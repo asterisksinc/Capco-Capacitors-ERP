@@ -302,7 +302,7 @@ export default function PipelinePage() {
       </section>
 
       {/* Main Content */}
-      <div className="w-full px-4 md:px-6 flex flex-col gap-4 pt-5 md:gap-6">
+      <div className="w-full px-4 md:px-6 flex flex-col gap-4 pt-5` md:gap-6">
         
         {/* Stats Section - Mobile 2x2 grid */}
         <section className="grid grid-cols-2 gap-0 md:hidden bg-white border border-[#EBEBEB]  rounded-[12px]">
