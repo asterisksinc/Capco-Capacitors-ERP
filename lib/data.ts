@@ -1,5 +1,16 @@
 export type WorkflowStatus = "Yet to Start" | "In-progress" | "Completed";
 
+export type ProductOrderSummary = {
+  id: string;
+  code: string;
+  type: string;
+  grade: string;
+  batchSize: string;
+  status: string;
+  stage: string;
+  timestamp: string;
+};
+
 export type WorkOrderSummary = {
   id: string;
   micron: string;
@@ -63,6 +74,17 @@ export type WorkOrderProgress = {
   status: WorkflowStatus;
 };
 
+export type InventoryItem = {
+  rawMaterialId: string;
+  rollId: string;
+  micron: string;
+  width: string;
+  weight: string;
+  supplier: string;
+  date: string;
+  status: "In Inventory" | "Being Used" | "Used Completely";
+};
+
 const godownPrimaryRange = Array.from({ length: 101 }, (_, idx) => `RM-${8300 + idx}`);
 const godownSecondaryRange = Array.from({ length: 201 }, (_, idx) => `RM-${3400 + idx}`);
 
@@ -82,6 +104,118 @@ export const godownRawMaterialIds = Array.from(
     "RM-490",
   ]),
 );
+
+export function createSeedInventory(): InventoryItem[] {
+  return [
+    { rawMaterialId: "RM-8301", rollId: "RL-2401-001", micron: "4.5", width: "1.0", weight: "58.5kgs", supplier: "VedaCap Industries", date: "10/01/2025", status: "In Inventory" },
+    { rawMaterialId: "RM-8302", rollId: "RL-2401-002", micron: "6.5", width: "1.2", weight: "45.2kgs", supplier: "ElectroForge Capacitors", date: "10/01/2025", status: "In Inventory" },
+    { rawMaterialId: "RM-8303", rollId: "RL-2401-003", micron: "5.0", width: "0.8", weight: "62.8kgs", supplier: "NextGen Metallic Pvt Ltd", date: "11/01/2025", status: "In Inventory" },
+    { rawMaterialId: "RM-8304", rollId: "RL-2401-004", micron: "4.5", width: "1.0", weight: "55.0kgs", supplier: "VedaCap Industries", date: "11/01/2025", status: "In Inventory" },
+    { rawMaterialId: "RM-8305", rollId: "RL-2401-005", micron: "7.5", width: "1.5", weight: "48.3kgs", supplier: "ElectroForge Capacitors", date: "12/01/2025", status: "In Inventory" },
+    { rawMaterialId: "RM-8306", rollId: "RL-2402-001", micron: "3.5", width: "0.9", weight: "52.1kgs", supplier: "NextGen Metallic Pvt Ltd", date: "12/01/2025", status: "In Inventory" },
+    { rawMaterialId: "RM-8307", rollId: "RL-2402-002", micron: "6.0", width: "1.1", weight: "60.0kgs", supplier: "VedaCap Industries", date: "13/01/2025", status: "In Inventory" },
+    { rawMaterialId: "RM-8308", rollId: "RL-2402-003", micron: "5.5", width: "1.0", weight: "47.5kgs", supplier: "ElectroForge Capacitors", date: "13/01/2025", status: "In Inventory" },
+    { rawMaterialId: "RM-8309", rollId: "RL-2402-004", micron: "4.0", width: "0.8", weight: "53.8kgs", supplier: "NextGen Metallic Pvt Ltd", date: "14/01/2025", status: "In Inventory" },
+    { rawMaterialId: "RM-8310", rollId: "RL-2402-005", micron: "6.5", width: "1.2", weight: "49.2kgs", supplier: "VedaCap Industries", date: "14/01/2025", status: "In Inventory" },
+    { rawMaterialId: "RM-3401", rollId: "RL-2403-001", micron: "4.0", width: "0.8", weight: "50.0kgs", supplier: "ElectroForge Capacitors", date: "15/01/2025", status: "In Inventory" },
+    { rawMaterialId: "RM-3402", rollId: "RL-2403-002", micron: "5.5", width: "1.0", weight: "55.5kgs", supplier: "NextGen Metallic Pvt Ltd", date: "15/01/2025", status: "In Inventory" },
+  ];
+}
+
+export function createSeedStore() {
+  const inventory: InventoryItem[] = [
+    { rawMaterialId: "RM-8301", rollId: "RL-2401-001", micron: "4.5", width: "1.0", weight: "58.5kgs", supplier: "VedaCap Industries", date: "10/01/2025", status: "Being Used" },
+    { rawMaterialId: "RM-8302", rollId: "RL-2401-002", micron: "6.5", width: "1.2", weight: "45.2kgs", supplier: "ElectroForge Capacitors", date: "10/01/2025", status: "Used Completely" },
+    { rawMaterialId: "RM-8303", rollId: "RL-2401-003", micron: "5.0", width: "0.8", weight: "62.8kgs", supplier: "NextGen Metallic Pvt Ltd", date: "11/01/2025", status: "Being Used" },
+    { rawMaterialId: "RM-8304", rollId: "RL-2401-004", micron: "4.5", width: "1.0", weight: "55.0kgs", supplier: "VedaCap Industries", date: "11/01/2025", status: "Being Used" },
+    { rawMaterialId: "RM-8305", rollId: "RL-2401-005", micron: "7.5", width: "1.5", weight: "48.3kgs", supplier: "ElectroForge Capacitors", date: "12/01/2025", status: "Being Used" },
+    { rawMaterialId: "RM-8306", rollId: "RL-2402-001", micron: "3.5", width: "0.9", weight: "52.1kgs", supplier: "NextGen Metallic Pvt Ltd", date: "12/01/2025", status: "In Inventory" },
+    { rawMaterialId: "RM-8307", rollId: "RL-2402-002", micron: "6.0", width: "1.1", weight: "60.0kgs", supplier: "VedaCap Industries", date: "13/01/2025", status: "In Inventory" },
+    { rawMaterialId: "RM-8308", rollId: "RL-2402-003", micron: "5.5", width: "1.0", weight: "47.5kgs", supplier: "ElectroForge Capacitors", date: "13/01/2025", status: "In Inventory" },
+    { rawMaterialId: "RM-8309", rollId: "RL-2402-004", micron: "4.0", width: "0.8", weight: "53.8kgs", supplier: "NextGen Metallic Pvt Ltd", date: "14/01/2025", status: "In Inventory" },
+    { rawMaterialId: "RM-8310", rollId: "RL-2402-005", micron: "6.5", width: "1.2", weight: "49.2kgs", supplier: "VedaCap Industries", date: "14/01/2025", status: "In Inventory" },
+    { rawMaterialId: "RM-3401", rollId: "RL-2403-001", micron: "4.0", width: "0.8", weight: "50.0kgs", supplier: "ElectroForge Capacitors", date: "15/01/2025", status: "In Inventory" },
+    { rawMaterialId: "RM-3402", rollId: "RL-2403-002", micron: "5.5", width: "1.0", weight: "55.5kgs", supplier: "NextGen Metallic Pvt Ltd", date: "15/01/2025", status: "In Inventory" },
+  ];
+
+  const now = new Date();
+  const d = (offset: number) => {
+    const dt = new Date(now);
+    dt.setDate(dt.getDate() + offset);
+    return `${String(dt.getDate()).padStart(2, "0")}/${String(dt.getMonth() + 1).padStart(2, "0")}/${dt.getFullYear()}`;
+  };
+
+  const workOrders: WorkOrderSummary[] = [
+    { id: "WO-2026-001", micron: "4.5", width: "1.0", qty: "5000", date: d(-5) },
+    { id: "WO-2026-002", micron: "6.5", width: "1.2", qty: "3000", date: d(-4) },
+    { id: "WO-2026-003", micron: "5.0", width: "0.8", qty: "4500", date: d(-3) },
+    { id: "WO-2026-004", micron: "7.5", width: "1.5", qty: "2500", date: d(-2) },
+    { id: "WO-2026-005", micron: "3.5", width: "0.9", qty: "6000", date: d(-1) },
+  ];
+
+  const flowDataMap: Record<string, WorkOrderFlowData> = {
+    "WO-2026-001": {
+      overview: { wordCount: "4.5µ x 1.0mm", micron: "4.5", width: "1.0", quantity: "5000", stage: "Slitting", date: d(-5), status: "Completed" },
+      rawMaterialRows: [
+        { rollNo: "RM-8301", weight: "58.5kgs", thickness: "4.5", supplier: "VedaCap Industries", stage: "METALLISATION", status: "Completed" },
+        { rollNo: "RM-8302", weight: "45.2kgs", thickness: "6.5", supplier: "ElectroForge Capacitors", stage: "METALLISATION", status: "Completed" },
+      ],
+      metallisationRows: [
+        { coilNo: "MC-1001", rmId: "RM-8301", machineNo: "M-01", weight: "58.5kgs", opticalDensity: "2.4", resistance: "1.5 Ohms", timestamp: `${d(-4)} 10:30`, nextStage: "SLITTING", status: "Completed" },
+        { coilNo: "MC-1002", rmId: "RM-8302", machineNo: "M-01", weight: "45.2kgs", opticalDensity: "2.3", resistance: "1.6 Ohms", timestamp: `${d(-4)} 14:15`, nextStage: "SLITTING", status: "Completed" },
+      ],
+      slittingRows: [
+        { productNo: "PM-1001", rmId: "RM-8301", weight: "28.5kgs", thickness: "4.5", grade: "AA", remarks: "Good quality", timestampAdded: d(-3), stage: "Completed", status: "Completed" },
+        { productNo: "PM-1002", rmId: "RM-8301", weight: "30.0kgs", thickness: "4.5", grade: "A", remarks: "Standard", timestampAdded: d(-3), stage: "Completed", status: "Completed" },
+        { productNo: "PM-1003", rmId: "RM-8302", weight: "45.2kgs", thickness: "6.5", grade: "AA", remarks: "Premium", timestampAdded: d(-3), stage: "Completed", status: "Completed" },
+      ],
+    },
+    "WO-2026-002": {
+      overview: { wordCount: "6.5µ x 1.2mm", micron: "6.5", width: "1.2", quantity: "3000", stage: "Metallisation", date: d(-4), status: "In-progress" },
+      rawMaterialRows: [
+        { rollNo: "RM-8303", weight: "62.8kgs", thickness: "5.0", supplier: "NextGen Metallic Pvt Ltd", stage: "METALLISATION", status: "Completed" },
+        { rollNo: "RM-8304", weight: "55.0kgs", thickness: "4.5", supplier: "VedaCap Industries", stage: "METALLISATION", status: "Completed" },
+      ],
+      metallisationRows: [
+        { coilNo: "MC-2001", rmId: "RM-8303", machineNo: "M-02", weight: "62.8kgs", opticalDensity: "2.5", resistance: "1.4 Ohms", timestamp: `${d(-2)} 09:00`, nextStage: "SLITTING", status: "Completed" },
+        { coilNo: "MC-2002", rmId: "RM-8304", machineNo: "M-02", weight: "55.0kgs", opticalDensity: "2.2", resistance: "1.7 Ohms", timestamp: `${d(-1)} 11:30`, nextStage: "SLITTING", status: "In-progress" },
+      ],
+      slittingRows: [],
+    },
+    "WO-2026-003": {
+      overview: { wordCount: "5.0µ x 0.8mm", micron: "5.0", width: "0.8", quantity: "4500", stage: "Raw Material", date: d(-3), status: "Yet to Start" },
+      rawMaterialRows: [
+        { rollNo: "RM-8305", weight: "48.3kgs", thickness: "7.5", supplier: "ElectroForge Capacitors", stage: "METALLISATION", status: "Yet to Start" },
+      ],
+      metallisationRows: [],
+      slittingRows: [],
+    },
+    "WO-2026-004": {
+      overview: { wordCount: "7.5µ x 1.5mm", micron: "7.5", width: "1.5", quantity: "2500", stage: "Raw Material", date: d(-2), status: "Yet to Start" },
+      rawMaterialRows: [
+        { rollNo: "RM-3401", weight: "50.0kgs", thickness: "4.0", supplier: "ElectroForge Capacitors", stage: "METALLISATION", status: "Yet to Start" },
+      ],
+      metallisationRows: [],
+      slittingRows: [],
+    },
+    "WO-2026-005": {
+      overview: { wordCount: "3.5µ x 0.9mm", micron: "3.5", width: "0.9", quantity: "6000", stage: "Raw Material", date: d(-1), status: "Yet to Start" },
+      rawMaterialRows: [
+        { rollNo: "RM-8306", weight: "52.1kgs", thickness: "3.5", supplier: "NextGen Metallic Pvt Ltd", stage: "METALLISATION", status: "Yet to Start" },
+      ],
+      metallisationRows: [],
+      slittingRows: [],
+    },
+  };
+
+  const productOrders: ProductOrderSummary[] = [
+    { id: "#PO-CC-0001", code: "C-450V-100uF", type: "Motor", grade: "AA", batchSize: "5000", status: "Yet to Start", stage: "Yet to Start", timestamp: `${d(-5)}:09:00:00` },
+    { id: "#PO-CC-0002", code: "MKT-250V-22uF", type: "Power", grade: "A+", batchSize: "3000", status: "In-progress", stage: "Raw Material", timestamp: `${d(-4)}:10:30:00` },
+    { id: "#PO-CC-0003", code: "SNUB-1KV-1uF", type: "Snubber", grade: "A", batchSize: "1000", status: "Completed", stage: "Completed", timestamp: `${d(-7)}:08:00:00` },
+  ];
+
+  return { workOrders, flowDataMap, inventoryItems: inventory, productOrders };
+}
 
 export function createEmptyFlowData(seed?: Partial<WorkOrderOverview>): WorkOrderFlowData {
   return {

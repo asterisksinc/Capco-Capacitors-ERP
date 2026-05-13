@@ -1,9 +1,9 @@
 "use client";
 
 import { use, useState, useMemo } from "react";
-import { Search, Plus, X, ChevronRight, Check } from "lucide-react";
+import { Plus, X, ChevronRight, Check } from "lucide-react";
 import { useStore } from "@/hooks/useStore";
-import { computeWorkflowProgress, godownRawMaterialIds } from "../../../../lib/data";
+import { computeWorkflowProgress } from "../../../../lib/data";
 import type { TableConfig } from "@/hooks/useTableControls";
 import { useTableControls } from "@/hooks/useTableControls";
 import { SortableHeader } from "@/components/table/SortableHeader";
@@ -16,14 +16,6 @@ type DetailPageProps = {
 
 type TabType = "Raw Material" | "Metallisation" | "Slitting";
 type ModalStep = 1 | 2 | 3;
-
-type RawMaterialForm = {
-  rawMaterialId: string;
-  micron: string;
-  width: string;
-  quantity: string;
-  supplier: string;
-};
 
 type MetallisationForm = {
   coilNo: string;
@@ -45,9 +37,7 @@ type SlittingForm = {
   remarks: string;
 };
 
-const rawMaterialIdOptions = godownRawMaterialIds;
 const micronOptions = ["2", "2.5", "3", "3.5", "4", "4.5", "4.5HT", "5", "5.5", "6", "6.5", "7", "7.5"];
-const supplierOptions = ["VedaCap Industries", "ElectroForge Capacitors", "NextGen Metallic Pvt Ltd"];
 const gradeOptions = ["AA", "A", "B", "C", "D"];
 
 const rawMaterialConfig: TableConfig<any> = {
@@ -58,8 +48,8 @@ const rawMaterialConfig: TableConfig<any> = {
     { key: "supplier", label: "Company/Supplier", type: "text", sortable: true },
     { key: "stage", label: "Stage", type: "enum", sortable: false, filter: "dropdown", options: ["Raw Material", "METALLISATION"] },
     { key: "status", label: "Status", type: "enum", sortable: false, filter: "dropdown", options: ["Yet to Start", "In-progress", "Completed"] },
-    { key: "options", label: "Action", type: "text", sortable: false }
-  ]
+    { key: "options", label: "Action", type: "text", sortable: false },
+  ],
 };
 
 const metallisationConfig: TableConfig<any> = {
@@ -73,8 +63,8 @@ const metallisationConfig: TableConfig<any> = {
     { key: "timestamp", label: "Timestamp", type: "date", sortable: true },
     { key: "nextStage", label: "Next Stage", type: "text", sortable: false },
     { key: "status", label: "Status", type: "enum", sortable: false, filter: "dropdown", options: ["Yet to Start", "In-progress", "Completed"] },
-    { key: "options", label: "Action", type: "text", sortable: false }
-  ]
+    { key: "options", label: "Action", type: "text", sortable: false },
+  ],
 };
 
 const slittingConfig: TableConfig<any> = {
@@ -87,16 +77,8 @@ const slittingConfig: TableConfig<any> = {
     { key: "timestampAdded", label: "Timestamp Added", type: "date", sortable: true },
     { key: "stage", label: "Stage", type: "enum", sortable: false, filter: "dropdown", options: ["Slitting", "Ready for Winding", "Completed"] },
     { key: "status", label: "Status", type: "enum", sortable: false, filter: "dropdown", options: ["Yet to Start", "In-progress", "Completed"] },
-    { key: "options", label: "Action", type: "text", sortable: false }
-  ]
-};
-
-const defaultRawMaterialForm: RawMaterialForm = {
-  rawMaterialId: rawMaterialIdOptions[0],
-  micron: "4.5",
-  width: "1.0",
-  quantity: "",
-  supplier: supplierOptions[0],
+    { key: "options", label: "Action", type: "text", sortable: false },
+  ],
 };
 
 const defaultMetallisationForm: MetallisationForm = {
@@ -156,10 +138,6 @@ function hasPositiveNumber(value: string) {
   return Number.isFinite(parsed) && parsed > 0;
 }
 
-function createRawMaterialRow(): RawMaterialForm {
-  return { ...defaultRawMaterialForm };
-}
-
 function createMetallisationRow(defaultRmId: string): MetallisationForm {
   return {
     ...defaultMetallisationForm,
@@ -189,9 +167,9 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
   const [slittingReviewRemarks, setSlittingReviewRemarks] = useState("");
   const workflowProgress = computeWorkflowProgress(workOrderFlowData);
 
-  const availableRollIds = Array.from(new Set(workOrderFlowData?.rawMaterialRows.map((row) => row.rollNo) ?? []));
+  const availableRollIds = Array.from(new Set(workOrderFlowData?.rawMaterialRows
+    .map((row) => row.rollNo) ?? []));
 
-  const [rawMaterialRowsInput, setRawMaterialRowsInput] = useState<RawMaterialForm[]>([createRawMaterialRow()]);
   const [metallisationRowsInput, setMetallisationRowsInput] = useState<MetallisationForm[]>([createMetallisationRow("")]);
   const [slittingRowsInput, setSlittingRowsInput] = useState<SlittingForm[]>([createSlittingRow("")]);
 
@@ -221,7 +199,7 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
     filters,
     handleFilterChange,
     dateRange,
-    setDateRange
+    setDateRange,
   } = useTableControls({ data: currentData, config: currentConfig });
 
   if (!mounted || !workOrderFlowData) return null;
@@ -230,7 +208,6 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
     setModalStep(1);
     setShowValidationHint(false);
     setSlittingReviewRemarks("");
-    setRawMaterialRowsInput([createRawMaterialRow()]);
     setMetallisationRowsInput([createMetallisationRow(availableRollIds[0] ?? "")]);
     setSlittingRowsInput([createSlittingRow(availableRollIds[0] ?? "")]);
   };
@@ -246,19 +223,8 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
   };
 
   const getCurrentDraftCount = () => {
-    if (activeTab === "Raw Material") return rawMaterialRowsInput.length;
     if (activeTab === "Metallisation") return metallisationRowsInput.length;
     return slittingRowsInput.length;
-  };
-
-  const isRawMaterialRowValid = (row: RawMaterialForm) => {
-    return Boolean(
-      rawMaterialIdOptions.includes(row.rawMaterialId.trim()) &&
-      micronOptions.includes(row.micron.trim()) &&
-      row.width.trim() &&
-      hasPositiveNumber(row.quantity) &&
-      row.supplier.trim(),
-    );
   };
 
   const isMetallisationRowValid = (row: MetallisationForm) => {
@@ -285,11 +251,9 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
   };
 
   const isCurrentStepOneValid =
-    activeTab === "Raw Material"
-      ? rawMaterialRowsInput.every(isRawMaterialRowValid)
-      : activeTab === "Metallisation"
-        ? metallisationRowsInput.every(isMetallisationRowValid)
-        : slittingRowsInput.every(isSlittingRowValid);
+    activeTab === "Metallisation"
+      ? metallisationRowsInput.every(isMetallisationRowValid)
+      : slittingRowsInput.every(isSlittingRowValid);
 
   const isStepTwoValid = activeTab === "Slitting" ? Boolean(slittingReviewRemarks.trim()) : true;
 
@@ -299,19 +263,11 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
       return;
     }
 
-    if (activeTab === "Raw Material") {
-      setRawMaterialRowsInput((prev) => [...prev, createRawMaterialRow()]);
-      return;
-    }
     if (activeTab === "Metallisation") {
       setMetallisationRowsInput((prev) => [...prev, createMetallisationRow(availableRollIds[0] ?? "")]);
       return;
     }
     setSlittingRowsInput((prev) => [...prev, createSlittingRow(availableRollIds[0] ?? "")]);
-  };
-
-  const updateRawMaterialRow = (index: number, patch: Partial<RawMaterialForm>) => {
-    setRawMaterialRowsInput((prev) => prev.map((row, idx) => (idx === index ? { ...row, ...patch } : row)));
   };
 
   const updateMetallisationRow = (index: number, patch: Partial<MetallisationForm>) => {
@@ -323,11 +279,6 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
   };
 
   const removeCurrentRow = (index: number) => {
-    if (activeTab === "Raw Material") {
-      if (rawMaterialRowsInput.length === 1) return;
-      setRawMaterialRowsInput((prev) => prev.filter((_, idx) => idx !== index));
-      return;
-    }
     if (activeTab === "Metallisation") {
       if (metallisationRowsInput.length === 1) return;
       setMetallisationRowsInput((prev) => prev.filter((_, idx) => idx !== index));
@@ -345,20 +296,6 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
 
     const date = getDateString();
     const dateTime = getDateTimeString();
-
-    if (activeTab === "Raw Material") {
-      const payload = rawMaterialRowsInput;
-      payload.forEach((item) => {
-        addFlowRow(orderId, "Raw Material", {
-          rollNo: item.rawMaterialId || generateId("RM"),
-          weight: `${item.quantity || "0"}kgs`,
-          thickness: item.micron,
-          supplier: item.supplier || "Unknown",
-          stage: "METALLISATION",
-          status: "Yet to Start",
-        });
-      });
-    }
 
     if (activeTab === "Metallisation") {
       const payload = metallisationRowsInput;
@@ -435,69 +372,6 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
   };
 
   const renderStepOneForm = () => {
-    if (activeTab === "Raw Material") {
-      return (
-        <div className="flex flex-col gap-4">
-          {rawMaterialRowsInput.map((row, idx) => (
-            <div key={`raw-step1-${idx}`} className="rounded-[12px] border border-[#DDE1E8] p-4 bg-white">
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-[13px] font-semibold text-[#344054]">Item {idx + 1}</p>
-                {rawMaterialRowsInput.length > 1 && (
-                  <button type="button" onClick={() => removeCurrentRow(idx)} className="text-[12px] text-[#D92D20] hover:underline">Remove</button>
-                )}
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                <div className="flex flex-col gap-2">
-                  <label className="text-[13px] font-medium text-[#171717]">Raw Material ID</label>
-                  <>
-                    <input
-                      list="raw-material-id-options"
-                      value={row.rawMaterialId}
-                      onChange={(e) => updateRawMaterialRow(idx, { rawMaterialId: e.target.value })}
-                      placeholder="Search RM-8300 to RM-8400"
-                      className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]"
-                    />
-                    <datalist id="raw-material-id-options">
-                      {rawMaterialIdOptions.map((id) => (
-                        <option key={id} value={id} />
-                      ))}
-                    </datalist>
-                  </>
-                </div>
-                <div className="flex flex-col gap-2">
-                  <label className="text-[13px] font-medium text-[#171717]">Micron</label>
-                  <select value={row.micron} onChange={(e) => updateRawMaterialRow(idx, { micron: e.target.value })} className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]">
-                    {micronOptions.map((option) => (
-                      <option key={option} value={option}>{option}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="flex flex-col gap-2">
-                  <label className="text-[13px] font-medium text-[#171717]">Width</label>
-                  <input type="number" step="0.1" value={row.width} onChange={(e) => updateRawMaterialRow(idx, { width: e.target.value })} placeholder="Enter width" className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]" />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <label className="text-[13px] font-medium text-[#171717]">Quantity (Kgs)</label>
-                  <div className="relative">
-                    <input type="number" min="0.1" step="0.1" value={row.quantity} onChange={(e) => updateRawMaterialRow(idx, { quantity: e.target.value })} placeholder="Enter quantity" className="h-[42px] w-full rounded-[8px] border border-[#DDE1E8] pl-3 pr-12 text-[14px]" />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[12px] font-medium text-[#5C5C5C]">Kgs</span>
-                  </div>
-                </div>
-                <div className="flex flex-col gap-2 md:col-span-2">
-                  <label className="text-[13px] font-medium text-[#171717]">Supplier</label>
-                  <select value={row.supplier} onChange={(e) => updateRawMaterialRow(idx, { supplier: e.target.value })} className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]">
-                    {supplierOptions.map((option) => (
-                      <option key={option} value={option}>{option}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      );
-    }
-
     if (activeTab === "Metallisation") {
       return (
         <div className="flex flex-col gap-4">
@@ -517,7 +391,7 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
                 <div className="flex flex-col gap-2">
                   <label className="text-[13px] font-medium text-[#171717]">RM ID</label>
                   <select value={row.rmId} onChange={(e) => updateMetallisationRow(idx, { rmId: e.target.value })} className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]">
-                    {availableRollIds.length === 0 && <option value="">No RM IDs available</option>}
+                    {availableRollIds.length === 0 && <option value="">No received RM IDs</option>}
                     {availableRollIds.map((rollId) => (
                       <option key={rollId} value={rollId}>{rollId}</option>
                     ))}
@@ -609,20 +483,6 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
   };
 
   const renderReviewCards = () => {
-    if (activeTab === "Raw Material") {
-      const rows = rawMaterialRowsInput;
-      return rows.map((item, idx) => (
-        <div key={`raw-${idx}`} className="rounded-[12px] border border-[#78CFFA] bg-[#F4FBFF] p-4 grid grid-cols-1 md:grid-cols-2 gap-y-2 gap-x-6 text-[14px] text-[#49526A]">
-          <p>Raw Material ID: {item.rawMaterialId || "Auto"}</p>
-          <p>Supplier: {item.supplier || "Unknown"}</p>
-          <p>Micron: {item.micron}</p>
-          <p>Width: {item.width}</p>
-          <p>Quantity: {item.quantity || "0"}</p>
-          <p>Stage: Metallisation</p>
-        </div>
-      ));
-    }
-
     if (activeTab === "Metallisation") {
       const rows = metallisationRowsInput;
       return rows.map((item, idx) => (
@@ -814,17 +674,18 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
             onExport={() => alert("Exporting data...")}
           />
 
-          <button
-            onClick={openModal}
-            className="flex items-center justify-center gap-2 bg-[#00B6E2] text-white text-[14px] font-medium rounded-[6px] h-[40px] px-[18px] hover:bg-[#0092b5] transition-colors shrink-0"
-          >
-            <Plus className="w-4 h-4 shrink-0" strokeWidth={2.5} />
-            <span className="leading-tight truncate">
-              {activeTab === "Raw Material" && "Add Raw Material"}
-              {activeTab === "Metallisation" && "Add Metallisation"}
-              {activeTab === "Slitting" && "Add Slitting"}
-            </span>
-          </button>
+          {activeTab !== "Raw Material" && (
+            <button
+              onClick={openModal}
+              className="flex items-center justify-center gap-2 bg-[#00B6E2] text-white text-[14px] font-medium rounded-[6px] h-[40px] px-[18px] hover:bg-[#0092b5] transition-colors shrink-0"
+            >
+              <Plus className="w-4 h-4 shrink-0" strokeWidth={2.5} />
+              <span className="leading-tight truncate">
+                {activeTab === "Metallisation" && "Add Metallisation"}
+                {activeTab === "Slitting" && "Add Slitting"}
+              </span>
+            </button>
+          )}
         </div>
 
         <div className="bg-white border border-[#EBEBEB] rounded-[12px] overflow-hidden">
@@ -852,10 +713,15 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
                       if (String(col.key) === "options") {
                         return (
                           <td key={String(col.key)} className="px-4 py-3 whitespace-nowrap">
-                            <OptionsDropdown 
-                              onEdit={() => alert(`Edit ${activeTab} Row ${idx}`)}
-                              onDelete={() => alert(`Delete ${activeTab} Row ${idx}`)}
-                            />
+                            {activeTab !== "Raw Material" ? (
+                              <OptionsDropdown
+                                onEdit={() => alert(`Edit ${activeTab} Row ${idx}`)}
+                                onDelete={() => alert(`Delete ${activeTab} Row ${idx}`)}
+                                status={row.status}
+                              />
+                            ) : (
+                              <span className="text-[12px] text-[#5C5C5C]">-</span>
+                            )}
                           </td>
                         );
                       }

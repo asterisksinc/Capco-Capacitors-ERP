@@ -2,7 +2,8 @@
 
 import { Plus, Search } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { useStore } from "@/hooks/useStore";
 import type { TableConfig } from "@/hooks/useTableControls";
 import { useTableControls } from "@/hooks/useTableControls";
 import { SortableHeader } from "@/components/table/SortableHeader";
@@ -50,22 +51,35 @@ const stockConfig: TableConfig<StockRow> = {
     { key: "width", label: "Width", type: "text", sortable: true },
     { key: "micron", label: "Micron", type: "text", sortable: true },
     { key: "grade", label: "Grade", type: "text", sortable: true },
-    { key: "stage", label: "Stage", type: "enum", sortable: false, filter: "dropdown", options: ["Metallisation", "Slitting", "Packaging", "Quality Check"] },
+    { key: "stage", label: "Stage", type: "enum", sortable: false, filter: "dropdown", options: ["Slitting", "Ready for Winding", "Completed"] },
     { key: "timestamp", label: "Timestamp", type: "date", sortable: true },
-    { key: "options", label: "Action", type: "text", sortable: false }
-  ]
+    { key: "options", label: "Action", type: "text", sortable: false },
+  ],
 };
 
-const mockRows: StockRow[] = [
-  { stockId: "PM-0001", linkedWoId: "WO-0001", weight: "58.5kgs", width: "4.5", micron: "6.5", grade: "A", stage: "Metallisation", timestamp: "10/01/2025" },
-  { stockId: "PM-0002", linkedWoId: "WO-0002", weight: "45.2kgs", width: "3.8", micron: "8.0", grade: "B", stage: "Slitting", timestamp: "10/01/2025" },
-  { stockId: "PM-0003", linkedWoId: "WO-0001", weight: "58.5kgs", width: "4.5", micron: "6.5", grade: "A", stage: "Metallisation", timestamp: "10/01/2025" },
-  { stockId: "PM-0004", linkedWoId: "WO-0003", weight: "62.8kgs", width: "5.0", micron: "7.5", grade: "A", stage: "Packaging", timestamp: "10/01/2025" },
-  { stockId: "PM-0005", linkedWoId: "WO-0002", weight: "45.2kgs", width: "3.8", micron: "8.0", grade: "B", stage: "Slitting", timestamp: "10/01/2025" },
-  { stockId: "PM-0006", linkedWoId: "WO-0004", weight: "55.0kgs", width: "4.2", micron: "6.8", grade: "A", stage: "Metallisation", timestamp: "10/01/2025" },
-  { stockId: "PM-0007", linkedWoId: "WO-0001", weight: "58.5kgs", width: "4.5", micron: "6.5", grade: "A", stage: "Metallisation", timestamp: "10/01/2025" },
-  { stockId: "PM-0008", linkedWoId: "WO-0005", weight: "48.3kgs", width: "4.0", micron: "7.2", grade: "B", stage: "Quality Check", timestamp: "10/01/2025" },
-];
+function useDerivedStock() {
+  const { store, mounted } = useStore();
+
+  return useMemo(() => {
+    if (!mounted) return [];
+    const rows: StockRow[] = [];
+    for (const [woId, flow] of Object.entries(store.flowDataMap)) {
+      for (const slitRow of flow.slittingRows) {
+        rows.push({
+          stockId: slitRow.productNo,
+          linkedWoId: woId,
+          weight: slitRow.weight,
+          width: flow.overview.width,
+          micron: slitRow.thickness,
+          grade: slitRow.grade,
+          stage: slitRow.stage,
+          timestamp: slitRow.timestampAdded,
+        });
+      }
+    }
+    return rows;
+  }, [store.flowDataMap, mounted]);
+}
 
 function StatusBadge({ status }: { status: string }) {
   if (status === "Out of Stock") {
@@ -81,7 +95,7 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export default function OperatorStockPage() {
-  const [data, setData] = useState(mockRows);
+  const data = useDerivedStock();
 
   const {
     processedData,
@@ -90,7 +104,7 @@ export default function OperatorStockPage() {
     filters,
     handleFilterChange,
     dateRange,
-    setDateRange
+    setDateRange,
   } = useTableControls({ data: data, config: stockConfig });
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -139,19 +153,22 @@ export default function OperatorStockPage() {
     if (f.stockId && !row.stockId.toLowerCase().includes((f.stockId as string).toLowerCase())) return false;
     if (f.linkedWoId && !row.linkedWoId.toLowerCase().includes((f.linkedWoId as string).toLowerCase())) return false;
     if (f.grade && row.grade !== (f.grade as string)) return false;
-    if (f.weightMin && parseFloat(row.weight) < parseFloat(f.weightMin as string)) return false;
-    if (f.weightMax && parseFloat(row.weight) > parseFloat(f.weightMax as string)) return false;
-    if (f.widthMin && parseFloat(row.width) < parseFloat(f.widthMin as string)) return false;
-    if (f.widthMax && parseFloat(row.width) > parseFloat(f.widthMax as string)) return false;
-    if (f.micronMin && parseFloat(row.micron) < parseFloat(f.micronMin as string)) return false;
-    if (f.micronMax && parseFloat(row.micron) > parseFloat(f.micronMax as string)) return false;
+    const weightNum = parseFloat(row.weight);
+    if (f.weightMin && !isNaN(weightNum) && weightNum < parseFloat(f.weightMin as string)) return false;
+    if (f.weightMax && !isNaN(weightNum) && weightNum > parseFloat(f.weightMax as string)) return false;
+    const widthNum = parseFloat(row.width);
+    if (f.widthMin && !isNaN(widthNum) && widthNum < parseFloat(f.widthMin as string)) return false;
+    if (f.widthMax && !isNaN(widthNum) && widthNum > parseFloat(f.widthMax as string)) return false;
+    const micronNum = parseFloat(row.micron);
+    if (f.micronMin && !isNaN(micronNum) && micronNum < parseFloat(f.micronMin as string)) return false;
+    if (f.micronMax && !isNaN(micronNum) && micronNum > parseFloat(f.micronMax as string)) return false;
     return true;
   });
 
   const totalLots = data.length;
-  const metallisationLots = data.filter((row) => row.stage === "Metallisation").length;
   const slittingLots = data.filter((row) => row.stage === "Slitting").length;
-  const qualityCheckLots = data.filter((row) => row.stage === "Quality Check").length;
+  const windingReadyLots = data.filter((row) => row.stage === "Ready for Winding").length;
+  const completedLots = data.filter((row) => row.stage === "Completed").length;
   const gradeALots = data.filter((row) => row.grade === "A").length;
 
   const overviewStats = [
@@ -163,13 +180,6 @@ export default function OperatorStockPage() {
       valClass: "text-[#171717]",
     },
     {
-      title: "Metallisation Stock",
-      value: String(metallisationLots),
-      subtext: "Available for slitting",
-      subtextClass: "text-[#5C5C5C] font-normal",
-      valClass: "text-[#171717]",
-    },
-    {
       title: "Slitting Queue",
       value: String(slittingLots),
       subtext: "Currently in cut processing",
@@ -177,35 +187,42 @@ export default function OperatorStockPage() {
       valClass: "text-[#171717]",
     },
     {
-      title: "Quality Check Lots",
-      value: String(qualityCheckLots),
-      subtext: qualityCheckLots > 0 ? "Needs final clearance" : "No pending QC",
-      subtextClass: qualityCheckLots > 0 ? "text-[#FB3748] font-semibold" : "text-[#1CB061] font-semibold",
+      title: "Ready for Winding",
+      value: String(windingReadyLots),
+      subtext: "Available for next stage",
+      subtextClass: "text-[#00B6E2] font-semibold",
+      valClass: "text-[#171717]",
+    },
+    {
+      title: "Completed Lots",
+      value: String(completedLots),
+      subtext: completedLots > 0 ? "Ready for dispatch" : "No completed lots",
+      subtextClass: completedLots > 0 ? "text-[#1CB061] font-semibold" : "text-[#5C5C5C] font-normal",
       valClass: "text-[#171717]",
     },
   ];
 
   return (
     <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-white flex flex-col">
-      {/* Header section (Frame 66 style) */}
       <section className="bg-white w-full flex justify-start border-b border-[#EBEBEB]">
         <div className="w-full px-6 py-6 pb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 h-auto">
           <div className="flex flex-col gap-1">
             <h1 className="text-[16px] font-medium text-[#171717] leading-tight">Stock Management</h1>
             <p className="text-[14px] font-normal text-[#5C5C5C] leading-tight">
-              Manage and view current inventory levels
+              Stock derived from slitting output across all work orders
             </p>
           </div>
-          <button className="flex items-center justify-center gap-2 bg-[#00B6E2] text-white text-[14px] font-medium rounded-[6px] h-[40px] px-[18px] hover:bg-[#0092b5] transition-colors shrink-0">
+          <Link
+            href="/person-a/workorder"
+            className="flex items-center justify-center gap-2 bg-[#00B6E2] text-white text-[14px] font-medium rounded-[6px] h-[40px] px-[18px] hover:bg-[#0092b5] transition-colors shrink-0"
+          >
             <Plus className="w-5 h-5 shrink-0" strokeWidth={2.5} />
-            <span className="leading-tight">Add Stock</span>
-          </button>
+            <span className="leading-tight">Add Slitting Output</span>
+          </Link>
         </div>
       </section>
 
-      {/* Main Content */}
       <div className="w-full px-6 py-6 flex flex-col gap-6">
-        {/* Stats Cards (Frame 70) */}
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 bg-white border border-[#EBEBEB] rounded-[12px] items-center p-5">
           {overviewStats.map((stat, i) => (
             <div key={i} className="flex items-center justify-between px-6 py-2 sm:py-0">
@@ -223,16 +240,15 @@ export default function OperatorStockPage() {
           ))}
         </section>
 
-        {/* Filters Row Component */}
         <section className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="relative max-w-[400px] w-full">
             <Search className="w-4 h-4 text-[#A1A1AA] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-            <input 
-              type="text" 
+            <input
+              type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by Stock ID..." 
-              className="h-[40px] w-full pl-9 pr-3 bg-white border border-[#EBEBEB] rounded-[8px] text-[14px] text-[#171717] placeholder:text-[#A1A1AA] focus:outline-none focus:border-[#00B6E2] " 
+              placeholder="Search by Stock ID..."
+              className="h-[40px] w-full pl-9 pr-3 bg-white border border-[#EBEBEB] rounded-[8px] text-[14px] text-[#171717] placeholder:text-[#A1A1AA] focus:outline-none focus:border-[#00B6E2]"
             />
           </div>
           <TableToolbar
@@ -257,10 +273,8 @@ export default function OperatorStockPage() {
           />
         </section>
 
-        {/* Active Filter Chips */}
         <FilterChips config={filterConfig} filters={tableFilters} onRemove={handleRemoveFilter} />
 
-        {/* Data Table (Frame 71) */}
         <section className="bg-white rounded-[12px] flex flex-col gap-4 overflow-hidden">
           <div className="border border-[#EAECF0] rounded-[8px] overflow-x-auto min-h-[300px]">
             <table className="w-full text-left border-collapse min-w-[1000px]">
@@ -299,21 +313,17 @@ export default function OperatorStockPage() {
                     </td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.timestamp}</td>
                     <td className="px-4 py-3 whitespace-nowrap">
-                      <OptionsDropdown 
+                      <OptionsDropdown
                         status="Yet to Start"
                         onEdit={() => {}}
-                        onDelete={() => {
-                          if (confirm(`Delete ${row.stockId}?`)) {
-                            setData(prev => prev.filter(r => r.stockId !== row.stockId));
-                          }
-                        }}
+                        onDelete={() => {}}
                       />
                     </td>
                   </tr>
                 )) : (
                   <tr>
                     <td colSpan={9} className="px-4 py-8 text-center text-[#5C5C5C] text-[14px]">
-                      No stock available.
+                      No stock available. Complete slitting on a work order to generate stock.
                     </td>
                   </tr>
                 )}
@@ -325,5 +335,3 @@ export default function OperatorStockPage() {
     </div>
   );
 }
-
-

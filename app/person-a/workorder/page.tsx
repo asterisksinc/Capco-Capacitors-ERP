@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { useStore, type ComputedWorkOrderSummary } from "@/hooks/useStore";
@@ -9,11 +9,11 @@ import { useTableControls } from "@/hooks/useTableControls";
 import { SortableHeader } from "@/components/table/SortableHeader";
 import { TableToolbar } from "@/components/table/TableToolbar";
 import { OptionsDropdown } from "@/components/table/OptionsDropdown";
-import { FilterPopover, FilterChips, type FilterConfig, type FilterState, type EnumFilter, type TextFilter, type NumberRangeFilter } from "@/components/table/FilterPopover";
+import { FilterChips, type FilterConfig, type FilterState, type EnumFilter, type TextFilter, type NumberRangeFilter } from "@/components/table/FilterPopover";
 import { exportToExcel } from "@/lib/exportExcel";
 
 const WO_STATUS_OPTIONS = ["Yet to Start", "In-progress", "Completed"];
-const WO_STAGE_OPTIONS = ["Metallisation", "Raw Material", "Slitting"];
+const WO_STAGE_OPTIONS = ["Raw Material", "Metallisation", "Slitting"];
 
 const statusFilter: EnumFilter = { label: "Status", key: "status", options: WO_STATUS_OPTIONS };
 const stageFilter: EnumFilter = { label: "Stage", key: "stage", options: WO_STAGE_OPTIONS };
@@ -118,18 +118,11 @@ export default function OperatorWorkOrderPage() {
   });
 
   const totalWorkOrders = rows.length;
-  const rawMaterialCount = rows.filter((row) => row.stage.toLowerCase().includes("raw material")).length;
   const metallisationCount = rows.filter((row) => row.stage.toLowerCase().includes("metallisation")).length;
   const slittingCount = rows.filter((row) => row.stage.toLowerCase().includes("slitting")).length;
   const completedCount = rows.filter((row) => row.status === "Completed").length;
   const inProgressCount = rows.filter((row) => row.status === "In-progress").length;
   const yetToStartCount = rows.filter((row) => row.status === "Yet to Start").length;
-  const yetRawCount = rows.filter((row) => row.status === "Yet to Start" && row.stage.toLowerCase().includes("raw material")).length;
-  const yetMetCount = rows.filter((row) => row.status === "Yet to Start" && row.stage.toLowerCase().includes("metallisation")).length;
-  const yetSlitCount = rows.filter((row) => row.status === "Yet to Start" && row.stage.toLowerCase().includes("slitting")).length;
-  const inProgressMetCount = rows.filter((row) => row.status === "In-progress" && row.stage.toLowerCase().includes("metallisation")).length;
-  const inProgressSlitCount = rows.filter((row) => row.status === "In-progress" && row.stage.toLowerCase().includes("slitting")).length;
-  const completedSlitCount = rows.filter((row) => row.status === "Completed" && row.stage.toLowerCase().includes("slitting")).length;
 
   const overviewStats = [
     {
@@ -140,48 +133,44 @@ export default function OperatorWorkOrderPage() {
       valClass: "text-[#171717]",
     },
     {
-      title: "Yet to Start",
-      value: String(yetToStartCount),
-      subtext: `Raw ${yetRawCount} | Met ${yetMetCount} | Slit ${yetSlitCount}`,
+      title: "Metallisation",
+      value: String(metallisationCount),
+      subtext: "In process",
       subtextClass: "text-[#E19242] font-semibold",
       valClass: "text-[#171717]",
     },
     {
-      title: "In-progress",
-      value: String(inProgressCount),
-      subtext: `Met ${inProgressMetCount} | Slit ${inProgressSlitCount}`,
+      title: "Slitting",
+      value: String(slittingCount),
+      subtext: "In queue",
       subtextClass: "text-[#1CB061] font-semibold",
       valClass: "text-[#171717]",
     },
     {
       title: "Completed",
       value: String(completedCount),
-      subtext: `Slitting completed ${completedSlitCount}`,
+      subtext: "Ready for next stage",
       subtextClass: "text-[#1CB061] font-semibold",
       valClass: "text-[#171717]",
     },
   ];
 
-  if (!mounted) return null; // Avoid hydration mismatch
+  if (!mounted) return null;
 
   return (
     <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-white flex flex-col relative">
-      {/* Header section (Frame 66 style) */}
       <section className="bg-white w-full flex justify-start border-b border-[#EBEBEB]">
         <div className="w-full px-6 py-6 pb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 h-auto">
           <div className="flex flex-col gap-1">
             <h1 className="text-[16px] font-medium text-[#171717] leading-tight">Work Orders</h1>
             <p className="text-[14px] font-normal text-[#5C5C5C] leading-tight">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit
+              View work orders and track metallisation progress
             </p>
           </div>
-          {/* Operator cannot add work order */}
         </div>
       </section>
 
-      {/* Main Content */}
       <div className="w-full px-6 py-6 flex flex-col gap-6">
-        {/* Stats Cards (Frame 70) */}
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 bg-white border border-[#EBEBEB] rounded-[12px] items-center p-5">
           {overviewStats.map((stat, i) => (
             <div key={i} className="flex items-center justify-between px-6 py-2 sm:py-0">
@@ -199,7 +188,6 @@ export default function OperatorWorkOrderPage() {
           ))}
         </section>
 
-        {/* Filters Row Component */}
         <section className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="relative max-w-[400px] w-full">
             <Search className="w-4 h-4 text-[#A1A1AA] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -232,13 +220,11 @@ export default function OperatorWorkOrderPage() {
           />
         </section>
 
-        {/* Active Filter Chips */}
         <FilterChips config={filterConfig} filters={tableFilters} onRemove={handleRemoveFilter} />
 
-        {/* Data Table (Frame 71) */}
         <section className="bg-white rounded-[12px] flex flex-col gap-4 overflow-hidden">
           <div className="border border-[#EAECF0] rounded-[8px] overflow-x-auto min-h-[300px]">
-            <table className="w-full text-left border-collapse min-w-[1000px]">
+            <table className="w-full text-left border-collapse min-w-[900px]">
               <thead>
                 <tr className="bg-[#F5F7FA] border-b border-[#EBEBEB]">
                   {workOrderConfig.columns.map((col) => (

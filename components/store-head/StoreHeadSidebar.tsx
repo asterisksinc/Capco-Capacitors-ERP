@@ -6,8 +6,7 @@ import {
   ArrowLeftFromLine,
   LayoutDashboard,
   Calendar,
-  BarChart2,
-  Share2,
+  Warehouse,
   LogOut,
 } from "lucide-react";
 import Image from "next/image";
@@ -18,9 +17,7 @@ export function StoreHeadSidebar() {
   const navItems = [
     { name: "Overview", href: "/store-head/overview", icon: LayoutDashboard },
     { name: "Work Orders", href: "/store-head/workorder", icon: Calendar },
-    { name: "Product Orders", href: "/store-head/product-orders", icon: Calendar },
-    { name: "Stock", href: "/store-head/stock", icon: BarChart2 },
-    { name: "Pipeline", href: "/store-head/pipeline", icon: Share2 },
+    { name: "Inventory", href: "/store-head/inventory", icon: Warehouse },
   ];
 
   return (

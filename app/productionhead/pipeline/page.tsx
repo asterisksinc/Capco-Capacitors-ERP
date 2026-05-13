@@ -16,6 +16,7 @@ import { SortableHeader } from "@/components/table/SortableHeader";
 import { TableToolbar } from "@/components/table/TableToolbar";
 import { FilterPopover, FilterChips, type FilterConfig, type FilterState, type EnumFilter } from "@/components/table/FilterPopover";
 import { MobileHeader, MobileSpacer } from "@/components/MobileHeader";
+import { useStore } from "@/hooks/useStore";
 
 // Reusing StatusBadge exactly as established in your design system
 function StatusBadge({ status }: { status: string }) {
@@ -141,6 +142,7 @@ const stageOrder = [
 ];
 
 export default function PipelinePage() {
+  const { store, mounted, workOrders } = useStore();
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [listType, setListType] = useState<ListType>("Work Orders");
   const [searchQuery, setSearchQuery] = useState("");
@@ -189,21 +191,28 @@ export default function PipelinePage() {
     poBatchMax: "",
   });
 
-  const [workOrders] = useState<WorkOrderRow[]>([
-    { id: "WO-0001", micron: "8", width: "1", quantity: "1", stage: "Metallisation", date: "10/01/2025", status: "Yet to Start", action: "View" },
-    { id: "WO-0002", micron: "12", width: "1", quantity: "1", stage: "Slitting", date: "10/01/2025", status: "In-progress", action: "View" },
-    { id: "WO-0003", micron: "5", width: "1", quantity: "1", stage: "Slitting", date: "10/01/2025", status: "Completed", action: "View" },
-    { id: "WO-0004", micron: "15", width: "1", quantity: "1", stage: "Metallisation", date: "10/01/2025", status: "Yet to Start", action: "View" },
-    { id: "WO-0005", micron: "7", width: "1", quantity: "1", stage: "Winding", date: "10/01/2025", status: "Completed", action: "View" },
-    { id: "WO-0006", micron: "9", width: "2", quantity: "2", stage: "Spray", date: "10/01/2025", status: "In-progress", action: "View" },
-  ]);
+  const pipelineWorkOrders: WorkOrderRow[] = workOrders.map((wo) => ({
+    id: wo.id,
+    micron: wo.micron,
+    width: wo.width,
+    quantity: wo.qty,
+    stage: wo.stage,
+    date: wo.date,
+    status: wo.status,
+    action: "View",
+  }));
 
-  const [productOrders] = useState<ProductOrderRow[]>([
-    { id: "#PO-CC-4567", code: "C-450V-100uF", type: "Motor", grade: "AA", batchSize: "5000", status: "Yet to Start", stage: "Winding", timestamp: "19/03/2026:01:55:26", action: "View" },
-    { id: "#PO-CC-4568", code: "C-450V-100uF", type: "Motor", grade: "AA", batchSize: "5000", status: "In-progress", stage: "Spray", timestamp: "19/03/2026:01:55:26", action: "View" },
-    { id: "#PO-CC-4569", code: "C-450V-100uF", type: "Motor", grade: "AA", batchSize: "5000", status: "Completed", stage: "Packing", timestamp: "19/03/2026:01:55:26", action: "View" },
-    { id: "#PO-CC-4570", code: "C-450V-100uF", type: "Motor", grade: "AA", batchSize: "5000", status: "Yet to Start", stage: "Testing", timestamp: "19/03/2026:01:55:26", action: "View" },
-  ]);
+  const pipelineProductOrders: ProductOrderRow[] = store.productOrders.map((po) => ({
+    id: po.id,
+    code: po.code,
+    type: po.type,
+    grade: po.grade,
+    batchSize: po.batchSize,
+    status: po.status,
+    stage: po.stage,
+    timestamp: po.timestamp,
+    action: "View",
+  }));
 
   const {
     processedData: processedWorkOrders,
@@ -211,7 +220,7 @@ export default function PipelinePage() {
     handleSort: handleWorkSort,
     filters: workFilters,
     handleFilterChange: handleWorkFilter,
-  } = useTableControls({ data: workOrders, config: workOrderConfig });
+  } = useTableControls({ data: pipelineWorkOrders, config: workOrderConfig });
 
   const {
     processedData: processedProductOrders,
@@ -219,7 +228,7 @@ export default function PipelinePage() {
     handleSort: handleProductSort,
     filters: productFilters,
     handleFilterChange: handleProductFilter,
-  } = useTableControls({ data: productOrders, config: productOrderConfig });
+  } = useTableControls({ data: pipelineProductOrders, config: productOrderConfig });
 
   const searchedWorkOrders = processedWorkOrders.filter((row) =>
     row.id.toLowerCase().includes(searchQuery.toLowerCase())
@@ -254,7 +263,7 @@ export default function PipelinePage() {
       groups[stage] = [];
     }
 
-    for (const row of workOrders) {
+    for (const row of pipelineWorkOrders) {
       if (!groups[row.stage]) {
         groups[row.stage] = [];
       }
@@ -268,7 +277,7 @@ export default function PipelinePage() {
       });
     }
 
-    for (const row of productOrders) {
+    for (const row of pipelineProductOrders) {
       if (!groups[row.stage]) {
         groups[row.stage] = [];
       }
@@ -285,8 +294,9 @@ export default function PipelinePage() {
     }
 
     return groups;
-  }, [workOrders, productOrders]);
+  }, [pipelineWorkOrders, pipelineProductOrders]);
 
+  if (!mounted) return null;
   return (
     <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-white flex flex-col relative w-full max-w-full">
       <MobileHeader title="Pipeline" />
@@ -307,10 +317,10 @@ export default function PipelinePage() {
         {/* Stats Section - Mobile 2x2 grid */}
         <section className="grid grid-cols-2 gap-0 md:hidden bg-white border border-[#EBEBEB]  rounded-[12px]">
           {[
-            { title: "Total Orders", value: "124", valClass: "text-[#171717]", subtextClass: "text-[#5C5C5C]" },
-            { title: "In Progress", value: "42", valClass: "text-[#171717]", subtextClass: "text-[#5C5C5C]" },
-            { title: "Completed", value: "15", valClass: "text-[#171717]", subtextClass: "text-[#5C5C5C]" },
-            { title: "Delayed", value: "8", valClass: "text-[#171717]", subtextClass: "text-[#5C5C5C]" },
+            { title: "Total Orders", value: String(workOrders.length + store.productOrders.length), valClass: "text-[#171717]", subtextClass: "text-[#5C5C5C]" },
+            { title: "In Progress", value: String(workOrders.filter((w) => w.status === "In-progress").length + store.productOrders.filter((p) => p.status === "In-progress").length), valClass: "text-[#171717]", subtextClass: "text-[#5C5C5C]" },
+            { title: "Completed", value: String(workOrders.filter((w) => w.status === "Completed").length + store.productOrders.filter((p) => p.status === "Completed").length), valClass: "text-[#171717]", subtextClass: "text-[#5C5C5C]" },
+            { title: "Yet to Start", value: String(workOrders.filter((w) => w.status === "Yet to Start").length + store.productOrders.filter((p) => p.status === "Yet to Start").length), valClass: "text-[#171717]", subtextClass: "text-[#5C5C5C]" },
           ].map((stat, i) => (
             <div key={i} className={`p-3 ${i % 2 === 0 ? 'border-r border-b border-[#EBEBEB]' : 'border-b border-[#EBEBEB]'}`}>
               <div className="flex flex-col gap-1">
@@ -325,11 +335,11 @@ export default function PipelinePage() {
         <section className="hidden md:grid grid-cols-1 sm:grid-cols-3 bg-white border border-[#EBEBEB] rounded-[12px] items-center p-5">
           <div className="flex items-center justify-between px-6 py-2 sm:py-0">
             <div className="flex flex-col gap-[6px]">
-              <p className="text-[12px] font-medium text-[#5C5C5C] leading-tight">Lorem ipsum dolor</p>
+              <p className="text-[12px] font-medium text-[#5C5C5C] leading-tight">Total Orders</p>
               <div className="flex items-baseline gap-3">
-                <span className="text-[14px] font-semibold leading-tight text-[#171717]">124</span>
-                <span className="text-[12px] leading-tight text-[#1CB061] font-semibold">
-                  5% vs Last Month
+                <span className="text-[14px] font-semibold leading-tight text-[#171717]">{workOrders.length + store.productOrders.length}</span>
+                <span className="text-[12px] leading-tight text-[#5C5C5C]">
+                  {workOrders.length} WO &bull; {store.productOrders.length} PO
                 </span>
               </div>
             </div>
@@ -338,11 +348,11 @@ export default function PipelinePage() {
           
           <div className="flex items-center justify-between px-6 py-2 sm:py-0">
             <div className="flex flex-col gap-[6px]">
-              <p className="text-[12px] font-medium text-[#5C5C5C] leading-tight">Lorem ipsum dolor</p>
+              <p className="text-[12px] font-medium text-[#5C5C5C] leading-tight">In Progress</p>
               <div className="flex items-baseline gap-3">
-                <span className="text-[14px] font-semibold leading-tight text-[#171717]">42</span>
-                <span className="text-[12px] leading-tight text-[#5C5C5C]">
-                  Stable
+                <span className="text-[14px] font-semibold leading-tight text-[#171717]">{workOrders.filter((w) => w.status === "In-progress").length + store.productOrders.filter((p) => p.status === "In-progress").length}</span>
+                <span className="text-[12px] leading-tight text-[#E19242]">
+                  Active orders
                 </span>
               </div>
             </div>
@@ -351,11 +361,11 @@ export default function PipelinePage() {
 
           <div className="flex items-center justify-between px-6 py-2 sm:py-0">
             <div className="flex flex-col gap-[6px]">
-              <p className="text-[12px] font-medium text-[#5C5C5C] leading-tight">Lorem ipsum dolor</p>
+              <p className="text-[12px] font-medium text-[#5C5C5C] leading-tight">Completed</p>
               <div className="flex items-baseline gap-3">
-                <span className="text-[14px] font-semibold leading-tight text-[#171717]">15</span>
-                <span className="text-[12px] leading-tight text-[#1CB061] font-semibold">
-                  +0.2% vs Last Month
+                <span className="text-[14px] font-semibold leading-tight text-[#171717]">{workOrders.filter((w) => w.status === "Completed").length + store.productOrders.filter((p) => p.status === "Completed").length}</span>
+                <span className="text-[12px] leading-tight text-[#1CB061]">
+                  Done
                 </span>
               </div>
             </div>

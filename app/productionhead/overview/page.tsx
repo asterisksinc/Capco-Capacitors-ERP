@@ -6,6 +6,7 @@ import Link from "next/link";
 import { exportToExcel } from "@/lib/exportExcel";
 import type { EnumFilter, FilterConfig, FilterState } from "@/components/table/FilterPopover";
 import { useMobileMenu } from "@/components/MobileMenuContext";
+import { useStore } from "@/hooks/useStore";
 
 function FilterPopover({
   config,
@@ -153,6 +154,7 @@ type PersonColumn = {
 
 export default function OverviewPage() {
   const { setIsMobileMenuOpen } = useMobileMenu();
+  const { store, mounted, workOrders } = useStore();
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("name-asc");
   const [isCreateOrderOpen, setIsCreateOrderOpen] = useState(false);
@@ -162,7 +164,7 @@ export default function OverviewPage() {
     { value: "name-desc", label: "Name (Z-A)" },
   ];
 
-  const STAGE_OPTIONS = ["Metallisation", "Slitting", "Winding", "Spray", "Epoxy", "Soldering", "Packaging", "QC"];
+  const STAGE_OPTIONS = ["Raw Material", "Metallisation", "Slitting", "Winding", "Spray", "Epoxy", "Soldering", "Packaging", "QC"];
   const STATUS_OPTIONS = ["Yet to Start", "In-progress", "Completed"];
   
   const [tableFilters, setTableFilters] = useState<FilterState>(() => {
@@ -181,36 +183,41 @@ export default function OverviewPage() {
 
   const stageFilter = (tableFilters.stage as string[]) || STAGE_OPTIONS;
   const statusFilter = (tableFilters.status as string[]) || STATUS_OPTIONS;
-  
+
+  const personACards: Card[] = workOrders.filter((wo) => wo.status !== "Completed").map((wo) => ({
+    id: wo.id,
+    stage: wo.stage,
+    date: wo.date,
+    status: wo.status,
+  }));
+
+  const personBCards: Card[] = store.productOrders.map((po) => ({
+    id: po.id,
+    stage: po.stage,
+    date: po.timestamp?.split(":")[0]?.replace(/(\d{2})\/(\d{2})\/(\d{4}).*/, "$1/$2/$3") ?? "-",
+    status: po.status === "Completed" ? "Completed" : po.status === "In-progress" ? "In-progress" : "Yet to Start",
+  }));
+
+  const completedWOs = workOrders.filter((wo) => wo.status === "Completed");
+  const personCCards: Card[] = completedWOs.map((wo) => ({
+    id: wo.id,
+    stage: "Epoxy",
+    date: wo.date,
+    status: "Yet to Start",
+  })).slice(0, 3);
+
+  const personDCards: Card[] = completedWOs.map((wo) => ({
+    id: wo.id,
+    stage: "Packaging",
+    date: wo.date,
+    status: "Yet to Start",
+  })).slice(0, 3);
+
   const data: PersonColumn[] = [
-    {
-      name: "Person A",
-      cards: [
-        { id: "WO-0001", stage: "Metallisation", date: "10/01/2025", status: "Yet to Start" },
-        { id: "WO-0002", stage: "Slitting", date: "10/01/2025", status: "Yet to Start" },
-      ],
-    },
-    {
-      name: "Person B",
-      cards: [
-        { id: "#PO-CC-4567", stage: "Winding", date: "10/01/2025", status: "In-progress" },
-        { id: "#PO-CC-4567", stage: "Spray", date: "10/01/2025", status: "Completed" },
-      ],
-    },
-    {
-      name: "Person C",
-      cards: [
-        { id: "#PO-CC-4567", stage: "Epoxy", date: "10/01/2025", status: "In-progress" },
-        { id: "#PO-CC-4567", stage: "Soldering", date: "10/01/2025", status: "In-progress" },
-      ],
-    },
-    {
-      name: "Person D",
-      cards: [
-        { id: "#PO-CC-8901", stage: "Packaging", date: "11/01/2025", status: "Completed" },
-        { id: "#PO-CC-8902", stage: "QC", date: "11/01/2025", status: "Yet to Start" },
-      ],
-    },
+    { name: "Person A", cards: personACards },
+    { name: "Person B", cards: personBCards },
+    { name: "Person C", cards: personCCards },
+    { name: "Person D", cards: personDCards },
   ];
 
   const filteredColumns = useMemo(() => {
@@ -266,6 +273,12 @@ export default function OverviewPage() {
     });
     exportToExcel(exportData, "overview-data", "Overview");
   };
+
+  if (!mounted) return null;
+  const woOpen = workOrders.filter((w) => w.status !== "Completed").length;
+  const poOpen = store.productOrders.filter((p) => p.status !== "Completed").length;
+  const woCompleted = workOrders.filter((w) => w.status === "Completed").length;
+  const poCompleted = store.productOrders.filter((p) => p.status === "Completed").length;
 
   return (
     <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-white flex flex-col w-full max-w-full">
@@ -394,10 +407,10 @@ export default function OverviewPage() {
       {/* MOBILE: KPI CARDS (2x2 grid) */}
       <section className="grid grid-cols-2 gap-0 md:hidden bg-white border border-[#EBEBEB] rounded-[12px]">
         {[
-          { title: "Product Orders Open", value: "124", valClass: "text-[#171717]", subtextClass: "text-[#1CB061] font-semibold", subtext: "+5%" },
-          { title: "Work Orders Open", value: "42", valClass: "text-[#171717]", subtextClass: "text-[#1CB061] font-semibold", subtext: "+0.2%" },
-          { title: "Orders Delayed", value: "15", valClass: "text-[#171717]", subtextClass: "text-[#1CB061] font-semibold", subtext: "+0.2%" },
-          { title: "Dispatch Ready Orders", value: "15", valClass: "text-[#171717]", subtextClass: "text-[#1CB061] font-semibold", subtext: "+0.2%" },
+          { title: "Product Orders Open", value: String(poOpen), valClass: "text-[#171717]", subtextClass: "text-[#1CB061] font-semibold", subtext: `${poCompleted} completed` },
+          { title: "Work Orders Open", value: String(woOpen), valClass: "text-[#171717]", subtextClass: "text-[#1CB061] font-semibold", subtext: `${woCompleted} completed` },
+          { title: "Orders Delayed", value: "0", valClass: "text-[#171717]", subtextClass: "text-[#5C5C5C]", subtext: "All on track" },
+          { title: "Dispatch Ready Orders", value: String(woCompleted), valClass: "text-[#171717]", subtextClass: "text-[#1CB061] font-semibold", subtext: "Ready" },
         ].map((stat, i) => (
           <div key={i} className={`p-3 ${i % 2 === 0 ? 'border-r border-b border-[#EBEBEB]' : 'border-b border-[#EBEBEB]'}`}>
             <div className="flex flex-col gap-1">
@@ -414,18 +427,18 @@ export default function OverviewPage() {
         <div className="bg-white border border-[#EBEBEB] rounded-[12px] p-6 flex items-center gap-4">
           
           {[
-            { label: "Product Orders Open", value: "124", change: "5%" },
-            { label: "Work Orders Open", value: "42", change: "+0.2%" },
-            { label: "Orders Delayed", value: "15", change: "+0.2%" },
-            { label: "Dispatch Ready Orders", value: "15", change: "+0.2%" },
+            { label: "Product Orders Open", value: String(poOpen), change: `${store.productOrders.length} total` },
+            { label: "Work Orders Open", value: String(woOpen), change: `${workOrders.length} total` },
+            { label: "Orders Delayed", value: "0", change: "All on track" },
+            { label: "Dispatch Ready Orders", value: String(woCompleted), change: "Completed" },
           ].map((item, i) => (
             <div key={i} className="flex-1 flex items-center justify-between">
               <div className="flex flex-col gap-1.5">
                 <p className="text-[12px] text-[#5C5C5C]">{item.label}</p>
                 <div className="flex items-baseline gap-2">
                   <span className="text-[14px] font-semibold text-[#171717]">{item.value}</span>
-                  <span className="text-[12px] text-[#1CB061] font-semibold">
-                    {item.change} vs Last Month
+                  <span className="text-[12px] text-[#5C5C5C]">
+                    {item.change}
                   </span>
                 </div>
               </div>
