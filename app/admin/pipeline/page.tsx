@@ -16,29 +16,29 @@ export default function PipelinePage() {
       title: "Metallisation",
       count: 2,
       cards: [
-        { id: "WO-0001", status: "Yet to Start", micron: "8", width: "1", qty: "1", date: "10/01/2025" },
-        { id: "WO-0003", status: "In-progress", micron: "8", width: "1", qty: "1", date: "10/01/2025", statusColor: "text-[#E19242]", statusBg: "bg-[#FFF4ED]" }
+        { id: "WO-0001", status: "Yet to Start", micron: "8", width: "1", qty: "1", date: "10/01/2025", statusColor: "", statusBg: "", isPO: false as const },
+        { id: "WO-0003", status: "In-progress", micron: "8", width: "1", qty: "1", date: "10/01/2025", statusColor: "text-[#E19242]", statusBg: "bg-[#FFF4ED]", isPO: false as const }
       ]
     },
     {
       title: "Slitting",
       count: 1,
       cards: [
-        { id: "WO-0002", status: "Completed", micron: "8", width: "1", qty: "1", date: "10/01/2025", statusColor: "text-[#1CB061]", statusBg: "bg-[#E8F8F0]" }
+        { id: "WO-0002", status: "Completed", micron: "8", width: "1", qty: "1", date: "10/01/2025", statusColor: "text-[#1CB061]", statusBg: "bg-[#E8F8F0]", isPO: false as const }
       ]
     },
     {
       title: "Winding",
       count: 1,
       cards: [
-        { id: "#PO-CC-4567", status: "Yet to Start", isPO: true, code: "C-450V-100uF", type: "Motor", grade: "AA", batch: "5000", qty: "1", date: "19/03/2026" }
+        { id: "#PO-CC-4567", status: "Yet to Start", isPO: true as const, code: "C-450V-100uF", type: "Motor", grade: "AA", batch: "5000", qty: "1", date: "19/03/2026", statusColor: "", statusBg: "" }
       ]
     },
     {
       title: "Spray",
       count: 1,
       cards: [
-        { id: "#PO-CC-4568", status: "In-progress", isPO: true, code: "C-450V-100uF", type: "Motor", grade: "AA", batch: "5000", qty: "1", date: "19/03/2026", statusColor: "text-[#E19242]", statusBg: "bg-[#FFF4ED]" }
+        { id: "#PO-CC-4568", status: "In-progress", isPO: true as const, code: "C-450V-100uF", type: "Motor", grade: "AA", batch: "5000", qty: "1", date: "19/03/2026", statusColor: "text-[#E19242]", statusBg: "bg-[#FFF4ED]" }
       ]
     }
   ];
@@ -54,10 +54,10 @@ export default function PipelinePage() {
   ];
 
   const workOrdersList = [
-    { id: "WO-0001", micron: "8", width: "1", quantity: "1", stage: "Metallisation", date: "10/01/2025", status: "Yet to Start" },
+    { id: "WO-0001", micron: "8", width: "1", quantity: "1", stage: "Metallisation", date: "10/01/2025", status: "Yet to Start", statusColor: "", statusBg: "" },
     { id: "WO-0001", micron: "12", width: "1", quantity: "1", stage: "Slitting", date: "10/01/2025", status: "In-progress", statusColor: "text-[#E19242]", statusBg: "bg-[#FFF4ED]" },
     { id: "WO-0001", micron: "5", width: "1", quantity: "1", stage: "Slitting", date: "10/01/2025", status: "Completed", statusColor: "text-[#1CB061]", statusBg: "bg-[#E8F8F0]" },
-    { id: "WO-0001", micron: "15", width: "1", quantity: "1", stage: "Metallisation", date: "10/01/2025", status: "Yet to Start" },
+    { id: "WO-0001", micron: "15", width: "1", quantity: "1", stage: "Metallisation", date: "10/01/2025", status: "Yet to Start", statusColor: "", statusBg: "" },
     { id: "WO-0001", micron: "7", width: "1", quantity: "1", stage: "Slitting", date: "10/01/2025", status: "Completed", statusColor: "text-[#1CB061]", statusBg: "bg-[#E8F8F0]" },
   ];
 
