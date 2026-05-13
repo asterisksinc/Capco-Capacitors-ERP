@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Plus, X, ChevronDown, Search, Info, ChevronLeft, ChevronRight } from "lucide-react";
 import { useMemo, useState } from "react";
+import { useStore } from "@/hooks/useStore";
 
 type ProductOrderRow = {
   id: string;
@@ -106,6 +107,7 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export default function PersonBProductOrdersPage() {
+  const { store, addProductOrder, deleteProductOrder } = useStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -118,18 +120,9 @@ export default function PersonBProductOrdersPage() {
     setIsModalOpen(true);
   };
 
-  const [productOrders, setProductOrders] = useState<ProductOrderRow[]>(
-    Array.from({ length: 8 }).map((_, index) => ({
-      id: `#PO-CC-${String(4567 - index).padStart(4, "0")}`,
-      code: "C-450V-100uF",
-      type: "Motor",
-      grade: "AA",
-      batchSize: "5000",
-      status: "Yet to Start",
-      stage: "Yet to Start",
-      timestamp: "19/03/2026:01:55:26",
-    }))
-  );
+  const productOrders: ProductOrderRow[] = store.productOrders.length > 0
+    ? store.productOrders as ProductOrderRow[]
+    : [];
 
   const {
     processedData,
@@ -209,7 +202,7 @@ export default function PersonBProductOrdersPage() {
       timestamp,
     };
 
-    setProductOrders((prev) => [newOrder, ...prev]);
+    addProductOrder(newOrder);
     setIsModalOpen(false);
     setFormData(createDefaultFormData(generateProductOrderId()));
     setCurrentPage(1);
@@ -654,7 +647,7 @@ export default function PersonBProductOrdersPage() {
                         onEdit={() => {}}
                         onDelete={() => {
                           if (confirm(`Are you sure you want to delete ${row.id}?`)) {
-                            setProductOrders(prev => prev.filter(p => p.id !== row.id));
+                            deleteProductOrder(row.id);
                           }
                         }}
                       />

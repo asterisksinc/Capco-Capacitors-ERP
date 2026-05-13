@@ -1,15 +1,21 @@
 import { useState, useEffect } from 'react';
 import {
   createEmptyFlowData,
+  createSeedInventory,
+  createSeedStore,
   computeWorkflowProgress,
   type WorkOrderSummary,
   type WorkOrderFlowData,
+  type ProductOrderSummary,
   type WorkflowStatus,
+  type InventoryItem,
 } from '../lib/data';
 
 interface StoreData {
   workOrders: WorkOrderSummary[];
   flowDataMap: Record<string, WorkOrderFlowData>;
+  inventoryItems: InventoryItem[];
+  productOrders: ProductOrderSummary[];
 }
 
 export type ComputedWorkOrderSummary = WorkOrderSummary & {
@@ -18,7 +24,7 @@ export type ComputedWorkOrderSummary = WorkOrderSummary & {
 };
 
 const STORAGE_KEY = 'capcoDataStore';
-const EMPTY_STORE: StoreData = { workOrders: [], flowDataMap: {} };
+const EMPTY_STORE: StoreData = { workOrders: [], flowDataMap: {}, inventoryItems: [], productOrders: [] };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -78,7 +84,15 @@ function sanitizeStore(raw: unknown): StoreData {
     }
   }
 
-  return { workOrders, flowDataMap };
+  const inventoryItems: InventoryItem[] = Array.isArray(raw.inventoryItems)
+    ? raw.inventoryItems.filter((row): row is InventoryItem => isRecord(row))
+    : createSeedInventory();
+
+  const productOrders: ProductOrderSummary[] = Array.isArray(raw.productOrders)
+    ? raw.productOrders.filter((row): row is ProductOrderSummary => isRecord(row))
+    : [];
+
+  return { workOrders, flowDataMap, inventoryItems, productOrders };
 }
 
 export function loadStore(): StoreData {
@@ -86,18 +100,28 @@ export function loadStore(): StoreData {
   const stored = localStorage.getItem(STORAGE_KEY);
 
   if (!stored) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(EMPTY_STORE));
-    return EMPTY_STORE;
+    const seeded = createSeedStore();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(seeded));
+    return seeded;
   }
 
   try {
     const parsed = JSON.parse(stored);
     const sanitized = sanitizeStore(parsed);
+    if (sanitized.workOrders.length === 0 && sanitized.productOrders.length === 0) {
+      const seeded = createSeedStore();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(seeded));
+      if (typeof window !== 'undefined') {
+        console.log('[capco] Seeded store with demo data');
+      }
+      return seeded;
+    }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitized));
     return sanitized;
   } catch {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(EMPTY_STORE));
-    return EMPTY_STORE;
+    const seeded = createSeedStore();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(seeded));
+    return seeded;
   }
 }
 
@@ -109,7 +133,7 @@ export function saveStore(data: StoreData) {
 }
 
 export function useStore() {
-  const [store, setStore] = useState<StoreData>({ workOrders: [], flowDataMap: {} });
+  const [store, setStore] = useState<StoreData>({ workOrders: [], flowDataMap: {}, inventoryItems: [], productOrders: [] });
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -191,5 +215,60 @@ export function useStore() {
     saveStore(nextStore);
   };
 
-  return { store, mounted, workOrders, addWorkOrder, deleteWorkOrder, addFlowRow };
+  const updateFlowRowField = (woId: string, tab: string, rowIndex: number, field: string, value: any) => {
+    const nextStore = loadStore();
+    const flow = nextStore.flowDataMap[woId];
+    if (!flow) return;
+
+    let rows: any[];
+    if (tab === "Raw Material") rows = flow.rawMaterialRows;
+    else if (tab === "Metallisation") rows = flow.metallisationRows;
+    else rows = flow.slittingRows;
+
+    if (rowIndex >= 0 && rowIndex < rows.length) {
+      rows[rowIndex][field] = value;
+    }
+
+    const progress = computeWorkflowProgress(flow);
+    flow.overview.stage = progress.stage;
+    flow.overview.status = progress.status;
+    nextStore.flowDataMap[woId] = flow;
+    saveStore(nextStore);
+  };
+
+  const updateInventoryStatus = (rawMaterialId: string, newStatus: InventoryItem["status"]) => {
+    const nextStore = loadStore();
+    const idx = nextStore.inventoryItems.findIndex((item) => item.rawMaterialId === rawMaterialId);
+    if (idx === -1) return false;
+    nextStore.inventoryItems[idx].status = newStatus;
+    saveStore(nextStore);
+    return true;
+  };
+
+  const addInventoryItem = (item: InventoryItem) => {
+    const nextStore = loadStore();
+    if (nextStore.inventoryItems.some((i) => i.rawMaterialId === item.rawMaterialId)) return false;
+    nextStore.inventoryItems.push(item);
+    saveStore(nextStore);
+    return true;
+  };
+
+  const getAvailableInventory = () => {
+    return store.inventoryItems.filter((item) => item.status === "In Inventory");
+  };
+
+  const addProductOrder = (po: ProductOrderSummary) => {
+    const nextStore = loadStore();
+    if (nextStore.productOrders.some((row) => row.id === po.id)) return;
+    nextStore.productOrders = [po, ...nextStore.productOrders];
+    saveStore(nextStore);
+  };
+
+  const deleteProductOrder = (poId: string) => {
+    const nextStore = loadStore();
+    nextStore.productOrders = nextStore.productOrders.filter((row) => row.id !== poId);
+    saveStore(nextStore);
+  };
+
+  return { store, mounted, workOrders, addWorkOrder, deleteWorkOrder, addFlowRow, updateFlowRowField, updateInventoryStatus, addInventoryItem, getAvailableInventory, addProductOrder, deleteProductOrder };
 }
