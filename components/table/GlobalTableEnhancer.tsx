@@ -31,7 +31,7 @@ const MAX_CATEGORY_FILTER_OPTIONS = 20;
 const tableStateMap = new WeakMap<HTMLTableElement, TableState>();
 
 function isPersonDashboardRoute(pathname: string): boolean {
-  return pathname.startsWith("/person-a") || pathname.startsWith("/person-b");
+  return pathname.startsWith("/person-a") || pathname.startsWith("/person-b") || pathname.startsWith("/store-head");
 }
 
 function getState(table: HTMLTableElement): TableState {
