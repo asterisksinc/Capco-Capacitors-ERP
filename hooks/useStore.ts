@@ -9,6 +9,9 @@ import {
   type ProductOrderSummary,
   type WorkflowStatus,
   type InventoryItem,
+  type MaterialRequest,
+  type MaterialRequestItem,
+  type MaterialReturn,
 } from '../lib/data';
 
 interface StoreData {
@@ -16,6 +19,8 @@ interface StoreData {
   flowDataMap: Record<string, WorkOrderFlowData>;
   inventoryItems: InventoryItem[];
   productOrders: ProductOrderSummary[];
+  materialRequests: MaterialRequest[];
+  materialReturns: MaterialReturn[];
 }
 
 export type ComputedWorkOrderSummary = WorkOrderSummary & {
@@ -24,7 +29,7 @@ export type ComputedWorkOrderSummary = WorkOrderSummary & {
 };
 
 const STORAGE_KEY = 'capcoDataStore';
-const EMPTY_STORE: StoreData = { workOrders: [], flowDataMap: {}, inventoryItems: [], productOrders: [] };
+const EMPTY_STORE: StoreData = { workOrders: [], flowDataMap: {}, inventoryItems: [], productOrders: [], materialRequests: [], materialReturns: [] };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -55,6 +60,8 @@ function sanitizeStore(raw: unknown): StoreData {
       const rawRows = Array.isArray(value.rawMaterialRows) ? value.rawMaterialRows : [];
       const metRows = Array.isArray(value.metallisationRows) ? value.metallisationRows : [];
       const slitRows = Array.isArray(value.slittingRows) ? value.slittingRows : [];
+      const windRows = Array.isArray(value.windingRows) ? value.windingRows : [];
+      const sprRows = Array.isArray(value.sprayRows) ? value.sprayRows : [];
       const overview = isRecord(value.overview) ? value.overview : {};
 
       const normalizedFlow: WorkOrderFlowData = {
@@ -75,6 +82,8 @@ function sanitizeStore(raw: unknown): StoreData {
           }
           return row;
         }) as WorkOrderFlowData['slittingRows'],
+        windingRows: windRows as WorkOrderFlowData['windingRows'],
+        sprayRows: sprRows as WorkOrderFlowData['sprayRows'],
       };
 
       const progress = computeWorkflowProgress(normalizedFlow);
@@ -92,7 +101,15 @@ function sanitizeStore(raw: unknown): StoreData {
     ? raw.productOrders.filter((row): row is ProductOrderSummary => isRecord(row))
     : [];
 
-  return { workOrders, flowDataMap, inventoryItems, productOrders };
+  const materialRequests: MaterialRequest[] = Array.isArray(raw.materialRequests)
+    ? raw.materialRequests.filter((row): row is MaterialRequest => isRecord(row))
+    : [];
+
+  const materialReturns: MaterialReturn[] = Array.isArray(raw.materialReturns)
+    ? raw.materialReturns.filter((row): row is MaterialReturn => isRecord(row))
+    : [];
+
+  return { workOrders, flowDataMap, inventoryItems, productOrders, materialRequests, materialReturns };
 }
 
 export function loadStore(): StoreData {
@@ -133,7 +150,7 @@ export function saveStore(data: StoreData) {
 }
 
 export function useStore() {
-  const [store, setStore] = useState<StoreData>({ workOrders: [], flowDataMap: {}, inventoryItems: [], productOrders: [] });
+  const [store, setStore] = useState<StoreData>({ workOrders: [], flowDataMap: {}, inventoryItems: [], productOrders: [], materialRequests: [], materialReturns: [] });
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -206,6 +223,8 @@ export function useStore() {
           : rowData;
       flow.slittingRows.push(row);
     }
+    if (tab === "Winding") flow.windingRows.push(rowData);
+    if (tab === "Spray") flow.sprayRows.push(rowData);
 
     const progress = computeWorkflowProgress(flow);
     flow.overview.stage = progress.stage;
@@ -223,6 +242,9 @@ export function useStore() {
     let rows: any[];
     if (tab === "Raw Material") rows = flow.rawMaterialRows;
     else if (tab === "Metallisation") rows = flow.metallisationRows;
+    else if (tab === "Slitting") rows = flow.slittingRows;
+    else if (tab === "Winding") rows = flow.windingRows;
+    else if (tab === "Spray") rows = flow.sprayRows;
     else rows = flow.slittingRows;
 
     if (rowIndex >= 0 && rowIndex < rows.length) {
@@ -270,5 +292,51 @@ export function useStore() {
     saveStore(nextStore);
   };
 
-  return { store, mounted, workOrders, addWorkOrder, deleteWorkOrder, addFlowRow, updateFlowRowField, updateInventoryStatus, addInventoryItem, getAvailableInventory, addProductOrder, deleteProductOrder };
+  const addMaterialRequest = (req: MaterialRequest) => {
+    const nextStore = loadStore();
+    nextStore.materialRequests = [req, ...nextStore.materialRequests];
+    saveStore(nextStore);
+  };
+
+  const issueMaterialRequest = (reqId: string, items: MaterialRequestItem[]) => {
+    const nextStore = loadStore();
+    const idx = nextStore.materialRequests.findIndex((r) => r.id === reqId);
+    if (idx === -1) return;
+    nextStore.materialRequests[idx].items = items;
+    nextStore.materialRequests[idx].status = items.every((i) => Number(i.issuedQty) >= Number(i.requestedQty)) ? "Issued" : "Partially Issued";
+    nextStore.materialRequests[idx].issuedAt = new Date().toLocaleDateString();
+    saveStore(nextStore);
+  };
+
+  const cancelMaterialRequest = (reqId: string) => {
+    const nextStore = loadStore();
+    const idx = nextStore.materialRequests.findIndex((r) => r.id === reqId);
+    if (idx === -1) return;
+    nextStore.materialRequests[idx].status = "Cancelled";
+    saveStore(nextStore);
+  };
+
+  const addMaterialReturn = (ret: MaterialReturn) => {
+    const nextStore = loadStore();
+    nextStore.materialReturns = [ret, ...nextStore.materialReturns];
+    saveStore(nextStore);
+  };
+
+  const acceptMaterialReturn = (retId: string) => {
+    const nextStore = loadStore();
+    const idx = nextStore.materialReturns.findIndex((r) => r.id === retId);
+    if (idx === -1) return;
+    nextStore.materialReturns[idx].status = "Accepted";
+    saveStore(nextStore);
+  };
+
+  const rejectMaterialReturn = (retId: string) => {
+    const nextStore = loadStore();
+    const idx = nextStore.materialReturns.findIndex((r) => r.id === retId);
+    if (idx === -1) return;
+    nextStore.materialReturns[idx].status = "Rejected";
+    saveStore(nextStore);
+  };
+
+  return { store, mounted, workOrders, addWorkOrder, deleteWorkOrder, addFlowRow, updateFlowRowField, updateInventoryStatus, addInventoryItem, getAvailableInventory, addProductOrder, deleteProductOrder, addMaterialRequest, issueMaterialRequest, cancelMaterialRequest, addMaterialReturn, acceptMaterialReturn, rejectMaterialReturn };
 }

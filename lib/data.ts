@@ -62,11 +62,36 @@ export type SlittingRow = {
   status: WorkflowStatus;
 };
 
+export type WindingRow = {
+  wdId: string;
+  linkedPmId: string;
+  filmWidth: string;
+  windingTension: string;
+  turnsCount: string;
+  quantityWound: string;
+  stage: string;
+  timestamp: string;
+  status: WorkflowStatus;
+};
+
+export type SprayRow = {
+  spId: string;
+  linkedWdId: string;
+  sprayType: string;
+  feedRate: string;
+  pressureSitting: string;
+  stage: string;
+  timestamp: string;
+  status: WorkflowStatus;
+};
+
 export type WorkOrderFlowData = {
   overview: WorkOrderOverview;
   rawMaterialRows: RawMaterialRow[];
   metallisationRows: MetallisationRow[];
   slittingRows: SlittingRow[];
+  windingRows: WindingRow[];
+  sprayRows: SprayRow[];
 };
 
 export type WorkOrderProgress = {
@@ -83,6 +108,33 @@ export type InventoryItem = {
   supplier: string;
   date: string;
   status: "In Inventory" | "Being Used" | "Used Completely";
+};
+
+export type MaterialRequestItem = {
+  productNo: string;
+  weight: string;
+  requestedQty: string;
+  issuedQty: string;
+  grade: string;
+};
+
+export type MaterialRequest = {
+  id: string;
+  items: MaterialRequestItem[];
+  status: "Pending" | "Partially Issued" | "Issued" | "Cancelled";
+  createdAt: string;
+  issuedAt?: string;
+  notes?: string;
+};
+
+export type MaterialReturn = {
+  id: string;
+  materialId: string;
+  weight: string;
+  usedWeight: string;
+  reason: string;
+  status: "Pending" | "Accepted" | "Rejected";
+  createdAt: string;
 };
 
 const godownPrimaryRange = Array.from({ length: 101 }, (_, idx) => `RM-${8300 + idx}`);
@@ -155,7 +207,7 @@ export function createSeedStore() {
 
   const flowDataMap: Record<string, WorkOrderFlowData> = {
     "WO-2026-001": {
-      overview: { wordCount: "4.5µ x 1.0mm", micron: "4.5", width: "1.0", quantity: "5000", stage: "Slitting", date: d(-5), status: "Completed" },
+      overview: { wordCount: "4.5µ x 1.0mm", micron: "4.5", width: "1.0", quantity: "5000", stage: "Completed", date: d(-5), status: "Completed" },
       rawMaterialRows: [
         { rollNo: "RM-8301", weight: "58.5kgs", thickness: "4.5", supplier: "VedaCap Industries", stage: "METALLISATION", status: "Completed" },
         { rollNo: "RM-8302", weight: "45.2kgs", thickness: "6.5", supplier: "ElectroForge Capacitors", stage: "METALLISATION", status: "Completed" },
@@ -169,6 +221,13 @@ export function createSeedStore() {
         { productNo: "PM-1002", rmId: "RM-8301", weight: "30.0kgs", thickness: "4.5", grade: "A", remarks: "Standard", timestampAdded: d(-3), stage: "Completed", status: "Completed" },
         { productNo: "PM-1003", rmId: "RM-8302", weight: "45.2kgs", thickness: "6.5", grade: "AA", remarks: "Premium", timestampAdded: d(-3), stage: "Completed", status: "Completed" },
       ],
+      windingRows: [
+        { wdId: "WD-1001", linkedPmId: "PM-1001", filmWidth: "7mm", windingTension: "0.5 N", turnsCount: "120", quantityWound: "250", stage: "Completed", timestamp: `${d(-2)} 09:15`, status: "Completed" },
+        { wdId: "WD-1002", linkedPmId: "PM-1002", filmWidth: "7mm", windingTension: "0.5 N", turnsCount: "110", quantityWound: "240", stage: "Completed", timestamp: `${d(-2)} 11:30`, status: "Completed" },
+      ],
+      sprayRows: [
+        { spId: "SP-1001", linkedWdId: "WD-1001", sprayType: "Zinc-spray", feedRate: "0.5", pressureSitting: "120", stage: "Moved to Person C", timestamp: `${d(-1)} 14:00`, status: "Completed" },
+      ],
     },
     "WO-2026-002": {
       overview: { wordCount: "6.5µ x 1.2mm", micron: "6.5", width: "1.2", quantity: "3000", stage: "Metallisation", date: d(-4), status: "In-progress" },
@@ -181,6 +240,10 @@ export function createSeedStore() {
         { coilNo: "MC-2002", rmId: "RM-8304", machineNo: "M-02", weight: "55.0kgs", opticalDensity: "2.2", resistance: "1.7 Ohms", timestamp: `${d(-1)} 11:30`, nextStage: "SLITTING", status: "In-progress" },
       ],
       slittingRows: [],
+      windingRows: [
+        { wdId: "WD-2001", linkedPmId: "PM-1001", filmWidth: "7mm", windingTension: "0.5 N", turnsCount: "115", quantityWound: "230", stage: "In-progress", timestamp: `${d(-1)} 10:00`, status: "In-progress" },
+      ],
+      sprayRows: [],
     },
     "WO-2026-003": {
       overview: { wordCount: "5.0µ x 0.8mm", micron: "5.0", width: "0.8", quantity: "4500", stage: "Raw Material", date: d(-3), status: "Yet to Start" },
@@ -189,6 +252,8 @@ export function createSeedStore() {
       ],
       metallisationRows: [],
       slittingRows: [],
+      windingRows: [],
+      sprayRows: [],
     },
     "WO-2026-004": {
       overview: { wordCount: "7.5µ x 1.5mm", micron: "7.5", width: "1.5", quantity: "2500", stage: "Raw Material", date: d(-2), status: "Yet to Start" },
@@ -197,6 +262,8 @@ export function createSeedStore() {
       ],
       metallisationRows: [],
       slittingRows: [],
+      windingRows: [],
+      sprayRows: [],
     },
     "WO-2026-005": {
       overview: { wordCount: "3.5µ x 0.9mm", micron: "3.5", width: "0.9", quantity: "6000", stage: "Raw Material", date: d(-1), status: "Yet to Start" },
@@ -205,6 +272,8 @@ export function createSeedStore() {
       ],
       metallisationRows: [],
       slittingRows: [],
+      windingRows: [],
+      sprayRows: [],
     },
   };
 
@@ -214,7 +283,7 @@ export function createSeedStore() {
     { id: "#PO-CC-0003", code: "SNUB-1KV-1uF", type: "Snubber", grade: "A", batchSize: "1000", status: "Completed", stage: "Completed", timestamp: `${d(-7)}:08:00:00` },
   ];
 
-  return { workOrders, flowDataMap, inventoryItems: inventory, productOrders };
+  return { workOrders, flowDataMap, inventoryItems: inventory, productOrders, materialRequests: [], materialReturns: [] };
 }
 
 export function createEmptyFlowData(seed?: Partial<WorkOrderOverview>): WorkOrderFlowData {
@@ -231,6 +300,8 @@ export function createEmptyFlowData(seed?: Partial<WorkOrderOverview>): WorkOrde
     rawMaterialRows: [],
     metallisationRows: [],
     slittingRows: [],
+    windingRows: [],
+    sprayRows: [],
   };
 }
 
@@ -240,23 +311,34 @@ export function computeWorkflowProgress(flow?: WorkOrderFlowData): WorkOrderProg
   }
 
   const stage =
-    flow.slittingRows.length > 0
-      ? "Slitting"
-      : flow.metallisationRows.length > 0
-        ? "Metallisation"
-        : flow.rawMaterialRows.length > 0
-          ? "Raw Material"
-          : "Raw Material";
+    flow.sprayRows.length > 0
+      ? "Spray"
+      : flow.windingRows.length > 0
+        ? "Winding"
+        : flow.slittingRows.length > 0
+          ? "Slitting"
+          : flow.metallisationRows.length > 0
+            ? "Metallisation"
+            : flow.rawMaterialRows.length > 0
+              ? "Raw Material"
+              : "Raw Material";
 
   const allStatuses = [
     ...flow.rawMaterialRows.map((row) => row.status),
     ...flow.metallisationRows.map((row) => row.status),
     ...flow.slittingRows.map((row) => row.status),
+    ...flow.windingRows.map((row) => row.status),
+    ...flow.sprayRows.map((row) => row.status),
   ];
 
   const slittingCompleted =
     flow.slittingRows.length > 0 && flow.slittingRows.every((row) => row.status === "Completed");
+  const windingCompleted =
+    flow.windingRows.length > 0 && flow.windingRows.every((row) => row.status === "Completed");
 
+  if (windingCompleted && flow.sprayRows.every((row) => row.status === "Completed")) {
+    return { stage, status: "Completed" };
+  }
   if (slittingCompleted) {
     return { stage, status: "Completed" };
   }

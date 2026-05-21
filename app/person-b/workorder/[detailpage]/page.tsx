@@ -1,9 +1,9 @@
 "use client";
 
 import { use, useState, useMemo } from "react";
-import { Search, Plus, X, ChevronRight, Check } from "lucide-react";
+import { Plus, X, ChevronRight, Check } from "lucide-react";
 import { useStore } from "@/hooks/useStore";
-import { computeWorkflowProgress, godownRawMaterialIds } from "../../../../lib/data";
+import { computeWorkflowProgress } from "../../../../lib/data";
 import type { TableConfig } from "@/hooks/useTableControls";
 import { useTableControls } from "@/hooks/useTableControls";
 import { SortableHeader } from "@/components/table/SortableHeader";
@@ -14,109 +14,68 @@ type DetailPageProps = {
   params: Promise<{ detailpage: string }>;
 };
 
-type TabType = "Raw Material" | "Metallisation" | "Slitting";
+type TabType = "Winding" | "Spray";
 type ModalStep = 1 | 2 | 3;
 
-type RawMaterialForm = {
-  rawMaterialId: string;
-  micron: string;
-  width: string;
-  quantity: string;
-  supplier: string;
+type WindingForm = {
+  wdId: string;
+  linkedPmId: string;
+  filmWidth: string;
+  windingTension: string;
+  turnsCount: string;
+  quantityWound: string;
 };
 
-type MetallisationForm = {
-  coilNo: string;
-  rmId: string;
-  machineNo: string;
-  weight: string;
-  opticalDensity: string;
-  resistance: string;
-  nextStage: string;
+type SprayForm = {
+  spId: string;
+  linkedWdId: string;
+  sprayType: string;
+  feedRate: string;
+  pressureSitting: string;
 };
 
-type SlittingForm = {
-  productNo: string;
-  associatedRmId: string;
-  micron: string;
-  width: string;
-  weight: string;
-  grade: string;
-  remarks: string;
-};
-
-const rawMaterialIdOptions = godownRawMaterialIds;
-const micronOptions = ["2", "2.5", "3", "3.5", "4", "4.5", "4.5HT", "5", "5.5", "6", "6.5", "7", "7.5"];
-const supplierOptions = ["VedaCap Industries", "ElectroForge Capacitors", "NextGen Metallic Pvt Ltd"];
-const gradeOptions = ["AA", "A", "B", "C", "D"];
-
-const rawMaterialConfig: TableConfig<any> = {
+const windingConfig: TableConfig<any> = {
   columns: [
-    { key: "rollNo", label: "Roll No", type: "text", sortable: true },
-    { key: "weight", label: "Weight", type: "text", sortable: true },
-    { key: "thickness", label: "Thickness", type: "text", sortable: true },
-    { key: "supplier", label: "Company/Supplier", type: "text", sortable: true },
-    { key: "stage", label: "Stage", type: "enum", sortable: false, filter: "dropdown", options: ["Raw Material", "METALLISATION"] },
-    { key: "status", label: "Status", type: "enum", sortable: false, filter: "dropdown", options: ["Yet to Start", "In-progress", "Completed"] },
-    { key: "options", label: "Action", type: "text", sortable: false }
-  ]
-};
-
-const metallisationConfig: TableConfig<any> = {
-  columns: [
-    { key: "coilNo", label: "Coil No.", type: "text", sortable: true },
-    { key: "rmId", label: "RM ID", type: "text", sortable: true },
-    { key: "machineNo", label: "Machine No.", type: "text", sortable: true },
-    { key: "weight", label: "Weight", type: "text", sortable: true },
-    { key: "opticalDensity", label: "Optical Density (OD)", type: "text", sortable: true },
-    { key: "resistance", label: "Resistance", type: "text", sortable: true },
+    { key: "wdId", label: "WD-ID", type: "text", sortable: true },
+    { key: "linkedPmId", label: "Linked PM-ID", type: "text", sortable: true },
+    { key: "filmWidth", label: "Film Width", type: "text", sortable: true },
+    { key: "windingTension", label: "Winding Tension", type: "text", sortable: true },
+    { key: "turnsCount", label: "Turns Count", type: "text", sortable: true },
+    { key: "quantityWound", label: "Quantity Wound", type: "text", sortable: true },
+    { key: "stage", label: "Stage", type: "text", sortable: true },
     { key: "timestamp", label: "Timestamp", type: "date", sortable: true },
-    { key: "nextStage", label: "Next Stage", type: "text", sortable: false },
-    { key: "status", label: "Status", type: "enum", sortable: false, filter: "dropdown", options: ["Yet to Start", "In-progress", "Completed"] },
     { key: "options", label: "Action", type: "text", sortable: false }
   ]
 };
 
-const slittingConfig: TableConfig<any> = {
+const sprayConfig: TableConfig<any> = {
   columns: [
-    { key: "productNo", label: "Product No", type: "text", sortable: true },
-    { key: "rmId", label: "RM ID", type: "text", sortable: true },
-    { key: "weight", label: "Weight", type: "text", sortable: true },
-    { key: "thickness", label: "Thickness", type: "text", sortable: true },
-    { key: "grade", label: "Grade", type: "text", sortable: true },
-    { key: "timestampAdded", label: "Timestamp Added", type: "date", sortable: true },
-    { key: "stage", label: "Stage", type: "enum", sortable: false, filter: "dropdown", options: ["Slitting", "Ready for Winding", "Completed"] },
-    { key: "status", label: "Status", type: "enum", sortable: false, filter: "dropdown", options: ["Yet to Start", "In-progress", "Completed"] },
+    { key: "spId", label: "SP-ID", type: "text", sortable: true },
+    { key: "linkedWdId", label: "Linked WD-ID", type: "text", sortable: true },
+    { key: "sprayType", label: "Spray Type", type: "text", sortable: true },
+    { key: "feedRate", label: "Feed Rate", type: "text", sortable: true },
+    { key: "pressureSitting", label: "Pressure Sitting", type: "text", sortable: true },
+    { key: "stage", label: "Stage", type: "text", sortable: true },
+    { key: "timestamp", label: "Timestamp", type: "date", sortable: true },
     { key: "options", label: "Action", type: "text", sortable: false }
   ]
 };
 
-const defaultRawMaterialForm: RawMaterialForm = {
-  rawMaterialId: rawMaterialIdOptions[0],
-  micron: "4.5",
-  width: "1.0",
-  quantity: "",
-  supplier: supplierOptions[0],
+const defaultWindingForm: WindingForm = {
+  wdId: "",
+  linkedPmId: "",
+  filmWidth: "7mm",
+  windingTension: "0.5 N",
+  turnsCount: "",
+  quantityWound: "",
 };
 
-const defaultMetallisationForm: MetallisationForm = {
-  coilNo: "",
-  rmId: "",
-  machineNo: "M-01",
-  weight: "",
-  opticalDensity: "2.4",
-  resistance: "1.5",
-  nextStage: "Slitting",
-};
-
-const defaultSlittingForm: SlittingForm = {
-  productNo: "",
-  associatedRmId: "",
-  micron: "4.5",
-  width: "1.0",
-  weight: "",
-  grade: "AA",
-  remarks: "",
+const defaultSprayForm: SprayForm = {
+  spId: "",
+  linkedWdId: "",
+  sprayType: "Zinc-spray",
+  feedRate: "",
+  pressureSitting: "",
 };
 
 function StatusBadge({ status }: { status: string }) {
@@ -130,11 +89,6 @@ function StatusBadge({ status }: { status: string }) {
     return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#E8F8F0] text-[#1CB061] text-[12px] font-medium leading-tight shrink-0">Completed</span>;
   }
   return null;
-}
-
-function getDateString() {
-  const today = new Date();
-  return `${String(today.getDate()).padStart(2, "0")}/${String(today.getMonth() + 1).padStart(2, "0")}/${today.getFullYear()}`;
 }
 
 function getDateTimeString() {
@@ -156,60 +110,58 @@ function hasPositiveNumber(value: string) {
   return Number.isFinite(parsed) && parsed > 0;
 }
 
-function createRawMaterialRow(): RawMaterialForm {
-  return { ...defaultRawMaterialForm };
-}
-
-function createMetallisationRow(defaultRmId: string): MetallisationForm {
+function createWindingRow(): WindingForm {
   return {
-    ...defaultMetallisationForm,
-    coilNo: generateId("MC"),
-    rmId: defaultRmId,
+    ...defaultWindingForm,
+    wdId: generateId("WD"),
   };
 }
 
-function createSlittingRow(defaultRmId: string): SlittingForm {
+function createSprayRow(): SprayForm {
   return {
-    ...defaultSlittingForm,
-    productNo: `PM-${Date.now()}-${Math.floor(Math.random() * 900 + 100)}`,
-    associatedRmId: defaultRmId,
+    ...defaultSprayForm,
+    spId: generateId("SP"),
   };
 }
 
-export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps) {
+export default function PersonBWorkOrderDetailPage({ params }: DetailPageProps) {
   const { detailpage } = use(params);
   const orderId = detailpage.toUpperCase();
   const { store, mounted, addFlowRow } = useStore();
   const workOrderFlowData = store.flowDataMap[orderId];
 
-  const [activeTab, setActiveTab] = useState<TabType>("Raw Material");
+  const [activeTab, setActiveTab] = useState<TabType>("Winding");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalStep, setModalStep] = useState<ModalStep>(1);
   const [showValidationHint, setShowValidationHint] = useState(false);
-  const [slittingReviewRemarks, setSlittingReviewRemarks] = useState("");
   const workflowProgress = computeWorkflowProgress(workOrderFlowData);
 
-  const availableRollIds = Array.from(new Set(workOrderFlowData?.rawMaterialRows.map((row) => row.rollNo) ?? []));
+  const availablePmIds = Array.from(new Set(store.workOrders.flatMap((wo) => {
+    const flow = store.flowDataMap[wo.id];
+    return flow?.slittingRows.map((row) => row.productNo) ?? [];
+  })));
 
-  const [rawMaterialRowsInput, setRawMaterialRowsInput] = useState<RawMaterialForm[]>([createRawMaterialRow()]);
-  const [metallisationRowsInput, setMetallisationRowsInput] = useState<MetallisationForm[]>([createMetallisationRow("")]);
-  const [slittingRowsInput, setSlittingRowsInput] = useState<SlittingForm[]>([createSlittingRow("")]);
+  const availableWdIds = Array.from(new Set(store.workOrders.flatMap((wo) => {
+    const flow = store.flowDataMap[wo.id];
+    return flow?.windingRows.map((row) => row.wdId) ?? [];
+  })));
+
+  const [windingRowsInput, setWindingRowsInput] = useState<WindingForm[]>([createWindingRow()]);
+  const [sprayRowsInput, setSprayRowsInput] = useState<SprayForm[]>([createSprayRow()]);
 
   const currentConfig = useMemo(() => {
     switch (activeTab) {
-      case "Raw Material": return rawMaterialConfig;
-      case "Metallisation": return metallisationConfig;
-      case "Slitting": return slittingConfig;
-      default: return rawMaterialConfig;
+      case "Winding": return windingConfig;
+      case "Spray": return sprayConfig;
+      default: return windingConfig;
     }
   }, [activeTab]);
 
   const currentData = useMemo(() => {
     if (!workOrderFlowData) return [];
     switch (activeTab) {
-      case "Raw Material": return workOrderFlowData.rawMaterialRows;
-      case "Metallisation": return workOrderFlowData.metallisationRows;
-      case "Slitting": return workOrderFlowData.slittingRows;
+      case "Winding": return workOrderFlowData.windingRows;
+      case "Spray": return workOrderFlowData.sprayRows;
       default: return [];
     }
   }, [workOrderFlowData, activeTab]);
@@ -229,10 +181,8 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
   const resetModalState = () => {
     setModalStep(1);
     setShowValidationHint(false);
-    setSlittingReviewRemarks("");
-    setRawMaterialRowsInput([createRawMaterialRow()]);
-    setMetallisationRowsInput([createMetallisationRow(availableRollIds[0] ?? "")]);
-    setSlittingRowsInput([createSlittingRow(availableRollIds[0] ?? "")]);
+    setWindingRowsInput([createWindingRow()]);
+    setSprayRowsInput([createSprayRow()]);
   };
 
   const openModal = () => {
@@ -246,52 +196,31 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
   };
 
   const getCurrentDraftCount = () => {
-    if (activeTab === "Raw Material") return rawMaterialRowsInput.length;
-    if (activeTab === "Metallisation") return metallisationRowsInput.length;
-    return slittingRowsInput.length;
+    if (activeTab === "Winding") return windingRowsInput.length;
+    return sprayRowsInput.length;
   };
 
-  const isRawMaterialRowValid = (row: RawMaterialForm) => {
+  const isWindingRowValid = (row: WindingForm) => {
     return Boolean(
-      rawMaterialIdOptions.includes(row.rawMaterialId.trim()) &&
-      micronOptions.includes(row.micron.trim()) &&
-      row.width.trim() &&
-      hasPositiveNumber(row.quantity) &&
-      row.supplier.trim(),
+      row.wdId.trim() &&
+      hasPositiveNumber(row.turnsCount) &&
+      hasPositiveNumber(row.quantityWound)
     );
   };
 
-  const isMetallisationRowValid = (row: MetallisationForm) => {
+  const isSprayRowValid = (row: SprayForm) => {
     return Boolean(
-      row.coilNo.trim() &&
-      row.rmId.trim() &&
-      row.machineNo.trim() &&
-      hasPositiveNumber(row.weight) &&
-      row.opticalDensity.trim() &&
-      row.resistance.trim() &&
-      row.nextStage.trim(),
-    );
-  };
-
-  const isSlittingRowValid = (row: SlittingForm) => {
-    return Boolean(
-      row.productNo.trim() &&
-      row.associatedRmId.trim() &&
-      micronOptions.includes(row.micron.trim()) &&
-      row.width.trim() &&
-      hasPositiveNumber(row.weight) &&
-      row.grade.trim(),
+      row.spId.trim() &&
+      row.sprayType.trim() &&
+      hasPositiveNumber(row.feedRate) &&
+      hasPositiveNumber(row.pressureSitting)
     );
   };
 
   const isCurrentStepOneValid =
-    activeTab === "Raw Material"
-      ? rawMaterialRowsInput.every(isRawMaterialRowValid)
-      : activeTab === "Metallisation"
-        ? metallisationRowsInput.every(isMetallisationRowValid)
-        : slittingRowsInput.every(isSlittingRowValid);
-
-  const isStepTwoValid = activeTab === "Slitting" ? Boolean(slittingReviewRemarks.trim()) : true;
+    activeTab === "Winding"
+      ? windingRowsInput.every(isWindingRowValid)
+      : sprayRowsInput.every(isSprayRowValid);
 
   const addCurrentItemToDraft = () => {
     if (!isCurrentStepOneValid) {
@@ -299,96 +228,67 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
       return;
     }
 
-    if (activeTab === "Raw Material") {
-      setRawMaterialRowsInput((prev) => [...prev, createRawMaterialRow()]);
+    if (activeTab === "Winding") {
+      setWindingRowsInput((prev) => [...prev, createWindingRow()]);
       return;
     }
-    if (activeTab === "Metallisation") {
-      setMetallisationRowsInput((prev) => [...prev, createMetallisationRow(availableRollIds[0] ?? "")]);
-      return;
-    }
-    setSlittingRowsInput((prev) => [...prev, createSlittingRow(availableRollIds[0] ?? "")]);
+    setSprayRowsInput((prev) => [...prev, createSprayRow()]);
   };
 
-  const updateRawMaterialRow = (index: number, patch: Partial<RawMaterialForm>) => {
-    setRawMaterialRowsInput((prev) => prev.map((row, idx) => (idx === index ? { ...row, ...patch } : row)));
+  const updateWindingRow = (index: number, patch: Partial<WindingForm>) => {
+    setWindingRowsInput((prev) => prev.map((row, idx) => (idx === index ? { ...row, ...patch } : row)));
   };
 
-  const updateMetallisationRow = (index: number, patch: Partial<MetallisationForm>) => {
-    setMetallisationRowsInput((prev) => prev.map((row, idx) => (idx === index ? { ...row, ...patch } : row)));
-  };
-
-  const updateSlittingRow = (index: number, patch: Partial<SlittingForm>) => {
-    setSlittingRowsInput((prev) => prev.map((row, idx) => (idx === index ? { ...row, ...patch } : row)));
+  const updateSprayRow = (index: number, patch: Partial<SprayForm>) => {
+    setSprayRowsInput((prev) => prev.map((row, idx) => (idx === index ? { ...row, ...patch } : row)));
   };
 
   const removeCurrentRow = (index: number) => {
-    if (activeTab === "Raw Material") {
-      if (rawMaterialRowsInput.length === 1) return;
-      setRawMaterialRowsInput((prev) => prev.filter((_, idx) => idx !== index));
+    if (activeTab === "Winding") {
+      if (windingRowsInput.length === 1) return;
+      setWindingRowsInput((prev) => prev.filter((_, idx) => idx !== index));
       return;
     }
-    if (activeTab === "Metallisation") {
-      if (metallisationRowsInput.length === 1) return;
-      setMetallisationRowsInput((prev) => prev.filter((_, idx) => idx !== index));
-      return;
-    }
-    if (slittingRowsInput.length === 1) return;
-    setSlittingRowsInput((prev) => prev.filter((_, idx) => idx !== index));
+    if (sprayRowsInput.length === 1) return;
+    setSprayRowsInput((prev) => prev.filter((_, idx) => idx !== index));
   };
 
   const submitCurrentStage = () => {
-    if (!isCurrentStepOneValid || !isStepTwoValid) {
+    if (!isCurrentStepOneValid) {
       setShowValidationHint(true);
       return;
     }
 
-    const date = getDateString();
     const dateTime = getDateTimeString();
 
-    if (activeTab === "Raw Material") {
-      const payload = rawMaterialRowsInput;
+    if (activeTab === "Winding") {
+      const payload = windingRowsInput;
       payload.forEach((item) => {
-        addFlowRow(orderId, "Raw Material", {
-          rollNo: item.rawMaterialId || generateId("RM"),
-          weight: `${item.quantity || "0"}kgs`,
-          thickness: item.micron,
-          supplier: item.supplier || "Unknown",
-          stage: "METALLISATION",
-          status: "Yet to Start",
-        });
-      });
-    }
-
-    if (activeTab === "Metallisation") {
-      const payload = metallisationRowsInput;
-      payload.forEach((item) => {
-        addFlowRow(orderId, "Metallisation", {
-          coilNo: item.coilNo || generateId("MC"),
-          rmId: item.rmId || "-",
-          machineNo: item.machineNo || "M-01",
-          weight: `${item.weight || "0"}kgs`,
-          opticalDensity: item.opticalDensity,
-          resistance: `${item.resistance} Ohms`,
+        addFlowRow(orderId, "Winding", {
+          wdId: item.wdId || generateId("WD"),
+          linkedPmId: item.linkedPmId || "-",
+          filmWidth: item.filmWidth || "0",
+          windingTension: item.windingTension || "0",
+          turnsCount: item.turnsCount || "0",
+          quantityWound: item.quantityWound || "0",
+          stage: "Spray",
           timestamp: dateTime,
-          nextStage: item.nextStage || "SLITTING",
-          status: "In-progress",
+          status: "Completed",
         });
       });
     }
 
-    if (activeTab === "Slitting") {
-      const payload = slittingRowsInput;
+    if (activeTab === "Spray") {
+      const payload = sprayRowsInput;
       payload.forEach((item) => {
-        addFlowRow(orderId, "Slitting", {
-          productNo: item.productNo || generateId("PM"),
-          rmId: item.associatedRmId || "-",
-          weight: `${item.weight || "0"}kgs`,
-          thickness: item.micron,
-          grade: item.grade,
-          remarks: slittingReviewRemarks,
-          timestampAdded: date,
-          stage: "Ready for Winding",
+        addFlowRow(orderId, "Spray", {
+          spId: item.spId || generateId("SP"),
+          linkedWdId: item.linkedWdId || "-",
+          sprayType: item.sprayType || "Zinc-spray",
+          feedRate: item.feedRate || "0",
+          pressureSitting: item.pressureSitting || "0",
+          stage: "Moved to Person C",
+          timestamp: dateTime,
           status: "Completed",
         });
       });
@@ -408,7 +308,7 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
   ];
 
   const renderStepHeader = () => {
-    const labels = ["Input Details", "Review Overview", "Submit Details"];
+    const labels = ["Input Details", "Submit Details"];
     return (
       <div className="px-6 py-5 border-b border-[#EBEBEB]">
         <div className="flex items-center justify-between gap-2">
@@ -435,116 +335,47 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
   };
 
   const renderStepOneForm = () => {
-    if (activeTab === "Raw Material") {
+    if (activeTab === "Winding") {
       return (
         <div className="flex flex-col gap-4">
-          {rawMaterialRowsInput.map((row, idx) => (
-            <div key={`raw-step1-${idx}`} className="rounded-[12px] border border-[#DDE1E8] p-4 bg-white">
+          {windingRowsInput.map((row, idx) => (
+            <div key={`wind-step1-${idx}`} className="rounded-[12px] border border-[#DDE1E8] p-4 bg-white">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-[13px] font-semibold text-[#344054]">Item {idx + 1}</p>
-                {rawMaterialRowsInput.length > 1 && (
+                {windingRowsInput.length > 1 && (
                   <button type="button" onClick={() => removeCurrentRow(idx)} className="text-[12px] text-[#D92D20] hover:underline">Remove</button>
                 )}
               </div>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                 <div className="flex flex-col gap-2">
-                  <label className="text-[13px] font-medium text-[#171717]">Raw Material ID</label>
-                  <>
-                    <input
-                      list="raw-material-id-options"
-                      value={row.rawMaterialId}
-                      onChange={(e) => updateRawMaterialRow(idx, { rawMaterialId: e.target.value })}
-                      placeholder="Search RM-8300 to RM-8400"
-                      className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]"
-                    />
-                    <datalist id="raw-material-id-options">
-                      {rawMaterialIdOptions.map((id) => (
-                        <option key={id} value={id} />
-                      ))}
-                    </datalist>
-                  </>
+                  <label className="text-[13px] font-medium text-[#171717]">WD-ID</label>
+                  <input value={row.wdId} readOnly className="h-[42px] rounded-[8px] border border-[#DDE1E8] bg-[#F8FAFC] px-3 text-[14px] text-[#5C5C5C]" />
                 </div>
                 <div className="flex flex-col gap-2">
-                  <label className="text-[13px] font-medium text-[#171717]">Micron</label>
-                  <select value={row.micron} onChange={(e) => updateRawMaterialRow(idx, { micron: e.target.value })} className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]">
-                    {micronOptions.map((option) => (
-                      <option key={option} value={option}>{option}</option>
+                  <label className="text-[13px] font-medium text-[#171717]">Linked PM-ID</label>
+                  <select value={row.linkedPmId} onChange={(e) => updateWindingRow(idx, { linkedPmId: e.target.value })} className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]">
+                    <option value="">Select PM-ID</option>
+                    {availablePmIds.length === 0 && <option value="">No PM-IDs available</option>}
+                    {availablePmIds.map((pmId) => (
+                      <option key={pmId} value={pmId}>{pmId}</option>
                     ))}
                   </select>
                 </div>
                 <div className="flex flex-col gap-2">
-                  <label className="text-[13px] font-medium text-[#171717]">Width</label>
-                  <input type="number" step="0.1" value={row.width} onChange={(e) => updateRawMaterialRow(idx, { width: e.target.value })} placeholder="Enter width" className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]" />
+                  <label className="text-[13px] font-medium text-[#171717]">Film Width</label>
+                  <input value={row.filmWidth} onChange={(e) => updateWindingRow(idx, { filmWidth: e.target.value })} placeholder="Film width" className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]" />
                 </div>
                 <div className="flex flex-col gap-2">
-                  <label className="text-[13px] font-medium text-[#171717]">Quantity (Kgs)</label>
-                  <div className="relative">
-                    <input type="number" min="0.1" step="0.1" value={row.quantity} onChange={(e) => updateRawMaterialRow(idx, { quantity: e.target.value })} placeholder="Enter quantity" className="h-[42px] w-full rounded-[8px] border border-[#DDE1E8] pl-3 pr-12 text-[14px]" />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[12px] font-medium text-[#5C5C5C]">Kgs</span>
-                  </div>
-                </div>
-                <div className="flex flex-col gap-2 md:col-span-2">
-                  <label className="text-[13px] font-medium text-[#171717]">Supplier</label>
-                  <select value={row.supplier} onChange={(e) => updateRawMaterialRow(idx, { supplier: e.target.value })} className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]">
-                    {supplierOptions.map((option) => (
-                      <option key={option} value={option}>{option}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      );
-    }
-
-    if (activeTab === "Metallisation") {
-      return (
-        <div className="flex flex-col gap-4">
-          {metallisationRowsInput.map((row, idx) => (
-            <div key={`met-step1-${idx}`} className="rounded-[12px] border border-[#DDE1E8] p-4 bg-white">
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-[13px] font-semibold text-[#344054]">Item {idx + 1}</p>
-                {metallisationRowsInput.length > 1 && (
-                  <button type="button" onClick={() => removeCurrentRow(idx)} className="text-[12px] text-[#D92D20] hover:underline">Remove</button>
-                )}
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                <div className="flex flex-col gap-2">
-                  <label className="text-[13px] font-medium text-[#171717]">Coil No.</label>
-                  <input value={row.coilNo} onChange={(e) => updateMetallisationRow(idx, { coilNo: e.target.value })} onBlur={(e) => !e.target.value.trim() && updateMetallisationRow(idx, { coilNo: generateId("MC") })} placeholder="Auto generate or enter coil no" className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]" />
+                  <label className="text-[13px] font-medium text-[#171717]">Winding Tension</label>
+                  <input value={row.windingTension} onChange={(e) => updateWindingRow(idx, { windingTension: e.target.value })} placeholder="Winding tension" className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]" />
                 </div>
                 <div className="flex flex-col gap-2">
-                  <label className="text-[13px] font-medium text-[#171717]">RM ID</label>
-                  <select value={row.rmId} onChange={(e) => updateMetallisationRow(idx, { rmId: e.target.value })} className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]">
-                    {availableRollIds.length === 0 && <option value="">No RM IDs available</option>}
-                    {availableRollIds.map((rollId) => (
-                      <option key={rollId} value={rollId}>{rollId}</option>
-                    ))}
-                  </select>
+                  <label className="text-[13px] font-medium text-[#171717]">Turns Count</label>
+                  <input type="number" min="1" value={row.turnsCount} onChange={(e) => updateWindingRow(idx, { turnsCount: e.target.value })} placeholder="Enter turns count" className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]" />
                 </div>
                 <div className="flex flex-col gap-2">
-                  <label className="text-[13px] font-medium text-[#171717]">Machine No.</label>
-                  <input value={row.machineNo} onChange={(e) => updateMetallisationRow(idx, { machineNo: e.target.value })} placeholder="Machine number" className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]" />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <label className="text-[13px] font-medium text-[#171717]">Weight</label>
-                  <input value={row.weight} onChange={(e) => updateMetallisationRow(idx, { weight: e.target.value })} placeholder="Enter weight" className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]" />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <label className="text-[13px] font-medium text-[#171717]">Optical Density</label>
-                  <input value={row.opticalDensity} onChange={(e) => updateMetallisationRow(idx, { opticalDensity: e.target.value })} placeholder="Enter optical density" className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]" />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <label className="text-[13px] font-medium text-[#171717]">Resistance</label>
-                  <input value={row.resistance} onChange={(e) => updateMetallisationRow(idx, { resistance: e.target.value })} placeholder="Enter resistance" className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]" />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <label className="text-[13px] font-medium text-[#171717]">Next Stage</label>
-                  <select value={row.nextStage} onChange={(e) => updateMetallisationRow(idx, { nextStage: e.target.value })} className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]">
-                    <option value="Slitting">Slitting</option>
-                    <option value="Quality Check">Quality Check</option>
-                  </select>
+                  <label className="text-[13px] font-medium text-[#171717]">Quantity Wound</label>
+                  <input type="number" min="1" value={row.quantityWound} onChange={(e) => updateWindingRow(idx, { quantityWound: e.target.value })} placeholder="Enter quantity wound" className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]" />
                 </div>
               </div>
             </div>
@@ -555,51 +386,40 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
 
     return (
       <div className="flex flex-col gap-4">
-        {slittingRowsInput.map((row, idx) => (
-          <div key={`slit-step1-${idx}`} className="rounded-[12px] border border-[#DDE1E8] p-4 bg-white">
+        {sprayRowsInput.map((row, idx) => (
+          <div key={`spray-step1-${idx}`} className="rounded-[12px] border border-[#DDE1E8] p-4 bg-white">
             <div className="flex items-center justify-between mb-3">
               <p className="text-[13px] font-semibold text-[#344054]">Item {idx + 1}</p>
-              {slittingRowsInput.length > 1 && (
+              {sprayRowsInput.length > 1 && (
                 <button type="button" onClick={() => removeCurrentRow(idx)} className="text-[12px] text-[#D92D20] hover:underline">Remove</button>
               )}
             </div>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
               <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-medium text-[#171717]">Product Material ID</label>
-                <input value={row.productNo} readOnly className="h-[42px] rounded-[8px] border border-[#DDE1E8] bg-[#F8FAFC] px-3 text-[14px] text-[#5C5C5C]" />
+                <label className="text-[13px] font-medium text-[#171717]">SP-ID</label>
+                <input value={row.spId} readOnly className="h-[42px] rounded-[8px] border border-[#DDE1E8] bg-[#F8FAFC] px-3 text-[14px] text-[#5C5C5C]" />
               </div>
               <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-medium text-[#171717]">Associated RM ID</label>
-                <select value={row.associatedRmId} onChange={(e) => updateSlittingRow(idx, { associatedRmId: e.target.value })} className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]">
-                  {availableRollIds.length === 0 && <option value="">No roll IDs available</option>}
-                  {availableRollIds.map((rollId) => (
-                    <option key={rollId} value={rollId}>{rollId}</option>
+                <label className="text-[13px] font-medium text-[#171717]">Linked WD-ID</label>
+                <select value={row.linkedWdId} onChange={(e) => updateSprayRow(idx, { linkedWdId: e.target.value })} className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]">
+                  <option value="">Select WD-ID</option>
+                  {availableWdIds.length === 0 && <option value="">No WD-IDs available</option>}
+                  {availableWdIds.map((wdId) => (
+                    <option key={wdId} value={wdId}>{wdId}</option>
                   ))}
                 </select>
               </div>
               <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-medium text-[#171717]">Micron</label>
-                <select value={row.micron} onChange={(e) => updateSlittingRow(idx, { micron: e.target.value })} className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]">
-                  {micronOptions.map((option) => (
-                    <option key={option} value={option}>{option}</option>
-                  ))}
-                </select>
+                <label className="text-[13px] font-medium text-[#171717]">Spray Type</label>
+                <input value={row.sprayType} onChange={(e) => updateSprayRow(idx, { sprayType: e.target.value })} placeholder="Spray type" className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]" />
               </div>
               <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-medium text-[#171717]">Width</label>
-                  <input type="number" step="0.1" value={row.width} onChange={(e) => updateSlittingRow(idx, { width: e.target.value })} placeholder="Enter width" className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]" />
+                <label className="text-[13px] font-medium text-[#171717]">Feed Rate</label>
+                <input type="number" min="0" step="0.1" value={row.feedRate} onChange={(e) => updateSprayRow(idx, { feedRate: e.target.value })} placeholder="Enter feed rate" className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]" />
               </div>
               <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-medium text-[#171717]">Weight</label>
-                <input value={row.weight} onChange={(e) => updateSlittingRow(idx, { weight: e.target.value })} placeholder="Enter weight" className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]" />
-              </div>
-              <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-medium text-[#171717]">Grade</label>
-                <select value={row.grade} onChange={(e) => updateSlittingRow(idx, { grade: e.target.value })} className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]">
-                  {gradeOptions.map((option) => (
-                    <option key={option} value={option}>{option}</option>
-                  ))}
-                </select>
+                <label className="text-[13px] font-medium text-[#171717]">Pressure Sitting</label>
+                <input type="number" min="0" step="0.1" value={row.pressureSitting} onChange={(e) => updateSprayRow(idx, { pressureSitting: e.target.value })} placeholder="Enter pressure sitting" className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]" />
               </div>
             </div>
           </div>
@@ -609,45 +429,28 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
   };
 
   const renderReviewCards = () => {
-    if (activeTab === "Raw Material") {
-      const rows = rawMaterialRowsInput;
+    if (activeTab === "Winding") {
+      const rows = windingRowsInput;
       return rows.map((item, idx) => (
-        <div key={`raw-${idx}`} className="rounded-[12px] border border-[#78CFFA] bg-[#F4FBFF] p-4 grid grid-cols-1 md:grid-cols-2 gap-y-2 gap-x-6 text-[14px] text-[#49526A]">
-          <p>Raw Material ID: {item.rawMaterialId || "Auto"}</p>
-          <p>Supplier: {item.supplier || "Unknown"}</p>
-          <p>Micron: {item.micron}</p>
-          <p>Width: {item.width}</p>
-          <p>Quantity: {item.quantity || "0"}</p>
-          <p>Stage: Metallisation</p>
+        <div key={`wind-${idx}`} className="rounded-[12px] border border-[#78CFFA] bg-[#F4FBFF] p-4 grid grid-cols-1 md:grid-cols-2 gap-y-2 gap-x-6 text-[14px] text-[#49526A]">
+          <p>WD-ID: {item.wdId || "Auto"}</p>
+          <p>Linked PM-ID: {item.linkedPmId || "-"}</p>
+          <p>Film Width: {item.filmWidth}</p>
+          <p>Winding Tension: {item.windingTension}</p>
+          <p>Turns Count: {item.turnsCount || "0"}</p>
+          <p>Quantity Wound: {item.quantityWound || "0"}</p>
         </div>
       ));
     }
 
-    if (activeTab === "Metallisation") {
-      const rows = metallisationRowsInput;
-      return rows.map((item, idx) => (
-        <div key={`met-${idx}`} className="rounded-[12px] border border-[#78CFFA] bg-[#F4FBFF] p-4 grid grid-cols-1 md:grid-cols-2 gap-y-2 gap-x-6 text-[14px] text-[#49526A]">
-          <p>Coil No: {item.coilNo || "Auto"}</p>
-          <p>RM ID: {item.rmId || "-"}</p>
-          <p>Machine: {item.machineNo}</p>
-          <p>Weight: {item.weight || "0"} kgs</p>
-          <p>Optical Density: {item.opticalDensity}</p>
-          <p>Resistance: {item.resistance}</p>
-          <p>Next Stage: {item.nextStage}</p>
-        </div>
-      ));
-    }
-
-    const rows = slittingRowsInput;
+    const rows = sprayRowsInput;
     return rows.map((item, idx) => (
-      <div key={`slit-${idx}`} className="rounded-[12px] border border-[#78CFFA] bg-[#F4FBFF] p-4 grid grid-cols-1 md:grid-cols-2 gap-y-2 gap-x-6 text-[14px] text-[#49526A]">
-        <p>Product No: {item.productNo || "Auto"}</p>
-        <p>Associated RM: {item.associatedRmId || "-"}</p>
-        <p>Micron: {item.micron}</p>
-        <p>Width: {item.width}</p>
-        <p>Weight: {item.weight || "0"} kgs</p>
-        <p>Grade: {item.grade}</p>
-        <p className="md:col-span-2">Remarks / Observation: {slittingReviewRemarks || "Pending in this step"}</p>
+      <div key={`spray-${idx}`} className="rounded-[12px] border border-[#78CFFA] bg-[#F4FBFF] p-4 grid grid-cols-1 md:grid-cols-2 gap-y-2 gap-x-6 text-[14px] text-[#49526A]">
+        <p>SP-ID: {item.spId || "Auto"}</p>
+        <p>Linked WD-ID: {item.linkedWdId || "-"}</p>
+        <p>Spray Type: {item.sprayType}</p>
+        <p>Feed Rate: {item.feedRate || "0"}</p>
+        <p>Pressure Sitting: {item.pressureSitting || "0"}</p>
       </div>
     ));
   };
@@ -661,7 +464,7 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
             Add Item
           </button>
           {showValidationHint && !isCurrentStepOneValid && (
-            <p className="text-[12px] text-[#D92D20]">All input fields are mandatory before adding an item or moving to the next step.</p>
+            <p className="text-[12px] text-[#D92D20]">All required fields must be filled before adding an item or moving to the next step.</p>
           )}
           <p className="text-[12px] text-[#667085]">Items queued for review: {getCurrentDraftCount()}</p>
         </div>
@@ -676,20 +479,6 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
             <p className="text-[13px] text-[#6B7280]">Review all values before submitting to the workflow queue.</p>
           </div>
           {renderReviewCards()}
-          {activeTab === "Slitting" && (
-            <div className="rounded-[12px] border border-[#DDE1E8] bg-white p-4 flex flex-col gap-2">
-              <label className="text-[13px] font-medium text-[#171717]">Remarks / Observation</label>
-              <textarea
-                value={slittingReviewRemarks}
-                onChange={(e) => setSlittingReviewRemarks(e.target.value)}
-                placeholder="Add remarks for winding readiness"
-                className="min-h-[92px] rounded-[8px] border border-[#DDE1E8] px-3 py-2 text-[14px] resize-none"
-              />
-              {showValidationHint && !isStepTwoValid && (
-                <p className="text-[12px] text-[#D92D20]">Remarks / Observation is mandatory for slitting in step 2.</p>
-              )}
-            </div>
-          )}
         </div>
       );
     }
@@ -703,7 +492,7 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
             </div>
           </div>
           <p className="text-[27px] leading-tight text-[#171717] font-semibold">Your details have been submitted successfully.</p>
-          <p className="text-[15px] text-[#667085] max-w-[460px]">We are reviewing this entry and notifying the next stage once processing is complete.</p>
+          <p className="text-[15px] text-[#667085] max-w-[460px]">Winding/Spray data has been recorded for this work order.</p>
         </div>
       </div>
     );
@@ -752,7 +541,7 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
                   <button onClick={() => setModalStep(1)} className="h-[40px] px-4 bg-white border border-[#EBEBEB] text-[#171717] text-[14px] font-medium rounded-[6px] hover:bg-gray-50 transition-colors">Back</button>
                   <button
                     onClick={submitCurrentStage}
-                    className={`h-[40px] px-5 text-[14px] font-medium rounded-[6px] transition-colors ${(isCurrentStepOneValid && isStepTwoValid) ? "bg-[#00B6E2] text-white hover:bg-[#0092b5]" : "bg-[#A7DDEB] text-white cursor-not-allowed"}`}
+                    className={`h-[40px] px-5 text-[14px] font-medium rounded-[6px] transition-colors ${isCurrentStepOneValid ? "bg-[#00B6E2] text-white hover:bg-[#0092b5]" : "bg-[#A7DDEB] text-white cursor-not-allowed"}`}
                   >
                     Submit Details
                   </button>
@@ -792,10 +581,10 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
 
       <section className="w-full px-6 py-6 flex flex-col gap-6">
         <div className="flex items-center gap-2 border-b border-[#EBEBEB] pb-4">
-          {["Raw Material", "Metallisation", "Slitting"].map((tab) => (
+          {(["Winding", "Spray"] as TabType[]).map((tab) => (
             <button
               key={tab}
-              onClick={() => setActiveTab(tab as TabType)}
+              onClick={() => setActiveTab(tab)}
               className={`px-4 py-2 text-[14px] font-medium rounded-[8px] transition-colors ${
                 activeTab === tab
                   ? "bg-[#00B6E2] text-white"
@@ -820,9 +609,7 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
           >
             <Plus className="w-4 h-4 shrink-0" strokeWidth={2.5} />
             <span className="leading-tight truncate">
-              {activeTab === "Raw Material" && "Add Raw Material"}
-              {activeTab === "Metallisation" && "Add Metallisation"}
-              {activeTab === "Slitting" && "Add Slitting"}
+              {activeTab === "Winding" ? "Add Winding" : "Add Spray"}
             </span>
           </button>
         </div>
@@ -852,7 +639,7 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
                       if (String(col.key) === "options") {
                         return (
                           <td key={String(col.key)} className="px-4 py-3 whitespace-nowrap">
-                            <OptionsDropdown 
+                            <OptionsDropdown
                               onEdit={() => alert(`Edit ${activeTab} Row ${idx}`)}
                               onDelete={() => alert(`Delete ${activeTab} Row ${idx}`)}
                             />
@@ -867,13 +654,20 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
                         );
                       }
                       return (
-                        <td key={String(col.key)} className={`px-4 py-4 text-[14px] ${['rollNo', 'coilNo', 'productNo'].includes(String(col.key)) ? 'text-[#00B6E2] font-semibold' : 'text-[#5C5C5C]'} whitespace-nowrap`}>
+                        <td key={String(col.key)} className={`px-4 py-4 text-[14px] ${['wdId', 'spId'].includes(String(col.key)) ? 'text-[#00B6E2] font-semibold' : 'text-[#5C5C5C]'} whitespace-nowrap`}>
                           {row[col.key]}
                         </td>
                       );
                     })}
                   </tr>
                 ))}
+                {processedData.length === 0 && (
+                  <tr>
+                    <td colSpan={currentConfig.columns.length} className="px-4 py-8 text-center text-[#5C5C5C] text-[14px]">
+                      No {activeTab.toLowerCase()} records found. Add records using the button above.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
