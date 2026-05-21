@@ -9,6 +9,8 @@ import {
   BarChart2,
   Share2,
   LogOut,
+  ClipboardList,
+  Undo2,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -20,6 +22,8 @@ export function PersonBSidebar() {
     { name: "Work Orders", href: "/person-b/workorder", icon: Calendar },
     { name: "Product Orders", href: "/person-b/product-orders", icon: Calendar },
     { name: "Stock", href: "/person-b/stock", icon: BarChart2 },
+    { name: "Material Requests", href: "/person-b/material-requests", icon: ClipboardList },
+    { name: "Material Returns", href: "/person-b/material-returns", icon: Undo2 },
     { name: "Pipeline", href: "/person-b/pipeline", icon: Share2 },
   ];
 
