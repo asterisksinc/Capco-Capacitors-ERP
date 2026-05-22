@@ -20,6 +20,7 @@ export function OperatorSidebar() {
   const navItems = [
     { name: "Overview", href: "/person-a/overview", icon: LayoutDashboard },
     { name: "Work Orders", href: "/person-a/workorder", icon: Calendar },
+    { name: "Product Orders", href: "/person-a/product-orders", icon: Calendar },
     { name: "Stock", href: "/person-a/stock", icon: BarChart2 },
     { name: "Material Requests", href: "/person-a/material-requests", icon: ClipboardList },
     { name: "Material Returns", href: "/person-a/material-returns", icon: Undo2 },

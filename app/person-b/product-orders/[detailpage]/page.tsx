@@ -13,7 +13,7 @@ type DetailPageProps = {
   params: Promise<{ detailpage: string }>;
 };
 
-type TabType = "Product Material" | "Winding" | "Spray";
+type TabType = "Product Material" | "Metallisation" | "Slitting" | "Winding" | "Spray";
 type ModalStep = 1 | 2;
 
 type WindingForm = {
@@ -35,14 +35,14 @@ type SprayForm = {
 
 const productMaterialConfig: TableConfig<any> = {
   columns: [
-    { key: "stockId", label: "STOCK ID", type: "text", sortable: true },
+    { key: "stockId", label: "Stock ID", type: "text", sortable: true },
     { key: "linkedWoId", label: "Linked WO ID", type: "text", sortable: true },
     { key: "weight", label: "Weight", type: "text", sortable: true },
     { key: "width", label: "Width", type: "text", sortable: true },
     { key: "micron", label: "Micron", type: "text", sortable: true },
     { key: "grade", label: "Grade", type: "text", sortable: true },
     { key: "handoverBy", label: "Handover By", type: "text", sortable: true },
-    { key: "timestamp", label: "Timestamp", type: "text", sortable: true },
+    { key: "timestamp", label: "Assigned At", type: "text", sortable: true },
     { key: "options", label: "Action", type: "text", sortable: false }
   ]
 };
@@ -58,6 +58,33 @@ const windingConfig: TableConfig<any> = {
     { key: "stage", label: "Stage", type: "text", sortable: true },
     { key: "timestamp", label: "Timestamp", type: "text", sortable: true },
     { key: "options", label: "Action", type: "text", sortable: false }
+  ]
+};
+
+const metallisationConfig: TableConfig<any> = {
+  columns: [
+    { key: "coilNo", label: "Coil No.", type: "text", sortable: true },
+    { key: "rmId", label: "RM ID", type: "text", sortable: true },
+    { key: "machineNo", label: "Machine No.", type: "text", sortable: true },
+    { key: "weight", label: "Weight", type: "text", sortable: true },
+    { key: "opticalDensity", label: "Optical Density", type: "text", sortable: true },
+    { key: "resistance", label: "Resistance", type: "text", sortable: true },
+    { key: "nextStage", label: "Next Stage", type: "text", sortable: true },
+    { key: "timestamp", label: "Timestamp", type: "text", sortable: true },
+    { key: "status", label: "Status", type: "text", sortable: true },
+  ]
+};
+
+const slittingConfig: TableConfig<any> = {
+  columns: [
+    { key: "productNo", label: "Product No", type: "text", sortable: true },
+    { key: "rmId", label: "RM ID", type: "text", sortable: true },
+    { key: "weight", label: "Weight", type: "text", sortable: true },
+    { key: "thickness", label: "Thickness", type: "text", sortable: true },
+    { key: "grade", label: "Grade", type: "text", sortable: true },
+    { key: "stage", label: "Stage", type: "text", sortable: true },
+    { key: "timestampAdded", label: "Timestamp", type: "text", sortable: true },
+    { key: "status", label: "Status", type: "text", sortable: true },
   ]
 };
 
@@ -96,8 +123,11 @@ function hasPositiveNumber(value: string) {
 export default function PersonBProductOrderDetail({ params }: DetailPageProps) {
   const { detailpage } = use(params);
   const displayId = (detailpage || "PO-0001").toUpperCase();
-  const { store, mounted, addFlowRow } = useStore();
-  const [activeTab, setActiveTab] = useState<TabType>("Winding");
+  const { store, mounted, addFlowRow, getAssignedStocks } = useStore();
+
+  const productOrder = store.productOrders.find((po) => po.id.replace("#", "").toUpperCase() === displayId);
+  const poId = productOrder?.id ?? displayId;
+  const [activeTab, setActiveTab] = useState<TabType>("Product Material");
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalStep, setModalStep] = useState<ModalStep>(1);
@@ -109,70 +139,127 @@ export default function PersonBProductOrderDetail({ params }: DetailPageProps) {
   const [sprayForm, setSprayForm] = useState<SprayForm>({
     spId: generateId("SP"), linkedWdId: "", sprayType: "Zinc-spray", feedRate: "", pressureSitting: ""
   });
+  const [modalImage, setModalImage] = useState<string | null>(null);
 
-  const stockData = useMemo(() => {
+  const assignedStocks = useMemo(() => getAssignedStocks(poId), [store.assignments, poId, mounted]);
+
+  const pmLookup = useMemo(() => {
+    const map = new Map<string, { weight: string; grade: string; micron: string; width: string }>();
+    for (const s of assignedStocks) {
+      map.set(s.stockId, { weight: s.weight, grade: s.grade, micron: s.micron, width: s.width });
+    }
+    return map;
+  }, [assignedStocks]);
+
+  const wdLookup = useMemo(() => {
+    const map = new Map<string, { filmWidth: string; windingTension: string; turnsCount: string; quantityWound: string }>();
+    for (const [, flow] of Object.entries(store.flowDataMap)) {
+      for (const w of flow.windingRows) {
+        map.set(w.wdId, { filmWidth: w.filmWidth, windingTension: w.windingTension, turnsCount: w.turnsCount, quantityWound: w.quantityWound });
+      }
+    }
+    return map;
+  }, [store.flowDataMap]);
+
+  const assignedPmIds = useMemo(() => new Set(assignedStocks.map((s) => s.stockId)), [assignedStocks]);
+
+  const linkedWoIds = useMemo(() => {
+    return Array.from(new Set(assignedStocks.map((s) => s.linkedWoId).filter(Boolean)));
+  }, [assignedStocks]);
+
+  const metallisationData = useMemo(() => {
     if (!mounted) return [];
     const rows: any[] = [];
-    for (const [woId, flow] of Object.entries(store.flowDataMap)) {
-      for (const slitRow of flow.slittingRows) {
-        rows.push({
-          id: slitRow.productNo,
-          stockId: slitRow.productNo,
-          linkedWoId: woId,
-          weight: slitRow.weight,
-          width: flow.overview.width,
-          micron: slitRow.thickness,
-          grade: slitRow.grade,
-          handoverBy: "Person A",
-          timestamp: slitRow.timestampAdded,
-        });
+    for (const woId of linkedWoIds) {
+      const flow = store.flowDataMap[woId];
+      if (!flow) continue;
+      for (const row of flow.metallisationRows) {
+        rows.push({ id: row.coilNo, ...row });
       }
     }
     return rows;
-  }, [store.flowDataMap, mounted]);
+  }, [store.flowDataMap, mounted, linkedWoIds]);
+
+  const slittingData = useMemo(() => {
+    if (!mounted) return [];
+    const rows: any[] = [];
+    for (const woId of linkedWoIds) {
+      const flow = store.flowDataMap[woId];
+      if (!flow) continue;
+      for (const row of flow.slittingRows) {
+        rows.push({ id: row.productNo, ...row });
+      }
+    }
+    return rows;
+  }, [store.flowDataMap, mounted, linkedWoIds]);
+
+  const stockData = useMemo(() => {
+    if (!mounted) return [];
+    return assignedStocks.map((s) => ({
+      id: s.stockId,
+      stockId: s.stockId,
+      linkedWoId: s.linkedWoId,
+      weight: s.weight,
+      width: s.width,
+      micron: s.micron,
+      grade: s.grade,
+      handoverBy: "Person A",
+      timestamp: s.assignedAt,
+    }));
+  }, [assignedStocks, mounted]);
 
   const windingData = useMemo(() => {
     if (!mounted) return [];
     const rows: any[] = [];
     for (const [, flow] of Object.entries(store.flowDataMap)) {
       for (const wRow of flow.windingRows) {
-        rows.push({ id: wRow.wdId, ...wRow });
+        if (assignedPmIds.has(wRow.linkedPmId)) {
+          rows.push({ id: wRow.wdId, ...wRow });
+        }
       }
     }
     return rows;
-  }, [store.flowDataMap, mounted]);
+  }, [store.flowDataMap, mounted, assignedPmIds]);
+
+  const poWdIds = useMemo(() => new Set(windingData.map((r) => r.wdId)), [windingData]);
 
   const sprayData = useMemo(() => {
     if (!mounted) return [];
     const rows: any[] = [];
     for (const [, flow] of Object.entries(store.flowDataMap)) {
       for (const sRow of flow.sprayRows) {
-        rows.push({ id: sRow.spId, ...sRow });
+        if (poWdIds.has(sRow.linkedWdId)) {
+          rows.push({ id: sRow.spId, ...sRow });
+        }
       }
     }
     return rows;
-  }, [store.flowDataMap, mounted]);
+  }, [store.flowDataMap, mounted, poWdIds]);
 
-  const availablePmIds = Array.from(new Set(stockData.map((r) => r.stockId)));
-  const availableWdIds = Array.from(new Set(windingData.map((r) => r.wdId)));
+  const availablePmIds = Array.from(assignedPmIds);
+  const availableWdIds = Array.from(poWdIds);
 
   const currentConfig = useMemo(() => {
     switch (activeTab) {
       case "Product Material": return productMaterialConfig;
+      case "Metallisation": return metallisationConfig;
+      case "Slitting": return slittingConfig;
       case "Winding": return windingConfig;
       case "Spray": return sprayConfig;
-      default: return windingConfig;
+      default: return productMaterialConfig;
     }
   }, [activeTab]);
 
   const currentData = useMemo(() => {
     switch (activeTab) {
       case "Product Material": return stockData;
+      case "Metallisation": return metallisationData;
+      case "Slitting": return slittingData;
       case "Winding": return windingData;
       case "Spray": return sprayData;
       default: return [];
     }
-  }, [activeTab, stockData, windingData, sprayData]);
+  }, [activeTab, stockData, metallisationData, slittingData, windingData, sprayData]);
 
   const {
     processedData,
@@ -202,6 +289,7 @@ export default function PersonBProductOrderDetail({ params }: DetailPageProps) {
     setIsModalOpen(false);
     setModalStep(1);
     setShowValidationHint(false);
+    setModalImage(null);
   };
 
   const isWindingValid = () => {
@@ -221,13 +309,18 @@ export default function PersonBProductOrderDetail({ params }: DetailPageProps) {
     );
   };
 
+  const targetWoId = useMemo(() => {
+    const fromAssigned = assignedStocks[0]?.linkedWoId;
+    if (fromAssigned && store.flowDataMap[fromAssigned]) return fromAssigned;
+    return Object.keys(store.flowDataMap)[0] || "WO-PO";
+  }, [assignedStocks, store.flowDataMap]);
+
   const submitWinding = () => {
     if (!isWindingValid()) {
       setShowValidationHint(true);
       return;
     }
-    const firstWoId = Object.keys(store.flowDataMap)[0] || "WO-PO";
-    addFlowRow(firstWoId, "Winding", {
+    addFlowRow(targetWoId, "Winding", {
       wdId: windingForm.wdId,
       linkedPmId: windingForm.linkedPmId,
       filmWidth: windingForm.filmWidth,
@@ -246,8 +339,7 @@ export default function PersonBProductOrderDetail({ params }: DetailPageProps) {
       setShowValidationHint(true);
       return;
     }
-    const firstWoId = Object.keys(store.flowDataMap)[0] || "WO-PO";
-    addFlowRow(firstWoId, "Spray", {
+    addFlowRow(targetWoId, "Spray", {
       spId: sprayForm.spId,
       linkedWdId: sprayForm.linkedWdId,
       sprayType: sprayForm.sprayType,
@@ -260,9 +352,10 @@ export default function PersonBProductOrderDetail({ params }: DetailPageProps) {
     closeModal();
   };
 
+  if (!mounted) return null;
+
   return (
     <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-[#FAFAFA] flex flex-col relative w-full pt-[72px] md:pt-0 pb-10">
-      {/* Add Winding / Spray Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#171717]/40 backdrop-blur-sm px-4">
           <div className="bg-white rounded-[16px] w-full max-w-[700px] shadow-lg flex flex-col overflow-hidden">
@@ -287,7 +380,11 @@ export default function PersonBProductOrderDetail({ params }: DetailPageProps) {
                   </div>
                   <div className="flex flex-col gap-2">
                     <label className="text-[13px] font-medium text-[#171717]">Linked PM-ID</label>
-                    <select value={windingForm.linkedPmId} onChange={(e) => setWindingForm({ ...windingForm, linkedPmId: e.target.value })} className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]">
+                    <select value={windingForm.linkedPmId} onChange={(e) => {
+                      const id = e.target.value;
+                      const pm = pmLookup.get(id);
+                      setWindingForm({ ...windingForm, linkedPmId: id });
+                    }} className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]">
                       <option value="">Select PM-ID</option>
                       {availablePmIds.map((id) => <option key={id} value={id}>{id}</option>)}
                     </select>
@@ -317,7 +414,11 @@ export default function PersonBProductOrderDetail({ params }: DetailPageProps) {
                   </div>
                   <div className="flex flex-col gap-2">
                     <label className="text-[13px] font-medium text-[#171717]">Linked WD-ID</label>
-                    <select value={sprayForm.linkedWdId} onChange={(e) => setSprayForm({ ...sprayForm, linkedWdId: e.target.value })} className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]">
+                    <select value={sprayForm.linkedWdId} onChange={(e) => {
+                      const id = e.target.value;
+                      const wd = wdLookup.get(id);
+                      setSprayForm({ ...sprayForm, linkedWdId: id });
+                    }} className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]">
                       <option value="">Select WD-ID</option>
                       {availableWdIds.map((id) => <option key={id} value={id}>{id}</option>)}
                     </select>
@@ -336,6 +437,20 @@ export default function PersonBProductOrderDetail({ params }: DetailPageProps) {
                   </div>
                 </div>
               )}
+              <div className="rounded-[12px] border border-[#DDE1E8] bg-white p-4 flex flex-col gap-2">
+                <label className="text-[13px] font-medium text-[#171717]">Attach Image</label>
+                <input type="file" accept="image/*" onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (ev) => setModalImage(ev.target?.result as string);
+                    reader.readAsDataURL(file);
+                  }
+                }} className="text-[14px]" />
+                {modalImage && (
+                  <img src={modalImage} alt="Preview" className="mt-2 max-h-[200px] rounded-[8px] border border-[#DDE1E8]" />
+                )}
+              </div>
               {showValidationHint && (
                 <p className="text-[12px] text-[#D92D20]">All required fields must be filled.</p>
               )}
@@ -362,68 +477,41 @@ export default function PersonBProductOrderDetail({ params }: DetailPageProps) {
               <h1 className="text-[20px] font-semibold text-[#171717] leading-tight">Product Order Details</h1>
             </div>
             <p className="text-[14px] text-[#5C5C5C] flex items-center gap-2">
-              Priority order — aviation-grade QC
+              {productOrder ? `${productOrder.code} — ${productOrder.grade} Grade` : displayId}
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <span className="bg-[#FFF4ED] text-[#E19242] text-[12px] font-medium px-3 py-[6px] rounded-[24px]">High Priority</span>
-            <span className="bg-[#E6F8FD] text-[#00B6E2] text-[12px] font-medium px-3 py-[6px] rounded-[24px]">Epoxy Filling</span>
+            <span className="bg-[#E6F8FD] text-[#00B6E2] text-[12px] font-medium px-3 py-[6px] rounded-[24px]">{productOrder?.grade ?? "-"} Grade</span>
           </div>
         </div>
       </section>
 
       {/* Detail grid */}
-      <section className="bg-white px-6 py-6 border-b border-[#EBEBEB] grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-y-6 gap-x-4">
-        <div className="flex flex-col gap-5">
-           <div className="flex flex-col gap-1">
+      {productOrder && (
+        <section className="bg-white px-6 py-6 border-b border-[#EBEBEB] grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-y-6 gap-x-4">
+          <div className="flex flex-col gap-1">
+            <span className="text-[13px] text-[#5C5C5C]">Product Code</span>
+            <span className="text-[14px] font-medium text-[#171717]">{productOrder.code}</span>
+          </div>
+          <div className="flex flex-col gap-1">
             <span className="text-[13px] text-[#5C5C5C]">Capacitor Type</span>
-            <span className="text-[14px] font-medium text-[#171717]">Film (MKT Series)</span>
+            <span className="text-[14px] font-medium text-[#171717]">{productOrder.type}</span>
           </div>
-          <div className="flex flex-col gap-1">
-            <span className="text-[13px] text-[#5C5C5C]">Tolerance</span>
-            <span className="text-[14px] font-medium text-[#171717]">±5%</span>
-          </div>
-          <div className="flex flex-col gap-1">
-            <span className="text-[13px] text-[#5C5C5C]">Delivery commitment</span>
-            <span className="text-[14px] font-medium text-[#171717]">31 Jan 2025, 09:00 IST</span>
-          </div>
-        </div>
-        <div className="flex flex-col gap-5">
-           <div className="flex flex-col gap-1">
-            <span className="text-[13px] text-[#5C5C5C]">Capacitance</span>
-            <span className="text-[14px] font-medium text-[#171717]">10μF</span>
-          </div>
-          <div className="flex flex-col gap-1">
-            <span className="text-[13px] text-[#5C5C5C]">Batch quantity</span>
-            <span className="text-[14px] font-medium text-[#171717]">5,000 Units</span>
-          </div>
-        </div>
-        <div className="flex flex-col gap-5">
-          <div className="flex flex-col gap-1">
-            <span className="text-[13px] text-[#5C5C5C]">Voltage rating</span>
-            <span className="text-[14px] font-medium text-[#171717]">63V DC</span>
-          </div>
-           <div className="flex flex-col gap-1">
-            <span className="text-[13px] text-[#5C5C5C]">Winding requirement</span>
-            <span className="text-[14px] font-medium text-[#171717]">120 turns/layer, 3-layer</span>
-          </div>
-        </div>
-        <div className="flex flex-col gap-5">
           <div className="flex flex-col gap-1">
             <span className="text-[13px] text-[#5C5C5C]">Grade</span>
-            <span className="text-[14px] font-medium text-[#171717]">A — Premium</span>
+            <span className="text-[14px] font-medium text-[#171717]">{productOrder.grade}</span>
           </div>
           <div className="flex flex-col gap-1">
-            <span className="text-[13px] text-[#5C5C5C]">Spray requirement</span>
-            <span className="text-[14px] font-medium text-[#171717]">Zinc-spray, Batch ZS-447</span>
+            <span className="text-[13px] text-[#5C5C5C]">Batch Size</span>
+            <span className="text-[14px] font-medium text-[#171717]">{productOrder.batchSize}</span>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       <section className="bg-white m-6 border border-[#EBEBEB] rounded-[8px]">
         {/* Tabs */}
         <div className="flex gap-2 px-6 pt-5 pb-5 border-b border-[#EBEBEB]">
-          {(["Product Material", "Winding", "Spray"] as TabType[]).map((tab) => (
+          {(["Product Material", "Metallisation", "Slitting", "Winding", "Spray"] as TabType[]).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -438,14 +526,9 @@ export default function PersonBProductOrderDetail({ params }: DetailPageProps) {
           ))}
         </div>
 
-        {/* Table Controls section */}
         <div className="px-6 py-6 flex flex-col gap-4">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <TableToolbar
-              dateRange={dateRange}
-              onDateRangeChange={setDateRange}
-              onExport={() => alert("Exporting data...")}
-            />
+            <TableToolbar dateRange={dateRange} onDateRangeChange={setDateRange} onExport={() => alert("Exporting data...")} />
             <div className="flex items-center gap-3 w-full sm:w-auto">
               {activeTab === "Winding" && (
                 <button onClick={openWindingModal} className="h-[40px] px-4 bg-[#00B6E2] hover:bg-[#0092b5] text-white text-[14px] font-medium rounded-[8px] flex items-center justify-center gap-2 whitespace-nowrap transition-colors">
@@ -502,7 +585,9 @@ export default function PersonBProductOrderDetail({ params }: DetailPageProps) {
                 {processedData.length === 0 && (
                   <tr>
                     <td colSpan={currentConfig.columns.length} className="px-5 py-8 text-center text-[#5C5C5C]">
-                      No records found
+                      {activeTab === "Product Material"
+                        ? "No stock assigned to this product order yet."
+                        : "No records found"}
                     </td>
                   </tr>
                 )}

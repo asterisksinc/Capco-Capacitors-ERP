@@ -8,6 +8,20 @@ import { useTableControls } from "@/hooks/useTableControls";
 import { SortableHeader } from "@/components/table/SortableHeader";
 import { TableToolbar } from "@/components/table/TableToolbar";
 
+function getMaterialSpecs(store: any, materialId: string) {
+  for (const [, flow] of Object.entries(store.flowDataMap) as any) {
+    for (const row of (flow as any).slittingRows || []) {
+      if (row.productNo === materialId) return { micron: row.thickness, width: (flow as any).overview?.width ?? "1.0" };
+    }
+  }
+  for (const [, stocks] of Object.entries(store.assignments || {}) as any) {
+    for (const s of (stocks as any[]) || []) {
+      if (s.stockId === materialId) return { micron: s.micron, width: s.width };
+    }
+  }
+  return { micron: "4.5", width: "1.0" };
+}
+
 const tableConfig: TableConfig<any> = {
   columns: [
     { key: "id", label: "Return ID", type: "text", sortable: true },
@@ -60,12 +74,16 @@ export default function PersonAMaterialReturnsPage() {
 
   const handleAccept = (ret: any) => {
     acceptMaterialReturn(ret.id);
+    const specs = getMaterialSpecs(store, ret.materialId);
+    const origWt = parseFloat(String(ret.weight).replace(/[^0-9.]/g, '')) || 0;
+    const usedWt = parseFloat(String(ret.usedWeight).replace(/[^0-9.]/g, '')) || 0;
+    const remaining = Math.max(0, origWt - usedWt);
     addInventoryItem({
-      rawMaterialId: ret.materialId,
+      rawMaterialId: `${ret.materialId}-RET`,
       rollId: `RL-${ret.materialId}`,
-      micron: "4.5",
-      width: "1.0",
-      weight: ret.weight,
+      micron: specs.micron,
+      width: specs.width,
+      weight: `${remaining}kgs`,
       supplier: "Returned Material",
       date: getDateString(),
       status: "In Inventory",

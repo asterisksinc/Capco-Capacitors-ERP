@@ -165,10 +165,28 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
   const [modalStep, setModalStep] = useState<ModalStep>(1);
   const [showValidationHint, setShowValidationHint] = useState(false);
   const [slittingReviewRemarks, setSlittingReviewRemarks] = useState("");
+  const [modalImage, setModalImage] = useState<string | null>(null);
   const workflowProgress = computeWorkflowProgress(workOrderFlowData);
 
   const availableRollIds = Array.from(new Set(workOrderFlowData?.rawMaterialRows
     .map((row) => row.rollNo) ?? []));
+  const rmLookup = useMemo(() => {
+    const map = new Map<string, { weight: string; thickness: string; supplier: string }>();
+    for (const row of workOrderFlowData?.rawMaterialRows ?? []) {
+      map.set(row.rollNo, { weight: row.weight, thickness: row.thickness, supplier: row.supplier });
+    }
+    return map;
+  }, [workOrderFlowData]);
+
+  const availableCoilIds = Array.from(new Set(workOrderFlowData?.metallisationRows
+    .map((row) => row.coilNo) ?? []));
+  const coilLookup = useMemo(() => {
+    const map = new Map<string, { weight: string; opticalDensity: string; resistance: string }>();
+    for (const row of workOrderFlowData?.metallisationRows ?? []) {
+      map.set(row.coilNo, { weight: row.weight, opticalDensity: row.opticalDensity, resistance: row.resistance });
+    }
+    return map;
+  }, [workOrderFlowData]);
 
   const [metallisationRowsInput, setMetallisationRowsInput] = useState<MetallisationForm[]>([createMetallisationRow("")]);
   const [slittingRowsInput, setSlittingRowsInput] = useState<SlittingForm[]>([createSlittingRow("")]);
@@ -207,9 +225,10 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
   const resetModalState = () => {
     setModalStep(1);
     setShowValidationHint(false);
+    setModalImage(null);
     setSlittingReviewRemarks("");
     setMetallisationRowsInput([createMetallisationRow(availableRollIds[0] ?? "")]);
-    setSlittingRowsInput([createSlittingRow(availableRollIds[0] ?? "")]);
+    setSlittingRowsInput([createSlittingRow(availableCoilIds[0] ?? "")]);
   };
 
   const openModal = () => {
@@ -267,7 +286,7 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
       setMetallisationRowsInput((prev) => [...prev, createMetallisationRow(availableRollIds[0] ?? "")]);
       return;
     }
-    setSlittingRowsInput((prev) => [...prev, createSlittingRow(availableRollIds[0] ?? "")]);
+    setSlittingRowsInput((prev) => [...prev, createSlittingRow(availableCoilIds[0] ?? "")]);
   };
 
   const updateMetallisationRow = (index: number, patch: Partial<MetallisationForm>) => {
@@ -390,7 +409,14 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
                 </div>
                 <div className="flex flex-col gap-2">
                   <label className="text-[13px] font-medium text-[#171717]">RM ID</label>
-                  <select value={row.rmId} onChange={(e) => updateMetallisationRow(idx, { rmId: e.target.value })} className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]">
+                  <select value={row.rmId} onChange={(e) => {
+                    const id = e.target.value;
+                    const rm = rmLookup.get(id);
+                    updateMetallisationRow(idx, {
+                      rmId: id,
+                      weight: rm?.weight ?? row.weight,
+                    });
+                  }} className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]">
                     {availableRollIds.length === 0 && <option value="">No received RM IDs</option>}
                     {availableRollIds.map((rollId) => (
                       <option key={rollId} value={rollId}>{rollId}</option>
@@ -443,11 +469,18 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
                 <input value={row.productNo} readOnly className="h-[42px] rounded-[8px] border border-[#DDE1E8] bg-[#F8FAFC] px-3 text-[14px] text-[#5C5C5C]" />
               </div>
               <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-medium text-[#171717]">Associated RM ID</label>
-                <select value={row.associatedRmId} onChange={(e) => updateSlittingRow(idx, { associatedRmId: e.target.value })} className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]">
-                  {availableRollIds.length === 0 && <option value="">No roll IDs available</option>}
-                  {availableRollIds.map((rollId) => (
-                    <option key={rollId} value={rollId}>{rollId}</option>
+                <label className="text-[13px] font-medium text-[#171717]">Coil ID (from Metallisation)</label>
+                <select value={row.associatedRmId} onChange={(e) => {
+                  const id = e.target.value;
+                  const coil = coilLookup.get(id);
+                  updateSlittingRow(idx, {
+                    associatedRmId: id,
+                    weight: coil?.weight ?? row.weight,
+                  });
+                }} className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]">
+                  {availableCoilIds.length === 0 && <option value="">No coil IDs from metallisation</option>}
+                  {availableCoilIds.map((coilId) => (
+                    <option key={coilId} value={coilId}>{coilId}</option>
                   ))}
                 </select>
               </div>
@@ -502,7 +535,7 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
     return rows.map((item, idx) => (
       <div key={`slit-${idx}`} className="rounded-[12px] border border-[#78CFFA] bg-[#F4FBFF] p-4 grid grid-cols-1 md:grid-cols-2 gap-y-2 gap-x-6 text-[14px] text-[#49526A]">
         <p>Product No: {item.productNo || "Auto"}</p>
-        <p>Associated RM: {item.associatedRmId || "-"}</p>
+        <p>Coil ID: {item.associatedRmId || "-"}</p>
         <p>Micron: {item.micron}</p>
         <p>Width: {item.width}</p>
         <p>Weight: {item.weight || "0"} kgs</p>
@@ -536,6 +569,20 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
             <p className="text-[13px] text-[#6B7280]">Review all values before submitting to the workflow queue.</p>
           </div>
           {renderReviewCards()}
+          <div className="rounded-[12px] border border-[#DDE1E8] bg-white p-4 flex flex-col gap-2">
+            <label className="text-[13px] font-medium text-[#171717]">Attach Image</label>
+            <input type="file" accept="image/*" onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                const reader = new FileReader();
+                reader.onload = (ev) => setModalImage(ev.target?.result as string);
+                reader.readAsDataURL(file);
+              }
+            }} className="text-[14px]" />
+            {modalImage && (
+              <img src={modalImage} alt="Preview" className="mt-2 max-h-[200px] rounded-[8px] border border-[#DDE1E8]" />
+            )}
+          </div>
           {activeTab === "Slitting" && (
             <div className="rounded-[12px] border border-[#DDE1E8] bg-white p-4 flex flex-col gap-2">
               <label className="text-[13px] font-medium text-[#171717]">Remarks / Observation</label>

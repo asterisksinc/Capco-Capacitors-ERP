@@ -12,6 +12,7 @@ import {
   type MaterialRequest,
   type MaterialRequestItem,
   type MaterialReturn,
+  type AssignedStock,
 } from '../lib/data';
 
 interface StoreData {
@@ -21,6 +22,7 @@ interface StoreData {
   productOrders: ProductOrderSummary[];
   materialRequests: MaterialRequest[];
   materialReturns: MaterialReturn[];
+  assignments: Record<string, AssignedStock[]>;
 }
 
 export type ComputedWorkOrderSummary = WorkOrderSummary & {
@@ -29,10 +31,10 @@ export type ComputedWorkOrderSummary = WorkOrderSummary & {
 };
 
 const STORAGE_KEY = 'capcoDataStore';
-const EMPTY_STORE: StoreData = { workOrders: [], flowDataMap: {}, inventoryItems: [], productOrders: [], materialRequests: [], materialReturns: [] };
+const EMPTY_STORE: StoreData = { workOrders: [], flowDataMap: {}, inventoryItems: [], productOrders: [], materialRequests: [], materialReturns: [], assignments: {} };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
-  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+  return value !== null && typeof value === 'object' && !Array.isArray(value) && value.constructor === Object;
 }
 
 function sanitizeStore(raw: unknown): StoreData {
@@ -57,11 +59,65 @@ function sanitizeStore(raw: unknown): StoreData {
       if (!isRecord(value)) continue;
 
       const fallback = createEmptyFlowData();
-      const rawRows = Array.isArray(value.rawMaterialRows) ? value.rawMaterialRows : [];
-      const metRows = Array.isArray(value.metallisationRows) ? value.metallisationRows : [];
-      const slitRows = Array.isArray(value.slittingRows) ? value.slittingRows : [];
-      const windRows = Array.isArray(value.windingRows) ? value.windingRows : [];
-      const sprRows = Array.isArray(value.sprayRows) ? value.sprayRows : [];
+      const rawRows = (Array.isArray(value.rawMaterialRows) ? value.rawMaterialRows : [])
+        .filter(isRecord).map((row) => ({
+          rollNo: String(row.rollNo ?? ''),
+          weight: String(row.weight ?? ''),
+          thickness: String(row.thickness ?? ''),
+          supplier: String(row.supplier ?? ''),
+          stage: String(row.stage ?? 'METALLISATION'),
+          status: (row.status as WorkflowStatus) ?? 'Yet to Start' as WorkflowStatus,
+        }));
+      const metRows = (Array.isArray(value.metallisationRows) ? value.metallisationRows : [])
+        .filter(isRecord).map((row) => ({
+          coilNo: String(row.coilNo ?? ''),
+          rmId: String(row.rmId ?? ''),
+          machineNo: String(row.machineNo ?? ''),
+          weight: String(row.weight ?? ''),
+          opticalDensity: String(row.opticalDensity ?? ''),
+          resistance: String(row.resistance ?? ''),
+          timestamp: String(row.timestamp ?? ''),
+          nextStage: String(row.nextStage ?? ''),
+          status: (row.status as WorkflowStatus) ?? 'Yet to Start' as WorkflowStatus,
+        }));
+      const slitRows = (Array.isArray(value.slittingRows) ? value.slittingRows : [])
+        .filter(isRecord).map((row) => {
+          const stage = row.stage === 'Ready for Dispatch' ? 'Ready for Winding' : String(row.stage ?? '');
+          return {
+            productNo: String(row.productNo ?? ''),
+            rmId: String(row.rmId ?? ''),
+            weight: String(row.weight ?? ''),
+            thickness: String(row.thickness ?? ''),
+            grade: String(row.grade ?? ''),
+            remarks: row.remarks ? String(row.remarks) : undefined,
+            timestampAdded: String(row.timestampAdded ?? ''),
+            stage,
+            status: (row.status as WorkflowStatus) ?? 'Yet to Start' as WorkflowStatus,
+          };
+        });
+      const windRows = (Array.isArray(value.windingRows) ? value.windingRows : [])
+        .filter(isRecord).map((row) => ({
+          wdId: String(row.wdId ?? ''),
+          linkedPmId: String(row.linkedPmId ?? ''),
+          filmWidth: String(row.filmWidth ?? ''),
+          windingTension: String(row.windingTension ?? ''),
+          turnsCount: String(row.turnsCount ?? ''),
+          quantityWound: String(row.quantityWound ?? ''),
+          stage: String(row.stage ?? ''),
+          timestamp: String(row.timestamp ?? ''),
+          status: (row.status as WorkflowStatus) ?? 'Yet to Start' as WorkflowStatus,
+        }));
+      const sprRows = (Array.isArray(value.sprayRows) ? value.sprayRows : [])
+        .filter(isRecord).map((row) => ({
+          spId: String(row.spId ?? ''),
+          linkedWdId: String(row.linkedWdId ?? ''),
+          sprayType: String(row.sprayType ?? ''),
+          feedRate: String(row.feedRate ?? ''),
+          pressureSitting: String(row.pressureSitting ?? ''),
+          stage: String(row.stage ?? ''),
+          timestamp: String(row.timestamp ?? ''),
+          status: (row.status as WorkflowStatus) ?? 'Yet to Start' as WorkflowStatus,
+        }));
       const overview = isRecord(value.overview) ? value.overview : {};
 
       const normalizedFlow: WorkOrderFlowData = {
@@ -74,16 +130,11 @@ function sanitizeStore(raw: unknown): StoreData {
           stage: String(overview.stage ?? fallback.overview.stage),
           status: (overview.status as WorkflowStatus) ?? fallback.overview.status,
         },
-        rawMaterialRows: rawRows as WorkOrderFlowData['rawMaterialRows'],
-        metallisationRows: metRows as WorkOrderFlowData['metallisationRows'],
-        slittingRows: slitRows.map((row) => {
-          if (isRecord(row) && row.stage === 'Ready for Dispatch') {
-            return { ...row, stage: 'Ready for Winding' };
-          }
-          return row;
-        }) as WorkOrderFlowData['slittingRows'],
-        windingRows: windRows as WorkOrderFlowData['windingRows'],
-        sprayRows: sprRows as WorkOrderFlowData['sprayRows'],
+        rawMaterialRows: rawRows,
+        metallisationRows: metRows,
+        slittingRows: slitRows,
+        windingRows: windRows,
+        sprayRows: sprRows,
       };
 
       const progress = computeWorkflowProgress(normalizedFlow);
@@ -109,7 +160,16 @@ function sanitizeStore(raw: unknown): StoreData {
     ? raw.materialReturns.filter((row): row is MaterialReturn => isRecord(row))
     : [];
 
-  return { workOrders, flowDataMap, inventoryItems, productOrders, materialRequests, materialReturns };
+  const assignments: Record<string, AssignedStock[]> = {};
+  if (isRecord(raw.assignments)) {
+    for (const [key, value] of Object.entries(raw.assignments)) {
+      if (Array.isArray(value)) {
+        assignments[key] = value.filter((item): item is AssignedStock => isRecord(item));
+      }
+    }
+  }
+
+  return { workOrders, flowDataMap, inventoryItems, productOrders, materialRequests, materialReturns, assignments };
 }
 
 export function loadStore(): StoreData {
@@ -150,7 +210,7 @@ export function saveStore(data: StoreData) {
 }
 
 export function useStore() {
-  const [store, setStore] = useState<StoreData>({ workOrders: [], flowDataMap: {}, inventoryItems: [], productOrders: [], materialRequests: [], materialReturns: [] });
+  const [store, setStore] = useState<StoreData>({ workOrders: [], flowDataMap: {}, inventoryItems: [], productOrders: [], materialRequests: [], materialReturns: [], assignments: {} });
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -239,13 +299,13 @@ export function useStore() {
     const flow = nextStore.flowDataMap[woId];
     if (!flow) return;
 
-    let rows: any[];
+    let rows: any[] | null = null;
     if (tab === "Raw Material") rows = flow.rawMaterialRows;
     else if (tab === "Metallisation") rows = flow.metallisationRows;
     else if (tab === "Slitting") rows = flow.slittingRows;
     else if (tab === "Winding") rows = flow.windingRows;
     else if (tab === "Spray") rows = flow.sprayRows;
-    else rows = flow.slittingRows;
+    if (!rows) return;
 
     if (rowIndex >= 0 && rowIndex < rows.length) {
       rows[rowIndex][field] = value;
@@ -338,5 +398,25 @@ export function useStore() {
     saveStore(nextStore);
   };
 
-  return { store, mounted, workOrders, addWorkOrder, deleteWorkOrder, addFlowRow, updateFlowRowField, updateInventoryStatus, addInventoryItem, getAvailableInventory, addProductOrder, deleteProductOrder, addMaterialRequest, issueMaterialRequest, cancelMaterialRequest, addMaterialReturn, acceptMaterialReturn, rejectMaterialReturn };
+  const assignStockToProductOrder = (productOrderId: string, stock: AssignedStock) => {
+    const nextStore = loadStore();
+    if (!nextStore.assignments[productOrderId]) nextStore.assignments[productOrderId] = [];
+    if (nextStore.assignments[productOrderId].some((s) => s.stockId === stock.stockId)) return;
+    nextStore.assignments[productOrderId].push(stock);
+    saveStore(nextStore);
+  };
+
+  const removeAssignedStock = (productOrderId: string, stockId: string) => {
+    const nextStore = loadStore();
+    if (!nextStore.assignments[productOrderId]) return;
+    nextStore.assignments[productOrderId] = nextStore.assignments[productOrderId].filter((s) => s.stockId !== stockId);
+    saveStore(nextStore);
+  };
+
+  const getAssignedStocks = (productOrderId: string): AssignedStock[] => {
+    const nextStore = loadStore();
+    return nextStore.assignments[productOrderId] ?? [];
+  };
+
+  return { store, mounted, workOrders, addWorkOrder, deleteWorkOrder, addFlowRow, updateFlowRowField, updateInventoryStatus, addInventoryItem, getAvailableInventory, addProductOrder, deleteProductOrder, addMaterialRequest, issueMaterialRequest, cancelMaterialRequest, addMaterialReturn, acceptMaterialReturn, rejectMaterialReturn, assignStockToProductOrder, removeAssignedStock, getAssignedStocks };
 }
