@@ -12,11 +12,12 @@ import type { MaterialRequestItem } from "@/lib/data";
 const tableConfig: TableConfig<any> = {
   columns: [
     { key: "id", label: "Request ID", type: "text", sortable: true },
-    { key: "itemsCount", label: "Items", type: "text", sortable: true },
+    { key: "products", label: "Product No", type: "text", sortable: true },
+    { key: "grade", label: "Grade", type: "text", sortable: true },
+    { key: "requestedQty", label: "Req Qty", type: "text", sortable: true },
     { key: "status", label: "Status", type: "enum", sortable: false, filter: "dropdown", options: ["Pending", "Partially Issued", "Issued", "Cancelled"] },
     { key: "createdAt", label: "Created At", type: "date", sortable: true },
     { key: "issuedAt", label: "Issued At", type: "date", sortable: true },
-    { key: "notes", label: "Notes", type: "text", sortable: false },
     { key: "options", label: "Action", type: "text", sortable: false },
   ],
 };
@@ -38,10 +39,15 @@ export default function PersonAMaterialRequestsPage() {
   const [issueItems, setIssueItems] = useState<MaterialRequestItem[]>([]);
 
   const data = useMemo(() => {
-    return store.materialRequests.map((req) => ({
-      ...req,
-      itemsCount: `${req.items.length} item(s)`,
-    }));
+    return store.materialRequests.map((req) => {
+      const first = req.items[0];
+      return {
+        ...req,
+        products: first?.productNo ?? "-",
+        grade: first?.grade ?? "-",
+        requestedQty: first ? `${first.requestedQty}/${first.weight}` : "-",
+      };
+    });
   }, [store.materialRequests]);
 
   const {
@@ -147,11 +153,12 @@ export default function PersonAMaterialRequestsPage() {
                 {filteredData.map((row, idx) => (
                   <tr key={idx} className="hover:bg-gray-50/50 transition-colors group">
                     <td className="px-4 py-4 text-[14px] font-medium text-[#00B6E2]">{row.id}</td>
-                    <td className="px-4 py-4 text-[14px] text-[#5C5C5C]">{row.itemsCount}</td>
+                    <td className="px-4 py-4 text-[14px] text-[#5C5C5C]">{row.products}</td>
+                    <td className="px-4 py-4 text-[14px] text-[#5C5C5C]">{row.grade}</td>
+                    <td className="px-4 py-4 text-[14px] text-[#5C5C5C]">{row.requestedQty}</td>
                     <td className="px-4 py-4"><StatusBadge status={row.status} /></td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C]">{row.createdAt}</td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C]">{row.issuedAt || "-"}</td>
-                    <td className="px-4 py-4 text-[14px] text-[#5C5C5C]">{row.notes || "-"}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1">
                         {row.status === "Pending" && (
@@ -166,7 +173,7 @@ export default function PersonAMaterialRequestsPage() {
                   </tr>
                 ))}
                 {filteredData.length === 0 && (
-                  <tr><td colSpan={7} className="px-4 py-8 text-center text-[#5C5C5C] text-[14px]">No material requests from Person B.</td></tr>
+                  <tr><td colSpan={8} className="px-4 py-8 text-center text-[#5C5C5C] text-[14px]">No material requests from Person B.</td></tr>
                 )}
               </tbody>
             </table>

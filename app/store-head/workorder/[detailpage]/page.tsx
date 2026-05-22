@@ -91,6 +91,7 @@ export default function StoreHeadWorkOrderDetailPage({ params }: DetailPageProps
   const workflowProgress = computeWorkflowProgress(workOrderFlowData);
 
   const [rawMaterialRowsInput, setRawMaterialRowsInput] = useState<RawMaterialForm[]>([createRawMaterialRow()]);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const currentData = useMemo(() => {
     if (!workOrderFlowData) return [];
@@ -112,6 +113,7 @@ export default function StoreHeadWorkOrderDetailPage({ params }: DetailPageProps
   const resetModalState = () => {
     setModalStep(1);
     setShowValidationHint(false);
+    setImagePreview(null);
     setRawMaterialRowsInput([createRawMaterialRow()]);
   };
 
@@ -231,7 +233,16 @@ export default function StoreHeadWorkOrderDetailPage({ params }: DetailPageProps
                 <label className="text-[13px] font-medium text-[#171717]">Raw Material ID</label>
                 <select
                   value={row.rawMaterialId}
-                  onChange={(e) => updateRawMaterialRow(idx, { rawMaterialId: e.target.value })}
+                  onChange={(e) => {
+                    const id = e.target.value;
+                    const inv = availableInventory.find((i) => i.rawMaterialId === id);
+                    updateRawMaterialRow(idx, {
+                      rawMaterialId: id,
+                      micron: inv?.micron ?? row.micron,
+                      width: inv?.width ?? row.width,
+                      supplier: inv?.supplier ?? row.supplier,
+                    });
+                  }}
                   className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]"
                 >
                   <option value="">Select from inventory...</option>
@@ -317,6 +328,20 @@ export default function StoreHeadWorkOrderDetailPage({ params }: DetailPageProps
             <p className="text-[13px] text-[#6B7280]">Review all values before submitting to the workflow queue.</p>
           </div>
           {renderReviewCards()}
+          <div className="rounded-[12px] border border-[#DDE1E8] bg-white p-4 flex flex-col gap-2">
+            <label className="text-[13px] font-medium text-[#171717]">Attach Image</label>
+            <input type="file" accept="image/*" onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                const reader = new FileReader();
+                reader.onload = (ev) => setImagePreview(ev.target?.result as string);
+                reader.readAsDataURL(file);
+              }
+            }} className="text-[14px]" />
+            {imagePreview && (
+              <img src={imagePreview} alt="Preview" className="mt-2 max-h-[200px] rounded-[8px] border border-[#DDE1E8]" />
+            )}
+          </div>
         </div>
       );
     }

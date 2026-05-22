@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Plus, Search, X, Check } from "lucide-react";
+import { Plus, Search, X } from "lucide-react";
 import { useStore } from "@/hooks/useStore";
 import type { TableConfig } from "@/hooks/useTableControls";
 import { useTableControls } from "@/hooks/useTableControls";
@@ -13,11 +13,12 @@ import type { MaterialRequestItem } from "@/lib/data";
 const tableConfig: TableConfig<any> = {
   columns: [
     { key: "id", label: "Request ID", type: "text", sortable: true },
-    { key: "itemsCount", label: "Items", type: "text", sortable: true },
+    { key: "products", label: "Product No", type: "text", sortable: true },
+    { key: "grade", label: "Grade", type: "text", sortable: true },
+    { key: "requestedQty", label: "Req Qty", type: "text", sortable: true },
     { key: "status", label: "Status", type: "enum", sortable: false, filter: "dropdown", options: ["Pending", "Partially Issued", "Issued", "Cancelled"] },
     { key: "createdAt", label: "Created At", type: "date", sortable: true },
     { key: "issuedAt", label: "Issued At", type: "date", sortable: true },
-    { key: "notes", label: "Notes", type: "text", sortable: false },
     { key: "options", label: "Action", type: "text", sortable: false },
   ],
 };
@@ -40,33 +41,48 @@ function getDateString() {
 }
 
 export default function MaterialRequestsPage() {
-  const { store, mounted, addMaterialRequest, issueMaterialRequest, cancelMaterialRequest } = useStore();
+  const { store, mounted, addMaterialRequest, cancelMaterialRequest } = useStore();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isIssueModalOpen, setIsIssueModalOpen] = useState(false);
-  const [issueReqId, setIssueReqId] = useState("");
-  const [issueItems, setIssueItems] = useState<MaterialRequestItem[]>([]);
 
   const [formItems, setFormItems] = useState<MaterialRequestItem[]>([
     { productNo: "", weight: "", requestedQty: "", issuedQty: "0", grade: "" },
   ]);
 
-  const stockIds = useMemo(() => {
-    const ids: string[] = [];
+  const addFormItem = () => {
+    setFormItems([...formItems, { productNo: "", weight: "", requestedQty: "", issuedQty: "0", grade: "" }]);
+  };
+
+  const stockList = useMemo(() => {
+    const map = new Map<string, { weight: string; grade: string }>();
     for (const [, flow] of Object.entries(store.flowDataMap)) {
       for (const row of flow.slittingRows) {
-        ids.push(row.productNo);
+        if (!map.has(row.productNo)) {
+          map.set(row.productNo, { weight: row.weight, grade: row.grade });
+        }
       }
     }
-    return Array.from(new Set(ids));
-  }, [store.flowDataMap]);
+    for (const [, stocks] of Object.entries(store.assignments)) {
+      for (const s of stocks) {
+        if (!map.has(s.stockId)) {
+          map.set(s.stockId, { weight: s.weight, grade: s.grade });
+        }
+      }
+    }
+    return map;
+  }, [store.flowDataMap, store.assignments]);
 
   const data = useMemo(() => {
-    return store.materialRequests.map((req) => ({
-      ...req,
-      itemsCount: `${req.items.length} item(s)`,
-    }));
+    return store.materialRequests.map((req) => {
+      const first = req.items[0];
+      return {
+        ...req,
+        products: first?.productNo ?? "-",
+        grade: first?.grade ?? "-",
+        requestedQty: first ? `${first.requestedQty}/${first.weight}` : "-",
+      };
+    });
   }, [store.materialRequests]);
 
   const {
@@ -85,10 +101,6 @@ export default function MaterialRequestsPage() {
     if (searchQuery && !row.id.toLowerCase().includes(searchQuery.toLowerCase())) return false;
     return true;
   });
-
-  const addFormItem = () => {
-    setFormItems([...formItems, { productNo: "", weight: "", requestedQty: "", issuedQty: "0", grade: "" }]);
-  };
 
   const updateFormItem = (idx: number, patch: Partial<MaterialRequestItem>) => {
     setFormItems(formItems.map((item, i) => i === idx ? { ...item, ...patch } : item));
@@ -113,21 +125,6 @@ export default function MaterialRequestsPage() {
 
     setFormItems([{ productNo: "", weight: "", requestedQty: "", issuedQty: "0", grade: "" }]);
     setIsModalOpen(false);
-  };
-
-  const openIssueModal = (req: any) => {
-    setIssueReqId(req.id);
-    setIssueItems(req.items.map((item: MaterialRequestItem) => ({ ...item })));
-    setIsIssueModalOpen(true);
-  };
-
-  const updateIssueItem = (idx: number, val: string) => {
-    setIssueItems(issueItems.map((item, i) => i === idx ? { ...item, issuedQty: val } : item));
-  };
-
-  const submitIssue = () => {
-    issueMaterialRequest(issueReqId, issueItems);
-    setIsIssueModalOpen(false);
   };
 
   if (!mounted) return null;
@@ -157,14 +154,21 @@ export default function MaterialRequestsPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div className="flex flex-col gap-2">
                       <label className="text-[13px] font-medium">Product No</label>
-                      <select value={item.productNo} onChange={(e) => updateFormItem(idx, { productNo: e.target.value })} className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]">
+                      <select value={item.productNo} onChange={(e) => {
+                        const selected = stockList.get(e.target.value);
+                        updateFormItem(idx, {
+                          productNo: e.target.value,
+                          weight: selected?.weight ?? "",
+                          grade: selected?.grade ?? "",
+                        });
+                      }} className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]">
                         <option value="">Select stock</option>
-                        {stockIds.map((id) => <option key={id} value={id}>{id}</option>)}
+                        {Array.from(stockList.keys()).map((id) => <option key={id} value={id}>{id}</option>)}
                       </select>
                     </div>
                     <div className="flex flex-col gap-2">
                       <label className="text-[13px] font-medium">Weight</label>
-                      <input value={item.weight} onChange={(e) => updateFormItem(idx, { weight: e.target.value })} placeholder="Weight" className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]" />
+                      <input value={item.weight} readOnly placeholder="Auto-fetched" className="h-[42px] rounded-[8px] border border-[#DDE1E8] bg-[#F8FAFC] px-3 text-[14px] text-[#5C5C5C]" />
                     </div>
                     <div className="flex flex-col gap-2">
                       <label className="text-[13px] font-medium">Requested Qty</label>
@@ -172,13 +176,7 @@ export default function MaterialRequestsPage() {
                     </div>
                     <div className="flex flex-col gap-2">
                       <label className="text-[13px] font-medium">Grade</label>
-                      <select value={item.grade} onChange={(e) => updateFormItem(idx, { grade: e.target.value })} className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]">
-                        <option value="">Select</option>
-                        <option value="AA">AA</option>
-                        <option value="A">A</option>
-                        <option value="B">B</option>
-                        <option value="C">C</option>
-                      </select>
+                      <input value={item.grade} readOnly placeholder="Auto-fetched" className="h-[42px] rounded-[8px] border border-[#DDE1E8] bg-[#F8FAFC] px-3 text-[14px] text-[#5C5C5C]" />
                     </div>
                   </div>
                 </div>
@@ -188,36 +186,6 @@ export default function MaterialRequestsPage() {
             <div className="flex items-center justify-end gap-3 px-6 py-5 bg-[#FAFAFA] border-t border-[#EBEBEB]">
               <button onClick={() => setIsModalOpen(false)} className="h-[40px] px-4 bg-white border border-[#EBEBEB] text-[#171717] text-[14px] font-medium rounded-[6px] hover:bg-gray-50">Cancel</button>
               <button onClick={submitRequest} className="h-[40px] px-5 bg-[#00B6E2] text-white text-[14px] font-medium rounded-[6px] hover:bg-[#0092b5]">Submit Request</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Issue Modal */}
-      {isIssueModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#171717]/40 backdrop-blur-sm px-4">
-          <div className="bg-white rounded-[16px] w-full max-w-[600px] shadow-lg flex flex-col overflow-hidden">
-            <div className="flex items-start justify-between px-6 py-5 border-b border-[#EBEBEB]">
-              <div>
-                <h2 className="text-[28px] leading-tight font-semibold text-[#171717]">Issue Material</h2>
-                <p className="text-[15px] text-[#5C5C5C]">Set issued quantities for {issueReqId}</p>
-              </div>
-              <button onClick={() => setIsIssueModalOpen(false)} className="text-[#5C5C5C] hover:text-[#171717] p-1"><X className="w-5 h-5" /></button>
-            </div>
-            <div className="px-6 py-6 flex flex-col gap-4">
-              {issueItems.map((item, idx) => (
-                <div key={idx} className="border border-[#DDE1E8] rounded-[12px] p-4">
-                  <p className="text-[13px] font-semibold text-[#344054] mb-2">{item.productNo} (Requested: {item.requestedQty})</p>
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[13px] font-medium">Issued Quantity</label>
-                    <input type="number" min="0" value={item.issuedQty} onChange={(e) => updateIssueItem(idx, e.target.value)} className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]" />
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="flex items-center justify-end gap-3 px-6 py-5 bg-[#FAFAFA] border-t border-[#EBEBEB]">
-              <button onClick={() => setIsIssueModalOpen(false)} className="h-[40px] px-4 bg-white border border-[#EBEBEB] text-[#171717] text-[14px] font-medium rounded-[6px] hover:bg-gray-50">Cancel</button>
-              <button onClick={submitIssue} className="h-[40px] px-5 bg-[#00B6E2] text-white text-[14px] font-medium rounded-[6px] hover:bg-[#0092b5]">Issue</button>
             </div>
           </div>
         </div>
@@ -261,18 +229,16 @@ export default function MaterialRequestsPage() {
                 {filteredData.map((row, idx) => (
                   <tr key={idx} className="hover:bg-gray-50/50 transition-colors group">
                     <td className="px-4 py-4 text-[14px] font-medium text-[#00B6E2]">{row.id}</td>
-                    <td className="px-4 py-4 text-[14px] text-[#5C5C5C]">{row.itemsCount}</td>
+                    <td className="px-4 py-4 text-[14px] text-[#5C5C5C]">{row.products}</td>
+                    <td className="px-4 py-4 text-[14px] text-[#5C5C5C]">{row.grade}</td>
+                    <td className="px-4 py-4 text-[14px] text-[#5C5C5C]">{row.requestedQty}</td>
                     <td className="px-4 py-4"><StatusBadge status={row.status} /></td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C]">{row.createdAt}</td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C]">{row.issuedAt || "-"}</td>
-                    <td className="px-4 py-4 text-[14px] text-[#5C5C5C]">{row.notes || "-"}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1">
                         {row.status === "Pending" && (
-                          <>
-                            <button onClick={() => openIssueModal(row)} className="text-[11px] bg-[#00B6E2] text-white px-2 py-1 rounded-[4px] hover:bg-[#0092b5]">Issue</button>
-                            <button onClick={() => cancelMaterialRequest(row.id)} className="text-[11px] bg-[#FB3748] text-white px-2 py-1 rounded-[4px] hover:bg-[#d92d20]">Cancel</button>
-                          </>
+                          <button onClick={() => cancelMaterialRequest(row.id)} className="text-[11px] bg-[#FB3748] text-white px-2 py-1 rounded-[4px] hover:bg-[#d92d20]">Cancel</button>
                         )}
                         {row.status !== "Pending" && <span className="text-[12px] text-[#A1A1AA]">-</span>}
                       </div>
@@ -280,7 +246,7 @@ export default function MaterialRequestsPage() {
                   </tr>
                 ))}
                 {filteredData.length === 0 && (
-                  <tr><td colSpan={7} className="px-4 py-8 text-center text-[#5C5C5C] text-[14px]">No material requests found.</td></tr>
+                  <tr><td colSpan={8} className="px-4 py-8 text-center text-[#5C5C5C] text-[14px]">No material requests found.</td></tr>
                 )}
               </tbody>
             </table>

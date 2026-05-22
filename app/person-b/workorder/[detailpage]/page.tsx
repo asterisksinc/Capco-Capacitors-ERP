@@ -140,14 +140,37 @@ export default function PersonBWorkOrderDetailPage({ params }: DetailPageProps) 
     const flow = store.flowDataMap[wo.id];
     return flow?.slittingRows.map((row) => row.productNo) ?? [];
   })));
+  const pmLookup = useMemo(() => {
+    const map = new Map<string, { weight: string; grade: string; micron: string; width: string }>();
+    for (const wo of store.workOrders) {
+      const flow = store.flowDataMap[wo.id];
+      if (!flow) continue;
+      for (const s of flow.slittingRows) {
+        map.set(s.productNo, { weight: s.weight, grade: s.grade, micron: s.thickness, width: flow.overview.width });
+      }
+    }
+    return map;
+  }, [store.flowDataMap]);
 
   const availableWdIds = Array.from(new Set(store.workOrders.flatMap((wo) => {
     const flow = store.flowDataMap[wo.id];
     return flow?.windingRows.map((row) => row.wdId) ?? [];
   })));
+  const wdLookup = useMemo(() => {
+    const map = new Map<string, { filmWidth: string; windingTension: string; turnsCount: string; quantityWound: string }>();
+    for (const wo of store.workOrders) {
+      const flow = store.flowDataMap[wo.id];
+      if (!flow) continue;
+      for (const w of flow.windingRows) {
+        map.set(w.wdId, { filmWidth: w.filmWidth, windingTension: w.windingTension, turnsCount: w.turnsCount, quantityWound: w.quantityWound });
+      }
+    }
+    return map;
+  }, [store.flowDataMap]);
 
   const [windingRowsInput, setWindingRowsInput] = useState<WindingForm[]>([createWindingRow()]);
   const [sprayRowsInput, setSprayRowsInput] = useState<SprayForm[]>([createSprayRow()]);
+  const [modalImage, setModalImage] = useState<string | null>(null);
 
   const currentConfig = useMemo(() => {
     switch (activeTab) {
@@ -181,6 +204,7 @@ export default function PersonBWorkOrderDetailPage({ params }: DetailPageProps) 
   const resetModalState = () => {
     setModalStep(1);
     setShowValidationHint(false);
+    setModalImage(null);
     setWindingRowsInput([createWindingRow()]);
     setSprayRowsInput([createSprayRow()]);
   };
@@ -353,7 +377,11 @@ export default function PersonBWorkOrderDetailPage({ params }: DetailPageProps) 
                 </div>
                 <div className="flex flex-col gap-2">
                   <label className="text-[13px] font-medium text-[#171717]">Linked PM-ID</label>
-                  <select value={row.linkedPmId} onChange={(e) => updateWindingRow(idx, { linkedPmId: e.target.value })} className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]">
+                  <select value={row.linkedPmId} onChange={(e) => {
+                    const id = e.target.value;
+                    const pm = pmLookup.get(id);
+                    updateWindingRow(idx, { linkedPmId: id });
+                  }} className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]">
                     <option value="">Select PM-ID</option>
                     {availablePmIds.length === 0 && <option value="">No PM-IDs available</option>}
                     {availablePmIds.map((pmId) => (
@@ -401,7 +429,11 @@ export default function PersonBWorkOrderDetailPage({ params }: DetailPageProps) 
               </div>
               <div className="flex flex-col gap-2">
                 <label className="text-[13px] font-medium text-[#171717]">Linked WD-ID</label>
-                <select value={row.linkedWdId} onChange={(e) => updateSprayRow(idx, { linkedWdId: e.target.value })} className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]">
+                <select value={row.linkedWdId} onChange={(e) => {
+                  const id = e.target.value;
+                  const wd = wdLookup.get(id);
+                  updateSprayRow(idx, { linkedWdId: id });
+                }} className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]">
                   <option value="">Select WD-ID</option>
                   {availableWdIds.length === 0 && <option value="">No WD-IDs available</option>}
                   {availableWdIds.map((wdId) => (
@@ -479,6 +511,20 @@ export default function PersonBWorkOrderDetailPage({ params }: DetailPageProps) 
             <p className="text-[13px] text-[#6B7280]">Review all values before submitting to the workflow queue.</p>
           </div>
           {renderReviewCards()}
+          <div className="rounded-[12px] border border-[#DDE1E8] bg-white p-4 flex flex-col gap-2">
+            <label className="text-[13px] font-medium text-[#171717]">Attach Image</label>
+            <input type="file" accept="image/*" onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                const reader = new FileReader();
+                reader.onload = (ev) => setModalImage(ev.target?.result as string);
+                reader.readAsDataURL(file);
+              }
+            }} className="text-[14px]" />
+            {modalImage && (
+              <img src={modalImage} alt="Preview" className="mt-2 max-h-[200px] rounded-[8px] border border-[#DDE1E8]" />
+            )}
+          </div>
         </div>
       );
     }

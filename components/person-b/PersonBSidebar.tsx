@@ -19,7 +19,6 @@ export function PersonBSidebar() {
 
   const navItems = [
     { name: "Overview", href: "/person-b/overview", icon: LayoutDashboard },
-    { name: "Work Orders", href: "/person-b/workorder", icon: Calendar },
     { name: "Product Orders", href: "/person-b/product-orders", icon: Calendar },
     { name: "Stock", href: "/person-b/stock", icon: BarChart2 },
     { name: "Material Requests", href: "/person-b/material-requests", icon: ClipboardList },

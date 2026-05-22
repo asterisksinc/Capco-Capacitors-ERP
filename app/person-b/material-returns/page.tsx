@@ -7,7 +7,6 @@ import type { TableConfig } from "@/hooks/useTableControls";
 import { useTableControls } from "@/hooks/useTableControls";
 import { SortableHeader } from "@/components/table/SortableHeader";
 import { TableToolbar } from "@/components/table/TableToolbar";
-import { OptionsDropdown } from "@/components/table/OptionsDropdown";
 
 const tableConfig: TableConfig<any> = {
   columns: [
@@ -39,11 +38,26 @@ function getDateString() {
 }
 
 export default function MaterialReturnsPage() {
-  const { store, mounted, addMaterialReturn, acceptMaterialReturn, rejectMaterialReturn } = useStore();
+  const { store, mounted, addMaterialReturn } = useStore();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({ materialId: "", weight: "", usedWeight: "", reason: "" });
+
+  const stockWeightMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const [, flow] of Object.entries(store.flowDataMap)) {
+      for (const row of flow.slittingRows) {
+        if (!map.has(row.productNo)) map.set(row.productNo, row.weight);
+      }
+    }
+    for (const [, stocks] of Object.entries(store.assignments)) {
+      for (const s of stocks) {
+        if (!map.has(s.stockId)) map.set(s.stockId, s.weight);
+      }
+    }
+    return map;
+  }, [store.flowDataMap, store.assignments]);
 
   const data = useMemo(() => store.materialReturns, [store.materialReturns]);
 
@@ -96,12 +110,19 @@ export default function MaterialReturnsPage() {
             <div className="px-6 py-6 flex flex-col gap-4">
               <div className="flex flex-col gap-2">
                 <label className="text-[13px] font-medium text-[#171717]">Material ID</label>
-                <input value={formData.materialId} onChange={(e) => setFormData({ ...formData, materialId: e.target.value })} placeholder="e.g. PM-1001" className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]" />
+                <select value={formData.materialId} onChange={(e) => {
+                  const id = e.target.value;
+                  const weight = stockWeightMap.get(id) ?? "";
+                  setFormData({ ...formData, materialId: id, weight });
+                }} className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]">
+                  <option value="">Select stock...</option>
+                  {Array.from(stockWeightMap.keys()).map((id) => <option key={id} value={id}>{id}</option>)}
+                </select>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="flex flex-col gap-2">
                   <label className="text-[13px] font-medium text-[#171717]">Original Weight</label>
-                  <input value={formData.weight} onChange={(e) => setFormData({ ...formData, weight: e.target.value })} placeholder="Weight" className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]" />
+                  <input value={formData.weight} readOnly placeholder="Auto-fetched" className="h-[42px] rounded-[8px] border border-[#DDE1E8] bg-[#F8FAFC] px-3 text-[14px] text-[#5C5C5C]" />
                 </div>
                 <div className="flex flex-col gap-2">
                   <label className="text-[13px] font-medium text-[#171717]">Used Weight</label>
@@ -166,15 +187,7 @@ export default function MaterialReturnsPage() {
                     <td className="px-4 py-4"><StatusBadge status={row.status} /></td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C]">{row.createdAt}</td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-1">
-                        {row.status === "Pending" && (
-                          <>
-                            <button onClick={() => acceptMaterialReturn(row.id)} className="text-[11px] bg-[#1CB061] text-white px-2 py-1 rounded-[4px] hover:bg-[#18994e]">Accept</button>
-                            <button onClick={() => rejectMaterialReturn(row.id)} className="text-[11px] bg-[#FB3748] text-white px-2 py-1 rounded-[4px] hover:bg-[#d92d20]">Reject</button>
-                          </>
-                        )}
-                        {row.status !== "Pending" && <span className="text-[12px] text-[#A1A1AA]">-</span>}
-                      </div>
+                      <span className="text-[12px] text-[#A1A1AA]">-</span>
                     </td>
                   </tr>
                 ))}

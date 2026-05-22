@@ -23,7 +23,7 @@ type StockRow = {
   timestamp: string;
 };
 
-const STAGE_OPTIONS = ["Metallisation", "Slitting", "Packaging", "Quality Check"];
+const STAGE_OPTIONS = ["Slitting", "Ready for Winding", "Completed"];
 
 const statusFilter: EnumFilter = { label: "Stage", key: "stage", options: STAGE_OPTIONS };
 const textFilters: TextFilter[] = [
@@ -46,7 +46,6 @@ const filterConfig: FilterConfig = {
 const stockConfig: TableConfig<StockRow> = {
   columns: [
     { key: "stockId", label: "STOCK ID", type: "text", sortable: true },
-    { key: "linkedWoId", label: "Linked WO ID", type: "text", sortable: true },
     { key: "weight", label: "Weight", type: "text", sortable: true },
     { key: "width", label: "Width", type: "text", sortable: true },
     { key: "micron", label: "Micron", type: "text", sortable: true },
@@ -301,7 +300,6 @@ export default function OperatorStockPage() {
                         {row.stockId}
                       </Link>
                     </td>
-                    <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.linkedWoId}</td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.weight}</td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.width}</td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.micron}</td>
@@ -322,7 +320,7 @@ export default function OperatorStockPage() {
                   </tr>
                 )) : (
                   <tr>
-                    <td colSpan={9} className="px-4 py-8 text-center text-[#5C5C5C] text-[14px]">
+                    <td colSpan={8} className="px-4 py-8 text-center text-[#5C5C5C] text-[14px]">
                       No stock available. Complete slitting on a work order to generate stock.
                     </td>
                   </tr>

@@ -137,6 +137,17 @@ export type MaterialReturn = {
   createdAt: string;
 };
 
+export type AssignedStock = {
+  stockId: string;
+  linkedWoId: string;
+  weight: string;
+  width: string;
+  micron: string;
+  grade: string;
+  stage: string;
+  assignedAt: string;
+};
+
 const godownPrimaryRange = Array.from({ length: 101 }, (_, idx) => `RM-${8300 + idx}`);
 const godownSecondaryRange = Array.from({ length: 201 }, (_, idx) => `RM-${3400 + idx}`);
 
@@ -240,9 +251,7 @@ export function createSeedStore() {
         { coilNo: "MC-2002", rmId: "RM-8304", machineNo: "M-02", weight: "55.0kgs", opticalDensity: "2.2", resistance: "1.7 Ohms", timestamp: `${d(-1)} 11:30`, nextStage: "SLITTING", status: "In-progress" },
       ],
       slittingRows: [],
-      windingRows: [
-        { wdId: "WD-2001", linkedPmId: "PM-1001", filmWidth: "7mm", windingTension: "0.5 N", turnsCount: "115", quantityWound: "230", stage: "In-progress", timestamp: `${d(-1)} 10:00`, status: "In-progress" },
-      ],
+      windingRows: [],
       sprayRows: [],
     },
     "WO-2026-003": {
@@ -283,7 +292,14 @@ export function createSeedStore() {
     { id: "#PO-CC-0003", code: "SNUB-1KV-1uF", type: "Snubber", grade: "A", batchSize: "1000", status: "Completed", stage: "Completed", timestamp: `${d(-7)}:08:00:00` },
   ];
 
-  return { workOrders, flowDataMap, inventoryItems: inventory, productOrders, materialRequests: [], materialReturns: [] };
+  const assignments: Record<string, AssignedStock[]> = {
+    "#PO-CC-0001": [
+      { stockId: "PM-1001", linkedWoId: "WO-2026-001", weight: "28.5kgs", width: "1.0", micron: "4.5", grade: "AA", stage: "Completed", assignedAt: `${d(-2)} 08:00` },
+      { stockId: "PM-1003", linkedWoId: "WO-2026-001", weight: "45.2kgs", width: "1.0", micron: "6.5", grade: "AA", stage: "Completed", assignedAt: `${d(-2)} 08:05` },
+    ],
+  };
+
+  return { workOrders, flowDataMap, inventoryItems: inventory, productOrders, materialRequests: [], materialReturns: [], assignments };
 }
 
 export function createEmptyFlowData(seed?: Partial<WorkOrderOverview>): WorkOrderFlowData {
@@ -331,15 +347,25 @@ export function computeWorkflowProgress(flow?: WorkOrderFlowData): WorkOrderProg
     ...flow.sprayRows.map((row) => row.status),
   ];
 
-  const slittingCompleted =
-    flow.slittingRows.length > 0 && flow.slittingRows.every((row) => row.status === "Completed");
-  const windingCompleted =
-    flow.windingRows.length > 0 && flow.windingRows.every((row) => row.status === "Completed");
+  const rawMaterialCompleted = flow.rawMaterialRows.length > 0 && flow.rawMaterialRows.every((row) => row.status === "Completed");
+  const metallisationCompleted = flow.metallisationRows.length > 0 && flow.metallisationRows.every((row) => row.status === "Completed");
+  const slittingCompleted = flow.slittingRows.length > 0 && flow.slittingRows.every((row) => row.status === "Completed");
+  const windingCompleted = flow.windingRows.length > 0 && flow.windingRows.every((row) => row.status === "Completed");
+  const sprayCompleted = flow.sprayRows.length > 0 && flow.sprayRows.every((row) => row.status === "Completed");
 
-  if (windingCompleted && flow.sprayRows.every((row) => row.status === "Completed")) {
+  if (sprayCompleted) {
     return { stage, status: "Completed" };
   }
-  if (slittingCompleted) {
+  if (windingCompleted && flow.sprayRows.length === 0) {
+    return { stage, status: "Completed" };
+  }
+  if (slittingCompleted && flow.windingRows.length === 0) {
+    return { stage, status: "Completed" };
+  }
+  if (metallisationCompleted && flow.slittingRows.length === 0) {
+    return { stage, status: "Completed" };
+  }
+  if (rawMaterialCompleted && flow.metallisationRows.length === 0) {
     return { stage, status: "Completed" };
   }
 
