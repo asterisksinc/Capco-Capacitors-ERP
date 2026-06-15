@@ -3,6 +3,7 @@
 import { Search } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { Layers, Zap, Scissors, CheckCircle } from "lucide-react";
 import { useStore, type ComputedWorkOrderSummary } from "@/hooks/useStore";
 import type { TableConfig } from "@/hooks/useTableControls";
 import { useTableControls } from "@/hooks/useTableControls";
@@ -11,6 +12,7 @@ import { TableToolbar } from "@/components/table/TableToolbar";
 import { OptionsDropdown } from "@/components/table/OptionsDropdown";
 import { FilterChips, type FilterConfig, type FilterState, type EnumFilter, type TextFilter, type NumberRangeFilter } from "@/components/table/FilterPopover";
 import { exportToExcel } from "@/lib/exportExcel";
+import { MobileHeader } from "@/components/MobileHeader";
 
 const WO_STATUS_OPTIONS = ["Yet to Start", "In-progress", "Completed"];
 const WO_STAGE_OPTIONS = ["Raw Material", "Metallisation", "Slitting"];
@@ -124,70 +126,65 @@ export default function OperatorWorkOrderPage() {
   const inProgressCount = rows.filter((row) => row.status === "In-progress").length;
   const yetToStartCount = rows.filter((row) => row.status === "Yet to Start").length;
 
-  const overviewStats = [
-    {
-      title: "Total Work Orders",
-      value: String(totalWorkOrders),
-      subtext: `Yet ${yetToStartCount} | In-progress ${inProgressCount} | Completed ${completedCount}`,
-      subtextClass: "text-[#5C5C5C] font-normal",
-      valClass: "text-[#171717]",
-    },
-    {
-      title: "Metallisation",
-      value: String(metallisationCount),
-      subtext: "In process",
-      subtextClass: "text-[#E19242] font-semibold",
-      valClass: "text-[#171717]",
-    },
-    {
-      title: "Slitting",
-      value: String(slittingCount),
-      subtext: "In queue",
-      subtextClass: "text-[#1CB061] font-semibold",
-      valClass: "text-[#171717]",
-    },
-    {
-      title: "Completed",
-      value: String(completedCount),
-      subtext: "Ready for next stage",
-      subtextClass: "text-[#1CB061] font-semibold",
-      valClass: "text-[#171717]",
-    },
+  const kpiStats = [
+    { label: "Total Work Orders", value: String(totalWorkOrders), icon: Layers, valClass: "text-[#171717]", subtext: `Yet ${yetToStartCount} | In-progress ${inProgressCount} | Completed ${completedCount}` },
+    { label: "Metallisation", value: String(metallisationCount), icon: Zap, valClass: "text-[#171717]", subtext: "In process" },
+    { label: "Slitting", value: String(slittingCount), icon: Scissors, valClass: "text-[#171717]", subtext: "In queue" },
+    { label: "Completed", value: String(completedCount), icon: CheckCircle, valClass: "text-[#171717]", subtext: "Ready for next stage" },
   ];
 
   if (!mounted) return null;
 
   return (
-    <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-white flex flex-col relative">
-      <section className="bg-white w-full flex justify-start border-b border-[#EBEBEB]">
-        <div className="w-full px-6 py-6 pb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 h-auto">
-          <div className="flex flex-col gap-1">
-            <h1 className="text-[16px] font-medium text-[#171717] leading-tight">Work Orders</h1>
-            <p className="text-[14px] font-normal text-[#5C5C5C] leading-tight">
-              View work orders and track metallisation progress
-            </p>
-          </div>
-        </div>
-      </section>
+    <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-white flex flex-col relative overflow-x-hidden">
+      <MobileHeader title="Work Orders" />
 
-      <div className="w-full px-6 py-6 flex flex-col gap-6">
-        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 bg-white border border-[#EBEBEB] rounded-[12px] items-center p-5">
-          {overviewStats.map((stat, i) => (
-            <div key={i} className="flex items-center justify-between px-6 py-2 sm:py-0">
-              <div className="flex flex-col gap-[6px]">
-                <p className="text-[12px] font-medium text-[#5C5C5C] leading-tight">{stat.title}</p>
-                <div className="flex items-baseline gap-3">
-                  <span className={`text-[14px] font-semibold leading-tight ${stat.valClass}`}>{stat.value}</span>
-                  <span className={`text-[12px] leading-tight ${stat.subtextClass}`}>{stat.subtext}</span>
+      {/* Mobile KPI 2x2 */}
+      <section className="grid grid-cols-2 gap-0 md:hidden mx-4 mt-[72px] bg-white border border-[#EBEBEB] rounded-[12px]">
+        {kpiStats.map((stat, i) => {
+          const Icon = stat.icon;
+          return (
+            <div key={i} className={`p-3 ${i % 2 === 0 ? 'border-r border-b border-[#EBEBEB]' : 'border-b border-[#EBEBEB]'} ${i >= 2 ? 'border-b-0' : ''}`}>
+              <div className="flex items-start gap-2">
+                <div className="w-8 h-8 rounded-full bg-[#E6F8FD] flex items-center justify-center shrink-0">
+                  <Icon className="w-4 h-4 text-[#00B6E2]" />
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  <p className="text-[11px] font-medium text-[#5C5C5C]">{stat.label}</p>
+                  <span className={`text-[16px] font-semibold ${stat.valClass}`}>{stat.value}</span>
+                  <span className="text-[10px] text-[#5C5C5C]">{stat.subtext}</span>
                 </div>
               </div>
-              {i < overviewStats.length - 1 && (
-                <div className="hidden lg:block w-[1px] h-[37px] bg-[#EAECF0]"></div>
+            </div>
+          );
+        })}
+      </section>
+
+      {/* Desktop KPI row */}
+      <section className="hidden md:grid grid-cols-1 lg:grid-cols-4 mx-4 md:mx-6 mt-6 bg-white border border-[#EBEBEB] rounded-[12px] items-center p-5">
+        {kpiStats.map((stat, i) => {
+          const Icon = stat.icon;
+          return (
+            <div key={i} className="flex items-center gap-4 px-4 py-2">
+              <div className="w-10 h-10 rounded-full bg-[#E6F8FD] flex items-center justify-center shrink-0">
+                <Icon className="w-5 h-5 text-[#00B6E2]" />
+              </div>
+              <div className="flex flex-col gap-[2px]">
+                <p className="text-[12px] font-medium text-[#5C5C5C] leading-tight">{stat.label}</p>
+                <div className="flex items-baseline gap-2">
+                  <span className={`text-[14px] font-semibold ${stat.valClass}`}>{stat.value}</span>
+                  <span className="text-[12px] text-[#5C5C5C]">{stat.subtext}</span>
+                </div>
+              </div>
+              {i < kpiStats.length - 1 && (
+                <div className="hidden lg:block w-[1px] h-[37px] bg-[#EAECF0] ml-auto" />
               )}
             </div>
-          ))}
-        </section>
+          );
+        })}
+      </section>
 
+      <div className="w-full px-4 md:px-6 py-6 flex flex-col gap-6">
         <section className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="relative max-w-[400px] w-full">
             <Search className="w-4 h-4 text-[#A1A1AA] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -196,7 +193,7 @@ export default function OperatorWorkOrderPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by Work Order ID..." 
-              className="h-[40px] w-full pl-9 pr-3 bg-white border border-[#EBEBEB] rounded-[8px] text-[14px] text-[#171717] placeholder:text-[#A1A1AA] focus:outline-none focus:border-[#00B6E2] " 
+              className="h-[40px] w-full pl-9 pr-3 bg-white border border-[#EBEBEB] rounded-[8px] text-[14px] text-[#171717] placeholder:text-[#A1A1AA] focus:outline-none focus:border-[#00B6E2]" 
             />
           </div>
           <TableToolbar

@@ -10,8 +10,13 @@ import {
   AlertCircle,
   Paperclip,
   History,
-  Send
+  Send,
+  Layers,
+  Package,
+  Activity,
+  TrendingUp
 } from "lucide-react";
+import { MobileHeader, MobileSpacer } from "@/components/MobileHeader";
 
 type DetailPageProps = {
   params: Promise<{ detailpage: string }>;
@@ -32,59 +37,65 @@ function StatusBadge({ status }: { status: string }) {
 
 export default function ProductOrderDetail({ params }: DetailPageProps) {
   const { detailpage } = use(params);
-  const displayId = detailpage.toUpperCase();
+
+  const kpiStats = [
+    { label: "Stages done", value: "4 / 6", icon: Layers, valClass: "text-[#171717]" },
+    { label: "Units Processed", value: "3,250", icon: Package, valClass: "text-[#1CB061]" },
+    { label: "Cycle Variance", value: "+1.2 Hrs", icon: Activity, valClass: "text-[#E19242]" },
+    { label: "Dispatch Readiness", value: "68%", icon: TrendingUp, valClass: "text-[#171717]" },
+  ];
 
   return (
-    <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-[#FAFAFA] flex flex-col md:px-6 md:py-6 p-4">
-      {/* Top Stats Cards */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white border border-[#EBEBEB] rounded-xl p-4 shadow-sm flex items-center gap-4">
-          <div className="w-10 h-10 rounded-full bg-[#E6F8FD] text-[#00B6E2] flex items-center justify-center">
-            <CheckCircle2 className="w-5 h-5" />
-          </div>
-          <div className="flex flex-col gap-1">
-            <span className="text-xl font-bold text-[#171717]">4 / 6</span>
-            <span className="text-xs text-[#5C5C5C]">Stages done</span>
-          </div>
-        </div>
+    <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-white flex flex-col w-full pb-12">
+      <MobileHeader title="Product Order Detail" />
 
-        <div className="bg-white border border-[#EBEBEB] rounded-xl p-4 shadow-sm flex items-center gap-4">
-          <div className="w-10 h-10 rounded-full bg-[#E8F8F0] text-[#1CB061] flex items-center justify-center">
-            <span className="font-bold">U</span>
-          </div>
-          <div className="flex flex-col gap-1">
-            <span className="text-xl font-bold text-[#1CB061]">3,250</span>
-            <span className="text-xs text-[#5C5C5C]">Units Processed</span>
-          </div>
-        </div>
-
-        <div className="bg-white border border-[#EBEBEB] rounded-xl p-4 shadow-sm flex items-center gap-4">
-          <div className="w-10 h-10 rounded-full bg-[#FFF4ED] text-[#E19242] flex items-center justify-center">
-            <Clock className="w-5 h-5" />
-          </div>
-          <div className="flex flex-col gap-1">
-            <span className="text-xl font-bold text-[#E19242]">+1.2 Hrs</span>
-            <span className="text-xs text-[#5C5C5C]">Cycle Variance</span>
-          </div>
-        </div>
-
-        <div className="bg-white border border-[#EBEBEB] rounded-xl p-4 shadow-sm flex items-center gap-4">
-          <div className="w-10 h-10 rounded-full bg-[#E6F8FD] text-[#00B6E2] flex items-center justify-center">
-            <CheckCircle2 className="w-5 h-5" />
-          </div>
-          <div className="flex flex-col gap-1">
-            <span className="text-xl font-bold text-[#171717]">68%</span>
-            <span className="text-xs text-[#5C5C5C]">Dispatch Readiness</span>
-          </div>
-        </div>
+      {/* KPI Stats - Mobile 2x2 grid */}
+      <section className="grid grid-cols-2 gap-0 md:hidden mx-4 mt-[72px] bg-white border border-[#EBEBEB] rounded-[12px]">
+        {kpiStats.map((stat, i) => {
+          const Icon = stat.icon;
+          return (
+            <div key={i} className={`p-3 ${i % 2 === 0 ? 'border-r border-b border-[#EBEBEB]' : 'border-b border-[#EBEBEB]'} ${i >= 2 ? 'border-b-0' : ''}`}>
+              <div className="flex items-start gap-2">
+                <div className="w-8 h-8 rounded-full bg-[#E6F8FD] flex items-center justify-center shrink-0">
+                  <Icon className="w-4 h-4 text-[#00B6E2]" />
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  <p className="text-[11px] font-medium text-[#5C5C5C]">{stat.label}</p>
+                  <span className={`text-[16px] font-semibold ${stat.valClass}`}>{stat.value}</span>
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </section>
 
-      <div className="flex flex-col xl:flex-row gap-6">
+      {/* KPI Stats - Desktop row */}
+      <section className="hidden md:grid grid-cols-1 lg:grid-cols-4 mx-4 md:mx-6 mt-6 bg-white border border-[#EBEBEB] rounded-[12px] items-center p-5">
+        {kpiStats.map((stat, i) => {
+          const Icon = stat.icon;
+          return (
+            <div key={i} className="flex items-center gap-4 px-4 py-2">
+              <div className="w-10 h-10 rounded-full bg-[#E6F8FD] flex items-center justify-center shrink-0">
+                <Icon className="w-5 h-5 text-[#00B6E2]" />
+              </div>
+              <div className="flex flex-col gap-[2px]">
+                <p className="text-[12px] font-medium text-[#5C5C5C] leading-tight">{stat.label}</p>
+                <span className={`text-[14px] font-semibold ${stat.valClass}`}>{stat.value}</span>
+              </div>
+              {i < kpiStats.length - 1 && (
+                <div className="hidden lg:block w-[1px] h-[37px] bg-[#EAECF0] ml-auto" />
+              )}
+            </div>
+          );
+        })}
+      </section>
+
+      <div className="flex flex-col xl:flex-row gap-6 px-4 md:px-6 pb-6">
         {/* Main Content Area */}
         <div className="flex flex-col gap-6 flex-1 min-w-0">
           
           {/* Detail Cards Row */}
-          <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <section className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
             {/* Left Card: Product Order Details */}
             <div className="bg-white border border-[#EBEBEB] rounded-xl p-6 shadow-sm flex flex-col gap-4">
               <div className="flex items-center justify-between border-b border-[#EBEBEB] pb-4">

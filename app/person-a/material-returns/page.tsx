@@ -7,6 +7,7 @@ import type { TableConfig } from "@/hooks/useTableControls";
 import { useTableControls } from "@/hooks/useTableControls";
 import { SortableHeader } from "@/components/table/SortableHeader";
 import { TableToolbar } from "@/components/table/TableToolbar";
+import { MobileHeader } from "@/components/MobileHeader";
 
 function getMaterialSpecs(store: any, materialId: string) {
   for (const [, flow] of Object.entries(store.flowDataMap) as any) {
@@ -93,19 +94,10 @@ export default function PersonAMaterialReturnsPage() {
   if (!mounted) return null;
 
   return (
-    <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-white flex flex-col">
-      <section className="bg-white w-full flex justify-start border-b border-[#EBEBEB]">
-        <div className="w-full px-6 py-6 pb-4 flex items-start sm:items-center justify-between">
-          <div>
-            <h1 className="text-[16px] font-medium text-[#171717] leading-tight">Material Returns</h1>
-            <p className="text-[14px] font-normal text-[#5C5C5C]">
-              {pendingCount > 0 ? `${pendingCount} return(s) from Person B awaiting review` : "No pending returns from Person B"}
-            </p>
-          </div>
-        </div>
-      </section>
+    <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-white flex flex-col overflow-x-hidden">
+      <MobileHeader title="Material Returns" />
 
-      <div className="w-full px-6 py-6 flex flex-col gap-6">
+      <div className="w-full px-4 md:px-6 pt-[72px] md:pt-6 pb-6 flex flex-col gap-6">
         <section className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="relative max-w-[400px] w-full">
             <Search className="w-4 h-4 text-[#A1A1AA] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />

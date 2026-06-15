@@ -2,6 +2,7 @@
 
 import { use, useState, useMemo } from "react";
 import { Plus, X, ChevronRight, Check } from "lucide-react";
+import { FileText, Ruler, Maximize2, Package } from "lucide-react";
 import { useStore } from "@/hooks/useStore";
 import { computeWorkflowProgress } from "../../../../lib/data";
 import type { TableConfig } from "@/hooks/useTableControls";
@@ -9,6 +10,7 @@ import { useTableControls } from "@/hooks/useTableControls";
 import { SortableHeader } from "@/components/table/SortableHeader";
 import { TableToolbar } from "@/components/table/TableToolbar";
 import { OptionsDropdown } from "@/components/table/OptionsDropdown";
+import { MobileHeader } from "@/components/MobileHeader";
 
 type DetailPageProps = {
   params: Promise<{ detailpage: string }>;
@@ -331,6 +333,19 @@ export default function PersonBWorkOrderDetailPage({ params }: DetailPageProps) 
     { label: "Status", value: <StatusBadge status={workflowProgress.status} /> },
   ];
 
+  const detailKpiStats = [
+    { label: "Word Count", value: workOrderFlowData.overview.wordCount, icon: FileText, valClass: "text-[#171717]" },
+    { label: "Micron", value: workOrderFlowData.overview.micron, icon: Ruler, valClass: "text-[#171717]" },
+    { label: "Width", value: workOrderFlowData.overview.width, icon: Maximize2, valClass: "text-[#171717]" },
+    { label: "Quantity", value: workOrderFlowData.overview.quantity, icon: Package, valClass: "text-[#171717]" },
+  ];
+
+  const detailChips = [
+    { label: "Stage", value: workflowProgress.stage },
+    { label: "Date", value: workOrderFlowData.overview.date },
+    { label: "Status", value: <StatusBadge status={workflowProgress.status} /> },
+  ];
+
   const renderStepHeader = () => {
     const labels = ["Input Details", "Submit Details"];
     return (
@@ -545,7 +560,9 @@ export default function PersonBWorkOrderDetailPage({ params }: DetailPageProps) 
   };
 
   return (
-    <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-white flex flex-col relative w-full lg:max-w-none pb-12">
+    <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-white flex flex-col relative pb-12 overflow-x-hidden">
+      <MobileHeader title={orderId} />
+
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#171717]/40 backdrop-blur-sm px-4">
           <div className="bg-white rounded-[16px] w-full max-w-[860px] shadow-lg flex flex-col overflow-hidden">
@@ -605,18 +622,49 @@ export default function PersonBWorkOrderDetailPage({ params }: DetailPageProps) 
         </div>
       )}
 
-      <div className="flex items-center gap-2 px-6 pt-6 mb-2">
+      {/* Desktop breadcrumb */}
+      <div className="hidden md:flex items-center gap-2 px-4 md:px-6 pt-6 mb-2">
         <span className="text-[14px] font-medium text-[#5C5C5C] leading-tight">Work Orders</span>
         <ChevronRight className="w-4 h-4 text-[#A1A1AA]" />
         <span className="text-[14px] font-medium text-[#00B6E2] leading-tight">{orderId}</span>
       </div>
 
-      <section className="w-full px-6 py-6 flex flex-col gap-6 border-b border-[#EBEBEB]">
-        <h1 className="text-[18px] font-semibold text-[#171717] leading-tight">Work Orders Overview</h1>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-y-6 gap-x-4">
+      {/* Mobile KPI 2x2 */}
+      <section className="grid grid-cols-2 gap-0 md:hidden mx-4 mt-[72px] bg-white border border-[#EBEBEB] rounded-[12px]">
+        {detailKpiStats.map((stat, i) => {
+          const Icon = stat.icon;
+          return (
+            <div key={i} className={`p-3 ${i % 2 === 0 ? 'border-r border-b border-[#EBEBEB]' : 'border-b border-[#EBEBEB]'} ${i >= 2 ? 'border-b-0' : ''}`}>
+              <div className="flex items-start gap-2">
+                <div className="w-8 h-8 rounded-full bg-[#E6F8FD] flex items-center justify-center shrink-0">
+                  <Icon className="w-4 h-4 text-[#00B6E2]" />
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  <p className="text-[11px] font-medium text-[#5C5C5C]">{stat.label}</p>
+                  <span className={`text-[16px] font-semibold ${stat.valClass}`}>{stat.value}</span>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </section>
+
+      {/* Mobile detail chips */}
+      <section className="md:hidden mx-4 mt-4 flex flex-wrap items-center gap-x-6 gap-y-3">
+        {detailChips.map((chip, i) => (
+          <div key={i} className="flex items-center gap-2">
+            <span className="text-[12px] font-medium text-[#5C5C5C]">{chip.label}:</span>
+            <span className="text-[12px] font-semibold text-[#171717]">{chip.value}</span>
+          </div>
+        ))}
+      </section>
+
+      {/* Desktop overview row */}
+      <section className="hidden md:flex w-full px-4 md:px-6 py-6 border-b border-[#EBEBEB]">
+        <div className="flex items-center gap-6 w-full">
           {overviewFields.map((field, idx) => (
-            <div key={idx} className="flex flex-col gap-[6px]">
-              <span className="text-[14px] font-normal text-[#5C5C5C] leading-tight">{field.label}</span>
+            <div key={idx} className="flex flex-col gap-[6px] min-w-0">
+              <span className="text-[12px] font-normal text-[#5C5C5C] leading-tight whitespace-nowrap">{field.label}</span>
               <div className="text-[14px] font-semibold text-[#171717] leading-tight flex items-center h-5">
                 {field.value}
               </div>
@@ -625,21 +673,24 @@ export default function PersonBWorkOrderDetailPage({ params }: DetailPageProps) 
         </div>
       </section>
 
-      <section className="w-full px-6 py-6 flex flex-col gap-6">
-        <div className="flex items-center gap-2 border-b border-[#EBEBEB] pb-4">
-          {(["Winding", "Spray"] as TabType[]).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-4 py-2 text-[14px] font-medium rounded-[8px] transition-colors ${
-                activeTab === tab
-                  ? "bg-[#00B6E2] text-white"
-                  : "bg-white text-[#5C5C5C] hover:bg-[#F5F7FA]"
-              }`}
-            >
-              {tab}
-            </button>
-          ))}
+      <section className="w-full px-4 md:px-6 py-6 flex flex-col gap-6">
+        {/* Scrollable tab bar on mobile */}
+        <div className="overflow-x-auto -mx-4 md:mx-0 px-4 md:px-0">
+          <div className="flex items-center gap-2 border-b border-[#EBEBEB] pb-4 min-w-max">
+            {(["Winding", "Spray"] as TabType[]).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-4 py-2 text-[14px] font-medium rounded-[8px] transition-colors whitespace-nowrap ${
+                  activeTab === tab
+                    ? "bg-[#00B6E2] text-white"
+                    : "bg-white text-[#5C5C5C] hover:bg-[#F5F7FA]"
+                }`}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -651,7 +702,7 @@ export default function PersonBWorkOrderDetailPage({ params }: DetailPageProps) 
 
           <button
             onClick={openModal}
-            className="flex items-center justify-center gap-2 bg-[#00B6E2] text-white text-[14px] font-medium rounded-[6px] h-[40px] px-[18px] hover:bg-[#0092b5] transition-colors shrink-0"
+            className="flex items-center justify-center gap-2 bg-[#00B6E2] text-white text-[14px] font-medium rounded-[6px] h-[40px] px-[18px] hover:bg-[#0092b5] transition-colors shrink-0 w-full sm:w-auto"
           >
             <Plus className="w-4 h-4 shrink-0" strokeWidth={2.5} />
             <span className="leading-tight truncate">

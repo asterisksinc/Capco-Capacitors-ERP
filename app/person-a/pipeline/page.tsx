@@ -2,6 +2,7 @@
 
 import { useStore } from "@/hooks/useStore";
 import Link from "next/link";
+import { MobileHeader } from "@/components/MobileHeader";
 
 export default function OperatorPipelinePage() {
   const { store, mounted } = useStore();
@@ -40,10 +41,10 @@ export default function OperatorPipelinePage() {
   ];
 
   return (
-    <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-[#FAFAFA] flex flex-col p-6 gap-6">
-      <h1 className="text-[18px] font-semibold text-[#171717] leading-tight">Person A Pipeline</h1>
+    <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-[#FAFAFA] flex flex-col pb-12 overflow-x-hidden">
+      <MobileHeader title="Person A Pipeline" />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 px-4 md:px-6 mt-[72px] md:mt-6">
         {columns.map((col) => (
           <div key={col.title} className="bg-white border border-[#EBEBEB] rounded-[12px] p-4 flex flex-col gap-3">
             <div className="flex items-center justify-between">

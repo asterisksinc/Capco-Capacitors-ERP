@@ -1,18 +1,19 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Search, X, Check } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { useStore } from "@/hooks/useStore";
 import type { TableConfig } from "@/hooks/useTableControls";
 import { useTableControls } from "@/hooks/useTableControls";
 import { SortableHeader } from "@/components/table/SortableHeader";
 import { TableToolbar } from "@/components/table/TableToolbar";
 import type { MaterialRequestItem } from "@/lib/data";
+import { MobileHeader } from "@/components/MobileHeader";
 
 const tableConfig: TableConfig<any> = {
   columns: [
     { key: "id", label: "Request ID", type: "text", sortable: true },
-    { key: "products", label: "Product No", type: "text", sortable: true },
+    { key: "weightInfo", label: "Weight", type: "text", sortable: true },
     { key: "grade", label: "Grade", type: "text", sortable: true },
     { key: "requestedQty", label: "Req Qty", type: "text", sortable: true },
     { key: "status", label: "Status", type: "enum", sortable: false, filter: "dropdown", options: ["Pending", "Partially Issued", "Issued", "Cancelled"] },
@@ -43,9 +44,9 @@ export default function PersonAMaterialRequestsPage() {
       const first = req.items[0];
       return {
         ...req,
-        products: first?.productNo ?? "-",
+        weightInfo: first?.weight ?? "-",
         grade: first?.grade ?? "-",
-        requestedQty: first ? `${first.requestedQty}/${first.weight}` : "-",
+        requestedQty: first?.requestedQty ?? "-",
       };
     });
   }, [store.materialRequests]);
@@ -87,7 +88,9 @@ export default function PersonAMaterialRequestsPage() {
   if (!mounted) return null;
 
   return (
-    <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-white flex flex-col">
+    <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-white flex flex-col overflow-x-hidden">
+      <MobileHeader title="Material Requests" />
+
       {isIssueModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#171717]/40 backdrop-blur-sm px-4">
           <div className="bg-white rounded-[16px] w-full max-w-[600px] shadow-lg flex flex-col overflow-hidden">
@@ -101,7 +104,7 @@ export default function PersonAMaterialRequestsPage() {
             <div className="px-6 py-6 flex flex-col gap-4">
               {issueItems.map((item, idx) => (
                 <div key={idx} className="border border-[#DDE1E8] rounded-[12px] p-4">
-                  <p className="text-[13px] font-semibold text-[#344054] mb-2">{item.productNo} (Requested: {item.requestedQty})</p>
+                  <p className="text-[13px] font-semibold text-[#344054] mb-2">Item {idx + 1} (Weight: {item.weight}, Grade: {item.grade}, Requested: {item.requestedQty})</p>
                   <div className="flex flex-col gap-2">
                     <label className="text-[13px] font-medium">Issued Quantity</label>
                     <input type="number" min="0" value={item.issuedQty} onChange={(e) => updateIssueItem(idx, e.target.value)} className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]" />
@@ -117,18 +120,7 @@ export default function PersonAMaterialRequestsPage() {
         </div>
       )}
 
-      <section className="bg-white w-full flex justify-start border-b border-[#EBEBEB]">
-        <div className="w-full px-6 py-6 pb-4 flex items-start sm:items-center justify-between">
-          <div>
-            <h1 className="text-[16px] font-medium text-[#171717] leading-tight">Material Requests</h1>
-            <p className="text-[14px] font-normal text-[#5C5C5C]">
-              {pendingCount > 0 ? `${pendingCount} pending request(s) from Person B` : "No pending requests from Person B"}
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <div className="w-full px-6 py-6 flex flex-col gap-6">
+      <div className="w-full px-4 md:px-6 pt-[72px] md:pt-6 pb-6 flex flex-col gap-6">
         <section className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="relative max-w-[400px] w-full">
             <Search className="w-4 h-4 text-[#A1A1AA] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -153,7 +145,7 @@ export default function PersonAMaterialRequestsPage() {
                 {filteredData.map((row, idx) => (
                   <tr key={idx} className="hover:bg-gray-50/50 transition-colors group">
                     <td className="px-4 py-4 text-[14px] font-medium text-[#00B6E2]">{row.id}</td>
-                    <td className="px-4 py-4 text-[14px] text-[#5C5C5C]">{row.products}</td>
+                    <td className="px-4 py-4 text-[14px] text-[#5C5C5C]">{row.weightInfo}</td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C]">{row.grade}</td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C]">{row.requestedQty}</td>
                     <td className="px-4 py-4"><StatusBadge status={row.status} /></td>

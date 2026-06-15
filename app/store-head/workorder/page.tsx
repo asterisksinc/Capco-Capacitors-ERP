@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, Search } from "lucide-react";
+import { ChevronDown, Search, Layers, Clock, Activity, CheckCircle } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { useStore, type ComputedWorkOrderSummary } from "@/hooks/useStore";
@@ -11,6 +11,7 @@ import { TableToolbar } from "@/components/table/TableToolbar";
 import { OptionsDropdown } from "@/components/table/OptionsDropdown";
 import { FilterPopover, FilterChips, type FilterConfig, type FilterState, type EnumFilter, type TextFilter, type NumberRangeFilter } from "@/components/table/FilterPopover";
 import { exportToExcel } from "@/lib/exportExcel";
+import { MobileHeader } from "@/components/MobileHeader";
 
 const WO_STATUS_OPTIONS = ["Yet to Start", "In-progress", "Completed"];
 const WO_STAGE_OPTIONS = ["Metallisation", "Raw Material", "Slitting"];
@@ -124,79 +125,103 @@ export default function StoreHeadWorkOrderPage() {
   const completedCount = rows.filter((row) => row.status === "Completed").length;
   const inProgressCount = rows.filter((row) => row.status === "In-progress").length;
   const yetToStartCount = rows.filter((row) => row.status === "Yet to Start").length;
-  const yetRawCount = rows.filter((row) => row.status === "Yet to Start" && row.stage.toLowerCase().includes("raw material")).length;
-  const yetMetCount = rows.filter((row) => row.status === "Yet to Start" && row.stage.toLowerCase().includes("metallisation")).length;
-  const yetSlitCount = rows.filter((row) => row.status === "Yet to Start" && row.stage.toLowerCase().includes("slitting")).length;
-  const inProgressMetCount = rows.filter((row) => row.status === "In-progress" && row.stage.toLowerCase().includes("metallisation")).length;
-  const inProgressSlitCount = rows.filter((row) => row.status === "In-progress" && row.stage.toLowerCase().includes("slitting")).length;
-  const completedSlitCount = rows.filter((row) => row.status === "Completed" && row.stage.toLowerCase().includes("slitting")).length;
 
   const overviewStats = [
     {
       title: "Total Work Orders",
       value: String(totalWorkOrders),
-      subtext: `Yet ${yetToStartCount} | In-progress ${inProgressCount} | Completed ${completedCount}`,
-      subtextClass: "text-[#5C5C5C] font-normal",
+      icon: Layers,
       valClass: "text-[#171717]",
+      subtext: `Yet ${yetToStartCount} | In-progress ${inProgressCount} | Completed ${completedCount}`,
     },
     {
       title: "Yet to Start",
       value: String(yetToStartCount),
-      subtext: `Raw ${yetRawCount} | Met ${yetMetCount} | Slit ${yetSlitCount}`,
-      subtextClass: "text-[#E19242] font-semibold",
-      valClass: "text-[#171717]",
+      icon: Clock,
+      valClass: "text-[#E19242]",
+      subtext: "",
     },
     {
       title: "In-progress",
       value: String(inProgressCount),
-      subtext: `Met ${inProgressMetCount} | Slit ${inProgressSlitCount}`,
-      subtextClass: "text-[#1CB061] font-semibold",
-      valClass: "text-[#171717]",
+      icon: Activity,
+      valClass: "text-[#1CB061]",
+      subtext: "",
     },
     {
       title: "Completed",
       value: String(completedCount),
-      subtext: `Slitting completed ${completedSlitCount}`,
-      subtextClass: "text-[#1CB061] font-semibold",
+      icon: CheckCircle,
       valClass: "text-[#171717]",
+      subtext: "",
     },
   ];
 
   if (!mounted) return null;
 
   return (
-    <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-white flex flex-col relative">
+    <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-white flex flex-col relative overflow-x-hidden">
+      <MobileHeader title="Work Orders" />
+
       <section className="bg-white w-full flex justify-start border-b border-[#EBEBEB]">
-        <div className="w-full px-6 py-6 pb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 h-auto">
+        <div className="w-full px-4 md:px-6 pt-[72px] md:pt-6 pb-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 h-auto">
           <div className="flex flex-col gap-1">
             <h1 className="text-[16px] font-medium text-[#171717] leading-tight">Work Orders</h1>
-            <p className="text-[14px] font-normal text-[#5C5C5C] leading-tight">
+            <p className="text-[14px] font-normal text-[#5C5C5C] leading-tight hidden md:block">
               Lorem ipsum dolor sit amet, consectetur adipiscing elit
             </p>
           </div>
         </div>
       </section>
 
-      <div className="w-full px-6 py-6 flex flex-col gap-6">
-        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 bg-white border border-[#EBEBEB] rounded-[12px] items-center p-5">
-          {overviewStats.map((stat, i) => (
-            <div key={i} className="flex items-center justify-between px-6 py-2 sm:py-0">
-              <div className="flex flex-col gap-[6px]">
-                <p className="text-[12px] font-medium text-[#5C5C5C] leading-tight">{stat.title}</p>
-                <div className="flex items-baseline gap-3">
-                  <span className={`text-[14px] font-semibold leading-tight ${stat.valClass}`}>{stat.value}</span>
-                  <span className={`text-[12px] leading-tight ${stat.subtextClass}`}>{stat.subtext}</span>
+      <div className="w-full px-4 md:px-6 py-6 flex flex-col gap-6">
+        {/* KPI Stats - Mobile 2x2 grid */}
+        <section className="grid grid-cols-2 gap-0 md:hidden bg-white border border-[#EBEBEB] rounded-[12px]">
+          {overviewStats.map((stat, i) => {
+            const Icon = stat.icon;
+            return (
+              <div key={i} className={`p-3 ${i % 2 === 0 ? 'border-r border-b border-[#EBEBEB]' : 'border-b border-[#EBEBEB]'} ${i >= 2 ? 'border-b-0' : ''}`}>
+                <div className="flex items-start gap-2">
+                  <div className="w-8 h-8 rounded-full bg-[#E6F8FD] flex items-center justify-center shrink-0">
+                    <Icon className="w-4 h-4 text-[#00B6E2]" />
+                  </div>
+                  <div className="flex flex-col gap-0.5">
+                    <p className="text-[11px] font-medium text-[#5C5C5C]">{stat.title}</p>
+                    <span className={`text-[16px] font-semibold ${stat.valClass}`}>{stat.value}</span>
+                    {stat.subtext && <span className="text-[10px] text-[#5C5C5C]">{stat.subtext}</span>}
+                  </div>
                 </div>
               </div>
-              {i < overviewStats.length - 1 && (
-                <div className="hidden lg:block w-[1px] h-[37px] bg-[#EAECF0]"></div>
-              )}
-            </div>
-          ))}
+            );
+          })}
+        </section>
+
+        {/* KPI Stats - Desktop row */}
+        <section className="hidden md:grid grid-cols-1 lg:grid-cols-4 bg-white border border-[#EBEBEB] rounded-[12px] items-center p-5">
+          {overviewStats.map((stat, i) => {
+            const Icon = stat.icon;
+            return (
+              <div key={i} className="flex items-center gap-4 px-4 py-2">
+                <div className="w-10 h-10 rounded-full bg-[#E6F8FD] flex items-center justify-center shrink-0">
+                  <Icon className="w-5 h-5 text-[#00B6E2]" />
+                </div>
+                <div className="flex flex-col gap-[2px]">
+                  <p className="text-[12px] font-medium text-[#5C5C5C] leading-tight">{stat.title}</p>
+                  <div className="flex items-baseline gap-2">
+                    <span className={`text-[14px] font-semibold ${stat.valClass}`}>{stat.value}</span>
+                    {stat.subtext && <span className="text-[12px] text-[#5C5C5C]">{stat.subtext}</span>}
+                  </div>
+                </div>
+                {i < overviewStats.length - 1 && (
+                  <div className="hidden lg:block w-[1px] h-[37px] bg-[#EAECF0] ml-auto" />
+                )}
+              </div>
+            );
+          })}
         </section>
 
         <section className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="relative max-w-[400px] w-full">
+          <div className="relative w-full sm:max-w-[400px]">
             <Search className="w-4 h-4 text-[#A1A1AA] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input 
               type="text" 

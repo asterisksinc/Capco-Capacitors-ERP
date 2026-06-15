@@ -4,6 +4,7 @@ import { use, useState, useMemo } from "react";
 import { Plus, X, ChevronRight, Trash2 } from "lucide-react";
 import { useStore } from "@/hooks/useStore";
 import Link from "next/link";
+import { MobileHeader } from "@/components/MobileHeader";
 
 type DetailPageProps = {
   params: Promise<{ detailpage: string }>;
@@ -88,7 +89,9 @@ export default function PersonAProductOrderDetail({ params }: DetailPageProps) {
   }
 
   return (
-    <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-[#FAFAFA] flex flex-col pb-10">
+    <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-[#FAFAFA] flex flex-col pb-10 overflow-x-hidden">
+      <MobileHeader title={productOrder.code} />
+
       {/* Assign Stock Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#171717]/40 backdrop-blur-sm px-4">
@@ -149,9 +152,9 @@ export default function PersonAProductOrderDetail({ params }: DetailPageProps) {
       )}
 
       {/* Header */}
-      <section className="bg-white w-full border-b border-[#EBEBEB]">
-        <div className="w-full px-6 py-5">
-          <div className="flex items-center gap-2 mb-2">
+      <section className="bg-white w-full border-b border-[#EBEBEB] pt-[72px] md:pt-0">
+        <div className="w-full px-4 md:px-6 py-5">
+          <div className="hidden md:flex items-center gap-2 mb-2">
             <Link href="/person-a/product-orders" className="text-[14px] text-[#5C5C5C] hover:text-[#171717]">Product Orders</Link>
             <ChevronRight className="w-4 h-4 text-[#A1A1AA]" />
             <span className="text-[14px] font-medium text-[#00B6E2]">{productOrder.id}</span>
@@ -161,13 +164,13 @@ export default function PersonAProductOrderDetail({ params }: DetailPageProps) {
               <h1 className="text-[20px] font-semibold text-[#171717]">{productOrder.code}</h1>
               <p className="text-[14px] text-[#5C5C5C] mt-1">Assign stock to Person B for this product order</p>
             </div>
-            <span className="bg-[#E6F8FD] text-[#00B6E2] text-[12px] font-medium px-3 py-[6px] rounded-[24px]">{productOrder.grade} Grade</span>
+            <span className="bg-[#E6F8FD] text-[#00B6E2] text-[12px] font-medium px-3 py-[6px] rounded-[24px] whitespace-nowrap">{productOrder.grade} Grade</span>
           </div>
         </div>
       </section>
 
       {/* Product Order Info */}
-      <section className="bg-white mx-6 mt-6 border border-[#EBEBEB] rounded-[12px] p-5">
+      <section className="bg-white mx-4 md:mx-6 mt-6 border border-[#EBEBEB] rounded-[12px] p-5">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div><p className="text-[12px] text-[#5C5C5C]">Capacitor Type</p><p className="text-[14px] font-medium text-[#171717]">{productOrder.type}</p></div>
           <div><p className="text-[12px] text-[#5C5C5C]">Grade</p><p className="text-[14px] font-medium text-[#171717]">{productOrder.grade}</p></div>
@@ -177,15 +180,16 @@ export default function PersonAProductOrderDetail({ params }: DetailPageProps) {
       </section>
 
       {/* Assigned Stocks */}
-      <section className="bg-white mx-6 mt-6 border border-[#EBEBEB] rounded-[12px]">
-        <div className="px-6 py-5 border-b border-[#EBEBEB] flex items-center justify-between">
-          <div>
+      <section className="bg-white mx-4 md:mx-6 mt-6 border border-[#EBEBEB] rounded-[12px]">
+        <div className="px-4 md:px-6 py-5 border-b border-[#EBEBEB] flex items-center justify-between gap-4">
+          <div className="min-w-0">
             <h2 className="text-[16px] font-semibold text-[#171717]">Assigned Stocks</h2>
             <p className="text-[13px] text-[#5C5C5C] mt-1">{assignedStocks.length} stock item(s) assigned to this product order</p>
           </div>
-          <button onClick={() => { setSelectedIds(new Set()); setIsModalOpen(true); }} className="flex items-center gap-2 bg-[#00B6E2] text-white text-[14px] font-medium rounded-[6px] h-[40px] px-[18px] hover:bg-[#0092b5] transition-colors">
+          <button onClick={() => { setSelectedIds(new Set()); setIsModalOpen(true); }} className="flex items-center gap-2 bg-[#00B6E2] text-white text-[14px] font-medium rounded-[6px] h-[40px] px-[18px] hover:bg-[#0092b5] transition-colors shrink-0">
             <Plus className="w-4 h-4" strokeWidth={2.5} />
-            <span>Assign Stock</span>
+            <span className="hidden sm:inline">Assign Stock</span>
+            <span className="sm:hidden">Assign</span>
           </button>
         </div>
         <div className="overflow-x-auto">

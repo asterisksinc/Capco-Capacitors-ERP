@@ -4,6 +4,7 @@ import { Search, Bell, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Fragment } from "react";
+import { UserSwitcher } from "@/components/UserSwitcher";
 
 export function PersonBTopbar() {
   const pathname = usePathname();
@@ -13,8 +14,7 @@ export function PersonBTopbar() {
     const paths = [];
     const segments = pathname.split("/").filter(Boolean);
     
-    // Check if we are inside PersonB
-    const PersonBIndex = segments.indexOf("PersonB");
+    const PersonBIndex = segments.indexOf("person-b");
     if (PersonBIndex !== -1) {
       const relevantSegments = segments.slice(PersonBIndex + 1);
       
@@ -43,7 +43,7 @@ export function PersonBTopbar() {
   const breadcrumbs = getBreadcrumbs();
 
   return (
-    <header className="h-[72px] shrink-0 bg-white border-b border-[#EBEBEB] flex items-center justify-between px-6 font-dm-sans sticky top-0 z-10 w-full">
+    <header className="hidden md:flex h-[72px] shrink-0 bg-white border-b border-[#EBEBEB] items-center justify-between px-4 md:px-6 font-dm-sans sticky top-0 z-10 w-full">
       <div className="flex items-center gap-1 text-[12px] font-dm-sans">
         <Link href="/person-b/overview" className="text-[#5C5C5C] hover:text-[#171717] transition-colors">
           Home
@@ -64,7 +64,7 @@ export function PersonBTopbar() {
 
       <div className="flex items-center gap-4">
         {/* Search */}
-        <div className="relative w-[291px] h-[40px] flex items-center border border-[#EBEBEB] rounded-[6px] px-[10px] gap-2 bg-white">
+        <div className="hidden lg:flex relative w-[291px] h-[40px] items-center border border-[#EBEBEB] rounded-[6px] px-[10px] gap-2 bg-white">
           <Search className="w-5 h-5 text-[#525866]" />
           <input
             type="text"
@@ -74,6 +74,7 @@ export function PersonBTopbar() {
         </div>
 
         {/* Notifications */}
+        <UserSwitcher />
         <button className="w-[40px] h-[40px] flex items-center justify-center border border-[#EBEBEB] rounded-[6px] relative bg-white transition-colors hover:bg-gray-50">
           <Bell className="w-5 h-5 text-[#171717]" />
           <span className="absolute top-[8px] right-[10px] w-[6px] h-[6px] bg-[#FB3748] rounded-full border-[1px] border-white"></span>

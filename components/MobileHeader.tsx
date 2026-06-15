@@ -1,7 +1,8 @@
 "use client";
 
-import { Menu, Bell, User } from "lucide-react";
+import { Menu, Bell } from "lucide-react";
 import { useMobileMenu } from "@/components/MobileMenuContext";
+import { UserSwitcher } from "@/components/UserSwitcher";
 
 export function MobileHeader({ title }: { title: string }) {
   const { setIsMobileMenuOpen } = useMobileMenu();
@@ -16,9 +17,7 @@ export function MobileHeader({ title }: { title: string }) {
         <button className="p-2">
           <Bell className="w-5 h-5 text-[#171717]" />
         </button>
-        <div className="w-8 h-8 rounded-full bg-[#F5F7FA] flex items-center justify-center">
-          <User className="w-4 h-4 text-[#5C5C5C]" />
-        </div>
+        <UserSwitcher />
       </div>
     </section>
   );

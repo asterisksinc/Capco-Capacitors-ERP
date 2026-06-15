@@ -1,6 +1,7 @@
 "use client";
 
-import { Search, Plus, X, ChevronRight, Check } from "lucide-react";
+import { Search, Plus, X, ChevronRight, Check, Layers, Ruler, Weight, Package } from "lucide-react";
+import { MobileHeader, MobileSpacer } from "@/components/MobileHeader";
 import { use, useState, useMemo } from "react";
 import { useStore } from "@/hooks/useStore";
 import { computeWorkflowProgress } from "../../../../lib/data";
@@ -336,8 +337,17 @@ export default function SupervisorWorkOrderDetailPage({ params }: DetailPageProp
     );
   };
 
+  const kpiStats = [
+    { label: "Word Count", value: workOrderFlowData.overview.wordCount, icon: Layers },
+    { label: "Micron", value: workOrderFlowData.overview.micron, icon: Ruler },
+    { label: "Width", value: workOrderFlowData.overview.width, icon: Ruler },
+    { label: "Quantity", value: workOrderFlowData.overview.quantity, icon: Package },
+  ];
+
   return (
-    <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-white flex flex-col relative w-full lg:max-w-none pb-12">
+    <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-white flex flex-col relative w-full lg:max-w-none pb-12 overflow-x-hidden">
+      <MobileHeader title="Work Order Detail" />
+
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#171717]/40 backdrop-blur-sm px-4">
           <div className="bg-white rounded-[16px] w-full max-w-[860px] shadow-lg flex flex-col overflow-hidden">
@@ -397,41 +407,92 @@ export default function SupervisorWorkOrderDetailPage({ params }: DetailPageProp
         </div>
       )}
 
-      <div className="flex items-center gap-2 px-6 pt-6 mb-2">
+      {/* KPI Stats - Mobile 2x2 grid */}
+      <section className="grid grid-cols-2 gap-0 md:hidden mx-4 mt-[72px] bg-white border border-[#EBEBEB] rounded-[12px]">
+        {kpiStats.map((stat, i) => {
+          const Icon = stat.icon;
+          return (
+            <div key={i} className={`p-3 ${i % 2 === 0 ? 'border-r border-b border-[#EBEBEB]' : 'border-b border-[#EBEBEB]'} ${i >= 2 ? 'border-b-0' : ''}`}>
+              <div className="flex items-start gap-2">
+                <div className="w-8 h-8 rounded-full bg-[#E6F8FD] flex items-center justify-center shrink-0">
+                  <Icon className="w-4 h-4 text-[#00B6E2]" />
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  <p className="text-[11px] font-medium text-[#5C5C5C]">{stat.label}</p>
+                  <span className="text-[16px] font-semibold text-[#171717]">{stat.value}</span>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </section>
+
+      {/* Additional detail info - Mobile */}
+      <section className="md:hidden mx-4 mt-3 mb-2 flex flex-wrap gap-2">
+        {[
+          { label: "Stage", value: workflowProgress.stage },
+          { label: "Date", value: workOrderFlowData.overview.date },
+          { label: "Status", value: workflowProgress.status },
+        ].map((field, idx) => (
+          <div key={idx} className="flex items-center gap-1.5 bg-[#F5F7FA] rounded-[8px] px-3 py-1.5">
+            <span className="text-[11px] text-[#5C5C5C]">{field.label}:</span>
+            <span className="text-[12px] font-semibold text-[#171717]">
+              {field.label === "Status" ? <StatusBadge status={field.value} /> : field.value}
+            </span>
+          </div>
+        ))}
+      </section>
+
+      {/* KPI Stats - Desktop row */}
+      <section className="hidden md:flex items-center gap-2 px-4 md:px-6 pt-6 mb-2">
         <span className="text-[14px] font-medium text-[#5C5C5C] leading-tight">Work Orders</span>
         <ChevronRight className="w-4 h-4 text-[#A1A1AA]" />
         <span className="text-[14px] font-medium text-[#00B6E2] leading-tight">{orderId}</span>
-      </div>
+      </section>
 
-      <section className="w-full px-6 py-6 flex flex-col gap-6 border-b border-[#EBEBEB]">
-        <h1 className="text-[18px] font-semibold text-[#171717] leading-tight">Work Orders Overview</h1>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-y-6 gap-x-4">
-          {[
-            { label: "Word Count", value: workOrderFlowData.overview.wordCount },
-            { label: "Micron", value: workOrderFlowData.overview.micron },
-            { label: "Width", value: workOrderFlowData.overview.width },
-            { label: "Quantity", value: workOrderFlowData.overview.quantity },
-            { label: "Stage", value: workflowProgress.stage },
-            { label: "Date", value: workOrderFlowData.overview.date },
-            { label: "Status", value: <StatusBadge status={workflowProgress.status} /> },
-          ].map((field, idx) => (
-            <div key={idx} className="flex flex-col gap-[6px]">
-              <span className="text-[14px] font-normal text-[#5C5C5C] leading-tight">{field.label}</span>
-              <div className="text-[14px] font-semibold text-[#171717] leading-tight flex items-center h-5">
-                {field.value}
+      <section className="hidden md:grid grid-cols-1 lg:grid-cols-4 mx-4 md:mx-6 bg-white border border-[#EBEBEB] rounded-[12px] items-center p-5">
+        {kpiStats.map((stat, i) => {
+          const Icon = stat.icon;
+          return (
+            <div key={i} className="flex items-center gap-4 px-4 py-2">
+              <div className="w-10 h-10 rounded-full bg-[#E6F8FD] flex items-center justify-center shrink-0">
+                <Icon className="w-5 h-5 text-[#00B6E2]" />
               </div>
+              <div className="flex flex-col gap-[2px]">
+                <p className="text-[12px] font-medium text-[#5C5C5C] leading-tight">{stat.label}</p>
+                <span className="text-[14px] font-semibold text-[#171717]">{stat.value}</span>
+              </div>
+              {i < kpiStats.length - 1 && (
+                <div className="hidden lg:block w-[1px] h-[37px] bg-[#EAECF0] ml-auto" />
+              )}
             </div>
-          ))}
+          );
+        })}
+      </section>
+
+      {/* Additional detail info - Desktop */}
+      <section className="hidden md:flex items-center gap-6 px-4 md:px-6 py-4 border-b border-[#EBEBEB] mx-4 md:mx-6">
+        <div className="flex items-center gap-2">
+          <span className="text-[14px] text-[#5C5C5C]">Stage:</span>
+          <span className="text-[14px] font-semibold text-[#171717]">{workflowProgress.stage}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-[14px] text-[#5C5C5C]">Date:</span>
+          <span className="text-[14px] font-semibold text-[#171717]">{workOrderFlowData.overview.date}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-[14px] text-[#5C5C5C]">Status:</span>
+          <StatusBadge status={workflowProgress.status} />
         </div>
       </section>
 
-      <section className="w-full px-6 py-6 flex flex-col gap-6">
-        <div className="flex items-center gap-2 border-b border-[#EBEBEB] pb-4">
+      <section className="w-full px-4 md:px-6 py-6 flex flex-col gap-6">
+        <div className="flex items-center gap-2 border-b border-[#EBEBEB] pb-4 overflow-x-auto overflow-y-hidden scrollbar-none">
           {(["Raw Material", "Metallisation", "Slitting"] as TabType[]).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-4 py-2 text-[14px] font-medium rounded-[8px] transition-colors ${
+              className={`px-3 md:px-4 py-2 text-[13px] md:text-[14px] font-medium rounded-[8px] transition-colors whitespace-nowrap shrink-0 ${
                 activeTab === tab
                   ? "bg-[#00B6E2] text-white"
                   : "bg-white text-[#5C5C5C] hover:bg-[#F5F7FA]"
@@ -442,19 +503,19 @@ export default function SupervisorWorkOrderDetailPage({ params }: DetailPageProp
           ))}
         </div>
 
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="relative w-full max-w-[291px] h-[40px] flex items-center border border-[#EBEBEB] rounded-[6px] px-[10px] gap-2 bg-white shrink-0">
-            <Search className="w-5 h-5 text-[#525866]" />
-            <input type="text" placeholder="Search" className="w-full bg-transparent text-[14px] text-[#171717] placeholder:text-[#525866] focus:outline-none" />
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <div className="relative w-full sm:max-w-[291px] h-[40px] flex items-center border border-[#EBEBEB] rounded-[6px] px-[10px] gap-2 bg-white">
+            <Search className="w-5 h-5 shrink-0 text-[#525866]" />
+            <input type="text" placeholder="Search" className="w-full min-w-0 bg-transparent text-[14px] text-[#171717] placeholder:text-[#525866] focus:outline-none" />
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4 w-full sm:w-auto">
             <TableToolbar dateRange={dateRange} onDateRangeChange={setDateRange} onExport={() => alert("Exporting data...")} />
 
             {activeTab === "Raw Material" && (
-              <button onClick={openModal} className="flex items-center justify-center gap-2 bg-[#00B6E2] text-white text-[14px] font-medium rounded-[6px] h-[40px] px-[18px] hover:bg-[#0092b5] transition-colors shrink-0">
+              <button onClick={openModal} className="flex items-center justify-center gap-2 bg-[#00B6E2] text-white text-[14px] font-medium rounded-[6px] h-[40px] px-4 sm:px-[18px] hover:bg-[#0092b5] transition-colors shrink-0 whitespace-nowrap w-full sm:w-auto">
                 <Plus className="w-4 h-4 shrink-0" strokeWidth={2.5} />
-                <span className="leading-tight truncate">Add Raw Material</span>
+                <span className="leading-tight">Add Raw Material</span>
               </button>
             )}
           </div>

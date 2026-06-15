@@ -1,8 +1,9 @@
 "use client";
 
 import { use, useState, useMemo } from "react";
-import { Plus, X, Check } from "lucide-react";
+import { Plus, X, Check, ChevronRight } from "lucide-react";
 import { useStore } from "@/hooks/useStore";
+import { MobileHeader } from "@/components/MobileHeader";
 import type { TableConfig } from "@/hooks/useTableControls";
 import { useTableControls } from "@/hooks/useTableControls";
 import { SortableHeader } from "@/components/table/SortableHeader";
@@ -355,7 +356,9 @@ export default function PersonBProductOrderDetail({ params }: DetailPageProps) {
   if (!mounted) return null;
 
   return (
-    <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-[#FAFAFA] flex flex-col relative w-full pt-[72px] md:pt-0 pb-10">
+    <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-[#FAFAFA] flex flex-col relative pb-10 overflow-x-hidden">
+      <MobileHeader title={productOrder?.code ?? displayId} />
+
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#171717]/40 backdrop-blur-sm px-4">
           <div className="bg-white rounded-[16px] w-full max-w-[700px] shadow-lg flex flex-col overflow-hidden">
@@ -470,12 +473,15 @@ export default function PersonBProductOrderDetail({ params }: DetailPageProps) {
       )}
 
       {/* Header section */}
-      <section className="bg-white w-full flex justify-start border-b border-[#EBEBEB]">
-        <div className="w-full px-6 py-5 flex items-center justify-between">
+      <section className="bg-white w-full border-b border-[#EBEBEB] pt-[72px] md:pt-0">
+        <div className="w-full px-4 md:px-6 py-5 flex items-center justify-between">
           <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-3">
-              <h1 className="text-[20px] font-semibold text-[#171717] leading-tight">Product Order Details</h1>
+            <div className="hidden md:flex items-center gap-2 mb-1">
+              <span className="text-[14px] text-[#5C5C5C] leading-tight">Product Orders</span>
+              <ChevronRight className="w-4 h-4 text-[#A1A1AA]" />
+              <span className="text-[14px] font-medium text-[#00B6E2]">{displayId}</span>
             </div>
+            <h1 className="text-[20px] font-semibold text-[#171717] leading-tight">Product Order Details</h1>
             <p className="text-[14px] text-[#5C5C5C] flex items-center gap-2">
               {productOrder ? `${productOrder.code} — ${productOrder.grade} Grade` : displayId}
             </p>
@@ -488,55 +494,57 @@ export default function PersonBProductOrderDetail({ params }: DetailPageProps) {
 
       {/* Detail grid */}
       {productOrder && (
-        <section className="bg-white px-6 py-6 border-b border-[#EBEBEB] grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-y-6 gap-x-4">
+        <section className="bg-white mx-4 md:mx-6 mt-6 border border-[#EBEBEB] rounded-[12px] p-5 grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div className="flex flex-col gap-1">
-            <span className="text-[13px] text-[#5C5C5C]">Product Code</span>
+            <span className="text-[12px] text-[#5C5C5C]">Product Code</span>
             <span className="text-[14px] font-medium text-[#171717]">{productOrder.code}</span>
           </div>
           <div className="flex flex-col gap-1">
-            <span className="text-[13px] text-[#5C5C5C]">Capacitor Type</span>
+            <span className="text-[12px] text-[#5C5C5C]">Capacitor Type</span>
             <span className="text-[14px] font-medium text-[#171717]">{productOrder.type}</span>
           </div>
           <div className="flex flex-col gap-1">
-            <span className="text-[13px] text-[#5C5C5C]">Grade</span>
+            <span className="text-[12px] text-[#5C5C5C]">Grade</span>
             <span className="text-[14px] font-medium text-[#171717]">{productOrder.grade}</span>
           </div>
           <div className="flex flex-col gap-1">
-            <span className="text-[13px] text-[#5C5C5C]">Batch Size</span>
+            <span className="text-[12px] text-[#5C5C5C]">Batch Size</span>
             <span className="text-[14px] font-medium text-[#171717]">{productOrder.batchSize}</span>
           </div>
         </section>
       )}
 
-      <section className="bg-white m-6 border border-[#EBEBEB] rounded-[8px]">
-        {/* Tabs */}
-        <div className="flex gap-2 px-6 pt-5 pb-5 border-b border-[#EBEBEB]">
-          {(["Product Material", "Metallisation", "Slitting", "Winding", "Spray"] as TabType[]).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-[16px] py-[8px] rounded-[6px] text-[14px] font-medium transition-colors ${
-                activeTab === tab 
-                  ? "bg-[#00B6E2] text-white" 
-                  : "bg-[#F5F7FA] text-[#5C5C5C] hover:bg-[#e4e7ec]"
-              }`}
-            >
-              {tab}
-            </button>
-          ))}
+      <section className="bg-white mx-4 md:mx-6 mt-6 border border-[#EBEBEB] rounded-[8px]">
+        {/* Scrollable tab bar on mobile */}
+        <div className="overflow-x-auto px-4 md:px-0">
+          <div className="flex gap-2 px-0 md:px-6 pt-5 pb-5 border-b border-[#EBEBEB] min-w-max">
+            {(["Product Material", "Metallisation", "Slitting", "Winding", "Spray"] as TabType[]).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-[16px] py-[8px] rounded-[6px] text-[14px] font-medium transition-colors whitespace-nowrap ${
+                  activeTab === tab 
+                    ? "bg-[#00B6E2] text-white" 
+                    : "bg-[#F5F7FA] text-[#5C5C5C] hover:bg-[#e4e7ec]"
+                }`}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
         </div>
 
-        <div className="px-6 py-6 flex flex-col gap-4">
+        <div className="px-4 md:px-6 py-6 flex flex-col gap-4">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <TableToolbar dateRange={dateRange} onDateRangeChange={setDateRange} onExport={() => alert("Exporting data...")} />
-            <div className="flex items-center gap-3 w-full sm:w-auto">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
               {activeTab === "Winding" && (
-                <button onClick={openWindingModal} className="h-[40px] px-4 bg-[#00B6E2] hover:bg-[#0092b5] text-white text-[14px] font-medium rounded-[8px] flex items-center justify-center gap-2 whitespace-nowrap transition-colors">
+                <button onClick={openWindingModal} className="h-[40px] px-4 bg-[#00B6E2] hover:bg-[#0092b5] text-white text-[14px] font-medium rounded-[8px] flex items-center justify-center gap-2 whitespace-nowrap transition-colors w-full sm:w-auto">
                    + Winding
                 </button>
               )}
               {activeTab === "Spray" && (
-                 <button onClick={openSprayModal} className="h-[40px] px-4 bg-[#00B6E2] hover:bg-[#0092b5] text-white text-[14px] font-medium rounded-[8px] flex items-center justify-center gap-2 whitespace-nowrap transition-colors">
+                 <button onClick={openSprayModal} className="h-[40px] px-4 bg-[#00B6E2] hover:bg-[#0092b5] text-white text-[14px] font-medium rounded-[8px] flex items-center justify-center gap-2 whitespace-nowrap transition-colors w-full sm:w-auto">
                    + Spray
                  </button>
               )}

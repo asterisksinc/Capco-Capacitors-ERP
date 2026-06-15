@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { Plus, X, ChevronDown, Search, Info, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, X, ChevronDown, Search, Info, ChevronLeft, ChevronRight, ClipboardList, Clock, Activity, CheckCircle } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useStore } from "@/hooks/useStore";
+import { MobileHeader } from "@/components/MobileHeader";
 
 type ProductOrderRow = {
   id: string;
@@ -237,8 +238,22 @@ export default function PersonBProductOrdersPage() {
     setCurrentPage(1);
   };
 
+  const totalPO = productOrders.length;
+  const poInProgress = productOrders.filter((p) => p.status === "In-progress").length;
+  const poYetToStart = productOrders.filter((p) => p.status === "Yet to Start").length;
+  const poCompleted = productOrders.filter((p) => p.status === "Completed").length;
+
+  const kpiStats = [
+    { label: "Total Product Orders", value: String(totalPO), icon: ClipboardList, valClass: "text-[#171717]", subtext: `${poInProgress} in-progress` },
+    { label: "Yet to Start", value: String(poYetToStart), icon: Clock, valClass: "text-[#FB3748]", subtext: "Pending processing" },
+    { label: "In Progress", value: String(poInProgress), icon: Activity, valClass: "text-[#E19242]", subtext: "Active production" },
+    { label: "Completed", value: String(poCompleted), icon: CheckCircle, valClass: "text-[#1CB061]", subtext: "Ready for next stage" },
+  ];
+
   return (
-    <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-white flex flex-col relative">
+    <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-white flex flex-col relative overflow-x-hidden">
+      <MobileHeader title="Product Orders" />
+
       {/* Modal Overlay */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#171717]/40 backdrop-blur-sm px-4">
@@ -492,8 +507,8 @@ export default function PersonBProductOrdersPage() {
       )}
 
       {/* Header section */}
-      <section className="bg-white w-full flex justify-start border-b border-[#EBEBEB]">
-        <div className="w-full px-6 py-6 pb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 h-auto">
+      <section className="bg-white w-full flex justify-start border-b border-[#EBEBEB] pt-[72px] md:pt-0">
+        <div className="w-full px-4 md:px-6 py-6 pb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex flex-col gap-1">
             <h1 className="text-[18px] font-semibold text-[#171717] leading-tight">Product Orders</h1>
             <p className="text-[14px] font-normal text-[#5C5C5C] leading-tight">
@@ -502,7 +517,7 @@ export default function PersonBProductOrdersPage() {
           </div>
           <button 
             onClick={openNewOrderModal}
-            className="flex items-center justify-center gap-2 bg-[#00B6E2] text-white text-[14px] font-medium rounded-[6px] h-[40px] px-[18px] hover:bg-[#0092b5] transition-colors shrink-0"
+            className="flex items-center justify-center gap-2 bg-[#00B6E2] text-white text-[14px] font-medium rounded-[6px] h-[40px] px-[18px] hover:bg-[#0092b5] transition-colors shrink-0 w-full sm:w-auto"
           >
             <Plus className="w-5 h-5 shrink-0" strokeWidth={2.5} />
             <span className="leading-tight">Add Product Order</span>
@@ -511,58 +526,51 @@ export default function PersonBProductOrdersPage() {
       </section>
 
       {/* Main Content */}
-      <div className="w-full px-6 flex flex-col gap-6 mt-6 mb-6">
+      <div className="w-full px-4 md:px-6 flex flex-col gap-6 mt-6 mb-6 pb-20 sm:pb-0">
         
-        {/* Stats Section */}
-        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 bg-white border border-[#EBEBEB] rounded-[12px] items-center p-5 shadow-sm">
-          <div className="flex items-center justify-between px-6 py-2 sm:py-0">
-            <div className="flex flex-col gap-[8px]">
-              <p className="text-[12px] font-medium text-[#5C5C5C] leading-tight">Total Product Orders</p>
-              <div className="flex items-baseline gap-3">
-                <span className="text-[20px] font-semibold leading-tight text-[#171717]">148</span>
-                <span className="text-[12px] leading-tight text-[#5C5C5C]">
-                  <span className="text-[#1CB061] font-medium">12%</span> vs Last Month
-                </span>
+        {/* Mobile KPI 2x2 */}
+        <section className="grid grid-cols-2 gap-0 md:hidden mt-[72px] bg-white border border-[#EBEBEB] rounded-[12px]">
+          {kpiStats.map((stat, i) => {
+            const Icon = stat.icon;
+            return (
+              <div key={i} className={`p-3 ${i % 2 === 0 ? 'border-r border-b border-[#EBEBEB]' : 'border-b border-[#EBEBEB]'} ${i >= 2 ? 'border-b-0' : ''}`}>
+                <div className="flex items-start gap-2">
+                  <div className="w-8 h-8 rounded-full bg-[#E6F8FD] flex items-center justify-center shrink-0">
+                    <Icon className="w-4 h-4 text-[#00B6E2]" />
+                  </div>
+                  <div className="flex flex-col gap-0.5">
+                    <p className="text-[11px] font-medium text-[#5C5C5C]">{stat.label}</p>
+                    <span className={`text-[16px] font-semibold ${stat.valClass}`}>{stat.value}</span>
+                    <span className="text-[10px] text-[#5C5C5C]">{stat.subtext}</span>
+                  </div>
+                </div>
               </div>
-            </div>
-            <div className="hidden lg:block w-[1px] h-[37px] bg-[#EAECF0]"></div>
-          </div>
-          
-          <div className="flex items-center justify-between px-6 py-2 sm:py-0">
-            <div className="flex flex-col gap-[8px]">
-              <p className="text-[12px] font-medium text-[#5C5C5C] leading-tight">Units Planned</p>
-              <div className="flex items-baseline gap-3">
-                <span className="text-[20px] font-semibold leading-tight text-[#171717]">24,500</span>
-                <span className="text-[12px] leading-tight text-[#5C5C5C]">
-                  18 active SKUs
-                </span>
-              </div>
-            </div>
-            <div className="hidden lg:block w-[1px] h-[37px] bg-[#EAECF0]"></div>
-          </div>
+            );
+          })}
+        </section>
 
-          <div className="flex items-center justify-between px-6 py-2 sm:py-0">
-            <div className="flex flex-col gap-[8px]">
-              <p className="text-[12px] font-medium text-[#5C5C5C] leading-tight">In-Progress Orders</p>
-              <div className="flex items-baseline gap-3">
-                <span className="text-[20px] font-semibold leading-tight text-[#171717]">37</span>
-                <span className="text-[12px] leading-tight text-[#5C5C5C]">
-                  <span className="text-[#1CB061] font-medium">+0.2%</span> vs Last Month
-                </span>
+        {/* Desktop KPI row */}
+        <section className="hidden md:grid grid-cols-1 lg:grid-cols-4 bg-white border border-[#EBEBEB] rounded-[12px] items-center p-5">
+          {kpiStats.map((stat, i) => {
+            const Icon = stat.icon;
+            return (
+              <div key={i} className="flex items-center gap-4 px-4 py-2">
+                <div className="w-10 h-10 rounded-full bg-[#E6F8FD] flex items-center justify-center shrink-0">
+                  <Icon className="w-5 h-5 text-[#00B6E2]" />
+                </div>
+                <div className="flex flex-col gap-[2px]">
+                  <p className="text-[12px] font-medium text-[#5C5C5C] leading-tight">{stat.label}</p>
+                  <div className="flex items-baseline gap-2">
+                    <span className={`text-[14px] font-semibold ${stat.valClass}`}>{stat.value}</span>
+                    <span className="text-[12px] text-[#5C5C5C]">{stat.subtext}</span>
+                  </div>
+                </div>
+                {i < kpiStats.length - 1 && (
+                  <div className="hidden lg:block w-[1px] h-[37px] bg-[#EAECF0] ml-auto" />
+                )}
               </div>
-            </div>
-            <div className="hidden lg:block w-[1px] h-[37px] bg-[#EAECF0]"></div>
-          </div>
-
-          <div className="flex items-center justify-between px-6 py-2 sm:py-0">
-            <div className="flex flex-col gap-[8px]">
-              <p className="text-[12px] font-medium text-[#5C5C5C] leading-tight">Pending Orders</p>
-              <div className="flex items-baseline gap-3">
-                <span className="text-[20px] font-semibold leading-tight text-[#171717]">22</span>
-                <span className="text-[12px] leading-tight text-[#FB3748] font-medium">Critical</span>
-              </div>
-            </div>
-          </div>
+            );
+          })}
         </section>
 
         {/* Filters Row */}

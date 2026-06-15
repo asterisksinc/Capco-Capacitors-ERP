@@ -7,6 +7,7 @@ import type { TableConfig } from "@/hooks/useTableControls";
 import { useTableControls } from "@/hooks/useTableControls";
 import { SortableHeader } from "@/components/table/SortableHeader";
 import { TableToolbar } from "@/components/table/TableToolbar";
+import { MobileHeader } from "@/components/MobileHeader";
 
 const tableConfig: TableConfig<any> = {
   columns: [
@@ -96,7 +97,9 @@ export default function MaterialReturnsPage() {
   if (!mounted) return null;
 
   return (
-    <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-white flex flex-col">
+    <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-white flex flex-col overflow-x-hidden">
+      <MobileHeader title="Material Returns" />
+
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#171717]/40 backdrop-blur-sm px-4">
           <div className="bg-white rounded-[16px] w-full max-w-[600px] shadow-lg flex flex-col overflow-hidden">
@@ -142,26 +145,20 @@ export default function MaterialReturnsPage() {
         </div>
       )}
 
-      <section className="bg-white w-full flex justify-start border-b border-[#EBEBEB]">
-        <div className="w-full px-6 py-6 pb-4 flex items-start sm:items-center justify-between">
-          <div>
-            <h1 className="text-[16px] font-medium text-[#171717] leading-tight">Material Returns</h1>
-            <p className="text-[14px] font-normal text-[#5C5C5C]">Return unused or rejected materials to inventory</p>
-          </div>
-          <button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2 bg-[#00B6E2] text-white text-[14px] font-medium rounded-[6px] h-[40px] px-[18px] hover:bg-[#0092b5] transition-colors shrink-0">
-            <Plus className="w-5 h-5" strokeWidth={2.5} />
-            <span>Return Material</span>
-          </button>
-        </div>
-      </section>
-
-      <div className="w-full px-6 py-6 flex flex-col gap-6">
+      <div className="w-full px-4 md:px-6 pt-[72px] md:pt-6 pb-6 flex flex-col gap-6">
         <section className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="relative max-w-[400px] w-full">
             <Search className="w-4 h-4 text-[#A1A1AA] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search by Return ID..." className="h-[40px] w-full pl-9 pr-3 bg-white border border-[#EBEBEB] rounded-[8px] text-[14px] placeholder:text-[#A1A1AA] focus:outline-none focus:border-[#00B6E2]" />
           </div>
-          <TableToolbar dateRange={dateRange} onDateRangeChange={setDateRange} onExport={() => alert("Exporting...")} />
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+            <TableToolbar dateRange={dateRange} onDateRangeChange={setDateRange} onExport={() => alert("Exporting...")} />
+            <button onClick={() => setIsModalOpen(true)} className="flex items-center justify-center gap-2 bg-[#00B6E2] text-white text-[14px] font-medium rounded-[6px] h-[40px] px-[18px] hover:bg-[#0092b5] transition-colors shrink-0 whitespace-nowrap w-full sm:w-auto">
+              <Plus className="w-5 h-5" strokeWidth={2.5} />
+              <span className="hidden sm:inline">Return Material</span>
+              <span className="sm:hidden">Return</span>
+            </button>
+          </div>
         </section>
 
         <section className="bg-white rounded-[12px] flex flex-col gap-4 overflow-hidden">
