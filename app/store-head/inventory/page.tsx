@@ -1,9 +1,10 @@
 "use client";
 
-import { Plus, Search, X, Check } from "lucide-react";
+import { Plus, Search, X, Check, Package, Warehouse, Activity, Archive } from "lucide-react";
 import { useState } from "react";
 import { useStore } from "@/hooks/useStore";
 import type { InventoryItem } from "@/lib/data";
+import { MobileHeader } from "@/components/MobileHeader";
 
 type ModalStep = 1 | 2 | 3;
 
@@ -76,6 +77,13 @@ export default function StoreHeadInventoryPage() {
   const inInventory = inventoryItems.filter((r) => r.status === "In Inventory").length;
   const beingUsed = inventoryItems.filter((r) => r.status === "Being Used").length;
   const usedUp = inventoryItems.filter((r) => r.status === "Used Completely").length;
+
+  const kpiStats = [
+    { label: "Total Raw Materials", value: String(totalItems), icon: Package, valClass: "text-[#171717]", subtext: "Lots in stock" },
+    { label: "In Inventory", value: String(inInventory), icon: Warehouse, valClass: "text-[#1CB061]", subtext: "Available" },
+    { label: "Being Used", value: String(beingUsed), icon: Activity, valClass: "text-[#E19242]", subtext: "In process" },
+    { label: "Used Completely", value: String(usedUp), icon: Archive, valClass: "text-[#667085]", subtext: "Depleted" },
+  ];
 
   const isFormValid = () => {
     return Boolean(
@@ -202,7 +210,9 @@ export default function StoreHeadInventoryPage() {
   };
 
   return (
-    <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-white flex flex-col">
+    <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-white flex flex-col overflow-x-hidden">
+      <MobileHeader title="Inventory" />
+
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#171717]/40 backdrop-blur-sm px-4">
           <div className="bg-white rounded-[16px] w-full max-w-[660px] shadow-lg flex flex-col overflow-hidden">
@@ -238,63 +248,66 @@ export default function StoreHeadInventoryPage() {
       )}
 
       <section className="bg-white w-full flex justify-start border-b border-[#EBEBEB]">
-        <div className="w-full px-6 py-6 pb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 h-auto">
+        <div className="w-full px-4 md:px-6 pt-[72px] md:pt-6 pb-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 h-auto">
           <div className="flex flex-col gap-1">
             <h1 className="text-[16px] font-medium text-[#171717] leading-tight">Inventory</h1>
-            <p className="text-[14px] font-normal text-[#5C5C5C] leading-tight">Raw material stock received from suppliers</p>
+            <p className="text-[14px] font-normal text-[#5C5C5C] leading-tight hidden md:block">Raw material stock received from suppliers</p>
           </div>
-          <button onClick={openModal} className="flex items-center justify-center gap-2 bg-[#00B6E2] text-white text-[14px] font-medium rounded-[6px] h-[40px] px-[18px] hover:bg-[#0092b5] transition-colors shrink-0">
+          <button onClick={openModal} className="flex items-center justify-center gap-2 bg-[#00B6E2] text-white text-[14px] font-medium rounded-[6px] h-[40px] px-[18px] hover:bg-[#0092b5] transition-colors shrink-0 w-full sm:w-auto">
             <Plus className="w-5 h-5 shrink-0" strokeWidth={2.5} />
             <span className="leading-tight">Add Inventory</span>
           </button>
         </div>
       </section>
 
-      <div className="w-full px-6 py-6 flex flex-col gap-6">
-        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 bg-white border border-[#EBEBEB] rounded-[12px] items-center p-5">
-          <div className="flex items-center justify-between px-6 py-2 sm:py-0">
-            <div className="flex flex-col gap-[6px]">
-              <p className="text-[12px] font-medium text-[#5C5C5C] leading-tight">Total Raw Materials</p>
-              <div className="flex items-baseline gap-3">
-                <span className="text-[14px] font-semibold leading-tight text-[#171717]">{totalItems}</span>
-                <span className="text-[12px] leading-tight text-[#5C5C5C] font-normal">Lots in stock</span>
+      <div className="w-full px-4 md:px-6 py-6 flex flex-col gap-6">
+        {/* KPI Stats - Mobile 2x2 grid */}
+        <section className="grid grid-cols-2 gap-0 md:hidden bg-white border border-[#EBEBEB] rounded-[12px]">
+          {kpiStats.map((stat, i) => {
+            const Icon = stat.icon;
+            return (
+              <div key={i} className={`p-3 ${i % 2 === 0 ? 'border-r border-b border-[#EBEBEB]' : 'border-b border-[#EBEBEB]'} ${i >= 2 ? 'border-b-0' : ''}`}>
+                <div className="flex items-start gap-2">
+                  <div className="w-8 h-8 rounded-full bg-[#E6F8FD] flex items-center justify-center shrink-0">
+                    <Icon className="w-4 h-4 text-[#00B6E2]" />
+                  </div>
+                  <div className="flex flex-col gap-0.5">
+                    <p className="text-[11px] font-medium text-[#5C5C5C]">{stat.label}</p>
+                    <span className={`text-[16px] font-semibold ${stat.valClass}`}>{stat.value}</span>
+                    <span className="text-[10px] text-[#5C5C5C]">{stat.subtext}</span>
+                  </div>
+                </div>
               </div>
-            </div>
-            <div className="hidden lg:block w-[1px] h-[37px] bg-[#EAECF0]"></div>
-          </div>
-          <div className="flex items-center justify-between px-6 py-2 sm:py-0">
-            <div className="flex flex-col gap-[6px]">
-              <p className="text-[12px] font-medium text-[#5C5C5C] leading-tight">In Inventory</p>
-              <div className="flex items-baseline gap-3">
-                <span className="text-[14px] font-semibold leading-tight text-[#1CB061]">{inInventory}</span>
-                <span className="text-[12px] leading-tight text-[#5C5C5C] font-normal">Available</span>
+            );
+          })}
+        </section>
+
+        {/* KPI Stats - Desktop row */}
+        <section className="hidden md:grid grid-cols-1 lg:grid-cols-4 bg-white border border-[#EBEBEB] rounded-[12px] items-center p-5">
+          {kpiStats.map((stat, i) => {
+            const Icon = stat.icon;
+            return (
+              <div key={i} className="flex items-center gap-4 px-4 py-2">
+                <div className="w-10 h-10 rounded-full bg-[#E6F8FD] flex items-center justify-center shrink-0">
+                  <Icon className="w-5 h-5 text-[#00B6E2]" />
+                </div>
+                <div className="flex flex-col gap-[2px]">
+                  <p className="text-[12px] font-medium text-[#5C5C5C] leading-tight">{stat.label}</p>
+                  <div className="flex items-baseline gap-2">
+                    <span className={`text-[14px] font-semibold ${stat.valClass}`}>{stat.value}</span>
+                    <span className="text-[12px] text-[#5C5C5C]">{stat.subtext}</span>
+                  </div>
+                </div>
+                {i < kpiStats.length - 1 && (
+                  <div className="hidden lg:block w-[1px] h-[37px] bg-[#EAECF0] ml-auto" />
+                )}
               </div>
-            </div>
-            <div className="hidden lg:block w-[1px] h-[37px] bg-[#EAECF0]"></div>
-          </div>
-          <div className="flex items-center justify-between px-6 py-2 sm:py-0">
-            <div className="flex flex-col gap-[6px]">
-              <p className="text-[12px] font-medium text-[#5C5C5C] leading-tight">Being Used</p>
-              <div className="flex items-baseline gap-3">
-                <span className="text-[14px] font-semibold leading-tight text-[#E19242]">{beingUsed}</span>
-                <span className="text-[12px] leading-tight text-[#5C5C5C] font-normal">In process</span>
-              </div>
-            </div>
-            <div className="hidden lg:block w-[1px] h-[37px] bg-[#EAECF0]"></div>
-          </div>
-          <div className="flex items-center justify-between px-6 py-2 sm:py-0">
-            <div className="flex flex-col gap-[6px]">
-              <p className="text-[12px] font-medium text-[#5C5C5C] leading-tight">Used Completely</p>
-              <div className="flex items-baseline gap-3">
-                <span className="text-[14px] font-semibold leading-tight text-[#667085]">{usedUp}</span>
-                <span className="text-[12px] leading-tight text-[#5C5C5C] font-normal">Depleted</span>
-              </div>
-            </div>
-          </div>
+            );
+          })}
         </section>
 
         <section className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="relative max-w-[400px] w-full">
+          <div className="relative w-full sm:max-w-[400px]">
             <Search className="w-4 h-4 text-[#A1A1AA] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search by RM ID, Roll ID, or Supplier..." className="h-[40px] w-full pl-9 pr-3 bg-white border border-[#EBEBEB] rounded-[8px] text-[14px] text-[#171717] placeholder:text-[#A1A1AA] focus:outline-none focus:border-[#00B6E2]" />
           </div>

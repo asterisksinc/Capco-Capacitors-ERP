@@ -312,7 +312,7 @@ export default function SupervisorWorkOrderPage() {
           </div>
           <button 
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center justify-center gap-2 bg-[#00B6E2] text-white text-[14px] font-medium rounded-[6px] h-[40px] px-[18px] hover:bg-[#0092b5] transition-colors shrink-0"
+            className="flex items-center justify-center gap-2 bg-[#00B6E2] text-white text-[14px] font-medium rounded-[6px] h-[40px] px-[18px] hover:bg-[#0092b5] transition-colors shrink-0 w-full sm:w-auto"
           >
             <Plus className="w-5 h-5 shrink-0" strokeWidth={2.5} />
             <span className="leading-tight">Add Work Order</span>

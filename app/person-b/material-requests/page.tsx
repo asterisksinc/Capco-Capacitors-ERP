@@ -7,13 +7,13 @@ import type { TableConfig } from "@/hooks/useTableControls";
 import { useTableControls } from "@/hooks/useTableControls";
 import { SortableHeader } from "@/components/table/SortableHeader";
 import { TableToolbar } from "@/components/table/TableToolbar";
-import { OptionsDropdown } from "@/components/table/OptionsDropdown";
 import type { MaterialRequestItem } from "@/lib/data";
+import { MobileHeader } from "@/components/MobileHeader";
 
 const tableConfig: TableConfig<any> = {
   columns: [
     { key: "id", label: "Request ID", type: "text", sortable: true },
-    { key: "products", label: "Product No", type: "text", sortable: true },
+    { key: "weightInfo", label: "Weight", type: "text", sortable: true },
     { key: "grade", label: "Grade", type: "text", sortable: true },
     { key: "requestedQty", label: "Req Qty", type: "text", sortable: true },
     { key: "status", label: "Status", type: "enum", sortable: false, filter: "dropdown", options: ["Pending", "Partially Issued", "Issued", "Cancelled"] },
@@ -54,33 +54,14 @@ export default function MaterialRequestsPage() {
     setFormItems([...formItems, { productNo: "", weight: "", requestedQty: "", issuedQty: "0", grade: "" }]);
   };
 
-  const stockList = useMemo(() => {
-    const map = new Map<string, { weight: string; grade: string }>();
-    for (const [, flow] of Object.entries(store.flowDataMap)) {
-      for (const row of flow.slittingRows) {
-        if (!map.has(row.productNo)) {
-          map.set(row.productNo, { weight: row.weight, grade: row.grade });
-        }
-      }
-    }
-    for (const [, stocks] of Object.entries(store.assignments)) {
-      for (const s of stocks) {
-        if (!map.has(s.stockId)) {
-          map.set(s.stockId, { weight: s.weight, grade: s.grade });
-        }
-      }
-    }
-    return map;
-  }, [store.flowDataMap, store.assignments]);
-
   const data = useMemo(() => {
     return store.materialRequests.map((req) => {
       const first = req.items[0];
       return {
         ...req,
-        products: first?.productNo ?? "-",
+        weightInfo: first?.weight ?? "-",
         grade: first?.grade ?? "-",
-        requestedQty: first ? `${first.requestedQty}/${first.weight}` : "-",
+        requestedQty: first?.requestedQty ?? "-",
       };
     });
   }, [store.materialRequests]);
@@ -112,7 +93,7 @@ export default function MaterialRequestsPage() {
   };
 
   const submitRequest = () => {
-    const valid = formItems.every((item) => item.productNo.trim() && item.requestedQty.trim());
+    const valid = formItems.every((item) => item.weight.trim() && item.requestedQty.trim() && item.grade.trim());
     if (!valid) return;
 
     addMaterialRequest({
@@ -130,7 +111,9 @@ export default function MaterialRequestsPage() {
   if (!mounted) return null;
 
   return (
-    <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-white flex flex-col">
+    <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-white flex flex-col overflow-x-hidden">
+      <MobileHeader title="Material Requests" />
+
       {/* Create Request Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#171717]/40 backdrop-blur-sm px-4">
@@ -151,24 +134,10 @@ export default function MaterialRequestsPage() {
                       <button onClick={() => removeFormItem(idx)} className="text-[12px] text-[#D92D20] hover:underline">Remove</button>
                     )}
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div className="flex flex-col gap-2">
-                      <label className="text-[13px] font-medium">Product No</label>
-                      <select value={item.productNo} onChange={(e) => {
-                        const selected = stockList.get(e.target.value);
-                        updateFormItem(idx, {
-                          productNo: e.target.value,
-                          weight: selected?.weight ?? "",
-                          grade: selected?.grade ?? "",
-                        });
-                      }} className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]">
-                        <option value="">Select stock</option>
-                        {Array.from(stockList.keys()).map((id) => <option key={id} value={id}>{id}</option>)}
-                      </select>
-                    </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div className="flex flex-col gap-2">
                       <label className="text-[13px] font-medium">Weight</label>
-                      <input value={item.weight} readOnly placeholder="Auto-fetched" className="h-[42px] rounded-[8px] border border-[#DDE1E8] bg-[#F8FAFC] px-3 text-[14px] text-[#5C5C5C]" />
+                      <input value={item.weight} onChange={(e) => updateFormItem(idx, { weight: e.target.value })} placeholder="Enter weight" className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]" />
                     </div>
                     <div className="flex flex-col gap-2">
                       <label className="text-[13px] font-medium">Requested Qty</label>
@@ -176,7 +145,13 @@ export default function MaterialRequestsPage() {
                     </div>
                     <div className="flex flex-col gap-2">
                       <label className="text-[13px] font-medium">Grade</label>
-                      <input value={item.grade} readOnly placeholder="Auto-fetched" className="h-[42px] rounded-[8px] border border-[#DDE1E8] bg-[#F8FAFC] px-3 text-[14px] text-[#5C5C5C]" />
+                      <select value={item.grade} onChange={(e) => updateFormItem(idx, { grade: e.target.value })} className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]">
+                        <option value="">Select grade</option>
+                        <option value="A+">A+</option>
+                        <option value="AA">AA</option>
+                        <option value="A">A</option>
+                        <option value="B">B</option>
+                      </select>
                     </div>
                   </div>
                 </div>
@@ -191,26 +166,20 @@ export default function MaterialRequestsPage() {
         </div>
       )}
 
-      <section className="bg-white w-full flex justify-start border-b border-[#EBEBEB]">
-        <div className="w-full px-6 py-6 pb-4 flex items-start sm:items-center justify-between">
-          <div>
-            <h1 className="text-[16px] font-medium text-[#171717] leading-tight">Material Requests</h1>
-            <p className="text-[14px] font-normal text-[#5C5C5C]">Request materials from Person A stock inventory</p>
-          </div>
-          <button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2 bg-[#00B6E2] text-white text-[14px] font-medium rounded-[6px] h-[40px] px-[18px] hover:bg-[#0092b5] transition-colors shrink-0">
-            <Plus className="w-5 h-5" strokeWidth={2.5} />
-            <span>New Request</span>
-          </button>
-        </div>
-      </section>
-
-      <div className="w-full px-6 py-6 flex flex-col gap-6">
+      <div className="w-full px-4 md:px-6 pt-[72px] md:pt-6 pb-6 flex flex-col gap-6">
         <section className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="relative max-w-[400px] w-full">
             <Search className="w-4 h-4 text-[#A1A1AA] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search by Request ID..." className="h-[40px] w-full pl-9 pr-3 bg-white border border-[#EBEBEB] rounded-[8px] text-[14px] placeholder:text-[#A1A1AA] focus:outline-none focus:border-[#00B6E2]" />
           </div>
-          <TableToolbar dateRange={dateRange} onDateRangeChange={setDateRange} onExport={() => alert("Exporting...")} />
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+            <TableToolbar dateRange={dateRange} onDateRangeChange={setDateRange} onExport={() => alert("Exporting...")} />
+            <button onClick={() => setIsModalOpen(true)} className="flex items-center justify-center gap-2 bg-[#00B6E2] text-white text-[14px] font-medium rounded-[6px] h-[40px] px-[18px] hover:bg-[#0092b5] transition-colors shrink-0 whitespace-nowrap w-full sm:w-auto">
+              <Plus className="w-5 h-5" strokeWidth={2.5} />
+              <span className="hidden sm:inline">New Request</span>
+              <span className="sm:hidden">New</span>
+            </button>
+          </div>
         </section>
 
         <section className="bg-white rounded-[12px] flex flex-col gap-4 overflow-hidden">
@@ -229,7 +198,7 @@ export default function MaterialRequestsPage() {
                 {filteredData.map((row, idx) => (
                   <tr key={idx} className="hover:bg-gray-50/50 transition-colors group">
                     <td className="px-4 py-4 text-[14px] font-medium text-[#00B6E2]">{row.id}</td>
-                    <td className="px-4 py-4 text-[14px] text-[#5C5C5C]">{row.products}</td>
+                    <td className="px-4 py-4 text-[14px] text-[#5C5C5C]">{row.weightInfo}</td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C]">{row.grade}</td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C]">{row.requestedQty}</td>
                     <td className="px-4 py-4"><StatusBadge status={row.status} /></td>

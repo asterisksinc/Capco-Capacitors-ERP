@@ -4,6 +4,7 @@ import { Search, Bell, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Fragment } from "react";
+import { UserSwitcher } from "@/components/UserSwitcher";
 
 export function SupervisorTopbar() {
   const pathname = usePathname();
@@ -74,6 +75,7 @@ export function SupervisorTopbar() {
         </div>
 
         {/* Notifications */}
+        <UserSwitcher />
         <button className="w-[40px] h-[40px] flex items-center justify-center border border-[#EBEBEB] rounded-[6px] relative bg-white transition-colors hover:bg-gray-50">
           <Bell className="w-5 h-5 text-[#171717]" />
           <span className="absolute top-[8px] right-[10px] w-[6px] h-[6px] bg-[#FB3748] rounded-full border-[1px] border-white"></span>

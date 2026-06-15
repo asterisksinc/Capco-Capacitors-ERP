@@ -3,6 +3,7 @@
 import { useStore } from "@/hooks/useStore";
 import Link from "next/link";
 import { useMemo } from "react";
+import { MobileHeader } from "@/components/MobileHeader";
 
 function StatusBadge({ status }: { status: string }) {
   if (status === "Yet to Start") {
@@ -52,10 +53,12 @@ export default function StoreHeadPipelinePage() {
   }, [workOrders, store.flowDataMap]);
 
   return (
-    <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-[#FAFAFA] flex flex-col p-6 gap-6">
-      <h1 className="text-[18px] font-semibold text-[#171717] leading-tight">Store Head Pipeline</h1>
+    <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-[#FAFAFA] flex flex-col w-full pb-12 overflow-x-hidden">
+      <MobileHeader title="Pipeline" />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <h1 className="text-[18px] font-semibold text-[#171717] leading-tight px-4 md:px-6 pt-[72px] md:pt-6">Store Head Pipeline</h1>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 px-4 md:px-6 mt-6">
         {columns.map((col) => (
           <div key={col.title} className="bg-white border border-[#EBEBEB] rounded-[12px] p-4 flex flex-col gap-3">
             <div className="flex items-center justify-between">

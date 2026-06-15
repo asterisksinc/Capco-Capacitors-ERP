@@ -1,12 +1,13 @@
 "use client";
 
 import { useMemo, useState, useRef, useEffect } from "react";
-import { Search, ChevronDown, Download, Filter, Calendar, Plus, ChevronRight, Menu, Bell, User } from "lucide-react";
+import { Search, ChevronDown, Download, Filter, Calendar, Plus, ChevronRight, Menu, Bell, User, X, Info } from "lucide-react";
 import Link from "next/link";
 import { exportToExcel } from "@/lib/exportExcel";
 import type { EnumFilter, FilterConfig, FilterState } from "@/components/table/FilterPopover";
 import { useMobileMenu } from "@/components/MobileMenuContext";
 import { useStore } from "@/hooks/useStore";
+import type { WorkOrderSummary, ProductOrderSummary } from "../../../lib/data";
 
 function FilterPopover({
   config,
@@ -154,10 +155,93 @@ type PersonColumn = {
 
 export default function OverviewPage() {
   const { setIsMobileMenuOpen } = useMobileMenu();
-  const { store, mounted, workOrders } = useStore();
+  const { store, mounted, workOrders, addWorkOrder, addProductOrder } = useStore();
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("name-asc");
   const [isCreateOrderOpen, setIsCreateOrderOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [formData, setFormData] = useState({ micron: "", width: "", quantity: "" });
+  const [isPOModalOpen, setIsPOModalOpen] = useState(false);
+  const [poFormData, setPOFormData] = useState({
+    poId: "",
+    productCode: "",
+    capacitance: "",
+    voltage: "",
+    capacitorType: "",
+    grade: "",
+    tolerance: "",
+    dielectric: "",
+    batchSize: "",
+    priority: "",
+    customerName: "",
+    customerReference: "",
+    specialInstructions: ""
+  });
+
+  const resetPOForm = () => ({
+    poId: `PO-CC-${String(Date.now()).slice(-6)}`,
+    productCode: "",
+    capacitance: "",
+    voltage: "",
+    capacitorType: "",
+    grade: "",
+    tolerance: "",
+    dielectric: "",
+    batchSize: "",
+    priority: "",
+    customerName: "",
+    customerReference: "",
+    specialInstructions: ""
+  });
+
+  const handleCreateProductOrder = () => {
+    if (!poFormData.productCode || !poFormData.capacitorType || !poFormData.grade || !poFormData.batchSize) return;
+
+    const now = new Date();
+    const timestamp = `${String(now.getDate()).padStart(2, "0")}/${String(now.getMonth() + 1).padStart(2, "0")}/${now.getFullYear()}:${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
+    const generatedOrderId = poFormData.poId.trim() || `PO-CC-${String(Date.now()).slice(-6)}`;
+    const normalizedId = generatedOrderId.startsWith("#") ? poFormData.poId.trim() : `#${generatedOrderId}`;
+
+    const newOrder: ProductOrderSummary = {
+      id: normalizedId,
+      code: poFormData.productCode,
+      type: poFormData.capacitorType,
+      grade: poFormData.grade.toUpperCase(),
+      batchSize: poFormData.batchSize,
+      status: "Yet to Start",
+      stage: "Yet to Start",
+      timestamp,
+    };
+
+    addProductOrder(newOrder);
+    setIsPOModalOpen(false);
+    setPOFormData(resetPOForm());
+  };
+
+  const handleCreateWorkOrder = () => {
+    if (!formData.micron || !formData.width || !formData.quantity) return;
+
+    const nextIdNum = workOrders.reduce((maxId, wo) => {
+      const parsed = Number.parseInt(wo.id.replace("WO-", ""), 10);
+      return Number.isNaN(parsed) ? maxId : Math.max(maxId, parsed);
+    }, 0) + 1;
+    const newId = `WO-${String(nextIdNum).padStart(4, "0")}`;
+
+    const today = new Date();
+    const dateStr = `${String(today.getDate()).padStart(2, "0")}/${String(today.getMonth() + 1).padStart(2, "0")}/${today.getFullYear()}`;
+
+    const newWorkOrder: WorkOrderSummary = {
+      id: newId,
+      micron: formData.micron,
+      width: formData.width,
+      qty: formData.quantity,
+      date: dateStr,
+    };
+
+    addWorkOrder(newWorkOrder);
+    setIsModalOpen(false);
+    setFormData({ micron: "", width: "", quantity: "" });
+  };
   
   const SORT_OPTIONS = [
     { value: "name-asc", label: "Name (A-Z)" },
@@ -309,34 +393,34 @@ export default function OverviewPage() {
             </p>
           </div>
 
-          <button 
-            onClick={() => setIsCreateOrderOpen(!isCreateOrderOpen)}
-            className="relative h-[40px] px-4 flex items-center gap-2 bg-[#00B6E2] text-white rounded-[6px] text-[14px] font-medium"
-          >
-            <Plus className="w-4 h-4" />
-            Create Order
-            <ChevronDown className={`w-4 h-4 transition-transform ${isCreateOrderOpen ? 'rotate-180' : ''}`} />
-          </button>
-          {isCreateOrderOpen && (
-            <div className="absolute right-0 top-full mt-1 w-[200px] bg-white border border-[#EBEBEB] rounded-[8px] shadow-lg z-50 overflow-hidden">
-              <Link 
-                href="/productionhead/workorder"
-                onClick={() => setIsCreateOrderOpen(false)}
-                className="flex items-center justify-between px-4 py-3 text-[14px] text-[#171717] hover:bg-[#F5F7FA] transition-colors"
-              >
-                Work Order
-                <ChevronRight className="w-4 h-4 text-[#5C5C5C]" />
-              </Link>
-              <Link 
-                href="/productionhead/productorders"
-                onClick={() => setIsCreateOrderOpen(false)}
-                className="flex items-center justify-between px-4 py-3 text-[14px] text-[#171717] hover:bg-[#F5F7FA] transition-colors border-t border-[#EBEBEB]"
+          <div className="relative">
+            <button 
+              onClick={() => setIsCreateOrderOpen(!isCreateOrderOpen)}
+              className="h-[40px] px-4 flex items-center gap-2 bg-[#00B6E2] text-white rounded-[6px] text-[14px] font-medium"
+            >
+              <Plus className="w-4 h-4" />
+              Create Order
+              <ChevronDown className={`w-4 h-4 transition-transform ${isCreateOrderOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {isCreateOrderOpen && (
+              <div className="absolute right-0 top-full mt-1 w-[200px] bg-white border border-[#EBEBEB] rounded-[8px] shadow-lg z-50 overflow-hidden">
+                <button
+                  onClick={() => { setIsCreateOrderOpen(false); setIsModalOpen(true); }}
+                  className="flex items-center justify-between w-full px-4 py-3 text-[14px] text-[#171717] hover:bg-[#F5F7FA] transition-colors"
+                >
+                  Work Order
+                  <ChevronRight className="w-4 h-4 text-[#5C5C5C]" />
+                </button>
+              <button
+                onClick={() => { setIsCreateOrderOpen(false); setIsPOModalOpen(true); }}
+                className="flex items-center justify-between w-full px-4 py-3 text-[14px] text-[#171717] hover:bg-[#F5F7FA] transition-colors border-t border-[#EBEBEB]"
               >
                 Product Order
                 <ChevronRight className="w-4 h-4 text-[#5C5C5C]" />
-              </Link>
-            </div>
-          )}
+              </button>
+              </div>
+            )}
+          </div>
         </div>
       </section>
 
@@ -375,22 +459,20 @@ export default function OverviewPage() {
               <div className="flex flex-col">
                 <div className="w-10 h-1.5 bg-[#E5E5E5] rounded-full mx-auto mt-3 mb-2"></div>
                 
-                <Link 
-                  href="/productionhead/workorder"
-                  onClick={() => setIsCreateOrderOpen(false)}
-                  className="flex items-center justify-between px-5 py-4 text-[15px] text-[#171717] hover:bg-[#F5F7FA] border-b border-[#EBEBEB]"
+                <button
+                  onClick={() => { setIsCreateOrderOpen(false); setIsModalOpen(true); }}
+                  className="flex items-center justify-between w-full px-5 py-4 text-[15px] text-[#171717] hover:bg-[#F5F7FA] border-b border-[#EBEBEB]"
                 >
                   Work Order
                   <ChevronRight className="w-5 h-5 text-[#5C5C5C]" />
-                </Link>
-                <Link 
-                  href="/productionhead/productorders"
-                  onClick={() => setIsCreateOrderOpen(false)}
-                  className="flex items-center justify-between px-5 py-4 text-[15px] text-[#171717] hover:bg-[#F5F7FA] border-b border-[#EBEBEB]"
+                </button>
+                <button
+                  onClick={() => { setIsCreateOrderOpen(false); setIsPOModalOpen(true); }}
+                  className="flex items-center justify-between w-full px-5 py-4 text-[15px] text-[#171717] hover:bg-[#F5F7FA] border-b border-[#EBEBEB]"
                 >
                   Product Order
                   <ChevronRight className="w-5 h-5 text-[#5C5C5C]" />
-                </Link>
+                </button>
                 
                 <button 
                   onClick={() => setIsCreateOrderOpen(false)}
@@ -669,6 +751,356 @@ export default function OverviewPage() {
 
         </div>
       </section>
+
+      {/* Create Product Order Modal */}
+      {isPOModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#171717]/40 backdrop-blur-sm px-4">
+          <div className="bg-white rounded-[12px] w-full max-w-[700px] flex flex-col overflow-hidden max-h-[90vh]">
+            {/* Header */}
+            <div className="flex items-start justify-between px-6 py-5 border-b border-[#EBEBEB]">
+              <div className="flex flex-col gap-1">
+                <h2 className="text-[18px] font-semibold text-[#171717] leading-tight">Add New Product Order</h2>
+                <p className="text-[14px] text-[#5C5C5C] leading-tight">Enter product specifications and planning details to create a new order.</p>
+              </div>
+              <button
+                onClick={() => setIsPOModalOpen(false)}
+                className="text-[#5C5C5C] hover:text-[#171717] transition-colors p-1"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="flex flex-col gap-8 px-6 py-6 overflow-y-auto">
+              {/* Section 1: Capacitor Specification */}
+              <div className="flex flex-col gap-5">
+                <h3 className="text-[16px] font-medium text-[#171717] leading-tight border-b border-[#EBEBEB] pb-2">Capacitor Specification</h3>
+
+                {/* Product Order ID (read-only) */}
+                <div className="flex flex-col gap-2">
+                  <label className="text-[14px] text-[#171717] leading-tight">Product Order ID</label>
+                  <input
+                    type="text"
+                    value={poFormData.poId}
+                    readOnly
+                    placeholder="PO-CC-000000"
+                    className="w-full h-[44px] bg-[#F5F7FA] border border-[#EBEBEB] rounded-[8px] px-3 text-[14px] text-[#5C5C5C] focus:outline-none"
+                  />
+                  <div className="flex items-center gap-1.5 text-[12px] text-[#5C5C5C] mt-1">
+                    <Info className="w-3.5 h-3.5" />
+                    <p>Use format like PO-CC-4589 for easier tracking.</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-5">
+                  {/* Product Code / Model No. */}
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[14px] text-[#171717] leading-tight">Product Code / Model No.</label>
+                    <div className="relative">
+                      <select
+                        value={poFormData.productCode}
+                        onChange={(e) => setPOFormData({...poFormData, productCode: e.target.value})}
+                        className="w-full h-[44px] bg-white border border-[#EBEBEB] rounded-[8px] px-3 text-[14px] text-[#5C5C5C] appearance-none focus:outline-none focus:border-[#00B6E2] transition-colors"
+                      >
+                        <option value="" disabled hidden>Select or Search Product Code...</option>
+                        <option value="C-450V-100uF">C-450V-100uF</option>
+                        <option value="C-630V-47uF">C-630V-47uF</option>
+                        <option value="MKT-250V-22uF">MKT-250V-22uF</option>
+                        <option value="MKP-400V-10uF">MKP-400V-10uF</option>
+                        <option value="SNUB-1KV-1uF">SNUB-1KV-1uF</option>
+                      </select>
+                      <ChevronDown className="w-4 h-4 text-[#525866] absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    </div>
+                  </div>
+
+                  {/* Capacitance Value */}
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[14px] text-[#171717] leading-tight">Capacitance Value</label>
+                    <div className="relative">
+                      <select
+                        value={poFormData.capacitance}
+                        onChange={(e) => setPOFormData({...poFormData, capacitance: e.target.value})}
+                        className="w-full h-[44px] bg-white border border-[#EBEBEB] rounded-[8px] px-3 text-[14px] text-[#5C5C5C] appearance-none focus:outline-none focus:border-[#00B6E2] transition-colors"
+                      >
+                        <option value="" disabled hidden>Select Value...</option>
+                        <option value="1uF">1uF</option>
+                        <option value="10uF">10uF</option>
+                        <option value="22uF">22uF</option>
+                        <option value="47uF">47uF</option>
+                        <option value="100uF">100uF</option>
+                      </select>
+                      <ChevronDown className="w-4 h-4 text-[#525866] absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    </div>
+                  </div>
+
+                  {/* Voltage Rating */}
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[14px] text-[#171717] leading-tight">Voltage Rating</label>
+                    <div className="relative">
+                      <select
+                        value={poFormData.voltage}
+                        onChange={(e) => setPOFormData({...poFormData, voltage: e.target.value})}
+                        className="w-full h-[44px] bg-white border border-[#EBEBEB] rounded-[8px] px-3 text-[14px] text-[#5C5C5C] appearance-none focus:outline-none focus:border-[#00B6E2] transition-colors"
+                      >
+                        <option value="" disabled hidden>Select Voltage Rating...</option>
+                        <option value="63V">63V</option>
+                        <option value="250V">250V</option>
+                        <option value="400V">400V</option>
+                        <option value="450V">450V</option>
+                        <option value="630V">630V</option>
+                      </select>
+                      <ChevronDown className="w-4 h-4 text-[#525866] absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    </div>
+                  </div>
+
+                  {/* Capacitor Type */}
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[14px] text-[#171717] leading-tight">Capacitor Type</label>
+                    <div className="relative">
+                      <select
+                        value={poFormData.capacitorType}
+                        onChange={(e) => setPOFormData({...poFormData, capacitorType: e.target.value})}
+                        className="w-full h-[44px] bg-white border border-[#EBEBEB] rounded-[8px] px-3 text-[14px] text-[#5C5C5C] appearance-none focus:outline-none focus:border-[#00B6E2] transition-colors"
+                      >
+                        <option value="" disabled hidden>Select type...</option>
+                        <option value="Motor">Motor</option>
+                        <option value="Snubber">Snubber</option>
+                        <option value="Power">Power</option>
+                        <option value="Lighting">Lighting</option>
+                        <option value="General Purpose">General Purpose</option>
+                      </select>
+                      <ChevronDown className="w-4 h-4 text-[#525866] absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 2: Grade & Tolerance */}
+              <div className="flex flex-col gap-5">
+                <h3 className="text-[16px] font-medium text-[#171717] leading-tight border-b border-[#EBEBEB] pb-2">Grade & Tolerance</h3>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-5">
+                  {/* Grade */}
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[14px] text-[#171717] leading-tight">Grade</label>
+                    <div className="relative">
+                      <select
+                        value={poFormData.grade}
+                        onChange={(e) => setPOFormData({...poFormData, grade: e.target.value})}
+                        className="w-full h-[44px] bg-white border border-[#EBEBEB] rounded-[8px] px-3 text-[14px] text-[#5C5C5C] appearance-none focus:outline-none focus:border-[#00B6E2] transition-colors"
+                      >
+                        <option value="" disabled hidden>Choose Grade...</option>
+                        <option value="A+">A+</option>
+                        <option value="AA">AA</option>
+                        <option value="A">A</option>
+                        <option value="B">B</option>
+                      </select>
+                      <ChevronDown className="w-4 h-4 text-[#525866] absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    </div>
+                  </div>
+
+                  {/* Tolerance */}
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[14px] text-[#171717] leading-tight">Tolerance</label>
+                    <div className="relative">
+                      <select
+                        value={poFormData.tolerance}
+                        onChange={(e) => setPOFormData({...poFormData, tolerance: e.target.value})}
+                        className="w-full h-[44px] bg-white border border-[#EBEBEB] rounded-[8px] px-3 text-[14px] text-[#5C5C5C] appearance-none focus:outline-none focus:border-[#00B6E2] transition-colors"
+                      >
+                        <option value="" disabled hidden>Select Value...</option>
+                        <option value="±1%">±1%</option>
+                        <option value="±2%">±2%</option>
+                        <option value="±5%">±5%</option>
+                        <option value="±10%">±10%</option>
+                      </select>
+                      <ChevronDown className="w-4 h-4 text-[#525866] absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    </div>
+                  </div>
+
+                  {/* Dielectric Material (full width) */}
+                  <div className="flex flex-col gap-2 col-span-1 sm:col-span-2">
+                    <label className="text-[14px] text-[#171717] leading-tight">Dielectric Material</label>
+                    <div className="relative">
+                      <select
+                        value={poFormData.dielectric}
+                        onChange={(e) => setPOFormData({...poFormData, dielectric: e.target.value})}
+                        className="w-full h-[44px] bg-white border border-[#EBEBEB] rounded-[8px] px-3 text-[14px] text-[#5C5C5C] appearance-none focus:outline-none focus:border-[#00B6E2] transition-colors"
+                      >
+                        <option value="" disabled hidden>Select Material...</option>
+                        <option value="Metallized Polypropylene">Metallized Polypropylene</option>
+                        <option value="Metallized Polyester">Metallized Polyester</option>
+                        <option value="Paper-Oil">Paper-Oil</option>
+                        <option value="Ceramic Hybrid">Ceramic Hybrid</option>
+                      </select>
+                      <ChevronDown className="w-4 h-4 text-[#525866] absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 3: Production Quantity */}
+              <div className="flex flex-col gap-5">
+                <h3 className="text-[16px] font-medium text-[#171717] leading-tight border-b border-[#EBEBEB] pb-2">Production Quantity</h3>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-5">
+                  {/* Batch Size */}
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[14px] text-[#171717] leading-tight">Batch Size</label>
+                    <input
+                      type="number"
+                      min="1"
+                      step="1"
+                      value={poFormData.batchSize}
+                      onChange={(e) => setPOFormData({...poFormData, batchSize: e.target.value})}
+                      placeholder="Enter batch size"
+                      className="w-full h-[44px] bg-[#FAFAFA] border border-[#EBEBEB] rounded-[8px] px-3 text-[14px] text-[#5C5C5C] placeholder:text-[#A1A1AA] focus:outline-none focus:border-[#00B6E2] transition-colors"
+                    />
+                  </div>
+
+                  {/* Production Priority */}
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[14px] text-[#171717] leading-tight">Production Priority</label>
+                    <div className="relative">
+                      <select
+                        value={poFormData.priority}
+                        onChange={(e) => setPOFormData({...poFormData, priority: e.target.value})}
+                        className="w-full h-[44px] bg-white border border-[#EBEBEB] rounded-[8px] px-3 text-[14px] text-[#5C5C5C] appearance-none focus:outline-none focus:border-[#00B6E2] transition-colors"
+                      >
+                        <option value="" disabled hidden>Select Value...</option>
+                        <option value="Low">Low</option>
+                        <option value="Medium">Medium</option>
+                        <option value="High">High</option>
+                        <option value="Critical">Critical</option>
+                      </select>
+                      <ChevronDown className="w-4 h-4 text-[#525866] absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    </div>
+                  </div>
+
+                  {/* Special Instructions (full width) */}
+                  <div className="flex flex-col gap-2 col-span-1 sm:col-span-2">
+                    <label className="text-[14px] text-[#171717] leading-tight">Special Instructions</label>
+                    <textarea
+                      rows={3}
+                      value={poFormData.specialInstructions}
+                      onChange={(e) => setPOFormData({ ...poFormData, specialInstructions: e.target.value })}
+                      placeholder="Add any process notes, dispatch priority, or QC instructions..."
+                      className="w-full bg-[#FAFAFA] border border-[#EBEBEB] rounded-[8px] px-3 py-2.5 text-[14px] text-[#5C5C5C] placeholder:text-[#A1A1AA] focus:outline-none focus:border-[#00B6E2] transition-colors resize-none"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer / Action buttons */}
+            <div className="flex items-center justify-between px-6 py-5 bg-white border-t border-[#EBEBEB]">
+              <button
+                onClick={() => setIsPOModalOpen(false)}
+                className="h-[40px] px-4 bg-white border border-[#EBEBEB] text-[#171717] text-[14px] font-medium rounded-[6px] hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreateProductOrder}
+                className="h-[40px] px-5 bg-[#00B6E2] text-white text-[14px] font-medium rounded-[6px] hover:bg-[#0092b5] transition-colors"
+              >
+                Create Product Order
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Work Order Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#171717]/40 backdrop-blur-sm px-4">
+          <div className="bg-white rounded-[12px] w-full max-w-[500px] shadow-lg flex flex-col overflow-hidden">
+            {/* Modal Header */}
+            <div className="flex items-start justify-between px-6 py-5 border-b border-[#EBEBEB]">
+              <div className="flex flex-col gap-1">
+                <h2 className="text-[18px] font-semibold text-[#171717] leading-tight">New Work Order</h2>
+                <p className="text-[14px] text-[#5C5C5C] leading-tight">Lorem ipsum dolor sit amet, consectetur adipiscing elit</p>
+              </div>
+              <button 
+                onClick={() => setIsModalOpen(false)}
+                className="text-[#5C5C5C] hover:text-[#171717] transition-colors p-1"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="flex flex-col gap-5 px-6 py-6 border-b border-[#EBEBEB]">
+              {/* Micron Field */}
+              <div className="flex flex-col gap-2">
+                <label className="text-[12px] font-medium text-[#171717] uppercase tracking-wider">MICRON</label>
+                <div className="relative">
+                  <select 
+                    value={formData.micron}
+                    onChange={(e) => setFormData({...formData, micron: e.target.value})}
+                    className="w-full h-[44px] bg-white border border-[#EBEBEB] rounded-[8px] px-3 text-[14px] text-[#171717] appearance-none focus:outline-none focus:border-[#00B6E2] transition-colors"
+                  >
+                    <option value="" disabled hidden>Select micron...</option>
+                    <option value="5">5 Micron</option>
+                    <option value="7">7 Micron</option>
+                    <option value="8">8 Micron</option>
+                    <option value="12">12 Micron</option>
+                    <option value="15">15 Micron</option>
+                  </select>
+                  <ChevronDown className="w-4 h-4 text-[#525866] absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                </div>
+              </div>
+
+              {/* Width Field */}
+              <div className="flex flex-col gap-2">
+                <label className="text-[12px] font-medium text-[#171717] uppercase tracking-wider">WIDTH</label>
+                <div className="relative">
+                  <select 
+                    value={formData.width}
+                    onChange={(e) => setFormData({...formData, width: e.target.value})}
+                    className="w-full h-[44px] bg-white border border-[#EBEBEB] rounded-[8px] px-3 text-[14px] text-[#171717] appearance-none focus:outline-none focus:border-[#00B6E2] transition-colors"
+                  >
+                    <option value="" disabled hidden>Select width...</option>
+                    <option value="0.5">0.5 Width</option>
+                    <option value="1">1 Width</option>
+                    <option value="1.5">1.5 Width</option>
+                    <option value="2">2 Width</option>
+                  </select>
+                  <ChevronDown className="w-4 h-4 text-[#525866] absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                </div>
+              </div>
+
+              {/* Quantity Field */}
+              <div className="flex flex-col gap-2">
+                <label className="text-[12px] font-medium text-[#171717] uppercase tracking-wider">QUANTITY</label>
+                <input 
+                  type="number"
+                  placeholder="Enter Quantity"
+                  value={formData.quantity}
+                  onChange={(e) => setFormData({...formData, quantity: e.target.value})}
+                  className="w-full h-[44px] bg-white border border-[#EBEBEB] rounded-[8px] px-3 text-[14px] text-[#171717] placeholder:text-[#A1A1AA] focus:outline-none focus:border-[#00B6E2] transition-colors"
+                />
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex items-center justify-between px-6 py-5 bg-[#FAFAFA]">
+              <button 
+                onClick={() => setIsModalOpen(false)}
+                className="h-[40px] px-4 bg-white border border-[#EBEBEB] text-[#171717] text-[14px] font-medium rounded-[6px] hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleCreateWorkOrder}
+                className="h-[40px] px-5 bg-[#00B6E2] text-white text-[14px] font-medium rounded-[6px] hover:bg-[#0092b5] transition-colors"
+              >
+                Create Work Order
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
