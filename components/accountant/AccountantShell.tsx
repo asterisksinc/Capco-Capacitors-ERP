@@ -5,7 +5,7 @@ import { AccountantTopbar } from "./AccountantTopbar";
 import { MobileMenuProvider, useMobileMenu } from "@/components/MobileMenuContext";
 
 function AccountantShellContent({ children }: { children: ReactNode }) {
-  // Simple shell without a sidebar, but keeps the topbar and standard layout
+  // Simpl shell without a sidebar, but keeps the topbar and standard layout
   return (
     <div className="flex-1 flex flex-col min-h-screen">
       <AccountantTopbar />
