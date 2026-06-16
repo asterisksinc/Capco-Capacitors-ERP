@@ -148,6 +148,36 @@ export type AssignedStock = {
   assignedAt: string;
 };
 
+export type VendorPurchaseItem = {
+  id: string;
+  type: string;
+  rate: string;
+  quantity: string;
+  total: string;
+};
+
+export type PaymentHistoryEntry = {
+  id: string;
+  date: string;
+  amountPaid: string;
+  paymentType: string;
+  notes?: string;
+};
+
+export type VendorPurchase = {
+  id: string;
+  vendorName: string;
+  purchaseDate: string;
+  direction: "Credit" | "Debit";
+  items: VendorPurchaseItem[];
+  grandTotal: string;
+  status: "Paid" | "Partial Payment" | "Due";
+  amountPaid: string;
+  paymentType: string;
+  notes?: string;
+  paymentHistory: PaymentHistoryEntry[];
+};
+
 const godownPrimaryRange = Array.from({ length: 101 }, (_, idx) => `RM-${8300 + idx}`);
 const godownSecondaryRange = Array.from({ length: 201 }, (_, idx) => `RM-${3400 + idx}`);
 
@@ -299,7 +329,7 @@ export function createSeedStore() {
     ],
   };
 
-  return { workOrders, flowDataMap, inventoryItems: inventory, productOrders, materialRequests: [], materialReturns: [], assignments };
+  return { workOrders, flowDataMap, inventoryItems: inventory, productOrders, materialRequests: [], materialReturns: [], assignments, vendorPurchases: [] };
 }
 
 export function createEmptyFlowData(seed?: Partial<WorkOrderOverview>): WorkOrderFlowData {

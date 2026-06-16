@@ -13,6 +13,7 @@ import {
   type MaterialRequestItem,
   type MaterialReturn,
   type AssignedStock,
+  type VendorPurchase,
 } from '../lib/data';
 
 interface StoreData {
@@ -23,6 +24,7 @@ interface StoreData {
   materialRequests: MaterialRequest[];
   materialReturns: MaterialReturn[];
   assignments: Record<string, AssignedStock[]>;
+  vendorPurchases: VendorPurchase[];
 }
 
 export type ComputedWorkOrderSummary = WorkOrderSummary & {
@@ -31,7 +33,7 @@ export type ComputedWorkOrderSummary = WorkOrderSummary & {
 };
 
 const STORAGE_KEY = 'capcoDataStore';
-const EMPTY_STORE: StoreData = { workOrders: [], flowDataMap: {}, inventoryItems: [], productOrders: [], materialRequests: [], materialReturns: [], assignments: {} };
+const EMPTY_STORE: StoreData = { workOrders: [], flowDataMap: {}, inventoryItems: [], productOrders: [], materialRequests: [], materialReturns: [], assignments: {}, vendorPurchases: [] };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value) && value.constructor === Object;
@@ -169,7 +171,11 @@ function sanitizeStore(raw: unknown): StoreData {
     }
   }
 
-  return { workOrders, flowDataMap, inventoryItems, productOrders, materialRequests, materialReturns, assignments };
+  const vendorPurchases: VendorPurchase[] = Array.isArray(raw.vendorPurchases)
+    ? raw.vendorPurchases.filter((row): row is VendorPurchase => isRecord(row))
+    : [];
+
+  return { workOrders, flowDataMap, inventoryItems, productOrders, materialRequests, materialReturns, assignments, vendorPurchases };
 }
 
 export function loadStore(): StoreData {
@@ -210,7 +216,7 @@ export function saveStore(data: StoreData) {
 }
 
 export function useStore() {
-  const [store, setStore] = useState<StoreData>({ workOrders: [], flowDataMap: {}, inventoryItems: [], productOrders: [], materialRequests: [], materialReturns: [], assignments: {} });
+  const [store, setStore] = useState<StoreData>({ workOrders: [], flowDataMap: {}, inventoryItems: [], productOrders: [], materialRequests: [], materialReturns: [], assignments: {}, vendorPurchases: [] });
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -418,5 +424,40 @@ export function useStore() {
     return nextStore.assignments[productOrderId] ?? [];
   };
 
-  return { store, mounted, workOrders, addWorkOrder, deleteWorkOrder, addFlowRow, updateFlowRowField, updateInventoryStatus, addInventoryItem, getAvailableInventory, addProductOrder, deleteProductOrder, addMaterialRequest, issueMaterialRequest, cancelMaterialRequest, addMaterialReturn, acceptMaterialReturn, rejectMaterialReturn, assignStockToProductOrder, removeAssignedStock, getAssignedStocks };
+  const addVendorPurchase = (purchase: VendorPurchase) => {
+    const nextStore = loadStore();
+    if (nextStore.vendorPurchases.some((p) => p.id === purchase.id)) return;
+    nextStore.vendorPurchases = [purchase, ...nextStore.vendorPurchases];
+    saveStore(nextStore);
+  };
+
+  const updateVendorPurchase = (id: string, amountPaid: number, paymentType: string, notes?: string) => {
+    const nextStore = loadStore();
+    const idx = nextStore.vendorPurchases.findIndex((p) => p.id === id);
+    if (idx === -1) return;
+
+    const purchase = nextStore.vendorPurchases[idx];
+    const newHistoryEntry = {
+      id: `PH-${Date.now()}`,
+      date: new Date().toLocaleDateString(),
+      amountPaid: amountPaid.toString(),
+      paymentType,
+      notes,
+    };
+
+    const newTotalPaid = (parseFloat(purchase.amountPaid || "0") + amountPaid).toString();
+    const grandTotal = parseFloat(purchase.grandTotal || "0");
+    const newStatus = parseFloat(newTotalPaid) >= grandTotal ? "Paid" : "Partial Payment";
+
+    nextStore.vendorPurchases[idx] = {
+      ...purchase,
+      amountPaid: newTotalPaid,
+      status: newStatus,
+      paymentHistory: [newHistoryEntry, ...(purchase.paymentHistory || [])],
+    };
+
+    saveStore(nextStore);
+  };
+
+  return { store, mounted, workOrders, addWorkOrder, deleteWorkOrder, addFlowRow, updateFlowRowField, updateInventoryStatus, addInventoryItem, getAvailableInventory, addProductOrder, deleteProductOrder, addMaterialRequest, issueMaterialRequest, cancelMaterialRequest, addMaterialReturn, acceptMaterialReturn, rejectMaterialReturn, assignStockToProductOrder, removeAssignedStock, getAssignedStocks, addVendorPurchase, updateVendorPurchase, vendorPurchases: store.vendorPurchases };
 }

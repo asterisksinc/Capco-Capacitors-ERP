@@ -14,6 +14,7 @@ import {
   Receipt,
   ClipboardCheck,
   LogOut,
+  CreditCard,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -30,6 +31,7 @@ export function AdminSidebar() {
     { name: "CRM", href: "/admin/crm", icon: Settings },
     { name: "Invoices", href: "/admin/invoices", icon: Receipt },
     { name: "Finished Goods", href: "/admin/finishedgoods", icon: ClipboardCheck },
+    { name: "Vendor Purchases", href: "/admin/vendor-purchases", icon: CreditCard },
   ];
 
   return (
