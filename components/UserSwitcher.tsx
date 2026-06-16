@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Repeat, Shield, UserCircle, UserCheck, Factory, Store, TrendingUp } from "lucide-react";
+import { Repeat, Shield, UserCircle, UserCheck, Factory, Store, TrendingUp, Receipt } from "lucide-react";
 import Link from "next/link";
 
 const userRoles = [
@@ -11,6 +11,7 @@ const userRoles = [
   { label: "Production Head", href: "/productionhead", icon: Factory },
   { label: "Store Head", href: "/store-head", icon: Store },
   { label: "Sales", href: "/sales", icon: TrendingUp },
+  { label: "Accountant", href: "/accountant", icon: Receipt },
 ];
 
 export function UserSwitcher() {
