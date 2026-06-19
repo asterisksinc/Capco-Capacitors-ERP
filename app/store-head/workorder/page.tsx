@@ -1,8 +1,9 @@
 "use client";
 
-import { ChevronDown, Search, Layers, Clock, Activity, CheckCircle } from "lucide-react";
+import { ChevronDown, Search, Layers, Clock, Activity, CheckCircle, QrCode, Download, X } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { QRCodeSVG } from "qrcode.react";
 import { useStore, type ComputedWorkOrderSummary } from "@/hooks/useStore";
 import type { TableConfig } from "@/hooks/useTableControls";
 import { useTableControls } from "@/hooks/useTableControls";
@@ -62,6 +63,7 @@ function StatusBadge({ status }: { status: string }) {
 export default function StoreHeadWorkOrderPage() {
   const { workOrders: rows, mounted, deleteWorkOrder } = useStore();
   const [searchQuery, setSearchQuery] = useState("");
+  const [qrModalId, setQrModalId] = useState<string | null>(null);
 
   const {
     processedData,
@@ -259,7 +261,21 @@ export default function StoreHeadWorkOrderPage() {
             <table className="w-full text-left border-collapse min-w-[1000px]">
               <thead>
                 <tr className="bg-[#F5F7FA] border-b border-[#EBEBEB]">
-                  {workOrderConfig.columns.map((col) => (
+                  {workOrderConfig.columns.slice(0, 7).map((col) => (
+                    <th key={String(col.key)} className="px-4 py-[11px]">
+                      <SortableHeader
+                        column={col}
+                        sortConfig={sortConfig}
+                        onSort={handleSort}
+                        filters={filters}
+                        onFilterChange={handleFilterChange}
+                      />
+                    </th>
+                  ))}
+                  <th className="px-4 py-[11px]">
+                    <span className="text-[12px] font-medium text-[#5C5C5C]">QR</span>
+                  </th>
+                  {workOrderConfig.columns.slice(7).map((col) => (
                     <th key={String(col.key)} className="px-4 py-[11px]">
                       <SortableHeader
                         column={col}
@@ -289,6 +305,15 @@ export default function StoreHeadWorkOrderPage() {
                       <StatusBadge status={row.status} />
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
+                      <button
+                        onClick={() => setQrModalId(row.id)}
+                        className="inline-flex items-center justify-center w-8 h-8 rounded-full hover:bg-[#F5F7FA] transition-colors text-[#5C5C5C] hover:text-[#00B6E2]"
+                        title="Show QR Code"
+                      >
+                        <QrCode className="w-4 h-4" />
+                      </button>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
                       <OptionsDropdown 
                         viewHref={`/store-head/workorder/${row.id}`}
                         status={row.status}
@@ -303,7 +328,7 @@ export default function StoreHeadWorkOrderPage() {
                   </tr>
                 )) : (
                   <tr>
-                    <td colSpan={8} className="px-4 py-8 text-center text-[#5C5C5C] text-[14px]">
+                    <td colSpan={9} className="px-4 py-8 text-center text-[#5C5C5C] text-[14px]">
                       No work orders found.
                     </td>
                   </tr>
@@ -312,6 +337,98 @@ export default function StoreHeadWorkOrderPage() {
             </table>
           </div>
         </section>
+      </div>
+
+      {/* QR Code Modal */}
+      {qrModalId && (
+        <QrModal workOrderId={qrModalId} onClose={() => setQrModalId(null)} />
+      )}
+    </div>
+  );
+}
+
+function QrModal({ workOrderId, onClose }: { workOrderId: string; onClose: () => void }) {
+  const svgRef = useRef<HTMLDivElement>(null);
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key === "Escape") onClose();
+  }, [onClose]);
+
+  useEffect(() => {
+    document.addEventListener("keydown", handleKeyDown);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = "";
+    };
+  }, [handleKeyDown]);
+
+  const handleDownload = useCallback(() => {
+    const svgEl = svgRef.current?.querySelector("svg");
+    if (!svgEl) return;
+    const clone = svgEl.cloneNode(true) as SVGSVGElement;
+    clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+    const serializer = new XMLSerializer();
+    const svgStr = serializer.serializeToString(clone);
+    const canvas = document.createElement("canvas");
+    const size = 360;
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const img = new Image();
+    const blob = new Blob([svgStr], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    img.onload = () => {
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, size, size);
+      ctx.drawImage(img, 0, 0, size, size);
+      URL.revokeObjectURL(url);
+      canvas.toBlob((pngBlob) => {
+        if (!pngBlob) return;
+        const pngUrl = URL.createObjectURL(pngBlob);
+        const a = document.createElement("a");
+        a.href = pngUrl;
+        a.download = `${workOrderId.replace(/[^a-zA-Z0-9-_]/g, "_")}-qr.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(pngUrl);
+      }, "image/png");
+    };
+    img.src = url;
+  }, [workOrderId]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[#171717]/40 backdrop-blur-sm px-4"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div className="bg-white rounded-[12px] p-6 flex flex-col items-center gap-4 shadow-lg max-w-[280px] w-full">
+        <div className="flex items-center justify-between w-full">
+          <p className="text-[14px] font-medium text-[#171717]">QR Code</p>
+          <button onClick={onClose} className="text-[#5C5C5C] hover:text-[#171717] transition-colors">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        <div ref={svgRef} className="bg-white p-3 rounded-[8px] border border-[#EBEBEB]">
+          <QRCodeSVG value={workOrderId} size={180} level="M" />
+        </div>
+        <p className="text-[13px] text-[#5C5C5C] text-center break-all max-w-full">{workOrderId}</p>
+        <div className="flex flex-col gap-2 w-full">
+          <button
+            onClick={handleDownload}
+            className="w-full h-[40px] bg-white border border-[#EBEBEB] text-[#5C5C5C] rounded-[8px] text-[14px] font-medium hover:bg-[#F5F7FA] transition-colors flex items-center justify-center gap-2"
+          >
+            <Download className="w-4 h-4" />
+            Download QR
+          </button>
+          <button
+            onClick={onClose}
+            className="w-full h-[40px] bg-[#00B6E2] text-white rounded-[8px] text-[14px] font-medium hover:bg-[#009DC4] transition-colors"
+          >
+            Close
+          </button>
+        </div>
       </div>
     </div>
   );

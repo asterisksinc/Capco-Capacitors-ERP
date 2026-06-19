@@ -1,9 +1,11 @@
 "use client";
 
-import { Search } from "lucide-react";
+import { Search, Scan, X } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Layers, Zap, Scissors, CheckCircle } from "lucide-react";
+import { Scanner, type IDetectedBarcode, type IScannerError } from "@yudiel/react-qr-scanner";
+import { useRouter } from "next/navigation";
 import { useStore, type ComputedWorkOrderSummary } from "@/hooks/useStore";
 import type { TableConfig } from "@/hooks/useTableControls";
 import { useTableControls } from "@/hooks/useTableControls";
@@ -63,6 +65,10 @@ function StatusBadge({ status }: { status: string }) {
 export default function OperatorWorkOrderPage() {
   const { workOrders: rows, mounted, deleteWorkOrder } = useStore();
   const [searchQuery, setSearchQuery] = useState("");
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [scanError, setScanError] = useState<string | null>(null);
+  const scanLockRef = useRef(false);
+  const router = useRouter();
 
   const {
     processedData,
@@ -159,29 +165,46 @@ export default function OperatorWorkOrderPage() {
           );
         })}
       </section>
+      {/* Mobile Scan QR button */}
+      <button
+        onClick={() => { setIsScannerOpen(true); setScanError(null); scanLockRef.current = false; }}
+        className="md:hidden mx-4 mt-3 flex items-center justify-center gap-2 h-[40px] bg-[#00B6E2] text-white rounded-[8px] text-[14px] font-medium hover:bg-[#009DC4] transition-colors"
+      >
+        <Scan className="w-4 h-4" />
+        Scan QR
+      </button>
 
-      {/* Desktop KPI row */}
-      <section className="hidden md:grid grid-cols-1 lg:grid-cols-4 mx-4 md:mx-6 mt-6 bg-white border border-[#EBEBEB] rounded-[12px] items-center p-5">
-        {kpiStats.map((stat, i) => {
-          const Icon = stat.icon;
-          return (
-            <div key={i} className="flex items-center gap-4 px-4 py-2">
-              <div className="w-10 h-10 rounded-full bg-[#E6F8FD] flex items-center justify-center shrink-0">
-                <Icon className="w-5 h-5 text-[#00B6E2]" />
-              </div>
-              <div className="flex flex-col gap-[2px]">
-                <p className="text-[12px] font-medium text-[#5C5C5C] leading-tight">{stat.label}</p>
-                <div className="flex items-baseline gap-2">
-                  <span className={`text-[14px] font-semibold ${stat.valClass}`}>{stat.value}</span>
-                  <span className="text-[12px] text-[#5C5C5C]">{stat.subtext}</span>
+      {/* Desktop KPI row + Scan */}
+      <section className="hidden md:flex mx-4 md:mx-6 mt-6 bg-white border border-[#EBEBEB] rounded-[12px] items-center p-5">
+        <div className="grid grid-cols-1 lg:grid-cols-4 flex-1">
+          {kpiStats.map((stat, i) => {
+            const Icon = stat.icon;
+            return (
+              <div key={i} className="flex items-center gap-4 px-4 py-2">
+                <div className="w-10 h-10 rounded-full bg-[#E6F8FD] flex items-center justify-center shrink-0">
+                  <Icon className="w-5 h-5 text-[#00B6E2]" />
                 </div>
+                <div className="flex flex-col gap-[2px]">
+                  <p className="text-[12px] font-medium text-[#5C5C5C] leading-tight">{stat.label}</p>
+                  <div className="flex items-baseline gap-2">
+                    <span className={`text-[14px] font-semibold ${stat.valClass}`}>{stat.value}</span>
+                    <span className="text-[12px] text-[#5C5C5C]">{stat.subtext}</span>
+                  </div>
+                </div>
+                {i < kpiStats.length - 1 && (
+                  <div className="hidden lg:block w-[1px] h-[37px] bg-[#EAECF0] ml-auto" />
+                )}
               </div>
-              {i < kpiStats.length - 1 && (
-                <div className="hidden lg:block w-[1px] h-[37px] bg-[#EAECF0] ml-auto" />
-              )}
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
+        <button
+          onClick={() => { setIsScannerOpen(true); setScanError(null); scanLockRef.current = false; }}
+          className="shrink-0 flex items-center gap-2 px-4 h-[40px] bg-[#00B6E2] text-white rounded-[8px] text-[14px] font-medium hover:bg-[#009DC4] transition-colors ml-4"
+        >
+          <Scan className="w-4 h-4" />
+          Scan QR
+        </button>
       </section>
 
       <div className="w-full px-4 md:px-6 py-6 flex flex-col gap-6">
@@ -277,6 +300,124 @@ export default function OperatorWorkOrderPage() {
             </table>
           </div>
         </section>
+      </div>
+
+      {/* QR Scanner Modal */}
+      {isScannerOpen && (
+        <ScannerModal
+          rows={rows}
+          onClose={() => { setIsScannerOpen(false); setScanError(null); }}
+          onNavigate={(id) => router.push(`/person-a/workorder/${id}`)}
+        />
+      )}
+    </div>
+  );
+}
+
+function ScannerModal({
+  rows,
+  onClose,
+  onNavigate,
+}: {
+  rows: ComputedWorkOrderSummary[];
+  onClose: () => void;
+  onNavigate: (id: string) => void;
+}) {
+  const [scanError, setScanError] = useState<string | null>(null);
+  const [unrecognizedId, setUnrecognizedId] = useState<string | null>(null);
+  const scanLockRef = useRef(false);
+
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key === "Escape") onClose();
+  }, [onClose]);
+
+  useEffect(() => {
+    document.addEventListener("keydown", handleKeyDown);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = "";
+    };
+  }, [handleKeyDown]);
+
+  const handleScan = useCallback((detectedCodes: IDetectedBarcode[]) => {
+    if (scanLockRef.current) return;
+    const rawValue = detectedCodes[0]?.rawValue;
+    if (!rawValue) return;
+
+    scanLockRef.current = true;
+    const found = rows.some((r) => r.id === rawValue);
+    if (found) {
+      onNavigate(rawValue);
+    } else {
+      setUnrecognizedId(rawValue);
+      setScanError(`Work Order "${rawValue}" not found.`);
+      setTimeout(() => { scanLockRef.current = false; }, 1500);
+    }
+  }, [rows, onNavigate]);
+
+  const handleError = useCallback((err: IScannerError) => {
+    const msg = err?.message || "";
+    if (msg.includes("Permission") || msg.includes("permission") || msg.includes("denied")) {
+      setScanError("Camera permission denied. Please allow camera access in your browser settings.");
+    } else if (msg.includes("NotFoundError") || msg.includes("not found") || msg.includes("NotFound")) {
+      setScanError("No camera found on this device.");
+    } else if (err.kind === "in-use") {
+      setScanError("Camera is already in use by another application.");
+    } else {
+      setScanError(msg || "Failed to start camera. Please try again.");
+    }
+  }, []);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[#171717]/40 backdrop-blur-sm px-4"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div className="bg-white rounded-[12px] p-6 flex flex-col items-center gap-4 shadow-lg max-w-[360px] w-full">
+        {/* Header */}
+        <div className="flex items-center justify-between w-full">
+          <p className="text-[14px] font-medium text-[#171717]">Scan QR Code</p>
+          <button onClick={onClose} className="text-[#5C5C5C] hover:text-[#171717] transition-colors">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Scanner viewport */}
+        <div className="w-full aspect-[4/3] bg-black rounded-[8px] overflow-hidden relative flex items-center justify-center">
+          {scanError && (
+            <div className="absolute inset-0 flex items-center justify-center z-10 bg-[#171717] flex-col gap-3 p-4 text-center">
+              <p className="text-white text-[13px]">{scanError}</p>
+              {unrecognizedId && (
+                <p className="text-[#A1A1AA] text-[11px]">Scanned: {unrecognizedId}</p>
+              )}
+              <button
+                onClick={() => { setScanError(null); scanLockRef.current = false; setUnrecognizedId(null); }}
+                className="px-4 h-[36px] bg-[#00B6E2] text-white rounded-[8px] text-[13px] font-medium hover:bg-[#009DC4] transition-colors"
+              >
+                {unrecognizedId ? "Scan Again" : "Retry"}
+              </button>
+            </div>
+          )}
+          <Scanner
+            onScan={(detectedCodes) => handleScan(detectedCodes)}
+            onError={(err) => handleError(err)}
+            allowMultiple={false}
+            constraints={{ facingMode: "environment", width: { ideal: 480 }, height: { ideal: 360 } }}
+            styles={{ container: { width: "100%", height: "100%" }, video: { objectFit: "cover" } }}
+          />
+        </div>
+
+        <p className="text-[12px] text-[#5C5C5C] text-center">
+          Point your camera at a work order QR code
+        </p>
+
+        <button
+          onClick={onClose}
+          className="w-full h-[40px] bg-white border border-[#EBEBEB] text-[#5C5C5C] rounded-[8px] text-[14px] font-medium hover:bg-[#F5F7FA] transition-colors"
+        >
+          Cancel
+        </button>
       </div>
     </div>
   );
