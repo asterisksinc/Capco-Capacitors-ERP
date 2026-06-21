@@ -3,6 +3,7 @@
 import { use, useState, useMemo } from "react";
 import { Plus, X, Check, ChevronRight } from "lucide-react";
 import { useStore } from "@/hooks/useStore";
+import { ScannerInput } from "@/components/ScannerInput";
 import { MobileHeader } from "@/components/MobileHeader";
 import type { TableConfig } from "@/hooks/useTableControls";
 import { useTableControls } from "@/hooks/useTableControls";
@@ -379,18 +380,35 @@ export default function PersonBProductOrderDetail({ params }: DetailPageProps) {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex flex-col gap-2">
                     <label className="text-[13px] font-medium text-[#171717]">WD-ID</label>
-                    <input value={windingForm.wdId} readOnly className="h-[42px] rounded-[8px] border border-[#DDE1E8] bg-[#F8FAFC] px-3 text-[14px] text-[#5C5C5C]" />
+                    <ScannerInput
+                      value={windingForm.wdId}
+                      onChange={(e) => setWindingForm({ ...windingForm, wdId: e.target.value })}
+                      onScanData={(data) => setWindingForm({ ...windingForm, wdId: data })}
+                      placeholder="Scan or enter WD-ID"
+                      className="h-[42px] rounded-[8px] border border-[#DDE1E8] pl-[36px] px-3 text-[14px]"
+                    />
                   </div>
                   <div className="flex flex-col gap-2">
                     <label className="text-[13px] font-medium text-[#171717]">Linked PM-ID</label>
-                    <select value={windingForm.linkedPmId} onChange={(e) => {
-                      const id = e.target.value;
-                      const pm = pmLookup.get(id);
-                      setWindingForm({ ...windingForm, linkedPmId: id });
-                    }} className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]">
-                      <option value="">Select PM-ID</option>
-                      {availablePmIds.map((id) => <option key={id} value={id}>{id}</option>)}
-                    </select>
+                    <div className="relative">
+                      <ScannerInput
+                        type="text"
+                        placeholder="Scan or select PM-ID..."
+                        list="pmIdList"
+                        value={windingForm.linkedPmId}
+                        onChange={(e) => {
+                          const id = e.target.value;
+                          setWindingForm({ ...windingForm, linkedPmId: id });
+                        }}
+                        onScanData={(data) => {
+                          setWindingForm({ ...windingForm, linkedPmId: data });
+                        }}
+                        className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 pl-[36px] text-[14px]"
+                      />
+                      <datalist id="pmIdList">
+                        {availablePmIds.map((id) => <option key={id} value={id}>{id}</option>)}
+                      </datalist>
+                    </div>
                   </div>
                   <div className="flex flex-col gap-2">
                     <label className="text-[13px] font-medium text-[#171717]">Film Width</label>
@@ -413,18 +431,35 @@ export default function PersonBProductOrderDetail({ params }: DetailPageProps) {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex flex-col gap-2">
                     <label className="text-[13px] font-medium text-[#171717]">SP-ID</label>
-                    <input value={sprayForm.spId} readOnly className="h-[42px] rounded-[8px] border border-[#DDE1E8] bg-[#F8FAFC] px-3 text-[14px] text-[#5C5C5C]" />
+                    <ScannerInput
+                      value={sprayForm.spId}
+                      onChange={(e) => setSprayForm({ ...sprayForm, spId: e.target.value })}
+                      onScanData={(data) => setSprayForm({ ...sprayForm, spId: data })}
+                      placeholder="Scan or enter SP-ID"
+                      className="h-[42px] rounded-[8px] border border-[#DDE1E8] pl-[36px] px-3 text-[14px]"
+                    />
                   </div>
                   <div className="flex flex-col gap-2">
                     <label className="text-[13px] font-medium text-[#171717]">Linked WD-ID</label>
-                    <select value={sprayForm.linkedWdId} onChange={(e) => {
-                      const id = e.target.value;
-                      const wd = wdLookup.get(id);
-                      setSprayForm({ ...sprayForm, linkedWdId: id });
-                    }} className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]">
-                      <option value="">Select WD-ID</option>
-                      {availableWdIds.map((id) => <option key={id} value={id}>{id}</option>)}
-                    </select>
+                    <div className="relative">
+                      <ScannerInput
+                        type="text"
+                        placeholder="Scan or select WD-ID..."
+                        list="wdIdList"
+                        value={sprayForm.linkedWdId}
+                        onChange={(e) => {
+                          const id = e.target.value;
+                          setSprayForm({ ...sprayForm, linkedWdId: id });
+                        }}
+                        onScanData={(data) => {
+                          setSprayForm({ ...sprayForm, linkedWdId: data });
+                        }}
+                        className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 pl-[36px] text-[14px]"
+                      />
+                      <datalist id="wdIdList">
+                        {availableWdIds.map((id) => <option key={id} value={id}>{id}</option>)}
+                      </datalist>
+                    </div>
                   </div>
                   <div className="flex flex-col gap-2">
                     <label className="text-[13px] font-medium text-[#171717]">Spray Type</label>

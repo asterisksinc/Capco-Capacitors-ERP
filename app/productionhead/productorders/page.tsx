@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Plus, X, ChevronDown, Search, Info, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, X, ChevronDown, Search, Info, ChevronLeft, ChevronRight, QrCode } from "lucide-react";
 import { useState } from "react";
 import { useStore } from "@/hooks/useStore";
 import type { TableConfig } from "@/hooks/useTableControls";
@@ -12,6 +12,7 @@ import { OptionsDropdown } from "@/components/table/OptionsDropdown";
 import { FilterPopover, FilterChips, type FilterConfig, type FilterState, type EnumFilter, type TextFilter, type NumberRangeFilter } from "@/components/table/FilterPopover";
 import { exportToExcel, convertDataToExportFormat } from "@/lib/exportExcel";
 import { MobileHeader, MobileSpacer } from "@/components/MobileHeader";
+import { QRCodeModal } from "@/components/QRCodeModal";
 
 const STATUS_OPTIONS = ["Yet to Start", "In-progress", "Completed"];
 const STAGE_OPTIONS = ["Yet to Start", "Raw Material", "Metallisation", "Slitting", "Completed"];
@@ -69,6 +70,7 @@ const productOrderConfig: TableConfig<ProductOrderRow> = {
       options: ["Yet to Start", "Raw Material", "Metallisation", "Slitting", "Completed"] 
     },
     { key: "timestamp", label: "Created Timestamp", type: "date", sortable: true },
+    { key: "qr", label: "QR", type: "text", sortable: false },
     { key: "options", label: "Action", type: "text", sortable: false }
   ],
 };
@@ -89,6 +91,7 @@ function StatusBadge({ status }: { status: string }) {
 export default function SupervisorProductOrdersPage() {
   const { store, addProductOrder, deleteProductOrder } = useStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [qrId, setQrId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [formData, setFormData] = useState({
     poId: "PO-CC-4567",
@@ -670,6 +673,11 @@ export default function SupervisorProductOrdersPage() {
                       <StatusBadge status={row.stage} />
                     </td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.timestamp}</td>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <button onClick={() => setQrId(row.id)} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors">
+                        <QrCode className="w-4 h-4" />
+                      </button>
+                    </td>
                     <td className="px-4 py-3 whitespace-nowrap">
                       <OptionsDropdown 
                         viewHref={`/productionhead/productorders/${row.id.replace('#', '')}`}
@@ -686,7 +694,7 @@ export default function SupervisorProductOrdersPage() {
                 ))}
                 {searchedData.length === 0 && (
                   <tr>
-                    <td colSpan={9} className="px-1 py-8 text-center text-[14px] text-[#5C5C5C]">
+                    <td colSpan={10} className="px-1 py-8 text-center text-[14px] text-[#5C5C5C]">
                       No product orders found.
                     </td>
                   </tr>
@@ -715,6 +723,8 @@ export default function SupervisorProductOrdersPage() {
         </section>
 
       </div>
+
+      {qrId && <QRCodeModal id={qrId} onClose={() => setQrId(null)} />}
     </div>
   );
 }

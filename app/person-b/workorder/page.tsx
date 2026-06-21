@@ -1,9 +1,8 @@
 "use client";
 
-import { Search } from "lucide-react";
+import { Search, QrCode, Scan, X, Layers, Clock, Activity, CheckCircle } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
-import { Layers, Clock, Activity, CheckCircle } from "lucide-react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useStore, type ComputedWorkOrderSummary } from "@/hooks/useStore";
 import type { TableConfig } from "@/hooks/useTableControls";
 import { useTableControls } from "@/hooks/useTableControls";
@@ -13,6 +12,10 @@ import { OptionsDropdown } from "@/components/table/OptionsDropdown";
 import { FilterChips, type FilterConfig, type FilterState, type EnumFilter, type TextFilter, type NumberRangeFilter } from "@/components/table/FilterPopover";
 import { exportToExcel } from "@/lib/exportExcel";
 import { MobileHeader } from "@/components/MobileHeader";
+import { QRCodeModal } from "@/components/QRCodeModal";
+import { Scanner, type IDetectedBarcode, type IScannerError } from "@yudiel/react-qr-scanner";
+import { traceBarcode, type StoreSnapshot } from "@/lib/traceBarcode";
+import { UniversalTraceModal } from "@/components/UniversalTraceModal";
 
 const WO_STATUS_OPTIONS = ["Yet to Start", "In-progress", "Completed"];
 const WO_STAGE_OPTIONS = ["Metallisation", "Raw Material", "Slitting"];
@@ -61,8 +64,11 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export default function PersonBWorkOrderPage() {
-  const { workOrders: rows, mounted, deleteWorkOrder } = useStore();
+  const { store, workOrders: rows, mounted, deleteWorkOrder } = useStore();
   const [searchQuery, setSearchQuery] = useState("");
+  const [qrId, setQrId] = useState<string | null>(null);
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [traceId, setTraceId] = useState<string | null>(null);
 
   const {
     processedData,
@@ -202,7 +208,15 @@ export default function PersonBWorkOrderPage() {
               className="h-[40px] w-full pl-9 pr-3 bg-white border border-[#EBEBEB] rounded-[8px] text-[14px] text-[#171717] placeholder:text-[#A1A1AA] focus:outline-none focus:border-[#00B6E2]" 
             />
           </div>
-          <TableToolbar
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsScannerOpen(true)}
+              className="h-[40px] px-3 flex items-center gap-2 bg-[#00B6E2] text-white rounded-[8px] text-[13px] font-medium hover:bg-[#009DC4] transition-colors"
+            >
+              <Scan className="w-4 h-4" />
+              <span className="hidden sm:inline">Scan QR</span>
+            </button>
+            <TableToolbar
             dateRange={dateRange}
             onDateRangeChange={setDateRange}
             onExport={() => {
@@ -221,6 +235,7 @@ export default function PersonBWorkOrderPage() {
             filters={tableFilters}
             onApplyFilters={handleApplyFilters}
           />
+          </div>
         </section>
 
         <FilterChips config={filterConfig} filters={tableFilters} onRemove={handleRemoveFilter} />
@@ -241,6 +256,9 @@ export default function PersonBWorkOrderPage() {
                       />
                     </th>
                   ))}
+                  <th className="px-4 py-[11px]">
+                    <span className="text-[13px] font-semibold text-[#667085]">QR</span>
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#EAECF0]">
@@ -271,10 +289,15 @@ export default function PersonBWorkOrderPage() {
                         }}
                       />
                     </td>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <button onClick={() => setQrId(row.id)} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors">
+                        <QrCode className="w-4 h-4" />
+                      </button>
+                    </td>
                   </tr>
                 )) : (
                   <tr>
-                    <td colSpan={8} className="px-4 py-8 text-center text-[#5C5C5C] text-[14px]">
+                    <td colSpan={9} className="px-4 py-8 text-center text-[#5C5C5C] text-[14px]">
                       No work orders found.
                     </td>
                   </tr>
@@ -283,6 +306,139 @@ export default function PersonBWorkOrderPage() {
             </table>
           </div>
         </section>
+      </div>
+      {qrId && <QRCodeModal id={qrId} onClose={() => setQrId(null)} />}
+
+      {isScannerOpen && (
+        <ScannerModal
+          store={store}
+          onClose={() => setIsScannerOpen(false)}
+          onTrace={(id) => { 
+            setIsScannerOpen(false); 
+            if (id.startsWith('WO-')) {
+              window.location.href = `/person-b/workorder/${id}`;
+            } else if (id.startsWith('#PO-') || id.startsWith('PO-')) {
+              const cleanId = id.startsWith('#') ? id.substring(1) : id;
+              window.location.href = `/person-b/product-orders/${cleanId}`;
+            } else {
+              setTraceId(id); 
+            }
+          }}
+        />
+      )}
+      {traceId && (
+        <UniversalTraceModal
+          store={store}
+          initialId={traceId}
+          onClose={() => setTraceId(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+function ScannerModal({
+  store,
+  onClose,
+  onTrace,
+}: {
+  store: StoreSnapshot;
+  onClose: () => void;
+  onTrace: (id: string) => void;
+}) {
+  const [scanError, setScanError] = useState<string | null>(null);
+  const [unrecognizedId, setUnrecognizedId] = useState<string | null>(null);
+  const scanLockRef = useRef(false);
+
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key === "Escape") onClose();
+  }, [onClose]);
+
+  useEffect(() => {
+    document.addEventListener("keydown", handleKeyDown);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = "";
+    };
+  }, [handleKeyDown]);
+
+  const handleScan = useCallback((detectedCodes: IDetectedBarcode[]) => {
+    if (scanLockRef.current) return;
+    const rawValue = detectedCodes[0]?.rawValue;
+    if (!rawValue) return;
+
+    scanLockRef.current = true;
+    const result = traceBarcode(store, rawValue.trim());
+    if (result) {
+      onTrace(result.scanned.id);
+    } else {
+      setUnrecognizedId(rawValue);
+      setScanError(`Barcode "${rawValue}" not found.`);
+      setTimeout(() => { scanLockRef.current = false; }, 1500);
+    }
+  }, [store, onTrace]);
+
+  const handleError = useCallback((err: IScannerError) => {
+    const msg = err?.message || "";
+    if (msg.includes("Permission") || msg.includes("permission") || msg.includes("denied")) {
+      setScanError("Camera permission denied. Please allow camera access in your browser settings.");
+    } else if (msg.includes("NotFoundError") || msg.includes("not found") || msg.includes("NotFound")) {
+      setScanError("No camera found on this device.");
+    } else if (err.kind === "in-use") {
+      setScanError("Camera is already in use by another application.");
+    } else {
+      setScanError(msg || "Failed to start camera. Please try again.");
+    }
+  }, []);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[#171717]/40 backdrop-blur-sm px-4"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div className="bg-white rounded-[12px] p-6 flex flex-col items-center gap-4 shadow-lg max-w-[360px] w-full">
+        <div className="flex items-center justify-between w-full">
+          <p className="text-[14px] font-medium text-[#171717]">Scan QR Code</p>
+          <button onClick={onClose} className="text-[#5C5C5C] hover:text-[#171717] transition-colors">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="w-full aspect-[4/3] bg-black rounded-[8px] overflow-hidden relative flex items-center justify-center">
+          {scanError && (
+            <div className="absolute inset-0 flex items-center justify-center z-10 bg-[#171717] flex-col gap-3 p-4 text-center">
+              <p className="text-white text-[13px]">{scanError}</p>
+              {unrecognizedId && (
+                <p className="text-[#A1A1AA] text-[11px]">Scanned: {unrecognizedId}</p>
+              )}
+              <button
+                onClick={() => { setScanError(null); scanLockRef.current = false; setUnrecognizedId(null); }}
+                className="px-4 h-[36px] bg-[#00B6E2] text-white rounded-[8px] text-[13px] font-medium hover:bg-[#009DC4] transition-colors"
+              >
+                {unrecognizedId ? "Scan Again" : "Retry"}
+              </button>
+            </div>
+          )}
+          <Scanner
+            onScan={(detectedCodes) => handleScan(detectedCodes)}
+            onError={(err) => handleError(err)}
+            allowMultiple={false}
+            constraints={{ facingMode: "environment", width: { ideal: 480 }, height: { ideal: 360 } }}
+            styles={{ container: { width: "100%", height: "100%" }, video: { objectFit: "cover" } }}
+          />
+        </div>
+
+        <p className="text-[12px] text-[#5C5C5C] text-center">
+          Point your camera at a work order QR code
+        </p>
+
+        <button
+          onClick={onClose}
+          className="w-full h-[40px] bg-white border border-[#EBEBEB] text-[#5C5C5C] rounded-[8px] text-[14px] font-medium hover:bg-[#F5F7FA] transition-colors"
+        >
+          Cancel
+        </button>
       </div>
     </div>
   );

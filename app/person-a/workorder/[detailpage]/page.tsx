@@ -1,9 +1,10 @@
 "use client";
 
 import { use, useState, useMemo } from "react";
-import { Plus, X, ChevronRight, Check } from "lucide-react";
+import { Plus, X, ChevronRight, Check, QrCode } from "lucide-react";
 import { FileText, Ruler, Maximize2, Package } from "lucide-react";
 import { useStore } from "@/hooks/useStore";
+import { ScannerInput } from "@/components/ScannerInput";
 import { computeWorkflowProgress } from "../../../../lib/data";
 import type { TableConfig } from "@/hooks/useTableControls";
 import { useTableControls } from "@/hooks/useTableControls";
@@ -11,6 +12,7 @@ import { SortableHeader } from "@/components/table/SortableHeader";
 import { TableToolbar } from "@/components/table/TableToolbar";
 import { OptionsDropdown } from "@/components/table/OptionsDropdown";
 import { MobileHeader } from "@/components/MobileHeader";
+import { QRCodeModal } from "@/components/QRCodeModal";
 
 type DetailPageProps = {
   params: Promise<{ detailpage: string }>;
@@ -192,6 +194,7 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
 
   const [metallisationRowsInput, setMetallisationRowsInput] = useState<MetallisationForm[]>([createMetallisationRow("")]);
   const [slittingRowsInput, setSlittingRowsInput] = useState<SlittingForm[]>([createSlittingRow("")]);
+  const [qrId, setQrId] = useState<string | null>(null);
 
   const currentConfig = useMemo(() => {
     switch (activeTab) {
@@ -420,23 +423,42 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
               <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                 <div className="flex flex-col gap-2">
                   <label className="text-[13px] font-medium text-[#171717]">Coil No.</label>
-                  <input value={row.coilNo} onChange={(e) => updateMetallisationRow(idx, { coilNo: e.target.value })} onBlur={(e) => !e.target.value.trim() && updateMetallisationRow(idx, { coilNo: generateId("MC") })} placeholder="Auto generate or enter coil no" className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]" />
+                  <ScannerInput
+                    value={row.coilNo}
+                    onChange={(e) => updateMetallisationRow(idx, { coilNo: e.target.value })}
+                    onScanData={(data) => updateMetallisationRow(idx, { coilNo: data })}
+                    placeholder="Scan or enter coil no"
+                    className="h-[42px] rounded-[8px] border border-[#DDE1E8] pl-[36px] px-3 text-[14px]"
+                  />
                 </div>
                 <div className="flex flex-col gap-2">
                   <label className="text-[13px] font-medium text-[#171717]">RM ID</label>
-                  <select value={row.rmId} onChange={(e) => {
-                    const id = e.target.value;
-                    const rm = rmLookup.get(id);
-                    updateMetallisationRow(idx, {
-                      rmId: id,
-                      weight: rm?.weight ?? row.weight,
-                    });
-                  }} className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]">
-                    {availableRollIds.length === 0 && <option value="">No received RM IDs</option>}
+                  <ScannerInput 
+                    value={row.rmId} 
+                    onChange={(e) => {
+                      const id = e.target.value;
+                      const rm = rmLookup.get(id);
+                      updateMetallisationRow(idx, {
+                        rmId: id,
+                        weight: rm?.weight ?? row.weight,
+                      });
+                    }} 
+                    onScanData={(data) => {
+                      const rm = rmLookup.get(data);
+                      updateMetallisationRow(idx, {
+                        rmId: data,
+                        weight: rm?.weight ?? row.weight,
+                      });
+                    }}
+                    list={`rm-list-${idx}`}
+                    placeholder="Scan RM ID..."
+                    className="h-[42px] rounded-[8px] border border-[#DDE1E8] pl-3 text-[14px]"
+                  />
+                  <datalist id={`rm-list-${idx}`}>
                     {availableRollIds.map((rollId) => (
                       <option key={rollId} value={rollId}>{rollId}</option>
                     ))}
-                  </select>
+                  </datalist>
                 </div>
                 <div className="flex flex-col gap-2">
                   <label className="text-[13px] font-medium text-[#171717]">Machine No.</label>
@@ -481,23 +503,42 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
             <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
               <div className="flex flex-col gap-2">
                 <label className="text-[13px] font-medium text-[#171717]">Product Material ID</label>
-                <input value={row.productNo} readOnly className="h-[42px] rounded-[8px] border border-[#DDE1E8] bg-[#F8FAFC] px-3 text-[14px] text-[#5C5C5C]" />
+                <ScannerInput
+                  value={row.productNo}
+                  onChange={(e) => updateSlittingRow(idx, { productNo: e.target.value })}
+                  onScanData={(data) => updateSlittingRow(idx, { productNo: data })}
+                  placeholder="Scan or enter product no"
+                  className="h-[42px] rounded-[8px] border border-[#DDE1E8] pl-[36px] px-3 text-[14px]"
+                />
               </div>
               <div className="flex flex-col gap-2">
                 <label className="text-[13px] font-medium text-[#171717]">Coil ID (from Metallisation)</label>
-                <select value={row.associatedRmId} onChange={(e) => {
-                  const id = e.target.value;
-                  const coil = coilLookup.get(id);
-                  updateSlittingRow(idx, {
-                    associatedRmId: id,
-                    weight: coil?.weight ?? row.weight,
-                  });
-                }} className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]">
-                  {availableCoilIds.length === 0 && <option value="">No coil IDs from metallisation</option>}
+                <ScannerInput 
+                  value={row.associatedRmId} 
+                  onChange={(e) => {
+                    const id = e.target.value;
+                    const coil = coilLookup.get(id);
+                    updateSlittingRow(idx, {
+                      associatedRmId: id,
+                      weight: coil?.weight ?? row.weight,
+                    });
+                  }}
+                  onScanData={(data) => {
+                    const coil = coilLookup.get(data);
+                    updateSlittingRow(idx, {
+                      associatedRmId: data,
+                      weight: coil?.weight ?? row.weight,
+                    });
+                  }}
+                  list={`coil-list-${idx}`}
+                  placeholder="Scan Coil ID..."
+                  className="h-[42px] rounded-[8px] border border-[#DDE1E8] pl-3 text-[14px]"
+                />
+                <datalist id={`coil-list-${idx}`}>
                   {availableCoilIds.map((coilId) => (
                     <option key={coilId} value={coilId}>{coilId}</option>
                   ))}
-                </select>
+                </datalist>
               </div>
               <div className="flex flex-col gap-2">
                 <label className="text-[13px] font-medium text-[#171717]">Micron</label>
@@ -809,16 +850,20 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
                   <tr key={idx} className="hover:bg-gray-50/50 transition-colors group">
                     {currentConfig.columns.map((col) => {
                       if (String(col.key) === "options") {
+                        const rowId = activeTab === "Raw Material" ? (row as any).rollNo : activeTab === "Metallisation" ? (row as any).coilNo : (row as any).productNo;
                         return (
                           <td key={String(col.key)} className="px-4 py-3 whitespace-nowrap">
                             {activeTab !== "Raw Material" ? (
                               <OptionsDropdown
                                 onEdit={() => alert(`Edit ${activeTab} Row ${idx}`)}
                                 onDelete={() => alert(`Delete ${activeTab} Row ${idx}`)}
+                                onQrCode={() => setQrId(rowId)}
                                 status={row.status}
                               />
                             ) : (
-                              <span className="text-[12px] text-[#5C5C5C]">-</span>
+                              <button onClick={() => setQrId(rowId)} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors">
+                                <QrCode className="w-4 h-4" />
+                              </button>
                             )}
                           </td>
                         );
@@ -843,6 +888,7 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
           </div>
         </div>
       </section>
+      {qrId && <QRCodeModal id={qrId} onClose={() => setQrId(null)} />}
     </div>
   );
 }

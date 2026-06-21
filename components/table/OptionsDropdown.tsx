@@ -1,17 +1,19 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { MoreVertical, Edit2, Trash2, Eye } from "lucide-react";
+import { MoreVertical, Edit2, Trash2, Eye, QrCode } from "lucide-react";
 import Link from "next/link";
 
 export function OptionsDropdown({
   onEdit,
   onDelete,
+  onQrCode,
   viewHref,
   status,
 }: {
   onEdit?: () => void;
   onDelete?: () => void;
+  onQrCode?: () => void;
   viewHref?: string;
   status?: string;
 }) {
@@ -52,6 +54,18 @@ export function OptionsDropdown({
                 <Eye className="w-3.5 h-3.5" />
                 View
               </Link>
+            )}
+            {onQrCode && (
+              <button
+                onClick={() => {
+                  setIsOpen(false);
+                  onQrCode();
+                }}
+                className="flex items-center gap-2 px-4 py-2 text-[13px] text-[#5C5C5C] hover:bg-gray-50 hover:text-[#171717] w-full text-left transition-colors"
+              >
+                <QrCode className="w-3.5 h-3.5" />
+                QR Code
+              </button>
             )}
             {onEdit && (
               <button

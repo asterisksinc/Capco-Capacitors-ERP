@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Fragment } from "react";
 import { UserSwitcher } from "@/components/UserSwitcher";
+import { TraceButton } from "@/components/TraceButton";
 
 export function OperatorTopbar() {
   const pathname = usePathname();
@@ -74,6 +75,8 @@ export function OperatorTopbar() {
           />
         </div>
 
+        {/* Trace */}
+        <TraceButton />
         {/* Notifications */}
         <UserSwitcher />
         <button className="w-[40px] h-[40px] flex items-center justify-center border border-[#EBEBEB] rounded-[6px] relative bg-white transition-colors hover:bg-gray-50">
