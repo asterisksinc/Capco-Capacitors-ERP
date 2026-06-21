@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useRef, useEffect } from "react";
 import { Search, ChevronDown, Download, Filter, Calendar, Plus, ChevronRight, Menu, Bell, User, X, Info } from "lucide-react";
+import { ScannerInput } from "@/components/ScannerInput";
 import Link from "next/link";
 import { exportToExcel } from "@/lib/exportExcel";
 import type { EnumFilter, FilterConfig, FilterState } from "@/components/table/FilterPopover";

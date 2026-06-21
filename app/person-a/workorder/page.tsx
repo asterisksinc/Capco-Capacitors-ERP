@@ -5,8 +5,9 @@ import Link from "next/link";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Layers, Zap, Scissors, CheckCircle } from "lucide-react";
 import { Scanner, type IDetectedBarcode, type IScannerError } from "@yudiel/react-qr-scanner";
-import { useRouter } from "next/navigation";
 import { useStore, type ComputedWorkOrderSummary } from "@/hooks/useStore";
+import { traceBarcode, type StoreSnapshot } from "@/lib/traceBarcode";
+import { UniversalTraceModal } from "@/components/UniversalTraceModal";
 import type { TableConfig } from "@/hooks/useTableControls";
 import { useTableControls } from "@/hooks/useTableControls";
 import { SortableHeader } from "@/components/table/SortableHeader";
@@ -63,12 +64,10 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export default function OperatorWorkOrderPage() {
-  const { workOrders: rows, mounted, deleteWorkOrder } = useStore();
+  const { store, workOrders: rows, mounted, deleteWorkOrder } = useStore();
   const [searchQuery, setSearchQuery] = useState("");
   const [isScannerOpen, setIsScannerOpen] = useState(false);
-  const [scanError, setScanError] = useState<string | null>(null);
-  const scanLockRef = useRef(false);
-  const router = useRouter();
+  const [traceId, setTraceId] = useState<string | null>(null);
 
   const {
     processedData,
@@ -167,7 +166,7 @@ export default function OperatorWorkOrderPage() {
       </section>
       {/* Mobile Scan QR button */}
       <button
-        onClick={() => { setIsScannerOpen(true); setScanError(null); scanLockRef.current = false; }}
+        onClick={() => { setIsScannerOpen(true); }}
         className="md:hidden mx-4 mt-3 flex items-center justify-center gap-2 h-[40px] bg-[#00B6E2] text-white rounded-[8px] text-[14px] font-medium hover:bg-[#009DC4] transition-colors"
       >
         <Scan className="w-4 h-4" />
@@ -199,7 +198,7 @@ export default function OperatorWorkOrderPage() {
           })}
         </div>
         <button
-          onClick={() => { setIsScannerOpen(true); setScanError(null); scanLockRef.current = false; }}
+          onClick={() => { setIsScannerOpen(true); }}
           className="shrink-0 flex items-center gap-2 px-4 h-[40px] bg-[#00B6E2] text-white rounded-[8px] text-[14px] font-medium hover:bg-[#009DC4] transition-colors ml-4"
         >
           <Scan className="w-4 h-4" />
@@ -305,9 +304,26 @@ export default function OperatorWorkOrderPage() {
       {/* QR Scanner Modal */}
       {isScannerOpen && (
         <ScannerModal
-          rows={rows}
-          onClose={() => { setIsScannerOpen(false); setScanError(null); }}
-          onNavigate={(id) => router.push(`/person-a/workorder/${id}`)}
+          store={store}
+          onClose={() => { setIsScannerOpen(false); }}
+          onTrace={(id) => { 
+            setIsScannerOpen(false); 
+            if (id.startsWith('WO-')) {
+              window.location.href = `/person-a/workorder/${id}`;
+            } else if (id.startsWith('#PO-') || id.startsWith('PO-')) {
+              const cleanId = id.startsWith('#') ? id.substring(1) : id;
+              window.location.href = `/person-a/product-orders/${cleanId}`;
+            } else {
+              setTraceId(id); 
+            }
+          }}
+        />
+      )}
+      {traceId && (
+        <UniversalTraceModal
+          store={store}
+          initialId={traceId}
+          onClose={() => setTraceId(null)}
         />
       )}
     </div>
@@ -315,13 +331,13 @@ export default function OperatorWorkOrderPage() {
 }
 
 function ScannerModal({
-  rows,
+  store,
   onClose,
-  onNavigate,
+  onTrace,
 }: {
-  rows: ComputedWorkOrderSummary[];
+  store: StoreSnapshot;
   onClose: () => void;
-  onNavigate: (id: string) => void;
+  onTrace: (id: string) => void;
 }) {
   const [scanError, setScanError] = useState<string | null>(null);
   const [unrecognizedId, setUnrecognizedId] = useState<string | null>(null);
@@ -346,15 +362,15 @@ function ScannerModal({
     if (!rawValue) return;
 
     scanLockRef.current = true;
-    const found = rows.some((r) => r.id === rawValue);
-    if (found) {
-      onNavigate(rawValue);
+    const result = traceBarcode(store, rawValue.trim());
+    if (result) {
+      onTrace(result.scanned.id);
     } else {
       setUnrecognizedId(rawValue);
-      setScanError(`Work Order "${rawValue}" not found.`);
+      setScanError(`Barcode "${rawValue}" not found.`);
       setTimeout(() => { scanLockRef.current = false; }, 1500);
     }
-  }, [rows, onNavigate]);
+  }, [store, onTrace]);
 
   const handleError = useCallback((err: IScannerError) => {
     const msg = err?.message || "";

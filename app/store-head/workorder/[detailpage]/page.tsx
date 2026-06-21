@@ -1,7 +1,7 @@
 "use client";
 
 import { use, useState, useMemo } from "react";
-import { Plus, X, ChevronRight, Check, Layers, Ruler, Weight, Package } from "lucide-react";
+import { Plus, X, ChevronRight, Check, Layers, Ruler, Weight, Package, QrCode } from "lucide-react";
 import { useStore } from "@/hooks/useStore";
 import { computeWorkflowProgress } from "../../../../lib/data";
 import type { TableConfig } from "@/hooks/useTableControls";
@@ -10,6 +10,8 @@ import { SortableHeader } from "@/components/table/SortableHeader";
 import { TableToolbar } from "@/components/table/TableToolbar";
 import type { RawMaterialRow } from "@/lib/data";
 import { MobileHeader } from "@/components/MobileHeader";
+import { QRCodeModal } from "@/components/QRCodeModal";
+import { ScannerInput } from "@/components/ScannerInput";
 
 type DetailPageProps = {
   params: Promise<{ detailpage: string }>;
@@ -93,6 +95,7 @@ export default function StoreHeadWorkOrderDetailPage({ params }: DetailPageProps
 
   const [rawMaterialRowsInput, setRawMaterialRowsInput] = useState<RawMaterialForm[]>([createRawMaterialRow()]);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [qrId, setQrId] = useState<string | null>(null);
 
   const currentData = useMemo(() => {
     if (!workOrderFlowData) return [];
@@ -229,7 +232,7 @@ export default function StoreHeadWorkOrderDetailPage({ params }: DetailPageProps
             <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
               <div className="flex flex-col gap-2">
                 <label className="text-[13px] font-medium text-[#171717]">Raw Material ID</label>
-                <select
+                <ScannerInput
                   value={row.rawMaterialId}
                   onChange={(e) => {
                     const id = e.target.value;
@@ -241,15 +244,30 @@ export default function StoreHeadWorkOrderDetailPage({ params }: DetailPageProps
                       supplier: inv?.supplier ?? row.supplier,
                     });
                   }}
-                  className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]"
-                >
-                  <option value="">Select from inventory...</option>
+                  onScanData={(data) => {
+                    const inv = availableInventory.find((i) => i.rawMaterialId === data || i.rollId === data);
+                    if (inv) {
+                      updateRawMaterialRow(idx, {
+                        rawMaterialId: inv.rawMaterialId,
+                        micron: inv.micron,
+                        width: inv.width,
+                        supplier: inv.supplier,
+                      });
+                    } else {
+                      updateRawMaterialRow(idx, { rawMaterialId: data });
+                    }
+                  }}
+                  list={`inv-list-${idx}`}
+                  placeholder="Scan or select..."
+                  className="h-[42px] rounded-[8px] border border-[#DDE1E8] pl-3 text-[14px]"
+                />
+                <datalist id={`inv-list-${idx}`}>
                   {availableInventory.map((inv) => (
                     <option key={inv.rawMaterialId} value={inv.rawMaterialId}>
-                      {inv.rawMaterialId} — {inv.micron}µ — {inv.weight}
+                      {inv.rawMaterialId} ({inv.weight})
                     </option>
                   ))}
-                </select>
+                </datalist>
                 {availableInventory.length === 0 && (
                   <p className="text-[11px] text-[#D92D20]">No inventory items available. Add inventory first.</p>
                 )}
@@ -543,7 +561,9 @@ export default function StoreHeadWorkOrderDetailPage({ params }: DetailPageProps
                       if (String(col.key) === "options") {
                         return (
                           <td key={String(col.key)} className="px-4 py-3 whitespace-nowrap">
-                            <span className="text-[12px] text-[#5C5C5C]">-</span>
+                            <button onClick={() => setQrId((row as any).rollNo)} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors">
+                              <QrCode className="w-4 h-4" />
+                            </button>
                           </td>
                         );
                       }
@@ -567,6 +587,7 @@ export default function StoreHeadWorkOrderDetailPage({ params }: DetailPageProps
           </div>
         </div>
       </section>
+      {qrId && <QRCodeModal id={qrId} onClose={() => setQrId(null)} />}
     </div>
   );
 }

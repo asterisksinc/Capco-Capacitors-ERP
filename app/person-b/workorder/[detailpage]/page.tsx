@@ -1,9 +1,10 @@
 "use client";
 
 import { use, useState, useMemo } from "react";
-import { Plus, X, ChevronRight, Check } from "lucide-react";
+import { Plus, X, ChevronRight, Check, QrCode } from "lucide-react";
 import { FileText, Ruler, Maximize2, Package } from "lucide-react";
 import { useStore } from "@/hooks/useStore";
+import { ScannerInput } from "@/components/ScannerInput";
 import { computeWorkflowProgress } from "../../../../lib/data";
 import type { TableConfig } from "@/hooks/useTableControls";
 import { useTableControls } from "@/hooks/useTableControls";
@@ -11,6 +12,7 @@ import { SortableHeader } from "@/components/table/SortableHeader";
 import { TableToolbar } from "@/components/table/TableToolbar";
 import { OptionsDropdown } from "@/components/table/OptionsDropdown";
 import { MobileHeader } from "@/components/MobileHeader";
+import { QRCodeModal } from "@/components/QRCodeModal";
 
 type DetailPageProps = {
   params: Promise<{ detailpage: string }>;
@@ -173,6 +175,7 @@ export default function PersonBWorkOrderDetailPage({ params }: DetailPageProps) 
   const [windingRowsInput, setWindingRowsInput] = useState<WindingForm[]>([createWindingRow()]);
   const [sprayRowsInput, setSprayRowsInput] = useState<SprayForm[]>([createSprayRow()]);
   const [modalImage, setModalImage] = useState<string | null>(null);
+  const [qrId, setQrId] = useState<string | null>(null);
 
   const currentConfig = useMemo(() => {
     switch (activeTab) {
@@ -392,17 +395,26 @@ export default function PersonBWorkOrderDetailPage({ params }: DetailPageProps) 
                 </div>
                 <div className="flex flex-col gap-2">
                   <label className="text-[13px] font-medium text-[#171717]">Linked PM-ID</label>
-                  <select value={row.linkedPmId} onChange={(e) => {
-                    const id = e.target.value;
-                    const pm = pmLookup.get(id);
-                    updateWindingRow(idx, { linkedPmId: id });
-                  }} className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]">
-                    <option value="">Select PM-ID</option>
-                    {availablePmIds.length === 0 && <option value="">No PM-IDs available</option>}
+                  <ScannerInput 
+                    value={row.linkedPmId} 
+                    onChange={(e) => {
+                      const id = e.target.value;
+                      const pm = pmLookup.get(id);
+                      updateWindingRow(idx, { linkedPmId: id });
+                    }}
+                    onScanData={(data) => {
+                      const pm = pmLookup.get(data);
+                      updateWindingRow(idx, { linkedPmId: data });
+                    }}
+                    list={`pm-list-${idx}`}
+                    placeholder="Scan PM-ID..."
+                    className="h-[42px] rounded-[8px] border border-[#DDE1E8] pl-3 text-[14px]"
+                  />
+                  <datalist id={`pm-list-${idx}`}>
                     {availablePmIds.map((pmId) => (
                       <option key={pmId} value={pmId}>{pmId}</option>
                     ))}
-                  </select>
+                  </datalist>
                 </div>
                 <div className="flex flex-col gap-2">
                   <label className="text-[13px] font-medium text-[#171717]">Film Width</label>
@@ -444,17 +456,26 @@ export default function PersonBWorkOrderDetailPage({ params }: DetailPageProps) 
               </div>
               <div className="flex flex-col gap-2">
                 <label className="text-[13px] font-medium text-[#171717]">Linked WD-ID</label>
-                <select value={row.linkedWdId} onChange={(e) => {
-                  const id = e.target.value;
-                  const wd = wdLookup.get(id);
-                  updateSprayRow(idx, { linkedWdId: id });
-                }} className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]">
-                  <option value="">Select WD-ID</option>
-                  {availableWdIds.length === 0 && <option value="">No WD-IDs available</option>}
+                <ScannerInput 
+                  value={row.linkedWdId} 
+                  onChange={(e) => {
+                    const id = e.target.value;
+                    const wd = wdLookup.get(id);
+                    updateSprayRow(idx, { linkedWdId: id });
+                  }}
+                  onScanData={(data) => {
+                    const wd = wdLookup.get(data);
+                    updateSprayRow(idx, { linkedWdId: data });
+                  }}
+                  list={`wd-list-${idx}`}
+                  placeholder="Scan WD-ID..."
+                  className="h-[42px] rounded-[8px] border border-[#DDE1E8] pl-3 text-[14px]"
+                />
+                <datalist id={`wd-list-${idx}`}>
                   {availableWdIds.map((wdId) => (
                     <option key={wdId} value={wdId}>{wdId}</option>
                   ))}
-                </select>
+                </datalist>
               </div>
               <div className="flex flex-col gap-2">
                 <label className="text-[13px] font-medium text-[#171717]">Spray Type</label>
@@ -734,11 +755,13 @@ export default function PersonBWorkOrderDetailPage({ params }: DetailPageProps) 
                   <tr key={idx} className="hover:bg-gray-50/50 transition-colors group">
                     {currentConfig.columns.map((col) => {
                       if (String(col.key) === "options") {
+                        const rowId = activeTab === "Winding" ? (row as any).wdId : (row as any).spId;
                         return (
                           <td key={String(col.key)} className="px-4 py-3 whitespace-nowrap">
                             <OptionsDropdown
                               onEdit={() => alert(`Edit ${activeTab} Row ${idx}`)}
                               onDelete={() => alert(`Delete ${activeTab} Row ${idx}`)}
+                              onQrCode={() => setQrId(rowId)}
                             />
                           </td>
                         );
@@ -770,6 +793,7 @@ export default function PersonBWorkOrderDetailPage({ params }: DetailPageProps) 
           </div>
         </div>
       </section>
+      {qrId && <QRCodeModal id={qrId} onClose={() => setQrId(null)} />}
     </div>
   );
 }

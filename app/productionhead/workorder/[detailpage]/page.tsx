@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, Plus, X, ChevronRight, Check, Layers, Ruler, Weight, Package } from "lucide-react";
+import { Search, Plus, X, ChevronRight, Check, Layers, Ruler, Weight, Package, QrCode } from "lucide-react";
 import { MobileHeader, MobileSpacer } from "@/components/MobileHeader";
 import { use, useState, useMemo } from "react";
 import { useStore } from "@/hooks/useStore";
@@ -9,6 +9,7 @@ import type { TableConfig } from "@/hooks/useTableControls";
 import { useTableControls } from "@/hooks/useTableControls";
 import { SortableHeader } from "@/components/table/SortableHeader";
 import { TableToolbar } from "@/components/table/TableToolbar";
+import { QRCodeModal } from "@/components/QRCodeModal";
 
 type DetailPageProps = {
   params: Promise<{ detailpage: string }>;
@@ -113,6 +114,7 @@ export default function SupervisorWorkOrderDetailPage({ params }: DetailPageProp
   const [modalStep, setModalStep] = useState<ModalStep>(1);
   const [showValidationHint, setShowValidationHint] = useState(false);
   const [rawMaterialRowsInput, setRawMaterialRowsInput] = useState<RawMaterialForm[]>([createRawMaterialRow()]);
+  const [qrId, setQrId] = useState<string | null>(null);
 
   const currentConfig = useMemo(() => {
     switch (activeTab) {
@@ -538,9 +540,12 @@ export default function SupervisorWorkOrderDetailPage({ params }: DetailPageProp
                   <tr key={idx} className="hover:bg-gray-50/50 transition-colors group">
                     {currentConfig.columns.map((col) => {
                       if (String(col.key) === "options") {
+                        const rowId = activeTab === "Raw Material" ? (row as any).rollNo : activeTab === "Metallisation" ? (row as any).coilNo : (row as any).productNo;
                         return (
                           <td key={String(col.key)} className="px-4 py-3 whitespace-nowrap">
-                            <span className="text-[12px] text-[#5C5C5C]">-</span>
+                            <button onClick={() => setQrId(rowId)} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors">
+                              <QrCode className="w-4 h-4" />
+                            </button>
                           </td>
                         );
                       }
@@ -564,6 +569,7 @@ export default function SupervisorWorkOrderDetailPage({ params }: DetailPageProp
           </div>
         </div>
       </section>
+      {qrId && <QRCodeModal id={qrId} onClose={() => setQrId(null)} />}
     </div>
   );
 }

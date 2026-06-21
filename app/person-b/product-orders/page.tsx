@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { Plus, X, ChevronDown, Search, Info, ChevronLeft, ChevronRight, ClipboardList, Clock, Activity, CheckCircle } from "lucide-react";
+import { Plus, X, ChevronDown, Search, Info, ChevronLeft, ChevronRight, QrCode, ClipboardList, Clock, Activity, CheckCircle } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useStore } from "@/hooks/useStore";
 import { MobileHeader } from "@/components/MobileHeader";
+import { QRCodeModal } from "@/components/QRCodeModal";
 
 type ProductOrderRow = {
   id: string;
@@ -56,6 +57,7 @@ const productOrderConfig: TableConfig<ProductOrderRow> = {
     { key: "status", label: "Status", type: "enum", sortable: false, filter: "dropdown", options: ["Yet to Start", "In-progress", "Completed"] },
     { key: "stage", label: "Stage", type: "enum", sortable: false, filter: "dropdown", options: ["Yet to Start", "Raw Material", "Metallisation", "Slitting", "Completed"] },
     { key: "timestamp", label: "Created Timestamp", type: "date", sortable: true },
+    { key: "qr", label: "QR", type: "text", sortable: false },
     { key: "options", label: "Action", type: "text", sortable: false }
   ]
 };
@@ -110,6 +112,7 @@ function StatusBadge({ status }: { status: string }) {
 export default function PersonBProductOrdersPage() {
   const { store, addProductOrder, deleteProductOrder } = useStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [qrId, setQrId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [formData, setFormData] = useState<ProductOrderFormData>(() => createDefaultFormData());
@@ -648,6 +651,11 @@ export default function PersonBProductOrdersPage() {
                       <StatusBadge status={row.stage} />
                     </td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.timestamp}</td>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <button onClick={() => setQrId(row.id)} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors">
+                        <QrCode className="w-4 h-4" />
+                      </button>
+                    </td>
                     <td className="px-4 py-3 whitespace-nowrap">
                       <OptionsDropdown 
                         viewHref={`/person-b/product-orders/${row.id.replace('#', '')}`}
@@ -664,7 +672,7 @@ export default function PersonBProductOrdersPage() {
                 ))}
                 {paginatedProductOrders.length === 0 && (
                   <tr>
-                    <td colSpan={9} className="px-5 py-8 text-center text-[14px] text-[#5C5C5C]">
+                    <td colSpan={10} className="px-5 py-8 text-center text-[14px] text-[#5C5C5C]">
                       No product orders found.
                     </td>
                   </tr>
@@ -714,6 +722,8 @@ export default function PersonBProductOrdersPage() {
         </section>
 
       </div>
+
+      {qrId && <QRCodeModal id={qrId} onClose={() => setQrId(null)} />}
     </div>
   );
 }

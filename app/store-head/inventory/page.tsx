@@ -1,10 +1,15 @@
 "use client";
 
-import { Plus, Search, X, Check, Package, Warehouse, Activity, Archive } from "lucide-react";
-import { useState } from "react";
+import { Plus, Search, X, Check, Package, Warehouse, Activity, Archive, QrCode, Scan } from "lucide-react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useStore } from "@/hooks/useStore";
 import type { InventoryItem } from "@/lib/data";
 import { MobileHeader } from "@/components/MobileHeader";
+import { QRCodeModal } from "@/components/QRCodeModal";
+import { ScannerInput } from "@/components/ScannerInput";
+import { Scanner, type IDetectedBarcode, type IScannerError } from "@yudiel/react-qr-scanner";
+import { traceBarcode, type StoreSnapshot } from "@/lib/traceBarcode";
+import { UniversalTraceModal } from "@/components/UniversalTraceModal";
 
 type ModalStep = 1 | 2 | 3;
 
@@ -60,6 +65,9 @@ export default function StoreHeadInventoryPage() {
   const [modalStep, setModalStep] = useState<ModalStep>(1);
   const [form, setForm] = useState<InventoryForm>({ ...defaultForm });
   const [showHint, setShowHint] = useState(false);
+  const [qrId, setQrId] = useState<string | null>(null);
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [traceId, setTraceId] = useState<string | null>(null);
 
   const inventoryItems = store.inventoryItems;
 
@@ -171,7 +179,7 @@ export default function StoreHeadInventoryPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="flex flex-col gap-2">
               <label className="text-[13px] font-medium text-[#171717]">Raw Material ID</label>
-              <input value={form.rawMaterialId} onChange={(e) => setForm({ ...form, rawMaterialId: e.target.value })} placeholder="Auto or enter" className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]" />
+              <ScannerInput value={form.rawMaterialId} onChange={(e) => setForm({ ...form, rawMaterialId: e.target.value })} onScanData={(data) => setForm({ ...form, rawMaterialId: data })} placeholder="Auto or scan..." className="h-[42px] rounded-[8px] border border-[#DDE1E8] pl-3 text-[14px]" />
             </div>
             <div className="flex flex-col gap-2">
               <label className="text-[13px] font-medium text-[#171717]">Roll ID</label>
@@ -311,6 +319,13 @@ export default function StoreHeadInventoryPage() {
             <Search className="w-4 h-4 text-[#A1A1AA] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search by RM ID, Roll ID, or Supplier..." className="h-[40px] w-full pl-9 pr-3 bg-white border border-[#EBEBEB] rounded-[8px] text-[14px] text-[#171717] placeholder:text-[#A1A1AA] focus:outline-none focus:border-[#00B6E2]" />
           </div>
+          <button
+            onClick={() => setIsScannerOpen(true)}
+            className="h-[40px] px-3 flex items-center gap-2 bg-[#00B6E2] text-white rounded-[8px] text-[13px] font-medium hover:bg-[#009DC4] transition-colors shrink-0 w-full sm:w-auto"
+          >
+            <Scan className="w-4 h-4" />
+            <span className="hidden sm:inline">Scan QR</span>
+          </button>
         </section>
 
         <section className="bg-white rounded-[12px] flex flex-col gap-4 overflow-hidden">
@@ -325,6 +340,7 @@ export default function StoreHeadInventoryPage() {
                   <th className="px-4 py-[11px] text-[13px] font-semibold text-[#667085]">Weight</th>
                   <th className="px-4 py-[11px] text-[13px] font-semibold text-[#667085]">Supplier</th>
                   <th className="px-4 py-[11px] text-[13px] font-semibold text-[#667085]">Date</th>
+                  <th className="px-4 py-[11px] text-[13px] font-semibold text-[#667085]">QR</th>
                   <th className="px-4 py-[11px] text-[13px] font-semibold text-[#667085]">Status</th>
                 </tr>
               </thead>
@@ -338,15 +354,143 @@ export default function StoreHeadInventoryPage() {
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.weight}</td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.supplier}</td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.date}</td>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <button onClick={() => setQrId(row.rawMaterialId)} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors">
+                        <QrCode className="w-4 h-4" />
+                      </button>
+                    </td>
                     <td className="px-4 py-4 whitespace-nowrap"><StatusBadge status={row.status} /></td>
                   </tr>
                 )) : (
-                  <tr><td colSpan={8} className="px-4 py-8 text-center text-[#5C5C5C] text-[14px]">No inventory items found.</td></tr>
+                  <tr><td colSpan={9} className="px-4 py-8 text-center text-[#5C5C5C] text-[14px]">No inventory items found.</td></tr>
                 )}
               </tbody>
             </table>
           </div>
         </section>
+      </div>
+      {qrId && <QRCodeModal id={qrId} onClose={() => setQrId(null)} />}
+
+      {isScannerOpen && (
+        <ScannerModal
+          store={store}
+          onClose={() => setIsScannerOpen(false)}
+          onTrace={(id) => { setIsScannerOpen(false); setTraceId(id); }}
+        />
+      )}
+      {traceId && (
+        <UniversalTraceModal
+          store={store}
+          initialId={traceId}
+          onClose={() => setTraceId(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+function ScannerModal({
+  store,
+  onClose,
+  onTrace,
+}: {
+  store: StoreSnapshot;
+  onClose: () => void;
+  onTrace: (id: string) => void;
+}) {
+  const [scanError, setScanError] = useState<string | null>(null);
+  const [unrecognizedId, setUnrecognizedId] = useState<string | null>(null);
+  const scanLockRef = useRef(false);
+
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key === "Escape") onClose();
+  }, [onClose]);
+
+  useEffect(() => {
+    document.addEventListener("keydown", handleKeyDown);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = "";
+    };
+  }, [handleKeyDown]);
+
+  const handleScan = useCallback((detectedCodes: IDetectedBarcode[]) => {
+    if (scanLockRef.current) return;
+    const rawValue = detectedCodes[0]?.rawValue;
+    if (!rawValue) return;
+
+    scanLockRef.current = true;
+    const result = traceBarcode(store, rawValue.trim());
+    if (result) {
+      onTrace(result.scanned.id);
+    } else {
+      setUnrecognizedId(rawValue);
+      setScanError(`Barcode "${rawValue}" not found.`);
+      setTimeout(() => { scanLockRef.current = false; }, 1500);
+    }
+  }, [store, onTrace]);
+
+  const handleError = useCallback((err: IScannerError) => {
+    const msg = err?.message || "";
+    if (msg.includes("Permission") || msg.includes("permission") || msg.includes("denied")) {
+      setScanError("Camera permission denied. Please allow camera access in your browser settings.");
+    } else if (msg.includes("NotFoundError") || msg.includes("not found") || msg.includes("NotFound")) {
+      setScanError("No camera found on this device.");
+    } else if (err.kind === "in-use") {
+      setScanError("Camera is already in use by another application.");
+    } else {
+      setScanError(msg || "Failed to start camera. Please try again.");
+    }
+  }, []);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[#171717]/40 backdrop-blur-sm px-4"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div className="bg-white rounded-[12px] p-6 flex flex-col items-center gap-4 shadow-lg max-w-[360px] w-full">
+        <div className="flex items-center justify-between w-full">
+          <p className="text-[14px] font-medium text-[#171717]">Scan QR Code</p>
+          <button onClick={onClose} className="text-[#5C5C5C] hover:text-[#171717] transition-colors">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="w-full aspect-[4/3] bg-black rounded-[8px] overflow-hidden relative flex items-center justify-center">
+          {scanError && (
+            <div className="absolute inset-0 flex items-center justify-center z-10 bg-[#171717] flex-col gap-3 p-4 text-center">
+              <p className="text-white text-[13px]">{scanError}</p>
+              {unrecognizedId && (
+                <p className="text-[#A1A1AA] text-[11px]">Scanned: {unrecognizedId}</p>
+              )}
+              <button
+                onClick={() => { setScanError(null); scanLockRef.current = false; setUnrecognizedId(null); }}
+                className="px-4 h-[36px] bg-[#00B6E2] text-white rounded-[8px] text-[13px] font-medium hover:bg-[#009DC4] transition-colors"
+              >
+                {unrecognizedId ? "Scan Again" : "Retry"}
+              </button>
+            </div>
+          )}
+          <Scanner
+            onScan={(detectedCodes) => handleScan(detectedCodes)}
+            onError={(err) => handleError(err)}
+            allowMultiple={false}
+            constraints={{ facingMode: "environment", width: { ideal: 480 }, height: { ideal: 360 } }}
+            styles={{ container: { width: "100%", height: "100%" }, video: { objectFit: "cover" } }}
+          />
+        </div>
+
+        <p className="text-[12px] text-[#5C5C5C] text-center">
+          Point your camera at a raw material QR code
+        </p>
+
+        <button
+          onClick={onClose}
+          className="w-full h-[40px] bg-white border border-[#EBEBEB] text-[#5C5C5C] rounded-[8px] text-[14px] font-medium hover:bg-[#F5F7FA] transition-colors"
+        >
+          Cancel
+        </button>
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 "use client";
 
-import { Plus, X, ChevronDown, Search, Download } from "lucide-react";
+import { Plus, X, ChevronDown, Search, Download, QrCode } from "lucide-react";
+import { ScannerInput } from "@/components/ScannerInput";
 import Link from "next/link";
 import { useState } from "react";
 import { type WorkOrderSummary } from "../../../lib/data";
@@ -13,6 +14,7 @@ import { OptionsDropdown } from "@/components/table/OptionsDropdown";
 import { FilterPopover, FilterChips, type FilterConfig, type FilterState, type EnumFilter, type TextFilter, type NumberRangeFilter } from "@/components/table/FilterPopover";
 import { exportToExcel } from "@/lib/exportExcel";
 import { MobileHeader, MobileSpacer } from "@/components/MobileHeader";
+import { QRCodeModal } from "@/components/QRCodeModal";
 
 const WO_STATUS_OPTIONS = ["Yet to Start", "In-progress", "Completed"];
 const WO_STAGE_OPTIONS = ["Metalisation", "Raw Material", "Metallisation", "Slitting"];
@@ -61,14 +63,11 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export default function SupervisorWorkOrderPage() {
-  const { workOrders: rows, mounted, addWorkOrder } = useStore();
+  const { store, workOrders: rows, mounted, addWorkOrder } = useStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [qrId, setQrId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [formData, setFormData] = useState({
-    micron: "",
-    width: "",
-    quantity: ""
-  });
+  const [formData, setFormData] = useState({ micron: "", width: "", quantity: "" });
 
   const {
     processedData,
@@ -400,7 +399,12 @@ export default function SupervisorWorkOrderPage() {
             <div key={idx} className="bg-white border border-[#EBEBEB] rounded-lg p-4 flex flex-col gap-3">
               <div className="flex items-center justify-between">
                 <span className="text-[14px] font-medium text-[#00B6E2]">{row.id}</span>
-                <StatusBadge status={row.status} />
+                <div className="flex items-center gap-2">
+                  <button onClick={() => setQrId(row.id)} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors">
+                    <QrCode className="w-4 h-4" />
+                  </button>
+                  <StatusBadge status={row.status} />
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-2 text-[12px] text-[#5C5C5C]">
                 <div>Micron: <span className="text-[#171717] font-medium">{row.micron}</span></div>
@@ -436,6 +440,9 @@ export default function SupervisorWorkOrderPage() {
                       />
                     </th>
                   ))}
+                  <th className="px-4 py-[11px]">
+                    <span className="text-[13px] font-semibold text-[#667085]">QR</span>
+                  </th>
                 </tr>
               </thead>
 <tbody className="divide-y divide-[#EAECF0]">
@@ -466,11 +473,16 @@ export default function SupervisorWorkOrderPage() {
                         }}
                       />
                     </td>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <button onClick={() => setQrId(row.id)} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors">
+                        <QrCode className="w-4 h-4" />
+                      </button>
+                    </td>
                   </tr>
                 ))}
                 {filteredData.length === 0 && (
                   <tr>
-                    <td colSpan={8} className="px-4 py-8 text-center text-[14px] text-[#5C5C5C]">
+                    <td colSpan={9} className="px-4 py-8 text-center text-[14px] text-[#5C5C5C]">
                       No work orders found.
                     </td>
                   </tr>
@@ -480,6 +492,8 @@ export default function SupervisorWorkOrderPage() {
           </div>
         </section>
       </div>
+
+      {qrId && <QRCodeModal id={qrId} onClose={() => setQrId(null)} />}
     </div>
   );
 }
