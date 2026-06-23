@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, Scan, X } from "lucide-react";
+import { Search, Scan, X, QrCode } from "lucide-react";
 import Link from "next/link";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Layers, Zap, Scissors, CheckCircle } from "lucide-react";
@@ -13,6 +13,7 @@ import { OptionsDropdown } from "@/components/table/OptionsDropdown";
 import { FilterChips, type FilterConfig, type FilterState, type EnumFilter, type TextFilter, type NumberRangeFilter } from "@/components/table/FilterPopover";
 import { exportToExcel } from "@/lib/exportExcel";
 import { MobileHeader } from "@/components/MobileHeader";
+import { QRCodeModal } from "@/components/QRCodeModal";
 
 const WO_STATUS_OPTIONS = ["Yet to Start", "In-progress", "Completed"];
 const WO_STAGE_OPTIONS = ["Raw Material", "Metallisation", "Slitting"];
@@ -43,6 +44,7 @@ const workOrderConfig: TableConfig<ComputedWorkOrderSummary> = {
     { key: "stage", label: "Stage", type: "text", sortable: true },
     { key: "date", label: "Date", type: "date", sortable: true },
     { key: "status", label: "Status", type: "enum", sortable: false, filter: "dropdown", options: ["Yet to Start", "In-progress", "Completed"] },
+    { key: "qr", label: "QR", type: "text", sortable: false },
     { key: "options", label: "Action", type: "text", sortable: false }
   ]
 };
@@ -63,6 +65,7 @@ function StatusBadge({ status }: { status: string }) {
 export default function OperatorWorkOrderPage() {
   const { workOrders: rows, mounted, deleteWorkOrder } = useStore();
   const [searchQuery, setSearchQuery] = useState("");
+  const [qrModalId, setQrModalId] = useState<string | null>(null);
 
   const {
     processedData,
@@ -256,6 +259,15 @@ export default function OperatorWorkOrderPage() {
                       <StatusBadge status={row.status} />
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
+                      <button
+                        onClick={() => setQrModalId(row.id)}
+                        className="inline-flex items-center justify-center w-8 h-8 rounded-full hover:bg-[#F5F7FA] transition-colors text-[#5C5C5C] hover:text-[#00B6E2]"
+                        title="Show QR Code"
+                      >
+                        <QrCode className="w-4 h-4" />
+                      </button>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
                       <OptionsDropdown 
                         viewHref={`/person-a/workorder/${row.id}`}
                         status={row.status}
@@ -280,7 +292,7 @@ export default function OperatorWorkOrderPage() {
           </div>
         </section>
       </div>
-
+      {qrModalId && <QRCodeModal id={qrModalId} onClose={() => setQrModalId(null)} />}
     </div>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { use, useState, useMemo } from "react";
-import { Plus, X, Check, ChevronRight } from "lucide-react";
+import { Plus, X, Check, ChevronRight, QrCode } from "lucide-react";
 import { useStore } from "@/hooks/useStore";
 import { ScannerInput } from "@/components/ScannerInput";
 import { MobileHeader } from "@/components/MobileHeader";
@@ -10,6 +10,7 @@ import { useTableControls } from "@/hooks/useTableControls";
 import { SortableHeader } from "@/components/table/SortableHeader";
 import { TableToolbar } from "@/components/table/TableToolbar";
 import { OptionsDropdown } from "@/components/table/OptionsDropdown";
+import { QRCodeModal } from "@/components/QRCodeModal";
 
 type DetailPageProps = {
   params: Promise<{ detailpage: string }>;
@@ -45,6 +46,7 @@ const productMaterialConfig: TableConfig<any> = {
     { key: "grade", label: "Grade", type: "text", sortable: true },
     { key: "handoverBy", label: "Handover By", type: "text", sortable: true },
     { key: "timestamp", label: "Assigned At", type: "text", sortable: true },
+    { key: "qr", label: "QR", type: "text", sortable: false },
     { key: "options", label: "Action", type: "text", sortable: false }
   ]
 };
@@ -59,6 +61,7 @@ const windingConfig: TableConfig<any> = {
     { key: "quantityWound", label: "Quantity Wound", type: "text", sortable: true },
     { key: "stage", label: "Stage", type: "text", sortable: true },
     { key: "timestamp", label: "Timestamp", type: "text", sortable: true },
+    { key: "qr", label: "QR", type: "text", sortable: false },
     { key: "options", label: "Action", type: "text", sortable: false }
   ]
 };
@@ -74,6 +77,7 @@ const metallisationConfig: TableConfig<any> = {
     { key: "nextStage", label: "Next Stage", type: "text", sortable: true },
     { key: "timestamp", label: "Timestamp", type: "text", sortable: true },
     { key: "status", label: "Status", type: "text", sortable: true },
+    { key: "qr", label: "QR", type: "text", sortable: false }
   ]
 };
 
@@ -87,6 +91,7 @@ const slittingConfig: TableConfig<any> = {
     { key: "stage", label: "Stage", type: "text", sortable: true },
     { key: "timestampAdded", label: "Timestamp", type: "text", sortable: true },
     { key: "status", label: "Status", type: "text", sortable: true },
+    { key: "qr", label: "QR", type: "text", sortable: false }
   ]
 };
 
@@ -99,6 +104,7 @@ const sprayConfig: TableConfig<any> = {
     { key: "pressureSitting", label: "Pressure Sitting", type: "text", sortable: true },
     { key: "stage", label: "Stage", type: "text", sortable: true },
     { key: "timestamp", label: "Timestamp", type: "text", sortable: true },
+    { key: "qr", label: "QR", type: "text", sortable: false },
     { key: "options", label: "Action", type: "text", sortable: false }
   ]
 };
@@ -142,6 +148,7 @@ export default function PersonBProductOrderDetail({ params }: DetailPageProps) {
     spId: generateId("SP"), linkedWdId: "", sprayType: "Zinc-spray", feedRate: "", pressureSitting: ""
   });
   const [modalImage, setModalImage] = useState<string | null>(null);
+  const [qrId, setQrId] = useState<string | null>(null);
 
   const assignedStocks = useMemo(() => getAssignedStocks(poId), [store.assignments, poId, mounted]);
 
@@ -607,6 +614,24 @@ export default function PersonBProductOrderDetail({ params }: DetailPageProps) {
                 {processedData.map((row, i) => (
                   <tr key={i} className="hover:bg-gray-50 transition-colors">
                     {currentConfig.columns.map((col) => {
+                      if (String(col.key) === "qr") {
+                        const rowId = activeTab === "Product Material" ? (row as any).stockId :
+                                      activeTab === "Metallisation" ? (row as any).coilNo :
+                                      activeTab === "Slitting" ? (row as any).productNo :
+                                      activeTab === "Winding" ? (row as any).wdId :
+                                      (row as any).spId;
+                        return (
+                          <td key={String(col.key)} className="px-5 py-3 whitespace-nowrap">
+                            <button
+                              onClick={() => setQrId(rowId)}
+                              className="inline-flex items-center justify-center w-8 h-8 rounded-full hover:bg-[#F5F7FA] transition-colors text-[#5C5C5C] hover:text-[#00B6E2]"
+                              title="Show QR Code"
+                            >
+                              <QrCode className="w-4 h-4" />
+                            </button>
+                          </td>
+                        );
+                      }
                       if (String(col.key) === "options") {
                         return (
                           <td key={String(col.key)} className="px-5 py-3 whitespace-nowrap">
@@ -639,6 +664,7 @@ export default function PersonBProductOrderDetail({ params }: DetailPageProps) {
           </div>
         </div>
       </section>
+      {qrId && <QRCodeModal id={qrId} onClose={() => setQrId(null)} />}
     </div>
   );
 }

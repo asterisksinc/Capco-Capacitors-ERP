@@ -1,62 +1,49 @@
 "use client";
-
-import { X, Search, Fingerprint, Layers, Package, Box, ArrowRight, ChevronRight, Info } from "lucide-react";
+ 
+import { X, Search, Fingerprint, Package, Info, AlertTriangle, Eye, ArrowDown, Lock } from "lucide-react";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { traceBarcode, type TraceResult, type TraceEntity } from "@/lib/traceBarcode";
-import type { StoreSnapshot } from "@/lib/traceBarcode";
+import { detectEntityType, getLineageChain, type LineageNode, type StoreSnapshot } from "@/lib/traceBarcode";
 import { Scanner, type IDetectedBarcode, type IScannerError } from "@yudiel/react-qr-scanner";
-
-const typeColors: Record<string, string> = {
-  RM: "bg-[#E8F8F0] text-[#1CB061]",
-  MC: "bg-[#FFF4ED] text-[#E19242]",
-  PM: "bg-[#E6F8FD] text-[#00B6E2]",
-  WD: "bg-[#F0E6FD] text-[#8B5CF6]",
-  SP: "bg-[#FFF0F1] text-[#FB3748]",
-  WO: "bg-[#F5F7FA] text-[#171717]",
-  PO: "bg-[#E8F8F0] text-[#1CB061]",
-};
-
+ 
 const typeLabels: Record<string, string> = {
   RM: "Raw Material",
-  MC: "Metallisation",
-  PM: "Product",
-  WD: "Winding",
-  SP: "Spray",
+  MC: "Metallisation Coil",
+  PM: "Slit Roll",
+  WD: "Winding Roll",
+  SP: "Spray Roll",
   WO: "Work Order",
   PO: "Product Order",
 };
+ 
+const nodeStyles: Record<string, { border: string; bg: string; text: string; iconBg: string; badge: string }> = {
+  RM: { border: "border-[#A3E635]", bg: "bg-[#F7FEE7]", text: "text-[#3F6212]", iconBg: "bg-[#D9F99D]", badge: "bg-[#E2F9B8] text-[#3F6212]" },
+  WO: { border: "border-[#94A3B8]", bg: "bg-[#F8FAFC]", text: "text-[#334155]", iconBg: "bg-[#E2E8F0]", badge: "bg-[#E2E8F0] text-[#334155]" },
+  MC: { border: "border-[#FDBA74]", bg: "bg-[#FFF7ED]", text: "text-[#C2410C]", iconBg: "bg-[#FFEDD5]", badge: "bg-[#FFEDD5] text-[#C2410C]" },
+  PM: { border: "border-[#7DD3FC]", bg: "bg-[#F0F9FF]", text: "text-[#0369A1]", iconBg: "bg-[#E0F2FE]", badge: "bg-[#E0F2FE] text-[#0369A1]" },
+  PO: { border: "border-[#86EFAC]", bg: "bg-[#F0FDF4]", text: "text-[#166534]", iconBg: "bg-[#DCFCE7]", badge: "bg-[#DCFCE7] text-[#166534]" },
+  WD: { border: "border-[#C084FC]", bg: "bg-[#FAF5FF]", text: "text-[#6B21A8]", iconBg: "bg-[#F3E8FF]", badge: "bg-[#F3E8FF] text-[#6B21A8]" },
+  SP: { border: "border-[#FDA4AF]", bg: "bg-[#FFF1F2]", text: "text-[#9F1239]", iconBg: "bg-[#FFE4E6]", badge: "bg-[#FFE4E6] text-[#9F1239]" },
+};
+ 
+const allowedStages: Record<string, string[]> = {
+  admin: ["RM", "WO", "MC", "PM", "PO", "WD", "SP"],
+  productionhead: ["RM", "WO", "MC", "PM", "PO", "WD", "SP"],
+  "store-head": ["RM", "WO"],
+  "person-a": ["RM", "WO", "MC", "PM", "PO"],
+  "person-b": ["RM", "WO", "MC", "PM", "PO", "WD", "SP"],
+};
 
-function EntityCard({ entity, depth = 0 }: { entity: TraceEntity; depth?: number }) {
-  return (
-    <div className="flex flex-col" style={{ marginLeft: depth * 20 }}>
-      <div className="flex items-center gap-2 mb-1">
-        <span className={`inline-flex items-center px-2 py-0.5 rounded-[6px] text-[11px] font-semibold ${typeColors[entity.type] ?? "bg-[#F5F7FA] text-[#5C5C5C]"}`}>
-          {entity.type}
-        </span>
-        <span className="text-[13px] font-medium text-[#171717]">{entity.id}</span>
-        <span className="text-[11px] text-[#5C5C5C]">{entity.label}</span>
-        <span className={`ml-auto text-[11px] font-medium ${
-          entity.status === "Completed" ? "text-[#1CB061]" :
-          entity.status === "In-progress" ? "text-[#E19242]" :
-          entity.status === "Yet to Start" ? "text-[#FB3748]" :
-          "text-[#5C5C5C]"
-        }`}>{entity.status}</span>
-      </div>
-      {entity.details.length > 0 && (
-        <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 ml-7 mb-2">
-          {entity.details.map((d, i) => (
-            <div key={i} className="flex items-center gap-1.5">
-              <span className="text-[11px] text-[#A1A1AA]">{d.label}:</span>
-              <span className="text-[11px] text-[#171717] font-medium">{d.value}</span>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
+const ALL_STAGES = [
+  { type: "RM", label: "Raw Material ID", short: "RM" },
+  { type: "WO", label: "Work Order ID", short: "WO" },
+  { type: "MC", label: "Metallisation ID", short: "MC" },
+  { type: "PM", label: "Slitting ID", short: "SL" },
+  { type: "PO", label: "Product Order ID", short: "PO" },
+  { type: "WD", label: "Winding ID", short: "WD" },
+  { type: "SP", label: "Spray ID", short: "SP" }
+];
+ 
 export function UniversalTraceModal({
   store,
   initialId,
@@ -67,7 +54,7 @@ export function UniversalTraceModal({
   onClose: () => void;
 }) {
   const [searchValue, setSearchValue] = useState(initialId ?? "");
-  const [result, setResult] = useState<TraceResult | null>(null);
+  const [lineage, setLineage] = useState<LineageNode[]>([]);
   const [notFound, setNotFound] = useState(false);
   const [scanError, setScanError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -75,7 +62,17 @@ export function UniversalTraceModal({
   const router = useRouter();
   const pathname = usePathname();
   const role = pathname.split('/')[1] || "admin";
-
+ 
+  const allowed = allowedStages[role] || allowedStages["admin"];
+  const scannedType = detectEntityType(searchValue);
+  
+  // Custom access deniability check: Store Head cannot view PO details.
+  const isAccessDenied = (() => {
+    if (!searchValue.trim() || scannedType === "Unknown") return false;
+    if (role === "store-head" && scannedType === "PO") return true;
+    return false;
+  })();
+ 
   const getGuide = () => {
     switch (role) {
       case "productionhead":
@@ -123,55 +120,75 @@ export function UniversalTraceModal({
     }
   };
   const guide = getGuide();
-
+ 
   const handleSearch = useCallback((value: string) => {
     setSearchValue(value);
     if (!value.trim()) {
-      setResult(null);
+      setLineage([]);
       setNotFound(false);
       return;
     }
-    const r = traceBarcode(store, value.trim());
-    setResult(r);
-    setNotFound(!r);
+    const chain = getLineageChain(store, value.trim());
+    setLineage(chain);
+    setNotFound(chain.length === 0);
   }, [store]);
-
+ 
+  const handleOpenScreen = (type: string, id: string) => {
+    let path = "";
+    if (type === "WO") {
+      const woId = id.toUpperCase();
+      if (role === "admin") path = `/admin/workorders/${woId}`;
+      else if (role === "productionhead") path = `/productionhead/workorder/${woId}`;
+      else if (role === "store-head") path = `/store-head/workorder/${woId}`;
+      else if (role === "person-a") path = `/person-a/workorder/${woId}`;
+    } else if (type === "PO") {
+      const poId = id.toUpperCase();
+      if (role === "admin") path = `/admin/productorders/${poId}`;
+      else if (role === "person-b") path = `/person-b/product-orders/${poId}`;
+      else if (role === "person-a") path = `/person-a/product-orders/${poId.replace('#', '')}`;
+    }
+    if (path) {
+      router.push(path);
+      onClose();
+    }
+  };
+ 
   const handleScan = useCallback((detectedCodes: IDetectedBarcode[]) => {
     if (scanLockRef.current) return;
     const rawValue = detectedCodes[0]?.rawValue;
     if (!rawValue) return;
-
+ 
     scanLockRef.current = true;
     
-    // Trace the barcode to find its lineage
-    const r = traceBarcode(store, rawValue.trim());
+    const cleanValue = rawValue.trim();
+    const type = detectEntityType(cleanValue);
     
-    // Auto-routing logic
-    const isWO = rawValue.startsWith("WO-");
-    const isPO = rawValue.startsWith("PO-");
-    const woId = r?.workOrder?.id || (isWO ? rawValue : null);
-    const poId = r?.productOrder?.id || (isPO ? rawValue : null);
-    let routed = false;
-
-    if (woId && ["productionhead", "store-head", "person-a", "admin"].includes(role)) {
-      if (role === "productionhead") { router.push(`/productionhead/workorder/${woId}`); routed = true; }
-      else if (role === "store-head") { router.push(`/store-head/workorder/${woId}`); routed = true; }
-      else if (role === "person-a") { router.push(`/person-a/workorder/${woId}`); routed = true; }
-      else if (role === "admin") { router.push(`/admin/workorders/${woId}`); routed = true; }
-    } else if (poId && ["person-b", "admin"].includes(role)) {
-      if (role === "person-b") { router.push(`/person-b/product-orders/${poId}`); routed = true; }
-      else if (role === "admin") { router.push(`/admin/productorders/${poId}`); routed = true; }
+    // Check permission rules for auto-routing
+    const isAllowed = allowed.includes(type);
+    
+    if (isAllowed) {
+      const isWO = type === "WO";
+      const isPO = type === "PO";
+      let routed = false;
+ 
+      if (isWO && ["productionhead", "store-head", "person-a", "admin"].includes(role)) {
+        handleOpenScreen("WO", cleanValue);
+        routed = true;
+      } else if (isPO && ["person-b", "person-a", "admin"].includes(role)) {
+        handleOpenScreen("PO", cleanValue);
+        routed = true;
+      }
+ 
+      if (routed) {
+        onClose();
+        return;
+      }
     }
-
-    if (routed) {
-      onClose();
-      return;
-    }
-
+ 
     handleSearch(rawValue);
     setTimeout(() => { scanLockRef.current = false; }, 1500);
-  }, [store, handleSearch, role, router, onClose]);
-
+  }, [store, handleSearch, role, router, onClose, allowed]);
+ 
   const handleError = useCallback((err: IScannerError) => {
     const msg = err?.message || "";
     if (msg.includes("Permission") || msg.includes("permission") || msg.includes("denied")) {
@@ -184,11 +201,11 @@ export function UniversalTraceModal({
       setScanError(msg || "Failed to start camera. Please try again.");
     }
   }, []);
-
+ 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (e.key === "Escape") onClose();
   }, [onClose]);
-
+ 
   useEffect(() => {
     document.addEventListener("keydown", handleKeyDown);
     document.body.style.overflow = "hidden";
@@ -197,20 +214,30 @@ export function UniversalTraceModal({
       document.body.style.overflow = "";
     };
   }, [handleKeyDown]);
-
+ 
   useEffect(() => {
     if (initialId) {
       handleSearch(initialId);
     }
     inputRef.current?.focus();
   }, [initialId, handleSearch]);
-
+ 
+  const scannedIndex = ALL_STAGES.findIndex(s => s.type === scannedType);
+  const filteredLineage = lineage.filter(node => {
+    if (!allowed.includes(node.type)) return false;
+    if (scannedIndex !== -1) {
+      const nodeIndex = ALL_STAGES.findIndex(s => s.type === node.type);
+      if (nodeIndex > scannedIndex) return false;
+    }
+    return true;
+  });
+ 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-[#171717]/40 backdrop-blur-sm px-2 sm:px-4"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="bg-white rounded-[12px] flex flex-col shadow-lg max-w-[520px] w-full max-h-[85vh]">
+      <div className="bg-white rounded-[12px] flex flex-col shadow-lg max-w-[560px] w-full max-h-[85vh]">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-[#EBEBEB]">
           <div className="flex items-center gap-2">
@@ -221,7 +248,7 @@ export function UniversalTraceModal({
             <X className="w-4 h-4" />
           </button>
         </div>
-
+ 
         {/* Search */}
         <div className="p-4 pb-0">
           <div className="relative w-full">
@@ -237,95 +264,176 @@ export function UniversalTraceModal({
           </div>
         </div>
 
+        {/* Visual Lineage Diagram */}
+        {!isAccessDenied && filteredLineage.length > 0 && (
+          <div className="w-full overflow-x-auto py-3 select-none shrink-0 border-b border-[#EBEBEB] bg-[#FAFAFA] scrollbar-thin">
+            <div className="w-[522px] mx-auto relative h-[88px]">
+              <svg className="absolute inset-0 w-[522px] h-[88px] pointer-events-none">
+                {(() => {
+                  const scannedIndex = ALL_STAGES.findIndex(s => s.type === scannedType);
+                  if (scannedIndex > 0) {
+                    const sourceX = 36 + scannedIndex * 75;
+                    const sourceY = 32;
+                    let arcColor = "#A1A1AA";
+                    if (scannedType === "SP") arcColor = "#10B981"; // Green
+                    else if (scannedType === "WD") arcColor = "#EF4444"; // Red
+                    else if (scannedType === "PO") arcColor = "#3B82F6"; // Blue
+                    else if (scannedType === "PM") arcColor = "#EC4899"; // Pink
+                    else if (scannedType === "MC") arcColor = "#06B6D4"; // Cyan
+                    else if (scannedType === "WO") arcColor = "#6366F1"; // Indigo/Blue
+
+                    return ALL_STAGES.slice(0, scannedIndex).map((stage, j) => {
+                      const targetX = 36 + j * 75;
+                      const distance = Math.abs(sourceX - targetX);
+                      const cpY = sourceY + distance * 0.42;
+                      return (
+                        <path
+                          key={j}
+                          d={`M ${sourceX} ${sourceY} Q ${(sourceX + targetX) / 2} ${cpY} ${targetX} ${sourceY}`}
+                          fill="none"
+                          stroke={arcColor}
+                          strokeWidth="2.5"
+                          strokeDasharray="2,2"
+                          className="opacity-75 transition-all duration-300"
+                        />
+                      );
+                    });
+                  }
+                  return null;
+                })()}
+              </svg>
+
+              {ALL_STAGES.map((stage, i) => {
+                const scannedIndex = ALL_STAGES.findIndex(s => s.type === scannedType);
+                const isActive = i <= scannedIndex;
+                const isScanned = i === scannedIndex;
+                const isAllowed = allowed.includes(stage.type);
+
+                let nodeStyle = "border-[#E4E4E7] bg-white text-[#A1A1AA]";
+                if (isActive) {
+                  if (isScanned) {
+                    nodeStyle = "border-[#00B6E2] bg-[#E6F8FD] text-[#00B6E2] ring-4 ring-[#00B6E2]/20 font-bold scale-110";
+                  } else if (isAllowed) {
+                    nodeStyle = "border-[#A3E635] bg-[#F7FEE7] text-[#3F6212] font-semibold";
+                  } else {
+                    nodeStyle = "border-gray-200 bg-gray-50 text-gray-400";
+                  }
+                }
+
+                return (
+                  <div
+                    key={stage.type}
+                    style={{ left: `${20 + i * 75}px` }}
+                    className="absolute top-[16px] flex flex-col items-center w-[32px] transition-all duration-300"
+                  >
+                    <div
+                      className={`w-8 h-8 rounded-full border-2 flex items-center justify-center text-[10px] shadow-sm z-10 transition-all ${nodeStyle}`}
+                      title={stage.label}
+                    >
+                      {!isAllowed && isActive ? (
+                        <Lock className="w-3 h-3 text-[#EF4444]" />
+                      ) : (
+                        stage.short
+                      )}
+                    </div>
+
+                    <div className="absolute top-[38px] w-[80px] text-center flex flex-col items-center">
+                      <span className={`text-[9px] font-medium leading-none ${isActive ? 'text-[#171717]' : 'text-[#A1A1AA]'}`}>
+                        {stage.short}
+                      </span>
+                      {isScanned && (
+                        <span className="text-[7px] text-[#00B6E2] font-bold uppercase tracking-wider mt-0.5 animate-pulse">
+                          Scanned
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+ 
         {/* Result */}
-        <div className="p-4 overflow-y-auto flex-1 min-h-[200px]">
-          {notFound && (
+        <div className="p-4 overflow-y-auto flex-1 min-h-[220px]">
+          {isAccessDenied && (
+            <div className="flex flex-col items-center justify-center py-8 gap-3 text-center bg-[#FFF0F1] rounded-[12px] border border-[#FDA4AF] p-4">
+              <AlertTriangle className="w-10 h-10 text-[#FB3748]" />
+              <p className="text-[14px] font-bold text-[#FB3748]">Access Denied</p>
+              <p className="text-[12px] text-[#FB3748] max-w-[360px] font-medium leading-relaxed">
+                Your role ({role.toUpperCase()}) does not have permission to view {typeLabels[scannedType] || scannedType} details.
+              </p>
+            </div>
+          )}
+ 
+          {!isAccessDenied && notFound && (
             <div className="flex flex-col items-center justify-center py-8 gap-2">
               <Package className="w-8 h-8 text-[#A1A1AA]" />
               <p className="text-[13px] text-[#5C5C5C]">No data found for &quot;{searchValue}&quot;</p>
               <p className="text-[11px] text-[#A1A1AA]">Please verify the barcode ID and try again.</p>
             </div>
           )}
-
-          {result && (
-            <div className="flex flex-col gap-3">
-              {/* Scanned entity */}
-              <div className="bg-[#F5F7FA] rounded-[8px] p-3 border border-[#EBEBEB]">
-                <p className="text-[11px] font-medium text-[#A1A1AA] uppercase tracking-wide mb-2">Scanned</p>
-                <EntityCard entity={result.scanned} />
-              </div>
-
-              {/* Parent chain (if any) */}
-              {result.parentChain.length > 0 && (
-                <div className="bg-white rounded-[8px] p-3 border border-[#EBEBEB]">
-                  <p className="text-[11px] font-medium text-[#A1A1AA] uppercase tracking-wide mb-2">Parent Chain</p>
-                  <div className="flex flex-col">
-                    {result.parentChain.map((entity, i) => (
-                      <div key={entity.id}>
-                        {i > 0 && (
-                          <div className="flex items-center gap-1 ml-2 my-0.5">
-                            <ArrowRight className="w-3 h-3 text-[#A1A1AA]" />
-                          </div>
-                        )}
-                        <EntityCard entity={entity} />
+ 
+          {!isAccessDenied && filteredLineage.length > 0 && (
+            <div className="flex flex-col gap-4 py-2">
+              <p className="text-[11px] font-bold text-[#A1A1AA] uppercase tracking-wider mb-1">
+                Lineage Chain ({filteredLineage.length} stages resolved)
+              </p>
+              
+              {filteredLineage.map((node, index) => {
+                const style = nodeStyles[node.type] || nodeStyles.WO;
+                const canNavigate = (node.type === "WO" && ["admin", "productionhead", "store-head", "person-a"].includes(role)) ||
+                                    (node.type === "PO" && ["admin", "person-b", "person-a"].includes(role));
+                
+                return (
+                  <div key={node.id} className="flex flex-col items-center w-full">
+                    {index > 0 && (
+                      <div className="flex flex-col items-center my-1">
+                        <ArrowDown className="w-4 h-4 text-[#A1A1AA]" />
                       </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Product Order (if found) */}
-              {result.productOrder && (
-                <div className="bg-[#E8F8F0] rounded-[8px] p-3 border border-[#1CB061]/20">
-                  <p className="text-[11px] font-medium text-[#A1A1AA] uppercase tracking-wide mb-2">Product Order</p>
-                  <EntityCard entity={result.productOrder} />
-                </div>
-              )}
-
-              {/* Raw Material detail */}
-              {result.rawMaterial && result.scanned.type !== "RM" && (
-                <div className="bg-[#E8F8F0] rounded-[8px] p-3 border border-[#EBEBEB]">
-                  <p className="text-[11px] font-medium text-[#A1A1AA] uppercase tracking-wide mb-2">Raw Material</p>
-                  <EntityCard entity={result.rawMaterial} />
-                  {result.rawMaterial.supplier && (
-                    <div className="ml-7 text-[11px] text-[#5C5C5C]">
-                      {result.rawMaterial.rollId && <span>Roll ID: {result.rawMaterial.rollId}</span>}
+                    )}
+                    
+                    <div className={`w-full rounded-[12px] border p-4 bg-white shadow-sm transition-all border-[#EBEBEB] hover:border-[#00B6E2]`}>
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-[6px] text-[10px] font-bold uppercase tracking-wider ${style.badge}`}>
+                          {typeLabels[node.type] || node.type}
+                        </span>
+                        <span className="text-[13px] font-bold text-[#171717]">{node.id}</span>
+                        <span className={`ml-auto text-[11px] font-semibold ${
+                          node.status === "Completed" ? "text-[#1CB061]" :
+                          node.status === "In-progress" ? "text-[#E19242]" :
+                          node.status === "Yet to Start" ? "text-[#FB3748]" :
+                          "text-[#5C5C5C]"
+                        }`}>{node.status}</span>
+                        {canNavigate && (
+                          <button
+                            onClick={() => handleOpenScreen(node.type, node.id)}
+                            className="p-1 text-[#5C5C5C] hover:text-[#00B6E2] hover:bg-gray-50 rounded-[4px] transition-colors ml-1"
+                            title="Go to Details"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                      
+                      {node.details.length > 0 && (
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 bg-[#FAFBFD] p-2.5 rounded-[8px] border border-[#F2F4F7]">
+                          {node.details.map((d, i) => (
+                            <div key={i} className="flex flex-col gap-0.5">
+                              <span className="text-[10px] text-[#8B8BA2] font-medium uppercase tracking-wider">{d.label}</span>
+                              <span className="text-[12px] text-[#171717] font-semibold">{d.value}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              )}
-
-              {/* Children (if any) */}
-              {result.children.length > 0 && (
-                <div className="bg-white rounded-[8px] p-3 border border-[#EBEBEB]">
-                  <p className="text-[11px] font-medium text-[#A1A1AA] uppercase tracking-wide mb-2">
-                    Children ({result.children.length})
-                  </p>
-                  <div className="flex flex-col gap-2">
-                    {result.children.map((child) => (
-                      <EntityCard key={child.id} entity={child} />
-                    ))}
                   </div>
-                </div>
-              )}
-
-              {/* Work Order summary */}
-              {result.workOrder && result.scanned.type !== "WO" && result.scanned.type !== "RM" && (
-                <div className="bg-[#F5F7FA] rounded-[8px] p-3 border border-[#EBEBEB]">
-                  <p className="text-[11px] font-medium text-[#A1A1AA] uppercase tracking-wide mb-2">Work Order</p>
-                  <EntityCard entity={result.workOrder} />
-                </div>
-              )}
-
-              {!result.parentChain.length && !result.children.length && !result.productOrder && !result.rawMaterial && (
-                <div className="flex items-center justify-center py-4 text-[12px] text-[#A1A1AA]">
-                  No linked data found for this entity
-                </div>
-              )}
+                );
+              })}
             </div>
           )}
-
-          {!result && !notFound && !searchValue.trim() && (
+ 
+          {!isAccessDenied && !lineage.length && !notFound && !searchValue.trim() && (
             <div className="flex flex-col items-center justify-center py-4 gap-4 w-full h-full">
               <div className="w-full max-w-[320px] aspect-[4/3] bg-black rounded-[8px] overflow-hidden relative flex items-center justify-center">
                 {scanError && (
@@ -371,11 +479,11 @@ export function UniversalTraceModal({
             </div>
           )}
         </div>
-
+ 
         {/* Footer */}
         <div className="flex items-center justify-between p-4 border-t border-[#EBEBEB]">
           <p className="text-[11px] text-[#A1A1AA]">
-            {result ? `${result.scanned.type}: ${result.scanned.id}` : "No scan"}
+            {lineage.length ? `${typeLabels[scannedType] || scannedType}: ${searchValue}` : "No scan"}
           </p>
           <button
             onClick={onClose}

@@ -1,13 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Search, Download, Plus, ChevronDown, Menu, Bell, User, Edit2, Trash2, X, FileText } from "lucide-react";
+import { Search, Download, Plus, ChevronDown, Menu, Bell, User, Edit2, Trash2, X, FileText, QrCode } from "lucide-react";
+import { QRCodeModal } from "@/components/QRCodeModal";
 import { useMobileMenu } from "@/components/MobileMenuContext";
 
 export default function InventoryPage() {
   const { setIsMobileMenuOpen } = useMobileMenu();
   const [searchQuery, setSearchQuery] = useState("");
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [qrId, setQrId] = useState<string | null>(null);
 
   const data = [
     { id: "MTL-4092-A", name: "Aluminum Alloy 6061", desc: "T6 Temper / Structural", category: "Metals", stock: "4,200", unit: "kg", supplier: "Hydro Extrusions Ltd.", status: "In Stock", date: "19/03/2026:01:55:26" },
@@ -179,6 +181,9 @@ export default function InventoryPage() {
                         <button className="text-[#5C5C5C] hover:text-[#FB3748] transition-colors">
                           <Trash2 className="w-[18px] h-[18px]" />
                         </button>
+                        <button onClick={() => setQrId(row.id)} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors">
+                          <QrCode className="w-[18px] h-[18px]" />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -256,6 +261,7 @@ export default function InventoryPage() {
           </div>
         </div>
       )}
+      {qrId && <QRCodeModal id={qrId} onClose={() => setQrId(null)} />}
     </div>
   );
 }

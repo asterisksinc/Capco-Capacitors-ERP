@@ -168,16 +168,17 @@ export default function StoreHeadWorkOrderDetailPage({ params }: DetailPageProps
 
     const payload = rawMaterialRowsInput;
     payload.forEach((item) => {
+      const cleanRMId = (item.rawMaterialId || "").trim().toUpperCase();
       addFlowRow(orderId, "Raw Material", {
-        rollNo: item.rawMaterialId || generateId("RM"),
+        rollNo: cleanRMId || generateId("RM"),
         weight: `${item.quantity || "0"}kgs`,
         thickness: item.micron,
         supplier: item.supplier || "Unknown",
         stage: "METALLISATION",
         status: "Yet to Start",
       });
-      if (item.rawMaterialId) {
-        updateInventoryStatus(item.rawMaterialId, "Being Used");
+      if (cleanRMId) {
+        updateInventoryStatus(cleanRMId, "Being Used");
       }
     });
 
@@ -236,22 +237,30 @@ export default function StoreHeadWorkOrderDetailPage({ params }: DetailPageProps
                   value={row.rawMaterialId}
                   onChange={(e) => {
                     const id = e.target.value;
-                    const inv = availableInventory.find((i) => i.rawMaterialId === id);
+                    const cleanId = id.trim().toUpperCase();
+                    const inv = store.inventoryItems.find(
+                      (i) => i.rawMaterialId.toUpperCase() === cleanId || i.rollId.toUpperCase() === cleanId
+                    );
                     updateRawMaterialRow(idx, {
-                      rawMaterialId: id,
+                      rawMaterialId: inv ? inv.rawMaterialId : id,
                       micron: inv?.micron ?? row.micron,
                       width: inv?.width ?? row.width,
                       supplier: inv?.supplier ?? row.supplier,
+                      quantity: inv ? parseFloat(inv.weight).toString() : row.quantity,
                     });
                   }}
                   onScanData={(data) => {
-                    const inv = availableInventory.find((i) => i.rawMaterialId === data || i.rollId === data);
+                    const cleanId = data.trim().toUpperCase();
+                    const inv = store.inventoryItems.find(
+                      (i) => i.rawMaterialId.toUpperCase() === cleanId || i.rollId.toUpperCase() === cleanId
+                    );
                     if (inv) {
                       updateRawMaterialRow(idx, {
                         rawMaterialId: inv.rawMaterialId,
                         micron: inv.micron,
                         width: inv.width,
                         supplier: inv.supplier,
+                        quantity: parseFloat(inv.weight).toString(),
                       });
                     } else {
                       updateRawMaterialRow(idx, { rawMaterialId: data });

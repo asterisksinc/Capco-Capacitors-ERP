@@ -5,7 +5,7 @@ import { useState, useMemo } from "react";
 export type ColumnType = "text" | "number" | "date" | "enum" | "boolean";
 
 export type ColumnConfig<T> = {
-  key: keyof T | "options";
+  key: keyof T | "options" | "qr";
   label: string;
   type: ColumnType;
   sortable: boolean;
