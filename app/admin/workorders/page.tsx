@@ -1,13 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Search, Download, Filter, Menu, Bell, User } from "lucide-react";
+import { Search, Download, Filter, Menu, Bell, User, QrCode } from "lucide-react";
+import { QRCodeModal } from "@/components/QRCodeModal";
 import Link from "next/link";
 import { useMobileMenu } from "@/components/MobileMenuContext";
 
 export default function WorkOrdersPage() {
   const { setIsMobileMenuOpen } = useMobileMenu();
   const [searchQuery, setSearchQuery] = useState("");
+  const [qrId, setQrId] = useState<string | null>(null);
 
   const data = [
     { id: "WO-0001", manager: "Kristin Watson", micron: "8", width: "1", quantity: "1", stage: "Metallisation", date: "10/01/2025", status: "Yet to Start" },
@@ -150,12 +152,17 @@ export default function WorkOrdersPage() {
                       )}
                     </td>
                     <td className="px-6 py-4">
-                      <Link
-                        href={`/admin/workorders/${row.id}`}
-                        className="inline-flex items-center justify-center h-8 px-4 bg-[#00B6E2] text-white text-[13px] font-medium rounded-[6px] hover:bg-[#00A0E3] transition-colors"
-                      >
-                        View
-                      </Link>
+                      <div className="flex items-center gap-3">
+                        <Link
+                          href={`/admin/workorders/${row.id}`}
+                          className="inline-flex items-center justify-center h-8 px-4 bg-[#00B6E2] text-white text-[13px] font-medium rounded-[6px] hover:bg-[#00A0E3] transition-colors"
+                        >
+                          View
+                        </Link>
+                        <button onClick={() => setQrId(row.id)} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors">
+                          <QrCode className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -185,6 +192,7 @@ export default function WorkOrdersPage() {
           </div>
         </div>
       </section>
+      {qrId && <QRCodeModal id={qrId} onClose={() => setQrId(null)} />}
     </div>
   );
 }

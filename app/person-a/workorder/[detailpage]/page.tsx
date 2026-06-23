@@ -52,6 +52,7 @@ const rawMaterialConfig: TableConfig<any> = {
     { key: "supplier", label: "Company/Supplier", type: "text", sortable: true },
     { key: "stage", label: "Stage", type: "enum", sortable: false, filter: "dropdown", options: ["Raw Material", "METALLISATION"] },
     { key: "status", label: "Status", type: "enum", sortable: false, filter: "dropdown", options: ["Yet to Start", "In-progress", "Completed"] },
+    { key: "qr", label: "QR", type: "text", sortable: false },
     { key: "options", label: "Action", type: "text", sortable: false },
   ],
 };
@@ -67,6 +68,7 @@ const metallisationConfig: TableConfig<any> = {
     { key: "timestamp", label: "Timestamp", type: "date", sortable: true },
     { key: "nextStage", label: "Next Stage", type: "text", sortable: false },
     { key: "status", label: "Status", type: "enum", sortable: false, filter: "dropdown", options: ["Yet to Start", "In-progress", "Completed"] },
+    { key: "qr", label: "QR", type: "text", sortable: false },
     { key: "options", label: "Action", type: "text", sortable: false },
   ],
 };
@@ -81,6 +83,7 @@ const slittingConfig: TableConfig<any> = {
     { key: "timestampAdded", label: "Timestamp Added", type: "date", sortable: true },
     { key: "stage", label: "Stage", type: "enum", sortable: false, filter: "dropdown", options: ["Slitting", "Ready for Winding", "Completed"] },
     { key: "status", label: "Status", type: "enum", sortable: false, filter: "dropdown", options: ["Yet to Start", "In-progress", "Completed"] },
+    { key: "qr", label: "QR", type: "text", sortable: false },
     { key: "options", label: "Action", type: "text", sortable: false },
   ],
 };
@@ -849,6 +852,20 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
                 {processedData.map((row, idx) => (
                   <tr key={idx} className="hover:bg-gray-50/50 transition-colors group">
                     {currentConfig.columns.map((col) => {
+                      if (String(col.key) === "qr") {
+                        const rowId = activeTab === "Raw Material" ? (row as any).rollNo : activeTab === "Metallisation" ? (row as any).coilNo : (row as any).productNo;
+                        return (
+                          <td key={String(col.key)} className="px-4 py-3 whitespace-nowrap">
+                            <button
+                              onClick={() => setQrId(rowId)}
+                              className="inline-flex items-center justify-center w-8 h-8 rounded-full hover:bg-[#F5F7FA] transition-colors text-[#5C5C5C] hover:text-[#00B6E2]"
+                              title="Show QR Code"
+                            >
+                              <QrCode className="w-4 h-4" />
+                            </button>
+                          </td>
+                        );
+                      }
                       if (String(col.key) === "options") {
                         const rowId = activeTab === "Raw Material" ? (row as any).rollNo : activeTab === "Metallisation" ? (row as any).coilNo : (row as any).productNo;
                         return (

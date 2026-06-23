@@ -498,3 +498,455 @@ export function traceBarcode(store: StoreSnapshot, rawId: string): TraceResult |
 
   return null;
 }
+
+export function detectEntityType(rawId: string): EntityType {
+  const id = rawId.toUpperCase().trim();
+  if (id.startsWith("WO-")) return "WO";
+  if (id.startsWith("PO-") || id.startsWith("#PO-")) return "PO";
+  if (id.startsWith("RM-")) return "RM";
+  if (id.startsWith("MC-")) return "MC";
+  if (id.startsWith("PM-") || id.startsWith("STOCK-")) return "PM";
+  if (id.startsWith("WD-")) return "WD";
+  if (id.startsWith("SP-")) return "SP";
+  return "Unknown";
+}
+
+export interface LineageNode {
+  type: EntityType;
+  id: string;
+  label: string;
+  details: { label: string; value: string }[];
+  status: string;
+}
+
+export function getLineageChain(store: StoreSnapshot, rawId: string): LineageNode[] {
+  let cleanId = rawId.toUpperCase().trim();
+  if (cleanId.startsWith("STOCK-")) {
+    cleanId = "PM-" + cleanId.substring(6);
+  }
+  const startType = detectEntityType(cleanId);
+  if (startType === "Unknown") return [];
+
+  const resolved = {
+    RM: new Set<string>(),
+    WO: new Set<string>(),
+    MC: new Set<string>(),
+    PM: new Set<string>(),
+    PO: new Set<string>(),
+    WD: new Set<string>(),
+    SP: new Set<string>(),
+  };
+
+  resolved[startType].add(cleanId);
+
+  let expanded = true;
+  let iterations = 0;
+  while (expanded && iterations < 10) {
+    expanded = false;
+    iterations++;
+    const add = (type: EntityType, id: string) => {
+      if (type === "Unknown") return;
+      const upperId = id.toUpperCase().trim();
+      if (!resolved[type].has(upperId)) {
+        resolved[type].add(upperId);
+        expanded = true;
+      }
+    };
+
+    // 1. WO connections
+    for (const woId of Array.from(resolved.WO)) {
+      const flow = store.flowDataMap[woId];
+      if (flow) {
+        flow.rawMaterialRows.forEach(r => add("RM", r.rollNo));
+        flow.metallisationRows.forEach(r => add("MC", r.coilNo));
+        flow.slittingRows.forEach(r => add("PM", r.productNo));
+        flow.windingRows.forEach(r => add("WD", r.wdId));
+        flow.sprayRows.forEach(r => add("SP", r.spId));
+      }
+    }
+
+    // 2. PO connections
+    for (const poId of Array.from(resolved.PO)) {
+      const assigns = store.assignments[poId] ?? [];
+      assigns.forEach(a => {
+        add("PM", a.stockId);
+        add("WO", a.linkedWoId);
+      });
+    }
+
+    // 3. RM connections
+    for (const rmId of Array.from(resolved.RM)) {
+      for (const [woId, flow] of Object.entries(store.flowDataMap)) {
+        if (flow.rawMaterialRows.some(r => r.rollNo.toUpperCase() === rmId)) {
+          add("WO", woId);
+        }
+        flow.metallisationRows.forEach(r => {
+          if (r.rmId.toUpperCase() === rmId) {
+            add("MC", r.coilNo);
+            add("WO", woId);
+          }
+        });
+      }
+    }
+
+    // 4. MC connections
+    for (const mcId of Array.from(resolved.MC)) {
+      for (const [woId, flow] of Object.entries(store.flowDataMap)) {
+        flow.metallisationRows.forEach(r => {
+          if (r.coilNo.toUpperCase() === mcId) {
+            add("RM", r.rmId);
+            add("WO", woId);
+          }
+        });
+        flow.slittingRows.forEach(r => {
+          if (r.rmId.toUpperCase() === mcId) {
+            add("PM", r.productNo);
+            add("WO", woId);
+          }
+        });
+      }
+    }
+
+    // 5. PM connections
+    for (const pmId of Array.from(resolved.PM)) {
+      for (const [woId, flow] of Object.entries(store.flowDataMap)) {
+        flow.slittingRows.forEach(r => {
+          if (r.productNo.toUpperCase() === pmId) {
+            add("MC", r.rmId);
+            add("WO", woId);
+          }
+        });
+        flow.windingRows.forEach(r => {
+          if (r.linkedPmId.toUpperCase() === pmId) {
+            add("WD", r.wdId);
+            add("WO", woId);
+          }
+        });
+      }
+      for (const [poId, assigns] of Object.entries(store.assignments)) {
+        if (assigns.some(a => a.stockId.toUpperCase() === pmId)) {
+          add("PO", poId);
+        }
+      }
+    }
+
+    // 6. WD connections
+    for (const wdId of Array.from(resolved.WD)) {
+      for (const [woId, flow] of Object.entries(store.flowDataMap)) {
+        flow.windingRows.forEach(r => {
+          if (r.wdId.toUpperCase() === wdId) {
+            add("PM", r.linkedPmId);
+            add("WO", woId);
+          }
+        });
+        flow.sprayRows.forEach(r => {
+          if (r.linkedWdId.toUpperCase() === wdId) {
+            add("SP", r.spId);
+            add("WO", woId);
+          }
+        });
+      }
+    }
+
+    // 7. SP connections
+    for (const spId of Array.from(resolved.SP)) {
+      for (const [woId, flow] of Object.entries(store.flowDataMap)) {
+        flow.sprayRows.forEach(r => {
+          if (r.spId.toUpperCase() === spId) {
+            add("WD", r.linkedWdId);
+            add("WO", woId);
+          }
+        });
+      }
+    }
+  }
+
+  const chain: LineageNode[] = [];
+
+  const addNode = (node: LineageNode) => {
+    if (!chain.some(n => n.id.toUpperCase() === node.id.toUpperCase())) {
+      chain.push(node);
+    }
+  };
+
+  // Resolve RM details
+  for (const id of Array.from(resolved.RM)) {
+    const inv = store.inventoryItems.find(i => i.rawMaterialId.toUpperCase() === id);
+    let supplier = inv?.supplier || "";
+    let weight = inv?.weight || "";
+    let micron = inv?.micron || "";
+    let width = inv?.width || "";
+    let date = inv?.date || "";
+    let status = inv?.status || "Unknown";
+
+    if (!inv) {
+      for (const flow of Object.values(store.flowDataMap)) {
+        const row = flow.rawMaterialRows.find(r => r.rollNo.toUpperCase() === id);
+        if (row) {
+          supplier = row.supplier;
+          weight = row.weight;
+          micron = flow.overview.micron;
+          width = flow.overview.width;
+          status = row.status;
+          break;
+        }
+      }
+    }
+
+    const details = [
+      { label: "Supplier", value: supplier || "—" },
+      { label: "Weight", value: weight || "—" },
+      { label: "Micron", value: micron || "—" },
+      { label: "Width", value: width || "—" },
+    ];
+    if (date) details.push({ label: "Date Received", value: date });
+
+    const linkedWOs = Array.from(resolved.WO);
+    const linkedPOs = Array.from(resolved.PO);
+    if (linkedWOs.length > 0) details.push({ label: "Linked WO ID", value: linkedWOs.join(", ") });
+    if (linkedPOs.length > 0) details.push({ label: "Linked PO ID", value: linkedPOs.join(", ") });
+
+    addNode({
+      type: "RM",
+      id,
+      label: `Raw Material: ${id}`,
+      status,
+      details,
+    });
+  }
+
+  // Resolve WO details
+  for (const id of Array.from(resolved.WO)) {
+    const wo = store.workOrders.find(w => w.id.toUpperCase() === id);
+    const flow = store.flowDataMap[id];
+    const micron = wo?.micron || flow?.overview.micron || "—";
+    const width = wo?.width || flow?.overview.width || "—";
+    const qty = wo?.qty || flow?.overview.quantity || "—";
+    const date = wo?.date || flow?.overview.date || "—";
+    const status = flow?.overview.status || "Yet to Start";
+
+    const details = [
+      { label: "Micron", value: micron },
+      { label: "Width", value: width },
+      { label: "Qty Required", value: qty },
+      { label: "Date Created", value: date },
+    ];
+
+    addNode({
+      type: "WO",
+      id,
+      label: `Work Order: ${id}`,
+      status,
+      details,
+    });
+  }
+
+  // Resolve MC details
+  for (const id of Array.from(resolved.MC)) {
+    let mcRow: any = null;
+    let foundWoId = "";
+    for (const [woId, flow] of Object.entries(store.flowDataMap)) {
+      const row = flow.metallisationRows.find(r => r.coilNo.toUpperCase() === id);
+      if (row) {
+        mcRow = row;
+        foundWoId = woId;
+        break;
+      }
+    }
+    const details = [];
+    let status = "Yet to Start";
+    if (mcRow) {
+      details.push({ label: "Machine No", value: mcRow.machineNo });
+      details.push({ label: "Weight", value: mcRow.weight });
+      details.push({ label: "Optical Density", value: mcRow.opticalDensity });
+      details.push({ label: "Resistance", value: mcRow.resistance });
+      details.push({ label: "Timestamp", value: mcRow.timestamp });
+      details.push({ label: "Linked RM ID", value: mcRow.rmId });
+      status = mcRow.status;
+    }
+    if (foundWoId) details.push({ label: "Linked WO ID", value: foundWoId });
+    const linkedPOs = Array.from(resolved.PO);
+    if (linkedPOs.length > 0) details.push({ label: "Linked PO ID", value: linkedPOs.join(", ") });
+
+    addNode({
+      type: "MC",
+      id,
+      label: `Metallisation Coil: ${id}`,
+      status,
+      details,
+    });
+  }
+
+  // Resolve PM details
+  for (const id of Array.from(resolved.PM)) {
+    let pmRow: any = null;
+    let foundWoId = "";
+    for (const [woId, flow] of Object.entries(store.flowDataMap)) {
+      const row = flow.slittingRows.find(r => r.productNo.toUpperCase() === id);
+      if (row) {
+        pmRow = row;
+        foundWoId = woId;
+        break;
+      }
+    }
+    const details = [];
+    let status = "Yet to Start";
+    if (pmRow) {
+      details.push({ label: "Weight", value: pmRow.weight });
+      details.push({ label: "Thickness", value: pmRow.thickness });
+      details.push({ label: "Grade", value: pmRow.grade });
+      details.push({ label: "Remarks", value: pmRow.remarks || "—" });
+      details.push({ label: "Timestamp", value: pmRow.timestampAdded });
+      details.push({ label: "Linked MC ID", value: pmRow.rmId });
+      status = pmRow.status;
+    }
+    if (foundWoId) details.push({ label: "Linked WO ID", value: foundWoId });
+    let foundPoId = "";
+    for (const [poId, assigns] of Object.entries(store.assignments)) {
+      if (assigns.some(a => a.stockId.toUpperCase() === id)) {
+        foundPoId = poId;
+        break;
+      }
+    }
+    if (foundPoId) details.push({ label: "Linked PO ID", value: foundPoId });
+
+    addNode({
+      type: "PM",
+      id,
+      label: `Slit Roll: ${id}`,
+      status,
+      details,
+    });
+  }
+
+  // Resolve PO details
+  for (const id of Array.from(resolved.PO)) {
+    const po = store.productOrders.find(p => p.id.toUpperCase() === id || p.id.replace('#', '').toUpperCase() === id);
+    const details = [];
+    let status = "Yet to Start";
+    if (po) {
+      details.push({ label: "Code", value: po.code });
+      details.push({ label: "Type", value: po.type });
+      details.push({ label: "Grade", value: po.grade });
+      details.push({ label: "Batch Size", value: po.batchSize });
+      status = po.status;
+    }
+
+    addNode({
+      type: "PO",
+      id,
+      label: `Product Order: ${id}`,
+      status,
+      details,
+    });
+  }
+
+  // Resolve WD details
+  for (const id of Array.from(resolved.WD)) {
+    let wdRow: any = null;
+    let foundWoId = "";
+    for (const [woId, flow] of Object.entries(store.flowDataMap)) {
+      const row = flow.windingRows.find(r => r.wdId.toUpperCase() === id);
+      if (row) {
+        wdRow = row;
+        foundWoId = woId;
+        break;
+      }
+    }
+    const details = [];
+    let status = "Yet to Start";
+    if (wdRow) {
+      details.push({ label: "Film Width", value: wdRow.filmWidth });
+      details.push({ label: "Winding Tension", value: wdRow.windingTension });
+      details.push({ label: "Turns Count", value: wdRow.turnsCount });
+      details.push({ label: "Qty Wound", value: wdRow.quantityWound });
+      details.push({ label: "Timestamp", value: wdRow.timestamp });
+      details.push({ label: "Linked PM ID", value: wdRow.linkedPmId });
+      status = wdRow.status;
+
+      // Resolve preceding MC and RM
+      const flow = store.flowDataMap[foundWoId];
+      const pmRow = flow?.slittingRows.find(r => r.productNo === wdRow.linkedPmId);
+      if (pmRow) {
+        details.push({ label: "Linked MC ID", value: pmRow.rmId });
+        const mcRow = flow?.metallisationRows.find(r => r.coilNo === pmRow.rmId);
+        if (mcRow) {
+          details.push({ label: "Linked RM ID", value: mcRow.rmId });
+        }
+      }
+    }
+    if (foundWoId) details.push({ label: "Linked WO ID", value: foundWoId });
+    const linkedPOs = Array.from(resolved.PO);
+    if (linkedPOs.length > 0) details.push({ label: "Linked PO ID", value: linkedPOs.join(", ") });
+
+    addNode({
+      type: "WD",
+      id,
+      label: `Winding Roll: ${id}`,
+      status,
+      details,
+    });
+  }
+
+  // Resolve SP details
+  for (const id of Array.from(resolved.SP)) {
+    let spRow: any = null;
+    let foundWoId = "";
+    for (const [woId, flow] of Object.entries(store.flowDataMap)) {
+      const row = flow.sprayRows.find(r => r.spId.toUpperCase() === id);
+      if (row) {
+        spRow = row;
+        foundWoId = woId;
+        break;
+      }
+    }
+    const details = [];
+    let status = "Yet to Start";
+    if (spRow) {
+      details.push({ label: "Spray Type", value: spRow.sprayType });
+      details.push({ label: "Feed Rate", value: spRow.feedRate });
+      details.push({ label: "Pressure Sitting", value: spRow.pressureSitting });
+      details.push({ label: "Timestamp", value: spRow.timestamp });
+      details.push({ label: "Linked WD ID", value: spRow.linkedWdId });
+      status = spRow.status;
+
+      // Resolve preceding WD, PM, MC, RM
+      const flow = store.flowDataMap[foundWoId];
+      const wdRow = flow?.windingRows.find(r => r.wdId === spRow.linkedWdId);
+      if (wdRow) {
+        details.push({ label: "Linked PM ID", value: wdRow.linkedPmId });
+        const pmRow = flow?.slittingRows.find(r => r.productNo === wdRow.linkedPmId);
+        if (pmRow) {
+          details.push({ label: "Linked MC ID", value: pmRow.rmId });
+          const mcRow = flow?.metallisationRows.find(r => r.coilNo === pmRow.rmId);
+          if (mcRow) {
+            details.push({ label: "Linked RM ID", value: mcRow.rmId });
+          }
+        }
+      }
+    }
+    if (foundWoId) details.push({ label: "Linked WO ID", value: foundWoId });
+    const linkedPOs = Array.from(resolved.PO);
+    if (linkedPOs.length > 0) details.push({ label: "Linked PO ID", value: linkedPOs.join(", ") });
+
+    addNode({
+      type: "SP",
+      id,
+      label: `Spray Roll: ${id}`,
+      status,
+      details,
+    });
+  }
+
+  const typeOrder: Record<EntityType, number> = {
+    RM: 0,
+    WO: 1,
+    MC: 2,
+    PM: 3,
+    PO: 4,
+    WD: 5,
+    SP: 6,
+    Unknown: 7,
+  };
+  return chain.sort((a, b) => typeOrder[a.type] - typeOrder[b.type]);
+}

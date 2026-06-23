@@ -1,13 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Search, Download, Filter, Menu, Bell, User } from "lucide-react";
+import { Search, Download, Filter, Menu, Bell, User, QrCode } from "lucide-react";
+import { QRCodeModal } from "@/components/QRCodeModal";
 import Link from "next/link";
 import { useMobileMenu } from "@/components/MobileMenuContext";
 
 export default function ProductOrdersPage() {
   const { setIsMobileMenuOpen } = useMobileMenu();
   const [searchQuery, setSearchQuery] = useState("");
+  const [qrId, setQrId] = useState<string | null>(null);
 
   const data = [
     { id: "#PO-CC-4567", code: "C-450V-100uF", type: "Motor", grade: "AA", batch: "5000", manager: "Kristin Watson", status: "Yet to Start", stage: "Yet to Start", date: "19/03/2026:01:55:26" },
@@ -144,12 +146,17 @@ export default function ProductOrdersPage() {
                     </td>
                     <td className="px-6 py-4 text-[14px] text-[#5C5C5C]">{row.date}</td>
                     <td className="px-6 py-4">
-                      <Link
-                        href={`/admin/productorders/${row.id.replace('#', '')}`}
-                        className="inline-flex items-center justify-center h-8 px-4 bg-[#00B6E2] text-white text-[13px] font-medium rounded-[6px] hover:bg-[#00A0E3] transition-colors"
-                      >
-                        View
-                      </Link>
+                      <div className="flex items-center gap-3">
+                        <Link
+                          href={`/admin/productorders/${row.id.replace('#', '')}`}
+                          className="inline-flex items-center justify-center h-8 px-4 bg-[#00B6E2] text-white text-[13px] font-medium rounded-[6px] hover:bg-[#00A0E3] transition-colors"
+                        >
+                          View
+                        </Link>
+                        <button onClick={() => setQrId(row.id.replace('#', ''))} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors">
+                          <QrCode className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -179,6 +186,7 @@ export default function ProductOrdersPage() {
           </div>
         </div>
       </section>
+      {qrId && <QRCodeModal id={qrId} onClose={() => setQrId(null)} />}
     </div>
   );
 }

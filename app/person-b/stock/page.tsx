@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, QrCode } from "lucide-react";
 import Link from "next/link";
 import { useState, useMemo } from "react";
 import { Package, ArrowRight, Scissors, CheckCircle } from "lucide-react";
@@ -13,6 +13,7 @@ import { OptionsDropdown } from "@/components/table/OptionsDropdown";
 import { FilterChips, type FilterConfig, type FilterState, type EnumFilter, type TextFilter, type NumberRangeFilter } from "@/components/table/FilterPopover";
 import { exportToExcel } from "@/lib/exportExcel";
 import { MobileHeader } from "@/components/MobileHeader";
+import { QRCodeModal } from "@/components/QRCodeModal";
 
 type StockRow = {
   stockId: string;
@@ -55,6 +56,7 @@ const stockConfig: TableConfig<StockRow> = {
     { key: "grade", label: "Grade", type: "text", sortable: true },
     { key: "stage", label: "Stage", type: "enum", sortable: false, filter: "dropdown", options: STAGE_OPTIONS },
     { key: "timestamp", label: "Timestamp", type: "date", sortable: true },
+    { key: "qr", label: "QR", type: "text", sortable: false },
     { key: "options", label: "Action", type: "text", sortable: false },
   ],
 };
@@ -97,6 +99,7 @@ export default function PersonBStockPage() {
   } = useTableControls({ data: data, config: stockConfig });
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [qrId, setQrId] = useState<string | null>(null);
 
   const [tableFilters, setTableFilters] = useState<FilterState>(() => {
     const state: FilterState = {};
@@ -290,6 +293,11 @@ export default function PersonBStockPage() {
                     </td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.timestamp}</td>
                     <td className="px-4 py-3 whitespace-nowrap">
+                      <button onClick={() => setQrId(row.stockId)} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors">
+                        <QrCode className="w-4 h-4" />
+                      </button>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
                       <OptionsDropdown
                         status="Yet to Start"
                         onEdit={() => {}}
@@ -309,6 +317,7 @@ export default function PersonBStockPage() {
           </div>
         </section>
       </div>
+      {qrId && <QRCodeModal id={qrId} onClose={() => setQrId(null)} />}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { Search } from "lucide-react";
+import { Search, QrCode } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { useStore } from "@/hooks/useStore";
@@ -12,6 +12,7 @@ import { OptionsDropdown } from "@/components/table/OptionsDropdown";
 import { FilterChips, type FilterConfig, type FilterState, type EnumFilter, type TextFilter } from "@/components/table/FilterPopover";
 import { exportToExcel } from "@/lib/exportExcel";
 import { MobileHeader } from "@/components/MobileHeader";
+import { QRCodeModal } from "@/components/QRCodeModal";
 
 type ProductOrderRow = {
   id: string;
@@ -50,6 +51,7 @@ const config: TableConfig<ProductOrderRow> = {
     { key: "status", label: "Status", type: "enum", sortable: false, filter: "dropdown", options: STATUS_OPTIONS },
     { key: "stage", label: "Stage", type: "enum", sortable: false, filter: "dropdown", options: STAGE_OPTIONS },
     { key: "timestamp", label: "Created", type: "date", sortable: true },
+    { key: "qr", label: "QR", type: "text", sortable: false },
     { key: "options", label: "Action", type: "text", sortable: false }
   ]
 };
@@ -64,6 +66,7 @@ function StatusBadge({ status }: { status: string }) {
 export default function PersonAProductOrdersPage() {
   const { store, mounted } = useStore();
   const [searchQuery, setSearchQuery] = useState("");
+  const [qrId, setQrId] = useState<string | null>(null);
 
   const productOrders = store.productOrders as ProductOrderRow[];
 
@@ -155,6 +158,11 @@ export default function PersonAProductOrdersPage() {
                     <td className="px-4 py-4"><StatusBadge status={row.stage} /></td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C]">{row.timestamp}</td>
                     <td className="px-4 py-3">
+                      <button onClick={() => setQrId(row.id)} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors">
+                        <QrCode className="w-4 h-4" />
+                      </button>
+                    </td>
+                    <td className="px-4 py-3">
                       <OptionsDropdown viewHref={`/person-a/product-orders/${row.id.replace('#', '')}`} status={row.status} />
                     </td>
                   </tr>
@@ -167,6 +175,7 @@ export default function PersonAProductOrdersPage() {
           </div>
         </section>
       </div>
+      {qrId && <QRCodeModal id={qrId} onClose={() => setQrId(null)} />}
     </div>
   );
 }
