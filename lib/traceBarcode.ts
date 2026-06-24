@@ -537,128 +537,160 @@ export function getLineageChain(store: StoreSnapshot, rawId: string): LineageNod
     SP: new Set<string>(),
   };
 
-  resolved[startType].add(cleanId);
+  // Upstream backtracking helper
+  function traceUpstream(type: EntityType, id: string) {
+    if (type === "Unknown") return;
+    const upperId = id.toUpperCase().trim();
+    if (resolved[type].has(upperId)) return;
+    resolved[type].add(upperId);
 
-  let expanded = true;
-  let iterations = 0;
-  while (expanded && iterations < 10) {
-    expanded = false;
-    iterations++;
-    const add = (type: EntityType, id: string) => {
-      if (type === "Unknown") return;
-      const upperId = id.toUpperCase().trim();
-      if (!resolved[type].has(upperId)) {
-        resolved[type].add(upperId);
-        expanded = true;
-      }
-    };
-
-    // 1. WO connections
-    for (const woId of Array.from(resolved.WO)) {
-      const flow = store.flowDataMap[woId];
-      if (flow) {
-        flow.rawMaterialRows.forEach(r => add("RM", r.rollNo));
-        flow.metallisationRows.forEach(r => add("MC", r.coilNo));
-        flow.slittingRows.forEach(r => add("PM", r.productNo));
-        flow.windingRows.forEach(r => add("WD", r.wdId));
-        flow.sprayRows.forEach(r => add("SP", r.spId));
-      }
-    }
-
-    // 2. PO connections
-    for (const poId of Array.from(resolved.PO)) {
-      const assigns = store.assignments[poId] ?? [];
-      assigns.forEach(a => {
-        add("PM", a.stockId);
-        add("WO", a.linkedWoId);
-      });
-    }
-
-    // 3. RM connections
-    for (const rmId of Array.from(resolved.RM)) {
+    if (type === "SP") {
       for (const [woId, flow] of Object.entries(store.flowDataMap)) {
-        if (flow.rawMaterialRows.some(r => r.rollNo.toUpperCase() === rmId)) {
-          add("WO", woId);
+        const spRow = flow.sprayRows.find(r => r.spId.toUpperCase() === upperId);
+        if (spRow) {
+          traceUpstream("WO", woId);
+          traceUpstream("WD", spRow.linkedWdId);
+          break;
         }
-        flow.metallisationRows.forEach(r => {
-          if (r.rmId.toUpperCase() === rmId) {
-            add("MC", r.coilNo);
-            add("WO", woId);
+      }
+    } else if (type === "WD") {
+      for (const [woId, flow] of Object.entries(store.flowDataMap)) {
+        const wdRow = flow.windingRows.find(r => r.wdId.toUpperCase() === upperId);
+        if (wdRow) {
+          traceUpstream("WO", woId);
+          traceUpstream("PM", wdRow.linkedPmId);
+          break;
+        }
+      }
+    } else if (type === "PM") {
+      let found = false;
+      for (const [woId, flow] of Object.entries(store.flowDataMap)) {
+        const pmRow = flow.slittingRows.find(r => r.productNo.toUpperCase() === upperId);
+        if (pmRow) {
+          found = true;
+          traceUpstream("WO", woId);
+          const parentId = pmRow.rmId.toUpperCase().trim();
+          const parentType = detectEntityType(parentId);
+          if (parentType === "MC") {
+            traceUpstream("MC", parentId);
+          } else if (parentType === "RM") {
+            traceUpstream("RM", parentId);
+            // In case there is an MC that produced this RM, add it as well
+            const mcRow = flow.metallisationRows.find(m => m.rmId.toUpperCase() === parentId);
+            if (mcRow) {
+              traceUpstream("MC", mcRow.coilNo);
+            }
+          }
+          break;
+        }
+      }
+      if (!found) {
+        for (const [poId, assigns] of Object.entries(store.assignments)) {
+          const assign = assigns.find(a => a.stockId.toUpperCase() === upperId);
+          if (assign) {
+            traceUpstream("WO", assign.linkedWoId);
+            break;
+          }
+        }
+      }
+      for (const [poId, assigns] of Object.entries(store.assignments)) {
+        if (assigns.some(a => a.stockId.toUpperCase() === upperId)) {
+          traceUpstream("PO", poId);
+          break;
+        }
+      }
+    } else if (type === "MC") {
+      for (const [woId, flow] of Object.entries(store.flowDataMap)) {
+        const mcRow = flow.metallisationRows.find(r => r.coilNo.toUpperCase() === upperId);
+        if (mcRow) {
+          traceUpstream("WO", woId);
+          traceUpstream("RM", mcRow.rmId);
+          break;
+        }
+      }
+    } else if (type === "RM") {
+      for (const [woId, flow] of Object.entries(store.flowDataMap)) {
+        if (flow.rawMaterialRows.some(r => r.rollNo.toUpperCase() === upperId)) {
+          traceUpstream("WO", woId);
+          break;
+        }
+      }
+    }
+  }
+
+  // Downstream tracking helper
+  function traceDownstream(type: EntityType, id: string) {
+    if (type === "Unknown") return;
+    const upperId = id.toUpperCase().trim();
+    if (resolved[type].has(upperId)) return;
+    resolved[type].add(upperId);
+
+    if (type === "RM") {
+      for (const [woId, flow] of Object.entries(store.flowDataMap)) {
+        const usedInWO = flow.rawMaterialRows.some(r => r.rollNo.toUpperCase() === upperId);
+        if (usedInWO) {
+          resolved.WO.add(woId.toUpperCase().trim());
+        }
+        flow.metallisationRows.forEach(m => {
+          if (m.rmId.toUpperCase() === upperId) {
+            traceDownstream("MC", m.coilNo);
+          }
+        });
+        flow.slittingRows.forEach(s => {
+          if (s.rmId.toUpperCase() === upperId) {
+            traceDownstream("PM", s.productNo);
           }
         });
       }
-    }
-
-    // 4. MC connections
-    for (const mcId of Array.from(resolved.MC)) {
+    } else if (type === "MC") {
       for (const [woId, flow] of Object.entries(store.flowDataMap)) {
-        flow.metallisationRows.forEach(r => {
-          if (r.coilNo.toUpperCase() === mcId) {
-            add("RM", r.rmId);
-            add("WO", woId);
-          }
-        });
-        flow.slittingRows.forEach(r => {
-          if (r.rmId.toUpperCase() === mcId) {
-            add("PM", r.productNo);
-            add("WO", woId);
+        flow.slittingRows.forEach(s => {
+          if (s.rmId.toUpperCase() === upperId) {
+            traceDownstream("PM", s.productNo);
           }
         });
       }
-    }
-
-    // 5. PM connections
-    for (const pmId of Array.from(resolved.PM)) {
+    } else if (type === "PM") {
       for (const [woId, flow] of Object.entries(store.flowDataMap)) {
-        flow.slittingRows.forEach(r => {
-          if (r.productNo.toUpperCase() === pmId) {
-            add("MC", r.rmId);
-            add("WO", woId);
-          }
-        });
-        flow.windingRows.forEach(r => {
-          if (r.linkedPmId.toUpperCase() === pmId) {
-            add("WD", r.wdId);
-            add("WO", woId);
+        flow.windingRows.forEach(w => {
+          if (w.linkedPmId.toUpperCase() === upperId) {
+            traceDownstream("WD", w.wdId);
           }
         });
       }
       for (const [poId, assigns] of Object.entries(store.assignments)) {
-        if (assigns.some(a => a.stockId.toUpperCase() === pmId)) {
-          add("PO", poId);
+        if (assigns.some(a => a.stockId.toUpperCase() === upperId)) {
+          resolved.PO.add(poId.toUpperCase().trim());
         }
       }
-    }
-
-    // 6. WD connections
-    for (const wdId of Array.from(resolved.WD)) {
+    } else if (type === "WD") {
       for (const [woId, flow] of Object.entries(store.flowDataMap)) {
-        flow.windingRows.forEach(r => {
-          if (r.wdId.toUpperCase() === wdId) {
-            add("PM", r.linkedPmId);
-            add("WO", woId);
-          }
-        });
-        flow.sprayRows.forEach(r => {
-          if (r.linkedWdId.toUpperCase() === wdId) {
-            add("SP", r.spId);
-            add("WO", woId);
+        flow.sprayRows.forEach(s => {
+          if (s.linkedWdId.toUpperCase() === upperId) {
+            traceDownstream("SP", s.spId);
           }
         });
       }
-    }
-
-    // 7. SP connections
-    for (const spId of Array.from(resolved.SP)) {
-      for (const [woId, flow] of Object.entries(store.flowDataMap)) {
-        flow.sprayRows.forEach(r => {
-          if (r.spId.toUpperCase() === spId) {
-            add("WD", r.linkedWdId);
-            add("WO", woId);
-          }
-        });
+    } else if (type === "WO") {
+      const flow = store.flowDataMap[upperId];
+      if (flow) {
+        flow.rawMaterialRows.forEach(r => traceDownstream("RM", r.rollNo));
       }
+    } else if (type === "PO") {
+      const assigns = store.assignments[upperId] ?? [];
+      assigns.forEach(a => {
+        traceDownstream("PM", a.stockId);
+      });
     }
+  }
+
+  // Execute trace
+  if (startType === "SP" || startType === "WD" || startType === "PM" || startType === "MC") {
+    // For intermediate processing stages, trace strictly upstream (backtrack)
+    traceUpstream(startType, cleanId);
+  } else {
+    // For order entries and raw materials, trace downstream
+    traceDownstream(startType, cleanId);
   }
 
   const chain: LineageNode[] = [];
@@ -797,7 +829,24 @@ export function getLineageChain(store: StoreSnapshot, rawId: string): LineageNod
       details.push({ label: "Grade", value: pmRow.grade });
       details.push({ label: "Remarks", value: pmRow.remarks || "—" });
       details.push({ label: "Timestamp", value: pmRow.timestampAdded });
-      details.push({ label: "Linked MC ID", value: pmRow.rmId });
+
+      const parentId = pmRow.rmId.toUpperCase().trim();
+      const parentType = detectEntityType(parentId);
+      if (parentType === "MC") {
+        details.push({ label: "Linked MC ID", value: parentId });
+        const mcRow = store.flowDataMap[foundWoId]?.metallisationRows.find(m => m.coilNo.toUpperCase() === parentId);
+        if (mcRow) {
+          details.push({ label: "Linked RM ID", value: mcRow.rmId });
+        }
+      } else if (parentType === "RM") {
+        const mcRow = store.flowDataMap[foundWoId]?.metallisationRows.find(m => m.rmId.toUpperCase() === parentId);
+        if (mcRow) {
+          details.push({ label: "Linked MC ID", value: mcRow.coilNo });
+        } else {
+          details.push({ label: "Linked MC ID", value: "—" });
+        }
+        details.push({ label: "Linked RM ID", value: parentId });
+      }
       status = pmRow.status;
     }
     if (foundWoId) details.push({ label: "Linked WO ID", value: foundWoId });
@@ -868,16 +917,36 @@ export function getLineageChain(store: StoreSnapshot, rawId: string): LineageNod
       const flow = store.flowDataMap[foundWoId];
       const pmRow = flow?.slittingRows.find(r => r.productNo === wdRow.linkedPmId);
       if (pmRow) {
-        details.push({ label: "Linked MC ID", value: pmRow.rmId });
-        const mcRow = flow?.metallisationRows.find(r => r.coilNo === pmRow.rmId);
-        if (mcRow) {
-          details.push({ label: "Linked RM ID", value: mcRow.rmId });
+        const parentId = pmRow.rmId.toUpperCase().trim();
+        const parentType = detectEntityType(parentId);
+        if (parentType === "MC") {
+          details.push({ label: "Linked MC ID", value: parentId });
+          const mcRow = flow?.metallisationRows.find(r => r.coilNo.toUpperCase() === parentId);
+          if (mcRow) {
+            details.push({ label: "Linked RM ID", value: mcRow.rmId });
+          }
+        } else if (parentType === "RM") {
+          const mcRow = flow?.metallisationRows.find(m => m.rmId.toUpperCase() === parentId);
+          if (mcRow) {
+            details.push({ label: "Linked MC ID", value: mcRow.coilNo });
+          }
+          details.push({ label: "Linked RM ID", value: parentId });
         }
       }
     }
     if (foundWoId) details.push({ label: "Linked WO ID", value: foundWoId });
-    const linkedPOs = Array.from(resolved.PO);
-    if (linkedPOs.length > 0) details.push({ label: "Linked PO ID", value: linkedPOs.join(", ") });
+    
+    // Find the exact PO from PM ID
+    let foundPoId = "";
+    if (wdRow) {
+      for (const [poId, assigns] of Object.entries(store.assignments)) {
+        if (assigns.some(a => a.stockId.toUpperCase() === wdRow.linkedPmId.toUpperCase())) {
+          foundPoId = poId;
+          break;
+        }
+      }
+    }
+    if (foundPoId) details.push({ label: "Linked PO ID", value: foundPoId });
 
     addNode({
       type: "WD",
@@ -917,17 +986,41 @@ export function getLineageChain(store: StoreSnapshot, rawId: string): LineageNod
         details.push({ label: "Linked PM ID", value: wdRow.linkedPmId });
         const pmRow = flow?.slittingRows.find(r => r.productNo === wdRow.linkedPmId);
         if (pmRow) {
-          details.push({ label: "Linked MC ID", value: pmRow.rmId });
-          const mcRow = flow?.metallisationRows.find(r => r.coilNo === pmRow.rmId);
-          if (mcRow) {
-            details.push({ label: "Linked RM ID", value: mcRow.rmId });
+          const parentId = pmRow.rmId.toUpperCase().trim();
+          const parentType = detectEntityType(parentId);
+          if (parentType === "MC") {
+            details.push({ label: "Linked MC ID", value: parentId });
+            const mcRow = flow?.metallisationRows.find(r => r.coilNo.toUpperCase() === parentId);
+            if (mcRow) {
+              details.push({ label: "Linked RM ID", value: mcRow.rmId });
+            }
+          } else if (parentType === "RM") {
+            const mcRow = flow?.metallisationRows.find(m => m.rmId.toUpperCase() === parentId);
+            if (mcRow) {
+              details.push({ label: "Linked MC ID", value: mcRow.coilNo });
+            }
+            details.push({ label: "Linked RM ID", value: parentId });
           }
         }
       }
     }
     if (foundWoId) details.push({ label: "Linked WO ID", value: foundWoId });
-    const linkedPOs = Array.from(resolved.PO);
-    if (linkedPOs.length > 0) details.push({ label: "Linked PO ID", value: linkedPOs.join(", ") });
+    
+    // Find the exact PO from WD ID -> PM ID
+    let foundPoId = "";
+    if (spRow) {
+      const flow = store.flowDataMap[foundWoId];
+      const wdRow = flow?.windingRows.find(r => r.wdId === spRow.linkedWdId);
+      if (wdRow) {
+        for (const [poId, assigns] of Object.entries(store.assignments)) {
+          if (assigns.some(a => a.stockId.toUpperCase() === wdRow.linkedPmId.toUpperCase())) {
+            foundPoId = poId;
+            break;
+          }
+        }
+      }
+    }
+    if (foundPoId) details.push({ label: "Linked PO ID", value: foundPoId });
 
     addNode({
       type: "SP",
