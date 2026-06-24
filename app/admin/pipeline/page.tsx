@@ -1,66 +1,164 @@
 "use client";
-import { MobileHeader } from "@/components/MobileHeader";
 
-import { useState } from "react";
-import { Search, Download, Filter, ChevronDown, Menu, Bell, User as UserIcon, Calendar } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Search, Download, Filter, ChevronDown, Calendar } from "lucide-react";
 import Link from "next/link";
-import { useMobileMenu } from "@/components/MobileMenuContext";
+import { useStore } from "@/hooks/useStore";
+import { MobileHeader } from "@/components/MobileHeader";
+import { computeWorkflowProgress } from "../../../lib/data";
 
 export default function PipelinePage() {
-  const { setIsMobileMenuOpen } = useMobileMenu();
+  const { store, mounted } = useStore();
   const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban");
   const [listType, setListType] = useState<"product" | "work">("work");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const kanbanColumns = [
-    {
-      title: "Metallisation",
-      count: 2,
-      cards: [
-        { id: "WO-0001", status: "Yet to Start", micron: "8", width: "1", qty: "1", date: "10/01/2025", statusColor: "", statusBg: "", isPO: false as const },
-        { id: "WO-0003", status: "In-progress", micron: "8", width: "1", qty: "1", date: "10/01/2025", statusColor: "text-[#E19242]", statusBg: "bg-[#FFF4ED]", isPO: false as const }
-      ]
-    },
-    {
-      title: "Slitting",
-      count: 1,
-      cards: [
-        { id: "WO-0002", status: "Completed", micron: "8", width: "1", qty: "1", date: "10/01/2025", statusColor: "text-[#1CB061]", statusBg: "bg-[#E8F8F0]", isPO: false as const }
-      ]
-    },
-    {
-      title: "Winding",
-      count: 1,
-      cards: [
-        { id: "#PO-CC-4567", status: "Yet to Start", isPO: true as const, code: "C-450V-100uF", type: "Motor", grade: "AA", batch: "5000", qty: "1", date: "19/03/2026", statusColor: "", statusBg: "" }
-      ]
-    },
-    {
-      title: "Spray",
-      count: 1,
-      cards: [
-        { id: "#PO-CC-4568", status: "In-progress", isPO: true as const, code: "C-450V-100uF", type: "Motor", grade: "AA", batch: "5000", qty: "1", date: "19/03/2026", statusColor: "text-[#E19242]", statusBg: "bg-[#FFF4ED]" }
-      ]
-    }
+  const kanbanColumns = useMemo(() => {
+    if (!mounted) return [];
+    
+    // Metallisation Stage
+    const metallisationCards = store.workOrders.map(wo => {
+      const flow = store.flowDataMap[wo.id];
+      const progress = computeWorkflowProgress(flow);
+      return { id: wo.id, status: progress.status, micron: wo.micron, width: wo.width, qty: wo.qty, date: wo.date, stage: progress.stage, isPO: false as const };
+    }).filter(c => c.stage === "Raw Material" || c.stage === "Metallisation");
+
+    // Slitting Stage
+    const slittingCards = store.workOrders.map(wo => {
+      const flow = store.flowDataMap[wo.id];
+      const progress = computeWorkflowProgress(flow);
+      return { id: wo.id, status: progress.status, micron: wo.micron, width: wo.width, qty: wo.qty, date: wo.date, stage: progress.stage, isPO: false as const };
+    }).filter(c => c.stage === "Slitting");
+
+    // Winding Stage
+    const windingCards = store.productOrders.filter(po => {
+      return po.stage === "Yet to Start" || po.stage === "Raw Material" || po.stage === "Metallisation" || po.stage === "Slitting" || po.stage === "Winding";
+    }).map(po => ({
+      id: po.id,
+      status: po.status,
+      isPO: true as const,
+      code: po.code,
+      type: po.type,
+      grade: po.grade,
+      batch: po.batchSize,
+      qty: po.batchSize,
+      date: po.timestamp.split(':')[0]
+    }));
+
+    // Spray Stage
+    const sprayCards = store.productOrders.filter(po => {
+      return po.stage === "Spray" || po.stage === "Completed";
+    }).map(po => ({
+      id: po.id,
+      status: po.status,
+      isPO: true as const,
+      code: po.code,
+      type: po.type,
+      grade: po.grade,
+      batch: po.batchSize,
+      qty: po.batchSize,
+      date: po.timestamp.split(':')[0]
+    }));
+
+    return [
+      {
+        title: "Metallisation",
+        count: metallisationCards.length,
+        cards: metallisationCards.map(c => ({
+          ...c,
+          statusColor: c.status === "Completed" ? "text-[#1CB061]" : c.status === "In-progress" ? "text-[#E19242]" : "text-[#FB3748]",
+          statusBg: c.status === "Completed" ? "bg-[#E8F8F0]" : c.status === "In-progress" ? "bg-[#FFF4ED]" : "bg-[#FFF0F1]"
+        }))
+      },
+      {
+        title: "Slitting",
+        count: slittingCards.length,
+        cards: slittingCards.map(c => ({
+          ...c,
+          statusColor: c.status === "Completed" ? "text-[#1CB061]" : c.status === "In-progress" ? "text-[#E19242]" : "text-[#FB3748]",
+          statusBg: c.status === "Completed" ? "bg-[#E8F8F0]" : c.status === "In-progress" ? "bg-[#FFF4ED]" : "bg-[#FFF0F1]"
+        }))
+      },
+      {
+        title: "Winding",
+        count: windingCards.length,
+        cards: windingCards.map(c => ({
+          ...c,
+          statusColor: c.status === "Completed" ? "text-[#1CB061]" : c.status === "In-progress" ? "text-[#E19242]" : "text-[#FB3748]",
+          statusBg: c.status === "Completed" ? "bg-[#E8F8F0]" : c.status === "In-progress" ? "bg-[#FFF4ED]" : "bg-[#FFF0F1]"
+        }))
+      },
+      {
+        title: "Spray",
+        count: sprayCards.length,
+        cards: sprayCards.map(c => ({
+          ...c,
+          statusColor: c.status === "Completed" ? "text-[#1CB061]" : c.status === "In-progress" ? "text-[#E19242]" : "text-[#FB3748]",
+          statusBg: c.status === "Completed" ? "bg-[#E8F8F0]" : c.status === "In-progress" ? "bg-[#FFF4ED]" : "bg-[#FFF0F1]"
+        }))
+      }
+    ];
+  }, [store, mounted]);
+
+  const workOrdersList = useMemo(() => {
+    if (!mounted) return [];
+    return store.workOrders.map(wo => {
+      const flow = store.flowDataMap[wo.id];
+      const progress = computeWorkflowProgress(flow);
+      return {
+        id: wo.id,
+        micron: wo.micron,
+        width: wo.width,
+        quantity: wo.qty,
+        stage: progress.stage,
+        date: wo.date,
+        status: progress.status,
+        statusColor: progress.status === "Completed" ? "text-[#1CB061]" : progress.status === "In-progress" ? "text-[#E19242]" : "text-[#FB3748]",
+        statusBg: progress.status === "Completed" ? "bg-[#E8F8F0]" : progress.status === "In-progress" ? "bg-[#FFF4ED]" : "bg-[#FFF0F1]"
+      };
+    }).filter(row => {
+      if (searchQuery && !row.id.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+      return true;
+    });
+  }, [store, mounted, searchQuery]);
+
+  const productOrdersList = useMemo(() => {
+    if (!mounted) return [];
+    return store.productOrders.map(po => ({
+      id: po.id,
+      code: po.code,
+      type: po.type,
+      grade: po.grade,
+      batch: po.batchSize,
+      status: po.status,
+      stage: po.stage,
+      date: po.timestamp
+    })).filter(row => {
+      const search = searchQuery.toLowerCase();
+      if (searchQuery && !row.id.toLowerCase().includes(search) && !row.code.toLowerCase().includes(search)) return false;
+      return true;
+    });
+  }, [store, mounted, searchQuery]);
+
+  const totalWos = store.workOrders.length;
+  const totalPos = store.productOrders.length;
+  const inProgressCount = useMemo(() => {
+    if (!mounted) return 0;
+    const activeWos = store.workOrders.filter(w => {
+      const flow = store.flowDataMap[w.id];
+      return computeWorkflowProgress(flow).status === "In-progress";
+    }).length;
+    const activePos = store.productOrders.filter(p => p.status === "In-progress").length;
+    return activeWos + activePos;
+  }, [store, mounted]);
+
+  const kpiStats = [
+    { label: "Active Work Orders", value: String(totalWos), subtext: "Live floor execution", subColor: "text-[#00B6E2]" },
+    { label: "Active Product Orders", value: String(totalPos), subtext: "Client demands", subColor: "text-[#1CB061]" },
+    { label: "In-Progress Stages", value: String(inProgressCount), subtext: "Under active processing", subColor: "text-[#E19242]" },
   ];
 
-  const productOrdersList = [
-    { id: "#PO-CC-4567", code: "C-450V-100uF", type: "Motor", grade: "AA", batch: "5000", manager: "Kristin Watson", status: "Yet to Start", stage: "Yet to Start", date: "19/03/2026:01:55:26" },
-    { id: "#PO-CC-4567", code: "C-450V-100uF", type: "Motor", grade: "AA", batch: "5000", manager: "Eleanor Pena", status: "Yet to Start", stage: "Yet to Start", date: "19/03/2026:01:55:26" },
-    { id: "#PO-CC-4567", code: "C-450V-100uF", type: "Motor", grade: "AA", batch: "5000", manager: "Eleanor Pena", status: "Yet to Start", stage: "Yet to Start", date: "19/03/2026:01:55:26" },
-    { id: "#PO-CC-4567", code: "C-450V-100uF", type: "Motor", grade: "AA", batch: "5000", manager: "Guy Hawkins", status: "Yet to Start", stage: "Yet to Start", date: "19/03/2026:01:55:26" },
-    { id: "#PO-CC-4567", code: "C-450V-100uF", type: "Motor", grade: "AA", batch: "5000", manager: "Jenny Wilson", status: "Yet to Start", stage: "Yet to Start", date: "19/03/2026:01:55:26" },
-    { id: "#PO-CC-4567", code: "C-450V-100uF", type: "Motor", grade: "AA", batch: "5000", manager: "Michael Brown", status: "Yet to Start", stage: "Yet to Start", date: "19/03/2026:01:55:26" },
-    { id: "#PO-CC-4567", code: "C-450V-100uF", type: "Motor", grade: "AA", batch: "5000", manager: "Emma Johnson", status: "Yet to Start", stage: "Yet to Start", date: "19/03/2026:01:55:26" },
-  ];
-
-  const workOrdersList = [
-    { id: "WO-0001", micron: "8", width: "1", quantity: "1", stage: "Metallisation", date: "10/01/2025", status: "Yet to Start", statusColor: "", statusBg: "" },
-    { id: "WO-0001", micron: "12", width: "1", quantity: "1", stage: "Slitting", date: "10/01/2025", status: "In-progress", statusColor: "text-[#E19242]", statusBg: "bg-[#FFF4ED]" },
-    { id: "WO-0001", micron: "5", width: "1", quantity: "1", stage: "Slitting", date: "10/01/2025", status: "Completed", statusColor: "text-[#1CB061]", statusBg: "bg-[#E8F8F0]" },
-    { id: "WO-0001", micron: "15", width: "1", quantity: "1", stage: "Metallisation", date: "10/01/2025", status: "Yet to Start", statusColor: "", statusBg: "" },
-    { id: "WO-0001", micron: "7", width: "1", quantity: "1", stage: "Slitting", date: "10/01/2025", status: "Completed", statusColor: "text-[#1CB061]", statusBg: "bg-[#E8F8F0]" },
-  ];
+  if (!mounted) return null;
 
   return (
     <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-white flex flex-col w-full max-w-full relative">
@@ -75,7 +173,7 @@ export default function PipelinePage() {
         <div className="px-6 py-6 flex flex-col">
           <h1 className="text-[20px] font-semibold text-[#171717]">Pipeline</h1>
           <p className="text-[14px] text-[#5C5C5C] mt-1">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit
+            Visual workflow pipeline of all orders across the floor
           </p>
         </div>
       </section>
@@ -84,18 +182,14 @@ export default function PipelinePage() {
       <section className="px-4 pt-4 sm:hidden">
         <h1 className="text-[16px] font-medium text-[#171717]">Pipeline</h1>
         <p className="text-[12px] text-[#5C5C5C] mt-1">
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit
+          Visual workflow pipeline of all orders across the floor
         </p>
       </section>
 
       {/* STATS SECTION */}
       <section className="px-4 md:px-6 py-4 md:py-6">
         <div className="bg-white border border-[#EBEBEB] rounded-[12px] p-4 md:p-6 flex flex-col md:flex-row md:items-center gap-4 md:gap-0">
-          {[
-            { label: "Lorem ipsum dolor", value: "124", subtext: "5% vs Last Month", subColor: "text-[#1CB061]" },
-            { label: "Lorem ipsum dolor", value: "42", subtext: "Stable", subColor: "text-[#5C5C5C]" },
-            { label: "Lorem ipsum dolor", value: "15", subtext: "+0.2% vs Last Month", subColor: "text-[#1CB061]" },
-          ].map((item, i) => (
+          {kpiStats.map((item, i) => (
             <div key={i} className="flex-1 flex flex-row md:flex-col justify-between md:justify-start items-center md:items-start border-b md:border-b-0 md:border-r border-[#EBEBEB] last:border-0 pb-3 md:pb-0 md:pl-6 first:pl-0">
               <div className="flex flex-col gap-1">
                 <p className="text-[13px] text-[#5C5C5C]">{item.label}</p>
@@ -133,9 +227,9 @@ export default function PipelinePage() {
 
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="relative w-full md:w-[400px]">
-              <Search className="w-5 h-5 text-[#A1A1AA] absolute left-3 top-1/2 -translate-y-1/2" />
+              <Search className="w-5 h-5 text-[#A1A1AA] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
-                placeholder="Search by Product Order ID..."
+                placeholder={listType === "work" ? "Search by Work Order ID..." : "Search by PO ID or Code..."}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="h-[44px] w-full pl-10 pr-4 bg-white border border-[#EBEBEB] rounded-[8px] text-[14px] focus:outline-none focus:border-[#00B6E2]"
@@ -157,20 +251,9 @@ export default function PipelinePage() {
                 </div>
               )}
               
-              <div className="relative w-[130px] hidden md:block">
-                <select className="h-[44px] w-full appearance-none bg-white border border-[#EBEBEB] rounded-[8px] px-4 pr-10 text-[14px] text-[#171717] focus:outline-none focus:border-[#00B6E2]">
-                  <option value="sort">Sort by</option>
-                </select>
-                <ChevronDown className="w-4 h-4 text-[#5C5C5C] absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-              </div>
-              
               <button className="h-[44px] px-4 bg-white border border-[#00B6E2] text-[#00B6E2] rounded-[8px] flex items-center gap-2 text-[14px] font-medium transition-colors hover:bg-[#F0FDFF]">
                 <Download className="w-4 h-4" />
                 Export
-              </button>
-              <button className="h-[44px] px-4 bg-[#00B6E2] border border-[#00B6E2] text-white rounded-[8px] flex items-center gap-2 text-[14px] font-medium transition-colors hover:bg-[#00A0E3]">
-                <Filter className="w-4 h-4" />
-                Filter
               </button>
             </div>
           </div>
@@ -201,17 +284,21 @@ export default function PipelinePage() {
                       {card.isPO ? (
                         <div className="grid grid-cols-2 gap-y-3 gap-x-2 text-[13px]">
                           <div className="flex flex-col gap-1">
-                            <span className="text-[#5C5C5C]">{card.code}</span>
-                            <span className="text-[#171717] font-medium">Grade: {card.grade}</span>
-                            <span className="text-[#171717] font-medium">Quantity: {card.qty}</span>
+                            <span className="text-[#5C5C5C] font-semibold">{card.code}</span>
+                            <span className="text-[#5C5C5C]">Grade: <span className="text-[#171717] font-medium">{card.grade}</span></span>
                           </div>
                           <div className="flex flex-col gap-1">
-                            <span className="text-[#171717] font-medium">{card.type}</span>
-                            <span className="text-[#171717] font-medium">Batch Size: {card.batch}</span>
-                            <div className="flex items-center gap-1.5 mt-auto">
+                            <span className="text-[#5C5C5C]">{card.type}</span>
+                            <span className="text-[#5C5C5C]">Batch: <span className="text-[#171717] font-medium">{card.batch}</span></span>
+                            <div className="flex items-center gap-1.5 mt-auto pt-2">
                               <Calendar className="w-3.5 h-3.5 text-[#5C5C5C]" />
-                              <span className="text-[#171717]">{card.date}</span>
+                              <span className="text-[#171717] text-[11px]">{card.date}</span>
                             </div>
+                          </div>
+                          <div className="col-span-2 pt-3 border-t border-[#EAECF0]">
+                            <Link href={`/admin/productorders/${card.id.replace('#', '')}`} className="text-[12px] text-[#00B6E2] hover:underline font-semibold">
+                              View details &rarr;
+                            </Link>
                           </div>
                         </div>
                       ) : (
@@ -222,15 +309,23 @@ export default function PipelinePage() {
                           </div>
                           <div className="flex flex-col gap-1">
                             <span className="text-[#5C5C5C]">Width: <span className="text-[#171717] font-medium">{card.width}</span></span>
-                            <div className="flex items-center gap-1.5 mt-auto">
+                            <div className="flex items-center gap-1.5 mt-auto pt-2">
                               <Calendar className="w-3.5 h-3.5 text-[#5C5C5C]" />
-                              <span className="text-[#171717]">{card.date}</span>
+                              <span className="text-[#171717] text-[11px]">{card.date}</span>
                             </div>
+                          </div>
+                          <div className="col-span-2 pt-3 border-t border-[#EAECF0]">
+                            <Link href={`/admin/workorders/${card.id}`} className="text-[12px] text-[#00B6E2] hover:underline font-semibold">
+                              View details &rarr;
+                            </Link>
                           </div>
                         </div>
                       )}
                     </div>
                   ))}
+                  {col.cards.length === 0 && (
+                    <p className="text-[13px] text-[#5C5C5C] text-center py-6">No active cards</p>
+                  )}
                 </div>
               </div>
             ))}
@@ -249,7 +344,6 @@ export default function PipelinePage() {
                         <th className="px-6 py-4 text-[13px] font-semibold text-[#171717]">Capacitor Type</th>
                         <th className="px-6 py-4 text-[13px] font-semibold text-[#171717]">Grade</th>
                         <th className="px-6 py-4 text-[13px] font-semibold text-[#171717]">Batch Size</th>
-                        <th className="px-6 py-4 text-[13px] font-semibold text-[#171717]">Manager</th>
                         <th className="px-6 py-4 text-[13px] font-semibold text-[#171717]">Status</th>
                         <th className="px-6 py-4 text-[13px] font-semibold text-[#171717]">Stage</th>
                         <th className="px-6 py-4 text-[13px] font-semibold text-[#171717]">Created Timestamp</th>
@@ -273,19 +367,30 @@ export default function PipelinePage() {
                   {listType === "product" ? (
                     productOrdersList.map((row, idx) => (
                       <tr key={idx} className="hover:bg-[#F9FAFB] transition-colors">
-                        <td className="px-6 py-4 text-[14px] text-[#5C5C5C]">{row.id}</td>
+                        <td className="px-6 py-4 text-[14px] text-[#5C5C5C] font-semibold">{row.id}</td>
                         <td className="px-6 py-4 text-[14px] text-[#5C5C5C]">{row.code}</td>
                         <td className="px-6 py-4 text-[14px] text-[#5C5C5C]">{row.type}</td>
                         <td className="px-6 py-4 text-[14px] text-[#5C5C5C]">{row.grade}</td>
                         <td className="px-6 py-4 text-[14px] text-[#5C5C5C]">{row.batch}</td>
-                        <td className="px-6 py-4 text-[14px] text-[#5C5C5C]">{row.manager}</td>
                         <td className="px-6 py-4">
-                          <span className="inline-flex px-2.5 py-1 rounded-[12px] bg-[#FFF0F1] text-[#FB3748] text-[12px] font-medium whitespace-nowrap">
-                            {row.status}
-                          </span>
+                          {row.status === "Yet to Start" && (
+                            <span className="inline-flex px-2.5 py-1 rounded-[12px] bg-[#FFF0F1] text-[#FB3748] text-[12px] font-medium whitespace-nowrap">
+                              Yet to Start
+                            </span>
+                          )}
+                          {row.status === "In-progress" && (
+                            <span className="inline-flex px-2.5 py-1 rounded-[12px] bg-[#FFF4ED] text-[#E19242] text-[12px] font-medium whitespace-nowrap">
+                              In-progress
+                            </span>
+                          )}
+                          {row.status === "Completed" && (
+                            <span className="inline-flex px-2.5 py-1 rounded-[12px] bg-[#E8F8F0] text-[#1CB061] text-[12px] font-medium whitespace-nowrap">
+                              Completed
+                            </span>
+                          )}
                         </td>
                         <td className="px-6 py-4">
-                          <span className="inline-flex px-2.5 py-1 rounded-[12px] bg-[#FFF0F1] text-[#FB3748] text-[12px] font-medium whitespace-nowrap">
+                          <span className="inline-flex px-2.5 py-0.5 rounded-[12px] bg-[#E6F8FC] text-[#00B6E2] text-[12px] font-medium whitespace-nowrap">
                             {row.stage}
                           </span>
                         </td>
@@ -303,11 +408,15 @@ export default function PipelinePage() {
                   ) : (
                     workOrdersList.map((row, idx) => (
                       <tr key={idx} className="hover:bg-[#F9FAFB] transition-colors">
-                        <td className="px-6 py-4 text-[14px] text-[#5C5C5C]">{row.id}</td>
+                        <td className="px-6 py-4 text-[14px] text-[#5C5C5C] font-semibold">{row.id}</td>
                         <td className="px-6 py-4 text-[14px] text-[#5C5C5C]">{row.micron}</td>
                         <td className="px-6 py-4 text-[14px] text-[#5C5C5C]">{row.width}</td>
                         <td className="px-6 py-4 text-[14px] text-[#5C5C5C]">{row.quantity}</td>
-                        <td className="px-6 py-4 text-[14px] text-[#5C5C5C]">{row.stage}</td>
+                        <td className="px-6 py-4 text-[14px] text-[#5C5C5C]">
+                          <span className="inline-flex px-2.5 py-0.5 rounded-[12px] bg-[#E6F8FC] text-[#00B6E2] text-[12px] font-medium whitespace-nowrap">
+                            {row.stage}
+                          </span>
+                        </td>
                         <td className="px-6 py-4 text-[14px] text-[#5C5C5C]">{row.date}</td>
                         <td className="px-6 py-4">
                           <span className={`inline-flex px-2.5 py-1 rounded-[12px] text-[12px] font-medium whitespace-nowrap ${row.statusBg || "bg-[#FFF0F1]"} ${row.statusColor || "text-[#FB3748]"}`}>
@@ -324,6 +433,13 @@ export default function PipelinePage() {
                         </td>
                       </tr>
                     ))
+                  )}
+                  {((listType === "product" ? productOrdersList.length : workOrdersList.length) === 0) && (
+                    <tr>
+                      <td colSpan={listType === "product" ? 9 : 8} className="px-6 py-8 text-center text-[#5C5C5C]">
+                        No records found
+                      </td>
+                    </tr>
                   )}
                 </tbody>
               </table>

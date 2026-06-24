@@ -1,26 +1,63 @@
 "use client";
-import { MobileHeader } from "@/components/MobileHeader";
 
 import { useState } from "react";
-import { Search, Download, Filter, Menu, Bell, User, QrCode } from "lucide-react";
+import { Search, Download, Filter, QrCode } from "lucide-react";
 import { QRCodeModal } from "@/components/QRCodeModal";
 import Link from "next/link";
-import { useMobileMenu } from "@/components/MobileMenuContext";
+import { useStore, type ComputedWorkOrderSummary } from "@/hooks/useStore";
+import { MobileHeader } from "@/components/MobileHeader";
+import type { TableConfig } from "@/hooks/useTableControls";
+import { useTableControls } from "@/hooks/useTableControls";
+import { SortableHeader } from "@/components/table/SortableHeader";
+import { TableToolbar } from "@/components/table/TableToolbar";
+
+const workOrderConfig: TableConfig<ComputedWorkOrderSummary> = {
+  columns: [
+    { key: "id", label: "Work Orders ID", type: "text", sortable: true },
+    { key: "micron", label: "Micron", type: "text", sortable: true },
+    { key: "width", label: "Width", type: "text", sortable: true },
+    { key: "qty", label: "Quantity", type: "number", sortable: true },
+    { key: "stage", label: "Stage", type: "text", sortable: true },
+    { key: "date", label: "Date", type: "date", sortable: true },
+    { key: "status", label: "Status", type: "enum", sortable: false, filter: "dropdown", options: ["Yet to Start", "In-progress", "Completed"] },
+    { key: "qr", label: "QR", type: "text", sortable: false },
+    { key: "options", label: "Action", type: "text", sortable: false }
+  ]
+};
 
 export default function WorkOrdersPage() {
-  const { setIsMobileMenuOpen } = useMobileMenu();
+  const { workOrders: rows, mounted } = useStore();
   const [searchQuery, setSearchQuery] = useState("");
   const [qrId, setQrId] = useState<string | null>(null);
 
-  const data = [
-    { id: "WO-0001", manager: "Kristin Watson", micron: "8", width: "1", quantity: "1", stage: "Metallisation", date: "10/01/2025", status: "Yet to Start" },
-    { id: "WO-0001", manager: "Cameron Williamson", micron: "12", width: "1", quantity: "1", stage: "Slitting", date: "10/01/2025", status: "In-progress" },
-    { id: "WO-0001", manager: "Eleanor Pena", micron: "5", width: "1", quantity: "1", stage: "Slitting", date: "10/01/2025", status: "Completed" },
-    { id: "WO-0001", manager: "Guy Hawkins", micron: "15", width: "1", quantity: "1", stage: "Metallisation", date: "10/01/2025", status: "Yet to Start" },
-    { id: "WO-0001", manager: "Jenny Wilson", micron: "7", width: "1", quantity: "1", stage: "Slitting", date: "10/01/2025", status: "Completed" },
-    { id: "WO-0002", manager: "Michael Brown", micron: "5", width: "2", quantity: "1", stage: "Cutting", date: "10/02/2025", status: "Completed" },
-    { id: "WO-0003", manager: "Emma Johnson", micron: "10", width: "3", quantity: "1", stage: "Assembly", date: "10/03/2025", status: "Yet to Start" },
+  const {
+    processedData,
+    sortConfig,
+    handleSort,
+    filters,
+    handleFilterChange,
+    dateRange,
+    setDateRange
+  } = useTableControls({ data: rows, config: workOrderConfig });
+
+  const filteredData = processedData.filter((row) => {
+    if (searchQuery && !row.id.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+    return true;
+  });
+
+  const totalWorkOrders = rows.length;
+  const completedCount = rows.filter((row) => row.status === "Completed").length;
+  const inProgressCount = rows.filter((row) => row.status === "In-progress").length;
+  const yetToStartCount = rows.filter((row) => row.status === "Yet to Start").length;
+
+  const kpiStats = [
+    { label: "Total Work Orders", value: String(totalWorkOrders), subtext: "All orders in store", subColor: "text-[#00B6E2]" },
+    { label: "Yet to Start", value: String(yetToStartCount), subtext: "Not started yet", subColor: "text-[#FB3748]" },
+    { label: "In-progress", value: String(inProgressCount), subtext: "Under execution", subColor: "text-[#E19242]" },
+    { label: "Completed", value: String(completedCount), subtext: "Finished orders", subColor: "text-[#1CB061]" },
   ];
+
+  if (!mounted) return null;
 
   return (
     <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-white flex flex-col w-full max-w-full">
@@ -35,7 +72,7 @@ export default function WorkOrdersPage() {
         <div className="px-6 py-6 flex flex-col">
           <h1 className="text-[20px] font-semibold text-[#171717]">Work Orders</h1>
           <p className="text-[14px] text-[#5C5C5C] mt-1">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit
+            Track and manage work orders across the factory floor
           </p>
         </div>
       </section>
@@ -44,19 +81,14 @@ export default function WorkOrdersPage() {
       <section className="px-4 pt-4 sm:hidden">
         <h1 className="text-[16px] font-medium text-[#171717]">Work Orders</h1>
         <p className="text-[12px] text-[#5C5C5C] mt-1">
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit
+          Track and manage work orders across the factory floor
         </p>
       </section>
 
       {/* STATS SECTION */}
       <section className="px-4 md:px-6 py-4 md:py-6">
         <div className="bg-white border border-[#EBEBEB] rounded-[12px] p-4 md:p-6 flex flex-col md:flex-row md:items-center gap-4 md:gap-0">
-          {[
-            { label: "Lorem ipsum dolor", value: "124", subtext: "5% vs Last Month", subColor: "text-[#1CB061]" },
-            { label: "Lorem ipsum dolor", value: "42", subtext: "Stable", subColor: "text-[#5C5C5C]" },
-            { label: "Revision Requests", value: "15", subtext: "+0.2% vs Last Month", subColor: "text-[#1CB061]" },
-            { label: "Lorem ipsum dolor", value: "08", subtext: "Critical", subColor: "text-[#FB3748]" },
-          ].map((item, i) => (
+          {kpiStats.map((item, i) => (
             <div key={i} className="flex-1 flex flex-row md:flex-col justify-between md:justify-start items-center md:items-start border-b md:border-b-0 md:border-r border-[#EBEBEB] last:border-0 pb-3 md:pb-0 md:pl-6 first:pl-0">
               <div className="flex flex-col gap-1">
                 <p className="text-[13px] text-[#5C5C5C]">{item.label}</p>
@@ -74,25 +106,16 @@ export default function WorkOrdersPage() {
         {/* TOOLBAR */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
           <div className="relative w-full md:w-[400px]">
-            <Search className="w-5 h-5 text-[#A1A1AA] absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-5 h-5 text-[#A1A1AA] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
-              placeholder="Search by Product Order ID..."
+              placeholder="Search by Work Order ID..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="h-[44px] w-full pl-10 pr-4 bg-white border border-[#EBEBEB] rounded-[8px] text-[14px] focus:outline-none focus:border-[#00B6E2]"
             />
           </div>
 
-          <div className="flex items-center gap-3">
-            <button className="h-[44px] px-4 bg-white border border-[#00B6E2] text-[#00B6E2] rounded-[8px] flex items-center gap-2 text-[14px] font-medium transition-colors hover:bg-[#F0FDFF]">
-              <Download className="w-4 h-4" />
-              Export
-            </button>
-            <button className="h-[44px] px-4 bg-[#00B6E2] border border-[#00B6E2] text-white rounded-[8px] flex items-center gap-2 text-[14px] font-medium transition-colors hover:bg-[#00A0E3]">
-              <Filter className="w-4 h-4" />
-              Filter
-            </button>
-          </div>
+          <TableToolbar dateRange={dateRange} onDateRangeChange={setDateRange} onExport={() => alert("Exporting data...")} />
         </div>
 
         {/* TABLE */}
@@ -101,82 +124,81 @@ export default function WorkOrdersPage() {
             <table className="w-full text-left border-collapse min-w-[1000px]">
               <thead>
                 <tr className="border-b border-[#EBEBEB] bg-[#F9FAFB]">
-                  <th className="px-6 py-4 text-[13px] font-semibold text-[#171717]">Work Orders ID</th>
-                  <th className="px-6 py-4 text-[13px] font-semibold text-[#171717]">Manager</th>
-                  <th className="px-6 py-4 text-[13px] font-semibold text-[#171717]">Micron</th>
-                  <th className="px-6 py-4 text-[13px] font-semibold text-[#171717]">Width</th>
-                  <th className="px-6 py-4 text-[13px] font-semibold text-[#171717]">Quantity</th>
-                  <th className="px-6 py-4 text-[13px] font-semibold text-[#171717]">Stage</th>
-                  <th className="px-6 py-4 text-[13px] font-semibold text-[#171717]">Date</th>
-                  <th className="px-6 py-4 text-[13px] font-semibold text-[#171717]">Status</th>
-                  <th className="px-6 py-4 text-[13px] font-semibold text-[#171717]">Action</th>
+                  {workOrderConfig.columns.map((col) => (
+                    <th key={String(col.key)} className="px-6 py-4 text-[13px] font-semibold text-[#171717]">
+                      <SortableHeader
+                        column={col}
+                        sortConfig={sortConfig}
+                        onSort={handleSort}
+                        filters={filters}
+                        onFilterChange={handleFilterChange}
+                      />
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#EBEBEB]">
-                {data.map((row, idx) => (
+                {filteredData.map((row, idx) => (
                   <tr key={idx} className="hover:bg-[#F9FAFB] transition-colors">
-                    <td className="px-6 py-4 text-[14px] text-[#5C5C5C]">{row.id}</td>
-                    <td className="px-6 py-4 text-[14px] text-[#5C5C5C]">{row.manager}</td>
-                    <td className="px-6 py-4 text-[14px] text-[#5C5C5C]">{row.micron}</td>
-                    <td className="px-6 py-4 text-[14px] text-[#5C5C5C]">{row.width}</td>
-                    <td className="px-6 py-4 text-[14px] text-[#5C5C5C]">{row.quantity}</td>
-                    <td className="px-6 py-4 text-[14px] text-[#5C5C5C]">{row.stage}</td>
-                    <td className="px-6 py-4 text-[14px] text-[#5C5C5C]">{row.date}</td>
-                    <td className="px-6 py-4">
-                      {row.status === "Yet to Start" && (
-                        <span className="inline-flex px-2.5 py-1 rounded-[12px] bg-[#FFF0F1] text-[#FB3748] text-[12px] font-medium whitespace-nowrap">
-                          Yet to Start
-                        </span>
-                      )}
-                      {row.status === "In-progress" && (
-                        <span className="inline-flex px-2.5 py-1 rounded-[12px] bg-[#FFF4ED] text-[#E19242] text-[12px] font-medium whitespace-nowrap">
-                          In-progress
-                        </span>
-                      )}
-                      {row.status === "Completed" && (
-                        <span className="inline-flex px-2.5 py-1 rounded-[12px] bg-[#E8F8F0] text-[#1CB061] text-[12px] font-medium whitespace-nowrap">
-                          Completed
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <Link
-                          href={`/admin/workorders/${row.id}`}
-                          className="inline-flex items-center justify-center h-8 px-4 bg-[#00B6E2] text-white text-[13px] font-medium rounded-[6px] hover:bg-[#00A0E3] transition-colors"
-                        >
-                          View
-                        </Link>
-                        <button onClick={() => setQrId(row.id)} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors">
-                          <QrCode className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
+                    {workOrderConfig.columns.map((col) => {
+                      if (String(col.key) === "id") {
+                        return <td key={String(col.key)} className="px-6 py-4 text-[14px] text-[#5C5C5C] font-semibold">{row.id}</td>;
+                      }
+                      if (String(col.key) === "status") {
+                        return (
+                          <td key={String(col.key)} className="px-6 py-4">
+                            {row.status === "Yet to Start" && (
+                              <span className="inline-flex px-2.5 py-1 rounded-[12px] bg-[#FFF0F1] text-[#FB3748] text-[12px] font-medium whitespace-nowrap">
+                                Yet to Start
+                              </span>
+                            )}
+                            {row.status === "In-progress" && (
+                              <span className="inline-flex px-2.5 py-1 rounded-[12px] bg-[#FFF4ED] text-[#E19242] text-[12px] font-medium whitespace-nowrap">
+                                In-progress
+                              </span>
+                            )}
+                            {row.status === "Completed" && (
+                              <span className="inline-flex px-2.5 py-1 rounded-[12px] bg-[#E8F8F0] text-[#1CB061] text-[12px] font-medium whitespace-nowrap">
+                                Completed
+                              </span>
+                            )}
+                          </td>
+                        );
+                      }
+                      if (String(col.key) === "qr") {
+                        return (
+                          <td key={String(col.key)} className="px-6 py-4">
+                            <button onClick={() => setQrId(row.id)} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors p-1">
+                              <QrCode className="w-4 h-4" />
+                            </button>
+                          </td>
+                        );
+                      }
+                      if (String(col.key) === "options") {
+                        return (
+                          <td key={String(col.key)} className="px-6 py-4">
+                            <Link
+                              href={`/admin/workorders/${row.id}`}
+                              className="inline-flex items-center justify-center h-8 px-4 bg-[#00B6E2] text-white text-[13px] font-medium rounded-[6px] hover:bg-[#00A0E3] transition-colors"
+                            >
+                              View
+                            </Link>
+                          </td>
+                        );
+                      }
+                      return <td key={String(col.key)} className="px-6 py-4 text-[14px] text-[#5C5C5C]">{(row as any)[col.key]}</td>;
+                    })}
                   </tr>
                 ))}
+                {filteredData.length === 0 && (
+                  <tr>
+                    <td colSpan={workOrderConfig.columns.length} className="px-6 py-8 text-center text-[#5C5C5C]">
+                      No work orders found
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
-          </div>
-          
-          {/* Pagination Footer */}
-          <div className="px-6 py-4 border-t border-[#EBEBEB] flex items-center justify-between">
-            <span className="text-[14px] text-[#5C5C5C]">
-              Showing <span className="font-semibold text-[#171717]">6</span> of <span className="font-semibold text-[#171717]">12</span> documents
-            </span>
-            <div className="flex items-center gap-1">
-              <button className="w-8 h-8 flex items-center justify-center border border-[#EBEBEB] rounded-[6px] text-[#5C5C5C] hover:bg-[#F9FAFB]">
-                &lt;
-              </button>
-              <button className="w-8 h-8 flex items-center justify-center border border-[#00B6E2] bg-[#00B6E2] text-white rounded-[6px] text-[14px] font-medium">
-                1
-              </button>
-              <button className="w-8 h-8 flex items-center justify-center border border-[#EBEBEB] bg-white text-[#171717] rounded-[6px] text-[14px] font-medium hover:bg-[#F9FAFB]">
-                2
-              </button>
-              <button className="w-8 h-8 flex items-center justify-center border border-[#EBEBEB] rounded-[6px] text-[#5C5C5C] hover:bg-[#F9FAFB]">
-                &gt;
-              </button>
-            </div>
           </div>
         </div>
       </section>

@@ -790,25 +790,6 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
       </section>
 
       <section className="w-full px-4 md:px-6 py-6 flex flex-col gap-6">
-        {/* Scrollable tab bar on mobile */}
-        <div className="overflow-x-auto -mx-4 md:mx-0 px-4 md:px-0">
-          <div className="flex items-center gap-2 border-b border-[#EBEBEB] pb-4 min-w-max">
-            {["Raw Material", "Metallisation", "Slitting"].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab as TabType)}
-                className={`px-4 py-2 text-[14px] font-medium rounded-[8px] transition-colors whitespace-nowrap ${
-                  activeTab === tab
-                    ? "bg-[#00B6E2] text-white"
-                    : "bg-white text-[#5C5C5C] hover:bg-[#F5F7FA]"
-                }`}
-              >
-                {tab}
-              </button>
-            ))}
-          </div>
-        </div>
-
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <TableToolbar
             dateRange={dateRange}
@@ -828,6 +809,25 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
               </span>
             </button>
           )}
+        </div>
+
+        {/* Scrollable tab bar on mobile */}
+        <div className="overflow-x-auto -mx-4 md:mx-0 px-4 md:px-0">
+          <div className="flex items-center gap-2 border-b border-[#EBEBEB] pb-4 min-w-max">
+            {["Raw Material", "Metallisation", "Slitting"].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab as TabType)}
+                className={`px-4 py-2 text-[14px] font-medium rounded-[8px] transition-colors whitespace-nowrap ${
+                  activeTab === tab
+                    ? "bg-[#00B6E2] text-white"
+                    : "bg-white text-[#5C5C5C] hover:bg-[#F5F7FA]"
+                }`}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="bg-white border border-[#EBEBEB] rounded-[12px] overflow-hidden">
