@@ -38,7 +38,7 @@ type SprayForm = {
 
 const productMaterialConfig: TableConfig<any> = {
   columns: [
-    { key: "stockId", label: "Stock ID", type: "text", sortable: true },
+    { key: "stockId", label: "PM-ID", type: "text", sortable: true },
     { key: "linkedWoId", label: "Linked WO ID", type: "text", sortable: true },
     { key: "weight", label: "Weight", type: "text", sortable: true },
     { key: "width", label: "Width", type: "text", sortable: true },
@@ -68,7 +68,7 @@ const windingConfig: TableConfig<any> = {
 
 const metallisationConfig: TableConfig<any> = {
   columns: [
-    { key: "coilNo", label: "Coil No.", type: "text", sortable: true },
+    { key: "coilNo", label: "MC-ID", type: "text", sortable: true },
     { key: "rmId", label: "RM ID", type: "text", sortable: true },
     { key: "machineNo", label: "Machine No.", type: "text", sortable: true },
     { key: "weight", label: "Weight", type: "text", sortable: true },
@@ -83,7 +83,8 @@ const metallisationConfig: TableConfig<any> = {
 
 const slittingConfig: TableConfig<any> = {
   columns: [
-    { key: "productNo", label: "Product No", type: "text", sortable: true },
+    { key: "productNo", label: "PM-ID", type: "text", sortable: true },
+    { key: "parentMcId", label: "Parent MC-ID", type: "text", sortable: true },
     { key: "rmId", label: "RM ID", type: "text", sortable: true },
     { key: "weight", label: "Weight", type: "text", sortable: true },
     { key: "thickness", label: "Thickness", type: "text", sortable: true },
@@ -196,7 +197,12 @@ export default function PersonBProductOrderDetail({ params }: DetailPageProps) {
       const flow = store.flowDataMap[woId];
       if (!flow) continue;
       for (const row of flow.slittingRows) {
-        rows.push({ id: row.productNo, ...row });
+        const parentMc = flow.metallisationRows.find(m => m.rmId === row.rmId);
+        rows.push({
+          id: row.productNo,
+          ...row,
+          parentMcId: parentMc ? parentMc.coilNo : "—"
+        });
       }
     }
     return rows;
