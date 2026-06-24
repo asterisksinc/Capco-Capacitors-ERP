@@ -142,10 +142,11 @@ export function UniversalTraceModal({
       else if (role === "store-head") path = `/store-head/workorder/${woId}`;
       else if (role === "person-a") path = `/person-a/workorder/${woId}`;
     } else if (type === "PO") {
-      const poId = id.toUpperCase();
+      const poId = id.toUpperCase().replace('#', '');
       if (role === "admin") path = `/admin/productorders/${poId}`;
       else if (role === "person-b") path = `/person-b/product-orders/${poId}`;
-      else if (role === "person-a") path = `/person-a/product-orders/${poId.replace('#', '')}`;
+      else if (role === "person-a") path = `/person-a/product-orders/${poId}`;
+      else if (role === "productionhead") path = `/productionhead/productorders/${poId}`;
     }
     if (path) {
       router.push(path);
@@ -174,7 +175,7 @@ export function UniversalTraceModal({
       if (isWO && ["productionhead", "store-head", "person-a", "admin"].includes(role)) {
         handleOpenScreen("WO", cleanValue);
         routed = true;
-      } else if (isPO && ["person-b", "person-a", "admin"].includes(role)) {
+      } else if (isPO && ["person-b", "person-a", "admin", "productionhead"].includes(role)) {
         handleOpenScreen("PO", cleanValue);
         routed = true;
       }
@@ -383,7 +384,7 @@ export function UniversalTraceModal({
               {filteredLineage.map((node, index) => {
                 const style = nodeStyles[node.type] || nodeStyles.WO;
                 const canNavigate = (node.type === "WO" && ["admin", "productionhead", "store-head", "person-a"].includes(role)) ||
-                                    (node.type === "PO" && ["admin", "person-b", "person-a"].includes(role));
+                                    (node.type === "PO" && ["admin", "person-b", "person-a", "productionhead"].includes(role));
                 
                 return (
                   <div key={node.id} className="flex flex-col items-center w-full">

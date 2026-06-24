@@ -1,5 +1,7 @@
 "use client";
 
+import { MobileHeader } from "@/components/MobileHeader";
+
 function StatusBadge({ status }: { status: string }) {
   let bg = "bg-[#F5F7FA]";
   let text = "text-[#5C5C5C]";
@@ -48,6 +50,8 @@ export default function SalesOverviewPage() {
 
   return (
     <div className="flex flex-col gap-8 w-full max-w-[1400px]">
+      <MobileHeader title="Overview" />
+      <div className="h-14 md:hidden"></div>
       <div className="flex flex-col gap-1">
         <h1 className="text-[20px] font-semibold text-[#171717] leading-tight">Overview</h1>
         <p className="text-[14px] text-[#5C5C5C] leading-tight">Lorem ipsum dolor sit amet, consectetur adipiscing elit</p>
