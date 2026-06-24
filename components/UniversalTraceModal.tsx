@@ -1,6 +1,6 @@
 "use client";
  
-import { X, Search, Fingerprint, Package, Info, AlertTriangle, Eye, ArrowDown, Lock } from "lucide-react";
+import { X, Search, Fingerprint, Package, Info, AlertTriangle, Eye, ArrowDown, Lock, SwitchCamera } from "lucide-react";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { detectEntityType, getLineageChain, type LineageNode, type StoreSnapshot } from "@/lib/traceBarcode";
@@ -57,6 +57,7 @@ export function UniversalTraceModal({
   const [lineage, setLineage] = useState<LineageNode[]>([]);
   const [notFound, setNotFound] = useState(false);
   const [scanError, setScanError] = useState<string | null>(null);
+  const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
   const inputRef = useRef<HTMLInputElement>(null);
   const scanLockRef = useRef(false);
   const router = useRouter();
@@ -452,9 +453,17 @@ export function UniversalTraceModal({
                   onScan={handleScan}
                   onError={handleError}
                   allowMultiple={false}
-                  constraints={{ facingMode: "environment", width: { ideal: 480 }, height: { ideal: 360 } }}
+                  constraints={{ facingMode, width: { ideal: 480 }, height: { ideal: 360 } }}
                   styles={{ container: { width: "100%", height: "100%" }, video: { objectFit: "cover" } }}
                 />
+                <button
+                  type="button"
+                  onClick={() => setFacingMode((prev) => (prev === "environment" ? "user" : "environment"))}
+                  className="absolute bottom-3 right-3 z-20 p-2 bg-white/80 backdrop-blur-sm rounded-full border border-gray-200/50 shadow-md text-[#171717] hover:bg-white transition-colors flex items-center justify-center"
+                  title="Switch Camera"
+                >
+                  <SwitchCamera className="w-4 h-4" />
+                </button>
               </div>
               <p className="text-[13px] text-[#5C5C5C]">Point your camera at a barcode to trace or navigate</p>
               
