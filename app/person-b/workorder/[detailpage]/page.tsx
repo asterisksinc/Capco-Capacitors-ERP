@@ -744,7 +744,15 @@ export default function PersonBWorkOrderDetailPage({ params }: DetailPageProps) 
             }}
           />
 
-          {/* Add button removed to make view-only */}
+          <button
+            onClick={openModal}
+            className="flex items-center justify-center gap-2 bg-[#00B6E2] text-white text-[14px] font-medium rounded-[6px] h-[40px] px-[18px] hover:bg-[#0092b5] transition-colors shrink-0 w-full sm:w-auto"
+          >
+            <Plus className="w-4 h-4 shrink-0" strokeWidth={2.5} />
+            <span className="leading-tight truncate">
+              {activeTab === "Winding" ? "Add Winding" : "Add Spray"}
+            </span>
+          </button>
         </div>
 
         <div className="bg-white border border-[#EBEBEB] rounded-[12px] overflow-hidden">
@@ -778,9 +786,11 @@ export default function PersonBWorkOrderDetailPage({ params }: DetailPageProps) 
                           : { "SP ID": (row as any).spId ?? "", "Linked WD ID": (row as any).linkedWdId ?? "", "Spray Type": (row as any).sprayType ?? "", "Status": (row as any).status ?? "" };
                         return (
                           <td key={String(col.key)} className="px-4 py-3 whitespace-nowrap">
-                            <button onClick={() => setQrData({ id: rowId, type: qrType, details: qrDetails })} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors p-1" title="Show QR Code">
-                              <QrCode className="w-4 h-4" />
-                            </button>
+                            <OptionsDropdown
+                              onEdit={() => alert(`Edit ${activeTab} Row ${idx}`)}
+                              onDelete={() => alert(`Delete ${activeTab} Row ${idx}`)}
+                              onQrCode={() => setQrData({ id: rowId, type: qrType, details: qrDetails })}
+                            />
                           </td>
                         );
                       }

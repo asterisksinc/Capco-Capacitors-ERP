@@ -82,7 +82,9 @@ export function QRCodeModal({
       // Header
       ctx.fillStyle = "#00B6E2";
       ctx.fillRect(0, 0, size, 56);
+      ctx.filter = "brightness(0) invert(1)";
       ctx.drawImage(logoImg, 16, 8, 120, 40);
+      ctx.filter = "none";
 
       // QR code
       const svgEl = svgRef.current?.querySelector("svg");
