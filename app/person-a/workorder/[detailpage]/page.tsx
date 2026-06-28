@@ -12,7 +12,8 @@ import { SortableHeader } from "@/components/table/SortableHeader";
 import { TableToolbar } from "@/components/table/TableToolbar";
 import { OptionsDropdown } from "@/components/table/OptionsDropdown";
 import { MobileHeader } from "@/components/MobileHeader";
-import { QRCodeModal } from "@/components/QRCodeModal";
+import { QRCodeModal, type QRModalData } from "@/components/QRCodeModal";
+import { exportToExcel } from "@/lib/exportExcel";
 
 type DetailPageProps = {
   params: Promise<{ detailpage: string }>;
@@ -47,7 +48,10 @@ const gradeOptions = ["AA", "A", "B", "C", "D"];
 const rawMaterialConfig: TableConfig<any> = {
   columns: [
     { key: "rollNo", label: "Roll No", type: "text", sortable: true },
-    { key: "weight", label: "Weight", type: "text", sortable: true },
+    { key: "actualWeight", label: "Actual Weight", type: "text", sortable: true },
+    { key: "damagedWeight", label: "Damaged Weight", type: "text", sortable: true },
+    { key: "usedWeight", label: "Used Weight", type: "text", sortable: true },
+    { key: "wastageWeight", label: "Wastage/Left Weight", type: "text", sortable: true },
     { key: "thickness", label: "Thickness", type: "text", sortable: true },
     { key: "supplier", label: "Company/Supplier", type: "text", sortable: true },
     { key: "stage", label: "Stage", type: "enum", sortable: false, filter: "dropdown", options: ["Raw Material", "METALLISATION"] },
@@ -197,7 +201,7 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
 
   const [metallisationRowsInput, setMetallisationRowsInput] = useState<MetallisationForm[]>([createMetallisationRow("")]);
   const [slittingRowsInput, setSlittingRowsInput] = useState<SlittingForm[]>([createSlittingRow("")]);
-  const [qrId, setQrId] = useState<string | null>(null);
+  const [qrData, setQrData] = useState<QRModalData | null>(null);
 
   const currentConfig = useMemo(() => {
     switch (activeTab) {
@@ -794,21 +798,41 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
           <TableToolbar
             dateRange={dateRange}
             onDateRangeChange={setDateRange}
-            onExport={() => alert("Exporting data...")}
+            onExport={() => {
+              const exportData = currentData.map((row: any) => ({
+                ...(activeTab === "Raw Material" ? {
+                  "Roll No": row.rollNo ?? "",
+                  "Weight": row.weight ?? "",
+                  "Thickness": row.thickness ?? "",
+                  "Supplier": row.supplier ?? "",
+                  "Stage": row.stage ?? "",
+                  "Status": row.status ?? "",
+                } : activeTab === "Metallisation" ? {
+                  "Coil No": row.coilNo ?? "",
+                  "RM ID": row.rmId ?? "",
+                  "Machine No": row.machineNo ?? "",
+                  "Weight": row.weight ?? "",
+                  "Optical Density": row.opticalDensity ?? "",
+                  "Resistance": row.resistance ?? "",
+                  "Timestamp": row.timestamp ?? "",
+                  "Next Stage": row.nextStage ?? "",
+                  "Status": row.status ?? "",
+                } : {
+                  "Product No": row.productNo ?? "",
+                  "RM ID": row.rmId ?? "",
+                  "Weight": row.weight ?? "",
+                  "Thickness": row.thickness ?? "",
+                  "Grade": row.grade ?? "",
+                  "Timestamp": row.timestampAdded ?? "",
+                  "Stage": row.stage ?? "",
+                  "Status": row.status ?? "",
+                })
+              }));
+              exportToExcel(exportData, `workorder-detail-${activeTab.toLowerCase().replace(/\s+/g, "-")}`, activeTab);
+            }}
           />
 
-          {activeTab !== "Raw Material" && (
-            <button
-              onClick={openModal}
-              className="flex items-center justify-center gap-2 bg-[#00B6E2] text-white text-[14px] font-medium rounded-[6px] h-[40px] px-[18px] hover:bg-[#0092b5] transition-colors shrink-0 w-full sm:w-auto"
-            >
-              <Plus className="w-4 h-4 shrink-0" strokeWidth={2.5} />
-              <span className="leading-tight truncate">
-                {activeTab === "Metallisation" && "Add Metallisation"}
-                {activeTab === "Slitting" && "Add Slitting"}
-              </span>
-            </button>
-          )}
+          {/* Add button removed to make view-only */}
         </div>
 
         {/* Scrollable tab bar on mobile */}
@@ -853,11 +877,19 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
                   <tr key={idx} className="hover:bg-gray-50/50 transition-colors group">
                     {currentConfig.columns.map((col) => {
                       if (String(col.key) === "qr") {
-                        const rowId = activeTab === "Raw Material" ? (row as any).rollNo : activeTab === "Metallisation" ? (row as any).coilNo : (row as any).productNo;
+                        const isRM = activeTab === "Raw Material";
+                        const isMC = activeTab === "Metallisation";
+                        const rowId = isRM ? (row as any).rollNo : isMC ? (row as any).coilNo : (row as any).productNo;
+                        const qrType = isRM ? "RM" : isMC ? "MC" : "PM";
+                        const qrDetails: Record<string, string> = isRM
+                          ? { "Roll No": (row as any).rollNo ?? "", "Weight": (row as any).weight ?? "", "Thickness": (row as any).thickness ?? "", "Supplier": (row as any).supplier ?? "", "Status": (row as any).status ?? "" }
+                          : isMC
+                          ? { "Coil No": (row as any).coilNo ?? "", "RM ID": (row as any).rmId ?? "", "Machine No": (row as any).machineNo ?? "", "Weight": (row as any).weight ?? "", "Status": (row as any).status ?? "" }
+                          : { "Product No": (row as any).productNo ?? "", "RM ID": (row as any).rmId ?? "", "Weight": (row as any).weight ?? "", "Grade": (row as any).grade ?? "", "Status": (row as any).status ?? "" };
                         return (
                           <td key={String(col.key)} className="px-4 py-3 whitespace-nowrap">
                             <button
-                              onClick={() => setQrId(rowId)}
+                              onClick={() => setQrData({ id: rowId, type: qrType, details: qrDetails })}
                               className="inline-flex items-center justify-center w-8 h-8 rounded-full hover:bg-[#F5F7FA] transition-colors text-[#5C5C5C] hover:text-[#00B6E2]"
                               title="Show QR Code"
                             >
@@ -867,21 +899,20 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
                         );
                       }
                       if (String(col.key) === "options") {
-                        const rowId = activeTab === "Raw Material" ? (row as any).rollNo : activeTab === "Metallisation" ? (row as any).coilNo : (row as any).productNo;
+                        const isRM = activeTab === "Raw Material";
+                        const isMC = activeTab === "Metallisation";
+                        const rowId = isRM ? (row as any).rollNo : isMC ? (row as any).coilNo : (row as any).productNo;
+                        const qrType = isRM ? "RM" : isMC ? "MC" : "PM";
+                        const qrDetails: Record<string, string> = isRM
+                          ? { "Roll No": (row as any).rollNo ?? "", "Weight": (row as any).weight ?? "", "Thickness": (row as any).thickness ?? "", "Supplier": (row as any).supplier ?? "", "Status": (row as any).status ?? "" }
+                          : isMC
+                          ? { "Coil No": (row as any).coilNo ?? "", "RM ID": (row as any).rmId ?? "", "Machine No": (row as any).machineNo ?? "", "Weight": (row as any).weight ?? "", "Status": (row as any).status ?? "" }
+                          : { "Product No": (row as any).productNo ?? "", "RM ID": (row as any).rmId ?? "", "Weight": (row as any).weight ?? "", "Grade": (row as any).grade ?? "", "Status": (row as any).status ?? "" };
                         return (
                           <td key={String(col.key)} className="px-4 py-3 whitespace-nowrap">
-                            {activeTab !== "Raw Material" ? (
-                              <OptionsDropdown
-                                onEdit={() => alert(`Edit ${activeTab} Row ${idx}`)}
-                                onDelete={() => alert(`Delete ${activeTab} Row ${idx}`)}
-                                onQrCode={() => setQrId(rowId)}
-                                status={row.status}
-                              />
-                            ) : (
-                              <button onClick={() => setQrId(rowId)} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors">
-                                <QrCode className="w-4 h-4" />
-                              </button>
-                            )}
+                            <button onClick={() => setQrData({ id: rowId, type: qrType, details: qrDetails })} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors p-1" title="Show QR Code">
+                              <QrCode className="w-4 h-4" />
+                            </button>
                           </td>
                         );
                       }
@@ -892,9 +923,18 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
                           </td>
                         );
                       }
+                      const val = row[col.key];
+                      let displayVal = val;
+                      if (activeTab === "Raw Material" && !val) {
+                        if (col.key === "actualWeight") displayVal = row.weight || "-";
+                        else if (col.key === "usedWeight") displayVal = row.weight || "-";
+                        else if (col.key === "damagedWeight") displayVal = "0.0kgs";
+                        else if (col.key === "wastageWeight") displayVal = "0.0kgs";
+                      }
+
                       return (
                         <td key={String(col.key)} className={`px-4 py-4 text-[14px] ${['rollNo', 'coilNo', 'productNo'].includes(String(col.key)) ? 'text-[#00B6E2] font-semibold' : 'text-[#5C5C5C]'} whitespace-nowrap`}>
-                          {row[col.key]}
+                          {displayVal}
                         </td>
                       );
                     })}
@@ -905,7 +945,7 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
           </div>
         </div>
       </section>
-      {qrId && <QRCodeModal id={qrId} onClose={() => setQrId(null)} />}
+      {qrData && <QRCodeModal id={qrData.id} type={qrData.type} details={qrData.details} onClose={() => setQrData(null)} />}
     </div>
   );
 }

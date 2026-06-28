@@ -4,6 +4,7 @@ import { MobileHeader } from "@/components/MobileHeader";
 import { useState } from "react";
 import { Search, Download, Plus, ChevronDown, Menu, Bell, User as UserIcon, Edit2, Trash2, X } from "lucide-react";
 import { useMobileMenu } from "@/components/MobileMenuContext";
+import { exportToExcel } from "@/lib/exportExcel";
 
 export default function UserManagementPage() {
   const { setIsMobileMenuOpen } = useMobileMenu();
@@ -92,7 +93,17 @@ export default function UserManagementPage() {
               <ChevronDown className="w-4 h-4 text-[#5C5C5C] absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
             
-            <button className="h-[44px] px-4 bg-white border border-[#00B6E2] text-[#00B6E2] rounded-[8px] flex items-center gap-2 text-[14px] font-medium transition-colors hover:bg-[#F0FDFF]">
+            <button onClick={() => {
+              const exportData = data.map((row: any) => ({
+                "Name": row.name ?? "",
+                "Email": row.email ?? "",
+                "Contact No.": row.contact ?? "",
+                "Role": row.role ?? "",
+                "Status": row.status ?? "",
+                "Last Login": row.lastLogin ?? "",
+              }));
+              exportToExcel(exportData, "users", "Users");
+            }} className="h-[44px] px-4 bg-white border border-[#00B6E2] text-[#00B6E2] rounded-[8px] flex items-center gap-2 text-[14px] font-medium transition-colors hover:bg-[#F0FDFF]">
               <Download className="w-4 h-4" />
               Export
             </button>

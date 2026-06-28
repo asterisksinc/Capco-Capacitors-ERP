@@ -13,7 +13,7 @@ import { OptionsDropdown } from "@/components/table/OptionsDropdown";
 import { FilterChips, type FilterConfig, type FilterState, type EnumFilter, type TextFilter, type NumberRangeFilter } from "@/components/table/FilterPopover";
 import { exportToExcel } from "@/lib/exportExcel";
 import { MobileHeader } from "@/components/MobileHeader";
-import { QRCodeModal } from "@/components/QRCodeModal";
+import { QRCodeModal, type QRModalData } from "@/components/QRCodeModal";
 
 type StockRow = {
   stockId: string;
@@ -99,7 +99,7 @@ export default function PersonBStockPage() {
   } = useTableControls({ data: data, config: stockConfig });
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [qrId, setQrId] = useState<string | null>(null);
+  const [qrData, setQrData] = useState<QRModalData | null>(null);
 
   const [tableFilters, setTableFilters] = useState<FilterState>(() => {
     const state: FilterState = {};
@@ -293,7 +293,7 @@ export default function PersonBStockPage() {
                     </td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.timestamp}</td>
                     <td className="px-4 py-3 whitespace-nowrap">
-                      <button onClick={() => setQrId(row.stockId)} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors">
+                      <button onClick={() => setQrData({ id: row.stockId, type: "RM", details: { "Stock ID": row.stockId, "Linked WO": row.linkedWoId, "Weight": row.weight, "Width": row.width, "Micron": row.micron, "Grade": row.grade, "Stage": row.stage } })} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors">
                         <QrCode className="w-4 h-4" />
                       </button>
                     </td>
@@ -317,7 +317,7 @@ export default function PersonBStockPage() {
           </div>
         </section>
       </div>
-      {qrId && <QRCodeModal id={qrId} onClose={() => setQrId(null)} />}
+      {qrData && <QRCodeModal id={qrData.id} type={qrData.type} details={qrData.details} onClose={() => setQrData(null)} />}
     </div>
   );
 }

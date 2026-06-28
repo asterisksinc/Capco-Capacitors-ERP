@@ -12,7 +12,7 @@ import { OptionsDropdown } from "@/components/table/OptionsDropdown";
 import { FilterChips, type FilterConfig, type FilterState, type EnumFilter, type TextFilter } from "@/components/table/FilterPopover";
 import { exportToExcel } from "@/lib/exportExcel";
 import { MobileHeader } from "@/components/MobileHeader";
-import { QRCodeModal } from "@/components/QRCodeModal";
+import { QRCodeModal, type QRModalData } from "@/components/QRCodeModal";
 
 type ProductOrderRow = {
   id: string;
@@ -66,7 +66,7 @@ function StatusBadge({ status }: { status: string }) {
 export default function PersonAProductOrdersPage() {
   const { store, mounted } = useStore();
   const [searchQuery, setSearchQuery] = useState("");
-  const [qrId, setQrId] = useState<string | null>(null);
+  const [qrData, setQrData] = useState<QRModalData | null>(null);
 
   const productOrders = store.productOrders as ProductOrderRow[];
 
@@ -158,7 +158,7 @@ export default function PersonAProductOrdersPage() {
                     <td className="px-4 py-4"><StatusBadge status={row.stage} /></td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C]">{row.timestamp}</td>
                     <td className="px-4 py-3">
-                      <button onClick={() => setQrId(row.id)} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors">
+                      <button onClick={() => setQrData({ id: row.id, type: "PO", details: { "Product Code": row.code, "Type": row.type, "Grade": row.grade, "Batch Size": row.batchSize, "Status": row.status } })} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors">
                         <QrCode className="w-4 h-4" />
                       </button>
                     </td>
@@ -175,7 +175,7 @@ export default function PersonAProductOrdersPage() {
           </div>
         </section>
       </div>
-      {qrId && <QRCodeModal id={qrId} onClose={() => setQrId(null)} />}
+      {qrData && <QRCodeModal id={qrData.id} type={qrData.type} details={qrData.details} onClose={() => setQrData(null)} />}
     </div>
   );
 }

@@ -9,6 +9,7 @@ import { SortableHeader } from "@/components/table/SortableHeader";
 import { TableToolbar } from "@/components/table/TableToolbar";
 import type { MaterialRequestItem } from "@/lib/data";
 import { MobileHeader } from "@/components/MobileHeader";
+import { exportToExcel } from "@/lib/exportExcel";
 
 const tableConfig: TableConfig<any> = {
   columns: [
@@ -173,7 +174,18 @@ export default function MaterialRequestsPage() {
             <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search by Request ID..." className="h-[40px] w-full pl-9 pr-3 bg-white border border-[#EBEBEB] rounded-[8px] text-[14px] placeholder:text-[#A1A1AA] focus:outline-none focus:border-[#00B6E2]" />
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
-            <TableToolbar dateRange={dateRange} onDateRangeChange={setDateRange} onExport={() => alert("Exporting...")} />
+            <TableToolbar dateRange={dateRange} onDateRangeChange={setDateRange} onExport={() => {
+            const exportData = filteredData.map((row: any) => ({
+              "Request ID": row.id ?? "",
+              "Weight": row.weightInfo ?? "",
+              "Grade": row.grade ?? "",
+              "Req Qty": row.requestedQty ?? "",
+              "Status": row.status ?? "",
+              "Created At": row.createdAt ?? "",
+              "Issued At": row.issuedAt ?? "",
+            }));
+            exportToExcel(exportData, "material-requests", "Material Requests");
+          }} />
             <button onClick={() => setIsModalOpen(true)} className="flex items-center justify-center gap-2 bg-[#00B6E2] text-white text-[14px] font-medium rounded-[6px] h-[40px] px-[18px] hover:bg-[#0092b5] transition-colors shrink-0 whitespace-nowrap w-full sm:w-auto">
               <Plus className="w-5 h-5" strokeWidth={2.5} />
               <span className="hidden sm:inline">New Request</span>

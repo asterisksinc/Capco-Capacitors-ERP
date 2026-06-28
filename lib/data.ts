@@ -36,6 +36,10 @@ export type RawMaterialRow = {
   supplier: string;
   stage: string;
   status: WorkflowStatus;
+  actualWeight?: string;
+  damagedWeight?: string;
+  usedWeight?: string;
+  wastageWeight?: string;
 };
 
 export type MetallisationRow = {

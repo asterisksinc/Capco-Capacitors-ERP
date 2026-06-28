@@ -1,255 +1,628 @@
 "use client";
-import { MobileHeader } from "@/components/MobileHeader";
 
 import { useState } from "react";
-import { Search, Download, Plus, ChevronDown, Menu, Bell, User, Edit2, Trash2, X, FileText, QrCode } from "lucide-react";
-import { QRCodeModal } from "@/components/QRCodeModal";
-import { useMobileMenu } from "@/components/MobileMenuContext";
+import { Plus, Search, X, Check, Package, Warehouse, Activity, Archive, QrCode, Download, Trash2, Mail } from "lucide-react";
+import { useStore } from "@/hooks/useStore";
+import { MobileHeader } from "@/components/MobileHeader";
+import { QRCodeModal, type QRModalData } from "@/components/QRCodeModal";
+import { ScannerInput } from "@/components/ScannerInput";
+import * as XLSX from "xlsx";
 
-export default function InventoryPage() {
-  const { setIsMobileMenuOpen } = useMobileMenu();
+const micronOptions = ["2", "2.5", "3", "3.5", "4", "4.5", "4.5HT", "5", "5.5", "6", "6.5", "7", "7.5"];
+const supplierOptions = ["VedaCap Industries", "ElectroForge Capacitors", "NextGen Metallic Pvt Ltd"];
+
+function StatusBadge({ status }: { status: string }) {
+  if (status === "In Inventory") {
+    return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#E8F8F0] text-[#1CB061] text-[12px] font-medium leading-tight">In Inventory</span>;
+  }
+  if (status === "Being Used") {
+    return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#FFF4ED] text-[#E19242] text-[12px] font-medium leading-tight">Being Used</span>;
+  }
+  return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#F2F4F7] text-[#667085] text-[12px] font-medium leading-tight">Used Completely</span>;
+}
+
+function getDateString() {
+  const today = new Date();
+  return `${String(today.getDate()).padStart(2, "0")}/${String(today.getMonth() + 1).padStart(2, "0")}/${today.getFullYear()}`;
+}
+
+function generateId(prefix: string) {
+  return `${prefix}-${Math.floor(Math.random() * 10000).toString().padStart(4, "0")}`;
+}
+
+const defaultForm = {
+  rawMaterialId: "",
+  rollId: "",
+  micron: "4.5",
+  width: "1.0",
+  weight: "",
+  supplier: supplierOptions[0],
+};
+
+export default function AdminInventoryPage() {
+  const { store, mounted, addInventoryItem, deleteInventoryItem } = useStore();
   const [searchQuery, setSearchQuery] = useState("");
+  
+  // Modals state
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
-  const [qrId, setQrId] = useState<string | null>(null);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [qrData, setQrData] = useState<QRModalData | null>(null);
 
-  const data = [
-    { id: "MTL-4092-A", name: "Aluminum Alloy 6061", desc: "T6 Temper / Structural", category: "Metals", stock: "4,200", unit: "kg", supplier: "Hydro Extrusions Ltd.", status: "In Stock", date: "19/03/2026:01:55:26" },
-    { id: "MTL-8821-C", name: "Polyamide 66 (Nylon)", desc: "Heat Stabilized / Pellets", category: "Polymers", stock: "80", unit: "kg", supplier: "DuPont Performance", status: "Low Stock", date: "19/03/2026:01:55:26" },
-    { id: "MTL-1029-E", name: "Micro-controller IC X9", desc: "ARM Cortex-M4 / 32-bit", category: "Electronics", stock: "0", unit: "units", supplier: "Silico Supply Corp", status: "Out of Stock", date: "19/03/2026:01:55:26" },
-    { id: "MTL-5540-B", name: "Industrial Adhesive Z-9", desc: "Fast-Cure Cyanoacrylate", category: "Chemicals", stock: "840", unit: "L", supplier: "3M Industrial", status: "In Stock", date: "19/03/2026:01:55:26" },
+  // Manual Add Form states
+  const [addStep, setAddStep] = useState<1 | 2 | 3>(1);
+  const [form, setForm] = useState({ ...defaultForm });
+  const [showAddHint, setShowAddHint] = useState(false);
+
+  // Export states
+  const [exportFormat, setExportFormat] = useState<"xlsx" | "csv">("xlsx");
+  const [sendEmail, setSendEmail] = useState(false);
+  const [recipientEmail, setRecipientEmail] = useState("vmknexgentemp@gmail.com");
+  const [isExporting, setIsExporting] = useState(false);
+
+  const inventoryItems = store.inventoryItems || [];
+
+  // Filtered rows
+  const filteredData = inventoryItems.filter((row) => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      row.rawMaterialId.toLowerCase().includes(q) ||
+      row.rollId.toLowerCase().includes(q) ||
+      row.supplier.toLowerCase().includes(q)
+    );
+  });
+
+  const totalItems = inventoryItems.length;
+  const inInventory = inventoryItems.filter((r) => r.status === "In Inventory").length;
+  const beingUsed = inventoryItems.filter((r) => r.status === "Being Used").length;
+  const usedUp = inventoryItems.filter((r) => r.status === "Used Completely").length;
+
+  const kpiStats = [
+    { label: "Total Raw Materials", value: String(totalItems), icon: Package, valClass: "text-[#171717]", subtext: "Lots in stock" },
+    { label: "In Inventory", value: String(inInventory), icon: Warehouse, valClass: "text-[#1CB061]", subtext: "Available" },
+    { label: "Being Used", value: String(beingUsed), icon: Activity, valClass: "text-[#E19242]", subtext: "In process" },
+    { label: "Used Completely", value: String(usedUp), icon: Archive, valClass: "text-[#667085]", subtext: "Depleted" },
   ];
 
-  return (
-    <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-white flex flex-col w-full max-w-full relative">
-      {/* MOBILE TOP NAVIGATION BAR */}
-      <MobileHeader title="Inventory" />
+  // Form validity
+  const isFormValid = () => {
+    return Boolean(
+      form.rawMaterialId.trim() &&
+      form.rollId.trim() &&
+      micronOptions.includes(form.micron) &&
+      form.width.trim() &&
+      form.weight.trim() &&
+      Number(form.weight) > 0 &&
+      form.supplier.trim()
+    );
+  };
 
-      {/* MOBILE HEADER SPACER */}
-      <div className="h-14 md:hidden"></div>
+  const openAddModal = () => {
+    setForm({
+      ...defaultForm,
+      rawMaterialId: generateId("RM"),
+      rollId: `RL-${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(100 + Math.random() * 900)}`,
+    });
+    setAddStep(1);
+    setShowAddHint(false);
+    setIsAddModalOpen(true);
+  };
+
+  const handleAddSubmit = () => {
+    if (!isFormValid()) {
+      setShowAddHint(true);
+      return;
+    }
+    addInventoryItem({
+      rawMaterialId: form.rawMaterialId.trim().toUpperCase(),
+      rollId: form.rollId.trim(),
+      micron: form.micron,
+      width: form.width,
+      weight: `${form.weight}kgs`,
+      supplier: form.supplier,
+      date: getDateString(),
+      status: "In Inventory",
+    });
+    setAddStep(3);
+  };
+
+  // CSV/Excel Import mapper
+  const mapRowToInventoryItem = (row: any) => {
+    const normalizedRow: Record<string, any> = {};
+    for (const [key, val] of Object.entries(row)) {
+      const normKey = key.toLowerCase().trim().replace(/[\s_-]+/g, "");
+      normalizedRow[normKey] = val;
+    }
+
+    const rawMaterialId = normalizedRow["rawmaterialid"] || normalizedRow["materialid"] || normalizedRow["id"];
+    const rollId = normalizedRow["rollid"] || normalizedRow["rollno"] || "";
+    const micron = normalizedRow["micron"] || "4.5";
+    const width = normalizedRow["width"] || "1.0";
+    let weight = String(normalizedRow["weight"] || "");
+    const supplier = normalizedRow["supplier"] || supplierOptions[0];
+    const date = normalizedRow["date"] || normalizedRow["datereceived"] || getDateString();
+    let status = normalizedRow["status"] || "In Inventory";
+
+    if (!rawMaterialId || !rollId) return null;
+
+    if (weight && !weight.toLowerCase().endsWith("kgs")) {
+      weight = `${weight}kgs`;
+    }
+
+    return {
+      rawMaterialId: String(rawMaterialId).trim().toUpperCase(),
+      rollId: String(rollId).trim(),
+      micron: String(micron).trim(),
+      width: String(width).trim(),
+      weight: String(weight).trim(),
+      supplier: String(supplier).trim(),
+      date: String(date).trim(),
+      status: (status === "Being Used" || status === "Used Completely") ? status : "In Inventory"
+    };
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const data = event.target?.result;
+        const workbook = XLSX.read(data, { type: "array" });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const json = XLSX.utils.sheet_to_json<any>(worksheet);
+
+        let importedCount = 0;
+        let skippedCount = 0;
+
+        json.forEach((row) => {
+          const item = mapRowToInventoryItem(row);
+          if (item) {
+            const added = addInventoryItem(item);
+            if (added) importedCount++;
+            else skippedCount++;
+          } else {
+            skippedCount++;
+          }
+        });
+
+        alert(`Successfully imported ${importedCount} raw material items. ${skippedCount} duplicate or invalid rows skipped.`);
+        setIsUploadModalOpen(false);
+      } catch (err) {
+        console.error(err);
+        alert("Failed to parse file. Please verify that the Excel or CSV template is correct.");
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
+  // Export Flow
+  const handleExportSubmit = async () => {
+    if (inventoryItems.length === 0) {
+      alert("No data available to export.");
+      return;
+    }
+
+    setIsExporting(true);
+
+    const exportData = inventoryItems.map((item) => ({
+      "Raw Material ID": item.rawMaterialId,
+      "Roll ID": item.rollId,
+      "Micron": item.micron,
+      "Width": item.width,
+      "Weight": item.weight,
+      "Supplier": item.supplier,
+      "Date": item.date,
+      "Status": item.status,
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Inventory");
+
+    const stamp = new Date().toISOString().slice(0, 10);
+    const filename = `Capco_Inventory_Export_${stamp}.${exportFormat}`;
+
+    // Download locally
+    XLSX.writeFile(workbook, filename);
+
+    // E-mail Automation via API Route
+    if (sendEmail && recipientEmail.trim()) {
+      const base64Data = XLSX.write(workbook, { bookType: exportFormat, type: "base64" });
+      
+      try {
+        const res = await fetch("/api/send-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            to: recipientEmail.trim(),
+            subject: `Capco Inventory Export (${stamp})`,
+            message: `Hello,\n\nPlease find attached the exported Capco Capacitors Raw Materials Inventory sheet.\n\nBest regards,\nCapco Capacitors ERP`,
+            attachmentBase64: base64Data,
+            filename: filename,
+          }),
+        });
+
+        const resData = await res.json();
+        if (resData.ok) {
+          alert(`File exported and email sent successfully to ${recipientEmail}!`);
+        } else {
+          alert(`File downloaded, but email dispatch failed: ${resData.error}`);
+        }
+      } catch (err: any) {
+        alert(`File downloaded, but email dispatch crashed: ${err?.message || err}`);
+      }
+    } else {
+      alert("File downloaded successfully!");
+    }
+
+    setIsExporting(false);
+    setIsExportModalOpen(false);
+  };
+
+  if (!mounted) return null;
+
+  return (
+    <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-white flex flex-col overflow-x-hidden">
+      <MobileHeader title="Inventory" />
 
       {/* DESKTOP HEADER */}
       <section className="bg-white border-b border-[#EBEBEB] hidden md:block">
-        <div className="px-6 py-6 flex flex-col">
-          <h1 className="text-[20px] font-semibold text-[#171717]">Raw Materials Inventory</h1>
-          <p className="text-[14px] text-[#5C5C5C] mt-1">
-            Manage and track your global production inputs and stock levels.
-          </p>
+        <div className="px-6 py-6 flex items-center justify-between">
+          <div className="flex flex-col">
+            <h1 className="text-[20px] font-semibold text-[#171717]">Raw Materials Inventory</h1>
+            <p className="text-[14px] text-[#5C5C5C] mt-1">
+              Manage, import, export, and track your global production inputs.
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <button onClick={() => setIsExportModalOpen(true)} className="h-[40px] px-4 bg-white border border-[#00B6E2] text-[#00B6E2] rounded-[6px] flex items-center gap-2 text-[14px] font-medium transition-colors hover:bg-[#F0FDFF]">
+              <Download className="w-4.5 h-4.5" />
+              Export Options
+            </button>
+            <button onClick={() => setIsUploadModalOpen(true)} className="h-[40px] px-4 bg-white border border-[#DDE1E8] text-[#171717] rounded-[6px] flex items-center gap-2 text-[14px] font-medium transition-colors hover:bg-[#F5F7FA]">
+              Import CSV/Excel
+            </button>
+            <button onClick={openAddModal} className="h-[40px] px-4 bg-[#00B6E2] text-white rounded-[6px] flex items-center gap-2 text-[14px] font-medium hover:bg-[#0092b5] transition-colors">
+              <Plus className="w-4.5 h-4.5" />
+              Add Material
+            </button>
+          </div>
         </div>
       </section>
 
       {/* MOBILE PAGE TITLE */}
-      <section className="px-4 pt-4 sm:hidden">
-        <h1 className="text-[16px] font-medium text-[#171717]">Raw Materials Inventory</h1>
-        <p className="text-[12px] text-[#5C5C5C] mt-1">
-          Manage and track your global production inputs and stock levels.
-        </p>
+      <section className="px-4 pt-20 pb-4 md:hidden flex flex-col gap-3">
+        <h1 className="text-[18px] font-semibold text-[#171717]">Raw Materials Inventory</h1>
+        <div className="grid grid-cols-3 gap-2">
+          <button onClick={openAddModal} className="h-[36px] bg-[#00B6E2] text-white rounded-[6px] text-[12px] font-medium flex items-center justify-center gap-1">
+            <Plus className="w-3.5 h-3.5" /> Add
+          </button>
+          <button onClick={() => setIsUploadModalOpen(true)} className="h-[36px] bg-white border border-[#DDE1E8] text-[#171717] rounded-[6px] text-[12px] font-medium flex items-center justify-center">
+            Import
+          </button>
+          <button onClick={() => setIsExportModalOpen(true)} className="h-[36px] bg-white border border-[#00B6E2] text-[#00B6E2] rounded-[6px] text-[12px] font-medium flex items-center justify-center">
+            Export
+          </button>
+        </div>
       </section>
 
-      {/* STATS SECTION */}
-      <section className="px-4 md:px-6 py-4 md:py-6">
-        <div className="bg-white border border-[#EBEBEB] rounded-[12px] p-4 md:p-6 flex flex-col md:flex-row md:items-center gap-4 md:gap-0">
-          {[
-            { label: "Total Materials", value: "1,284", subtext: "5% vs Last Month", subColor: "text-[#1CB061]" },
-            { label: "Low Stock Alerts", value: "12", subtext: "Reorder required", subColor: "text-[#5C5C5C]" },
-            { label: "Out of Stock", value: "3", subtext: "Urgent", subColor: "text-[#FB3748]" },
-            { label: "Suppliers Active", value: "42", subtext: "Global regions", subColor: "text-[#5C5C5C]" },
-          ].map((item, i) => (
-            <div key={i} className="flex-1 flex flex-row md:flex-col justify-between md:justify-start items-center md:items-start border-b md:border-b-0 md:border-r border-[#EBEBEB] last:border-0 pb-3 md:pb-0 md:pl-6 first:pl-0">
-              <div className="flex flex-col gap-1">
-                <p className="text-[13px] text-[#5C5C5C]">{item.label}</p>
-                <span className="text-[24px] font-semibold text-[#171717]">{item.value}</span>
+      <div className="w-full px-4 md:px-6 py-6 flex flex-col gap-6">
+        {/* KPI Stats - Mobile 2x2 grid */}
+        <section className="grid grid-cols-2 gap-0 md:hidden bg-white border border-[#EBEBEB] rounded-[12px]">
+          {kpiStats.map((stat, i) => {
+            const Icon = stat.icon;
+            return (
+              <div key={i} className={`p-3 ${i % 2 === 0 ? 'border-r border-b border-[#EBEBEB]' : 'border-b border-[#EBEBEB]'} ${i >= 2 ? 'border-b-0' : ''}`}>
+                <div className="flex items-start gap-2">
+                  <div className="w-8 h-8 rounded-full bg-[#E6F8FD] flex items-center justify-center shrink-0">
+                    <Icon className="w-4 h-4 text-[#00B6E2]" />
+                  </div>
+                  <div className="flex flex-col gap-0.5">
+                    <p className="text-[11px] font-medium text-[#5C5C5C]">{stat.label}</p>
+                    <span className={`text-[16px] font-semibold ${stat.valClass}`}>{stat.value}</span>
+                  </div>
+                </div>
               </div>
-              <span className={`text-[12px] font-medium ${item.subColor} md:mt-1`}>
-                {item.subtext}
-              </span>
-            </div>
-          ))}
-        </div>
-      </section>
+            );
+          })}
+        </section>
 
-      <section className="px-4 md:px-6 pb-6 flex-1 flex flex-col">
+        {/* KPI Stats - Desktop row */}
+        <section className="hidden md:grid grid-cols-1 lg:grid-cols-4 bg-white border border-[#EBEBEB] rounded-[12px] items-center p-5">
+          {kpiStats.map((stat, i) => {
+            const Icon = stat.icon;
+            return (
+              <div key={i} className="flex items-center gap-4 px-4 py-2">
+                <div className="w-10 h-10 rounded-full bg-[#E6F8FD] flex items-center justify-center shrink-0">
+                  <Icon className="w-5 h-5 text-[#00B6E2]" />
+                </div>
+                <div className="flex flex-col gap-[2px]">
+                  <p className="text-[12px] font-medium text-[#5C5C5C] leading-tight">{stat.label}</p>
+                  <div className="flex items-baseline gap-2">
+                    <span className={`text-[14px] font-semibold ${stat.valClass}`}>{stat.value}</span>
+                    <span className="text-[12px] text-[#5C5C5C] ml-1">{stat.subtext}</span>
+                  </div>
+                </div>
+                {i < kpiStats.length - 1 && (
+                  <div className="hidden lg:block w-[1px] h-[37px] bg-[#EAECF0] ml-auto" />
+                )}
+              </div>
+            );
+          })}
+        </section>
+
         {/* TOOLBAR */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-          <div className="relative w-full md:w-[400px]">
-            <Search className="w-5 h-5 text-[#A1A1AA] absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              placeholder="Filter by material ID, name or supplier..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="h-[44px] w-full pl-10 pr-4 bg-white border border-[#EBEBEB] rounded-[8px] text-[14px] focus:outline-none focus:border-[#00B6E2]"
-            />
+        <section className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="relative w-full sm:max-w-[400px]">
+            <Search className="w-4 h-4 text-[#A1A1AA] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search by RM ID, Roll ID, or Supplier..." className="h-[40px] w-full pl-9 pr-3 bg-white border border-[#EBEBEB] rounded-[8px] text-[14px] text-[#171717] placeholder:text-[#A1A1AA] focus:outline-none focus:border-[#00B6E2]" />
           </div>
+        </section>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="relative w-[150px] hidden md:block">
-              <select className="h-[44px] w-full appearance-none bg-white border border-[#EBEBEB] rounded-[8px] px-4 pr-10 text-[14px] text-[#171717] focus:outline-none focus:border-[#00B6E2]">
-                <option value="all">All Categories</option>
-              </select>
-              <ChevronDown className="w-4 h-4 text-[#5C5C5C] absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-            </div>
-            <div className="relative w-[130px] hidden md:block">
-              <select className="h-[44px] w-full appearance-none bg-white border border-[#EBEBEB] rounded-[8px] px-4 pr-10 text-[14px] text-[#171717] focus:outline-none focus:border-[#00B6E2]">
-                <option value="all">All Status</option>
-              </select>
-              <ChevronDown className="w-4 h-4 text-[#5C5C5C] absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-            </div>
-            
-            <button className="h-[44px] px-4 bg-white border border-[#00B6E2] text-[#00B6E2] rounded-[8px] flex items-center gap-2 text-[14px] font-medium transition-colors hover:bg-[#F0FDFF]">
-              <Download className="w-4 h-4" />
-              Export
-            </button>
-            <button 
-              onClick={() => setIsUploadModalOpen(true)}
-              className="h-[44px] px-4 bg-[#00B6E2] border border-[#00B6E2] text-white rounded-[8px] flex items-center gap-2 text-[14px] font-medium transition-colors hover:bg-[#00A0E3]"
-            >
-              <Plus className="w-4 h-4" />
-              Upload Material List
-            </button>
-          </div>
-        </div>
-
-        {/* TABLE */}
-        <div className="bg-white border border-[#EBEBEB] rounded-[12px] overflow-hidden flex-1">
-          <div className="overflow-x-auto">
+        {/* DATA TABLE */}
+        <section className="bg-white rounded-[12px] flex flex-col gap-4 overflow-hidden border border-[#EBEBEB]">
+          <div className="overflow-x-auto min-h-[300px]">
             <table className="w-full text-left border-collapse min-w-[1000px]">
               <thead>
-                <tr className="border-b border-[#EBEBEB] bg-[#F9FAFB]">
-                  <th className="px-6 py-4 text-[13px] font-semibold text-[#171717]">Material ID</th>
-                  <th className="px-6 py-4 text-[13px] font-semibold text-[#171717]">Name</th>
-                  <th className="px-6 py-4 text-[13px] font-semibold text-[#171717]">Category</th>
-                  <th className="px-6 py-4 text-[13px] font-semibold text-[#171717]">Stock Level</th>
-                  <th className="px-6 py-4 text-[13px] font-semibold text-[#171717]">Unit</th>
-                  <th className="px-6 py-4 text-[13px] font-semibold text-[#171717]">Supplier</th>
-                  <th className="px-6 py-4 text-[13px] font-semibold text-[#171717]">Status</th>
-                  <th className="px-6 py-4 text-[13px] font-semibold text-[#171717]">Last Updated</th>
-                  <th className="px-6 py-4 text-[13px] font-semibold text-[#171717]">Action</th>
+                <tr className="bg-[#F5F7FA] border-b border-[#EBEBEB]">
+                  <th className="px-4 py-[12px] text-[13px] font-semibold text-[#667085]">Raw Material ID</th>
+                  <th className="px-4 py-[12px] text-[13px] font-semibold text-[#667085]">Roll ID</th>
+                  <th className="px-4 py-[12px] text-[13px] font-semibold text-[#667085]">Micron</th>
+                  <th className="px-4 py-[12px] text-[13px] font-semibold text-[#667085]">Width (m)</th>
+                  <th className="px-4 py-[12px] text-[13px] font-semibold text-[#667085]">Weight</th>
+                  <th className="px-4 py-[12px] text-[13px] font-semibold text-[#667085]">Supplier</th>
+                  <th className="px-4 py-[12px] text-[13px] font-semibold text-[#667085]">Date Received</th>
+                  <th className="px-4 py-[12px] text-[13px] font-semibold text-[#667085]">QR Code</th>
+                  <th className="px-4 py-[12px] text-[13px] font-semibold text-[#667085]">Status</th>
+                  <th className="px-4 py-[12px] text-[13px] font-semibold text-[#667085]">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#EBEBEB]">
-                {data.map((row, idx) => (
-                  <tr key={idx} className="hover:bg-[#F9FAFB] transition-colors">
-                    <td className="px-6 py-4 text-[14px] text-[#5C5C5C]">{row.id}</td>
-                    <td className="px-6 py-4">
-                      <div className="flex flex-col">
-                        <span className="text-[14px] font-medium text-[#171717]">{row.name}</span>
-                        <span className="text-[12px] text-[#5C5C5C] mt-0.5">{row.desc}</span>
-                      </div>
+                {filteredData.length > 0 ? filteredData.map((row, idx) => (
+                  <tr key={idx} className="hover:bg-gray-50/50 transition-colors">
+                    <td className="px-4 py-4 text-[14px] text-[#00B6E2] font-semibold whitespace-nowrap">{row.rawMaterialId}</td>
+                    <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.rollId}</td>
+                    <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.micron}</td>
+                    <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.width}</td>
+                    <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.weight}</td>
+                    <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.supplier}</td>
+                    <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.date}</td>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <button onClick={() => setQrData({ id: row.rawMaterialId, type: "RM", details: { "Roll ID": row.rollId, "Micron": row.micron, "Width": row.width, "Weight": row.weight, "Supplier": row.supplier, "Status": row.status } })} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors p-1" title="View QR Code">
+                        <QrCode className="w-4 h-4" />
+                      </button>
                     </td>
-                    <td className="px-6 py-4 text-[14px] text-[#5C5C5C]">{row.category}</td>
-                    <td className="px-6 py-4">
-                      <span className={`text-[14px] ${row.status === "Out of Stock" || row.status === "Low Stock" ? "text-[#E19242] font-medium" : "text-[#5C5C5C]"}`}>
-                        {row.status === "Out of Stock" ? <span className="text-[#FB3748]">{row.stock}</span> : row.stock}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-[14px] text-[#5C5C5C]">{row.unit}</td>
-                    <td className="px-6 py-4 text-[14px] text-[#5C5C5C]">{row.supplier}</td>
-                    <td className="px-6 py-4">
-                      {row.status === "In Stock" && (
-                        <span className="inline-flex px-2.5 py-1 rounded-[12px] bg-[#E8F8F0] text-[#1CB061] text-[12px] font-medium whitespace-nowrap">
-                          In Stock
-                        </span>
-                      )}
-                      {row.status === "Low Stock" && (
-                        <span className="inline-flex px-2.5 py-1 rounded-[12px] bg-[#FFF4ED] text-[#E19242] text-[12px] font-medium whitespace-nowrap">
-                          Low Stock
-                        </span>
-                      )}
-                      {row.status === "Out of Stock" && (
-                        <span className="inline-flex px-2.5 py-1 rounded-[12px] bg-[#FFF0F1] text-[#FB3748] text-[12px] font-medium whitespace-nowrap">
-                          Out of Stock
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 text-[14px] text-[#5C5C5C]">{row.date}</td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <button className="text-[#5C5C5C] hover:text-[#171717] transition-colors">
-                          <Edit2 className="w-[18px] h-[18px]" />
-                        </button>
-                        <button className="text-[#5C5C5C] hover:text-[#FB3748] transition-colors">
-                          <Trash2 className="w-[18px] h-[18px]" />
-                        </button>
-                        <button onClick={() => setQrId(row.id)} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors">
-                          <QrCode className="w-[18px] h-[18px]" />
-                        </button>
-                      </div>
+                    <td className="px-4 py-4 whitespace-nowrap"><StatusBadge status={row.status} /></td>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <button onClick={() => {
+                        if (confirm(`Are you sure you want to delete ${row.rawMaterialId}?`)) {
+                          deleteInventoryItem(row.rawMaterialId);
+                        }
+                      }} className="text-[#5C5C5C] hover:text-[#FB3748] transition-colors p-1" title="Delete Material">
+                        <Trash2 className="w-4.5 h-4.5" />
+                      </button>
                     </td>
                   </tr>
-                ))}
+                )) : (
+                  <tr><td colSpan={10} className="px-4 py-12 text-center text-[#5C5C5C] text-[14px]">No inventory raw materials found.</td></tr>
+                )}
               </tbody>
             </table>
           </div>
-          
-          {/* Pagination Footer */}
-          <div className="px-6 py-4 border-t border-[#EBEBEB] flex items-center justify-between">
-            <span className="text-[14px] text-[#5C5C5C]">
-              Showing <span className="font-semibold text-[#171717]">6</span> of <span className="font-semibold text-[#171717]">12</span> documents
-            </span>
-            <div className="flex items-center gap-1">
-              <button className="w-8 h-8 flex items-center justify-center border border-[#EBEBEB] rounded-[6px] text-[#5C5C5C] hover:bg-[#F9FAFB]">
-                &lt;
-              </button>
-              <button className="w-8 h-8 flex items-center justify-center border border-[#00B6E2] bg-[#00B6E2] text-white rounded-[6px] text-[14px] font-medium">
-                1
-              </button>
-              <button className="w-8 h-8 flex items-center justify-center border border-[#EBEBEB] bg-white text-[#171717] rounded-[6px] text-[14px] font-medium hover:bg-[#F9FAFB]">
-                2
-              </button>
-              <button className="w-8 h-8 flex items-center justify-center border border-[#EBEBEB] rounded-[6px] text-[#5C5C5C] hover:bg-[#F9FAFB]">
-                &gt;
-              </button>
+        </section>
+      </div>
+
+      {/* MANUAL ADD MODAL */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#171717]/40 backdrop-blur-sm px-4">
+          <div className="bg-white rounded-[16px] w-full max-w-[660px] shadow-lg flex flex-col overflow-hidden">
+            <div className="flex items-start justify-between px-6 py-5 border-b border-[#EBEBEB]">
+              <div className="flex flex-col gap-1">
+                <h2 className="text-[24px] leading-tight font-semibold text-[#171717]">Add Inventory Item</h2>
+                <p className="text-[14px] text-[#5C5C5C]">Record a new raw material received from supplier</p>
+              </div>
+              <button onClick={() => setIsAddModalOpen(false)} className="text-[#5C5C5C] hover:text-[#171717] transition-colors p-1"><X className="w-5 h-5" /></button>
+            </div>
+            
+            <div className="max-h-[58vh] overflow-y-auto">
+              {addStep === 1 && (
+                <div className="px-6 py-6 flex flex-col gap-5">
+                  <div className="rounded-[12px] border border-[#DDE1E8] p-4 bg-white">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="flex flex-col gap-2">
+                        <label className="text-[13px] font-medium text-[#171717]">Raw Material ID</label>
+                        <ScannerInput value={form.rawMaterialId} onChange={(e) => setForm({ ...form, rawMaterialId: e.target.value })} onScanData={(data) => setForm({ ...form, rawMaterialId: data })} placeholder="Auto or scan..." className="h-[42px] rounded-[8px] border border-[#DDE1E8] pl-3 text-[14px]" />
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <label className="text-[13px] font-medium text-[#171717]">Roll ID</label>
+                        <input value={form.rollId} onChange={(e) => setForm({ ...form, rollId: e.target.value })} placeholder="Auto or enter" className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]" />
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <label className="text-[13px] font-medium text-[#171717]">Micron</label>
+                        <select value={form.micron} onChange={(e) => setForm({ ...form, micron: e.target.value })} className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]">
+                          {micronOptions.map((o) => <option key={o} value={o}>{o}</option>)}
+                        </select>
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <label className="text-[13px] font-medium text-[#171717]">Width</label>
+                        <input type="number" step="0.1" value={form.width} onChange={(e) => setForm({ ...form, width: e.target.value })} placeholder="Enter width" className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]" />
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <label className="text-[13px] font-medium text-[#171717]">Weight (Kgs)</label>
+                        <div className="relative">
+                          <input type="number" min="0.1" step="0.1" value={form.weight} onChange={(e) => setForm({ ...form, weight: e.target.value })} placeholder="Enter weight" className="h-[42px] w-full rounded-[8px] border border-[#DDE1E8] pl-3 pr-12 text-[14px]" />
+                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[12px] font-medium text-[#5C5C5C]">Kgs</span>
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <label className="text-[13px] font-medium text-[#171717]">Supplier</label>
+                        <select value={form.supplier} onChange={(e) => setForm({ ...form, supplier: e.target.value })} className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]">
+                          {supplierOptions.map((o) => <option key={o} value={o}>{o}</option>)}
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                  {showAddHint && !isFormValid() && (
+                    <p className="text-[12px] text-[#D92D20]">All fields are mandatory.</p>
+                  )}
+                </div>
+              )}
+              {addStep === 2 && (
+                <div className="px-6 py-6 flex flex-col gap-5">
+                  <div className="rounded-[10px] border border-[#DDE1E8] bg-[#FAFCFF] p-4">
+                    <p className="text-[15px] font-semibold text-[#1F2937] mb-1">Review Details</p>
+                    <p className="text-[13px] text-[#6B7280]">Confirm the inventory item details before adding.</p>
+                  </div>
+                  <div className="rounded-[12px] border border-[#78CFFA] bg-[#F4FBFF] p-4 grid grid-cols-1 md:grid-cols-2 gap-y-2 gap-x-6 text-[14px] text-[#49526A]">
+                    <p>RM ID: <span className="font-semibold text-black">{form.rawMaterialId}</span></p>
+                    <p>Roll ID: <span className="font-semibold text-black">{form.rollId}</span></p>
+                    <p>Micron: <span className="font-semibold text-black">{form.micron}</span></p>
+                    <p>Width: <span className="font-semibold text-black">{form.width}</span></p>
+                    <p>Weight: <span className="font-semibold text-black">{form.weight}kgs</span></p>
+                    <p>Supplier: <span className="font-semibold text-black">{form.supplier}</span></p>
+                  </div>
+                </div>
+              )}
+              {addStep === 3 && (
+                <div className="px-6 py-8">
+                  <div className="rounded-[16px] border border-[#D6EEF9] bg-[radial-gradient(circle_at_center,_#ECF8FD_0%,_#F8FCFF_45%,_#FFFFFF_100%)] p-8 md:p-10 flex flex-col items-center text-center gap-4">
+                    <div className="w-16 h-16 rounded-full bg-[#E6F7FF] border border-[#9DDBF6] flex items-center justify-center">
+                      <div className="w-10 h-10 rounded-full bg-[#00B6E2] flex items-center justify-center">
+                        <Check className="w-6 h-6 text-white" />
+                      </div>
+                    </div>
+                    <p className="text-[24px] leading-tight text-[#171717] font-semibold">Inventory item added successfully.</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between px-6 py-5 bg-[#FAFAFA] border-t border-[#EBEBEB]">
+              {addStep === 1 && (
+                <>
+                  <button onClick={() => setIsAddModalOpen(false)} className="h-[40px] px-4 bg-white border border-[#EBEBEB] text-[#171717] text-[14px] font-medium rounded-[6px] hover:bg-gray-50">Cancel</button>
+                  <button onClick={() => { if (!isFormValid()) { setShowAddHint(true); return; } setShowAddHint(false); setAddStep(2); }}
+                    className={`h-[40px] px-5 text-[14px] font-medium rounded-[6px] ${isFormValid() ? "bg-[#00B6E2] text-white hover:bg-[#0092b5]" : "bg-[#A7DDEB] text-white cursor-not-allowed"}`}>Next</button>
+                </>
+              )}
+              {addStep === 2 && (
+                <>
+                  <button onClick={() => setAddStep(1)} className="h-[40px] px-4 bg-white border border-[#EBEBEB] text-[#171717] text-[14px] font-medium rounded-[6px] hover:bg-gray-50">Back</button>
+                  <button onClick={handleAddSubmit}
+                    className="h-[40px] px-5 text-[14px] font-medium rounded-[6px] bg-[#00B6E2] text-white hover:bg-[#0092b5]">Add to Inventory</button>
+                </>
+              )}
+              {addStep === 3 && (
+                <button onClick={() => setIsAddModalOpen(false)} className="h-[40px] px-5 bg-[#00B6E2] text-white text-[14px] font-medium rounded-[6px] hover:bg-[#0092b5]">Done</button>
+              )}
             </div>
           </div>
         </div>
-      </section>
+      )}
 
-      {/* UPLOAD MODAL */}
+      {/* IMPORT EXCEL/CSV MODAL */}
       {isUploadModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div 
-            className="absolute inset-0 bg-[#171717]/40 backdrop-blur-sm"
-            onClick={() => setIsUploadModalOpen(false)}
-          />
-          <div className="relative w-full max-w-[600px] bg-white rounded-[12px] shadow-lg flex flex-col animate-slide-up">
+          <div className="absolute inset-0 bg-[#171717]/40 backdrop-blur-sm" onClick={() => setIsUploadModalOpen(false)} />
+          <div className="relative w-full max-w-[600px] bg-white rounded-[12px] shadow-lg flex flex-col overflow-hidden animate-slide-up">
             <div className="flex items-center justify-between px-6 py-5 border-b border-[#EBEBEB]">
               <div>
                 <h2 className="text-[18px] font-semibold text-[#171717]">Upload Material List</h2>
-                <p className="text-[14px] text-[#5C5C5C] mt-1">Import your inventory data to sync with enterprise global logistics.</p>
+                <p className="text-[14px] text-[#5C5C5C] mt-1">Import Excel or CSV template sheets into raw materials inventory.</p>
               </div>
-              <button 
-                onClick={() => setIsUploadModalOpen(false)}
-                className="p-2 hover:bg-[#F5F7FA] rounded-[8px] transition-colors"
-              >
+              <button onClick={() => setIsUploadModalOpen(false)} className="p-2 hover:bg-[#F5F7FA] rounded-[8px] transition-colors">
                 <X className="w-5 h-5 text-[#5C5C5C]" />
               </button>
             </div>
             
-            <div className="p-6">
-              <div className="border-2 border-dashed border-[#00B6E2] bg-[#F0FDFF] rounded-[12px] flex flex-col items-center justify-center py-12 px-4 cursor-pointer hover:bg-[#E6F8FC] transition-colors">
-                <FileText className="w-8 h-8 text-[#00B6E2] mb-3" />
-                <span className="text-[16px] font-medium text-[#171717]">Drag or Click to Upload</span>
-                <span className="text-[14px] text-[#5C5C5C] mt-1">PDF Format only (Max 50MB)</span>
+            <div className="p-6 flex flex-col gap-5">
+              <div className="border-2 border-dashed border-[#00B6E2] bg-[#F0FDFF] rounded-[12px] flex flex-col items-center justify-center py-10 px-4 cursor-pointer hover:bg-[#E6F8FC] transition-colors relative">
+                <input type="file" accept=".csv,.xlsx,.xls" onChange={handleFileUpload} className="absolute inset-0 opacity-0 cursor-pointer" />
+                <Package className="w-8 h-8 text-[#00B6E2] mb-2" />
+                <span className="text-[15px] font-medium text-[#171717]">Click to upload or drag file here</span>
+                <span className="text-[12px] text-[#5C5C5C] mt-1">Accepts CSV or Excel (.xlsx) files</span>
+              </div>
+
+              <div className="rounded-[8px] bg-[#F9FAFB] border border-[#EBEBEB] p-4 flex flex-col gap-2">
+                <p className="text-[13px] font-semibold text-[#171717]">Template Setup</p>
+                <p className="text-[12px] text-[#5C5C5C] leading-normal">
+                  Make sure your file columns match the template: <span className="font-semibold text-black">Raw Material ID, Roll ID, Micron, Width, Weight, Supplier, Date, Status</span>.
+                </p>
+                <a href="/sample_inventory.csv" download className="text-[#00B6E2] hover:underline font-semibold text-[13px] mt-1 flex items-center gap-1.5 self-start">
+                  <Download className="w-3.5 h-3.5" /> Download Sample CSV Template
+                </a>
               </div>
             </div>
 
-            <div className="flex items-center justify-between px-6 py-4 border-t border-[#EBEBEB]">
-              <button 
-                onClick={() => setIsUploadModalOpen(false)}
-                className="h-[44px] px-6 bg-white border border-[#EBEBEB] text-[#171717] text-[14px] font-medium rounded-[8px] hover:bg-[#F5F7FA] transition-colors"
-              >
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[#EBEBEB] bg-[#FAFAFA]">
+              <button onClick={() => setIsUploadModalOpen(false)} className="h-[38px] px-4 bg-white border border-[#EBEBEB] text-[#171717] text-[13px] font-medium rounded-[6px] hover:bg-[#F5F7FA]">
                 Cancel
-              </button>
-              <button 
-                onClick={() => setIsUploadModalOpen(false)}
-                className="h-[44px] px-6 bg-[#00B6E2] text-white text-[14px] font-medium rounded-[8px] hover:bg-[#00A0E3] transition-colors"
-              >
-                Confirm & Import
               </button>
             </div>
           </div>
         </div>
       )}
-      {qrId && <QRCodeModal id={qrId} onClose={() => setQrId(null)} />}
+
+      {/* EXPORT OPTIONS MODAL */}
+      {isExportModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-[#171717]/40 backdrop-blur-sm" onClick={() => setIsExportModalOpen(false)} />
+          <div className="relative w-full max-w-[500px] bg-white rounded-[12px] shadow-lg flex flex-col overflow-hidden animate-slide-up">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-[#EBEBEB]">
+              <div>
+                <h2 className="text-[18px] font-semibold text-[#171717]">Export Inventory Options</h2>
+                <p className="text-[13px] text-[#5C5C5C] mt-0.5">Export logs locally and configure automated email delivery.</p>
+              </div>
+              <button onClick={() => setIsExportModalOpen(false)} className="p-2 hover:bg-[#F5F7FA] rounded-[8px] transition-colors">
+                <X className="w-5 h-5 text-[#5C5C5C]" />
+              </button>
+            </div>
+
+            <div className="p-6 flex flex-col gap-5">
+              <div className="flex flex-col gap-2.5">
+                <label className="text-[13px] font-semibold text-[#171717]">Export Format</label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button onClick={() => setExportFormat("xlsx")} className={`h-[42px] border rounded-[8px] font-medium text-[13px] flex items-center justify-center gap-2 transition-colors ${exportFormat === "xlsx" ? "border-[#00B6E2] bg-[#F0FDFF] text-[#00B6E2]" : "border-[#EBEBEB] bg-white text-[#5C5C5C] hover:bg-gray-50"}`}>
+                    Excel (.xlsx)
+                  </button>
+                  <button onClick={() => setExportFormat("csv")} className={`h-[42px] border rounded-[8px] font-medium text-[13px] flex items-center justify-center gap-2 transition-colors ${exportFormat === "csv" ? "border-[#00B6E2] bg-[#F0FDFF] text-[#00B6E2]" : "border-[#EBEBEB] bg-white text-[#5C5C5C] hover:bg-gray-50"}`}>
+                    CSV (.csv)
+                  </button>
+                </div>
+              </div>
+
+              <div className="border-t border-[#EBEBEB] pt-4 flex flex-col gap-3">
+                <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                  <input type="checkbox" checked={sendEmail} onChange={(e) => setSendEmail(e.target.checked)} className="w-4 h-4 rounded text-[#00B6E2] focus:ring-[#00B6E2] border-gray-300" />
+                  <span className="text-[13px] font-medium text-[#171717] flex items-center gap-1.5"><Mail className="w-4 h-4 text-[#5c5c5c]" /> Email exported file upon download</span>
+                </label>
+
+                {sendEmail && (
+                  <div className="flex flex-col gap-1.5 mt-1 animate-fade-in">
+                    <label className="text-[12px] font-semibold text-[#5C5C5C]">Recipient Email Address</label>
+                    <input type="email" value={recipientEmail} onChange={(e) => setRecipientEmail(e.target.value)} placeholder="admin@example.com" className="h-[40px] px-3 border border-[#EBEBEB] rounded-[8px] text-[13px] text-black focus:outline-none focus:border-[#00B6E2]" />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between px-6 py-4 border-t border-[#EBEBEB] bg-[#FAFAFA]">
+              <button onClick={() => setIsExportModalOpen(false)} className="h-[38px] px-4 bg-white border border-[#EBEBEB] text-[#171717] text-[13px] font-medium rounded-[6px] hover:bg-[#F5F7FA]">
+                Cancel
+              </button>
+              <button onClick={handleExportSubmit} disabled={isExporting} className="h-[38px] px-5 bg-[#00B6E2] text-white text-[13px] font-medium rounded-[6px] hover:bg-[#0092b5] transition-colors flex items-center gap-1.5 disabled:opacity-50">
+                {isExporting ? "Exporting..." : "Download & Export"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {qrData && <QRCodeModal id={qrData.id} type={qrData.type} details={qrData.details} onClose={() => setQrData(null)} />}
     </div>
   );
 }

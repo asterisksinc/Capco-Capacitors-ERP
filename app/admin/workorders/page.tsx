@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Search, Download, Filter, QrCode } from "lucide-react";
-import { QRCodeModal } from "@/components/QRCodeModal";
+import { QRCodeModal, type QRModalData } from "@/components/QRCodeModal";
 import Link from "next/link";
 import { useStore, type ComputedWorkOrderSummary } from "@/hooks/useStore";
 import { MobileHeader } from "@/components/MobileHeader";
@@ -10,6 +10,7 @@ import type { TableConfig } from "@/hooks/useTableControls";
 import { useTableControls } from "@/hooks/useTableControls";
 import { SortableHeader } from "@/components/table/SortableHeader";
 import { TableToolbar } from "@/components/table/TableToolbar";
+import { exportToExcel } from "@/lib/exportExcel";
 
 const workOrderConfig: TableConfig<ComputedWorkOrderSummary> = {
   columns: [
@@ -28,7 +29,7 @@ const workOrderConfig: TableConfig<ComputedWorkOrderSummary> = {
 export default function WorkOrdersPage() {
   const { workOrders: rows, mounted } = useStore();
   const [searchQuery, setSearchQuery] = useState("");
-  const [qrId, setQrId] = useState<string | null>(null);
+  const [qrData, setQrData] = useState<QRModalData | null>(null);
 
   const {
     processedData,
@@ -115,7 +116,18 @@ export default function WorkOrdersPage() {
             />
           </div>
 
-          <TableToolbar dateRange={dateRange} onDateRangeChange={setDateRange} onExport={() => alert("Exporting data...")} />
+          <TableToolbar dateRange={dateRange} onDateRangeChange={setDateRange} onExport={() => {
+            const exportData = filteredData.map((row: any) => ({
+              "Work Order ID": row.id ?? "",
+              "Micron": row.micron ?? "",
+              "Width": row.width ?? "",
+              "Quantity": row.qty ?? "",
+              "Stage": row.stage ?? "",
+              "Date": row.date ?? "",
+              "Status": row.status ?? "",
+            }));
+            exportToExcel(exportData, "work-orders", "Work Orders");
+          }} />
         </div>
 
         {/* TABLE */}
@@ -168,7 +180,7 @@ export default function WorkOrdersPage() {
                       if (String(col.key) === "qr") {
                         return (
                           <td key={String(col.key)} className="px-6 py-4">
-                            <button onClick={() => setQrId(row.id)} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors p-1">
+                            <button onClick={() => setQrData({ id: row.id, type: "WO", details: { Micron: row.micron, Width: row.width, Quantity: row.qty, Date: row.date, Status: row.status } })} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors p-1">
                               <QrCode className="w-4 h-4" />
                             </button>
                           </td>
@@ -202,7 +214,7 @@ export default function WorkOrdersPage() {
           </div>
         </div>
       </section>
-      {qrId && <QRCodeModal id={qrId} onClose={() => setQrId(null)} />}
+      {qrData && <QRCodeModal id={qrData.id} type={qrData.type} details={qrData.details} onClose={() => setQrData(null)} />}
     </div>
   );
 }

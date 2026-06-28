@@ -14,9 +14,11 @@ import {
   Layers,
   Package,
   Activity,
-  TrendingUp
+  TrendingUp,
+  Download
 } from "lucide-react";
 import { MobileHeader, MobileSpacer } from "@/components/MobileHeader";
+import { exportToExcel } from "@/lib/exportExcel";
 
 type DetailPageProps = {
   params: Promise<{ detailpage: string }>;
@@ -289,7 +291,18 @@ export default function ProductOrderDetail({ params }: DetailPageProps) {
                     <button className="flex items-center gap-1 hover:text-[#171717]"><History className="w-4 h-4"/> View history</button>
                   </div>
                   <div className="flex gap-3">
-                    {/* Approve and Send Back removed */}
+                    <button
+                      onClick={() => {
+                        exportToExcel([
+                          { "Product Material ID": "PM-001", "Material Name": "Polypropylene Film", "Roll Width": "40mm", "Turns/Layer": "120", "Layer Count": "3", "Qty Wound": "5050", "Machine": "WM-04", "Rejected": "12", "Remarks": "Minor tension issue" },
+                          { "Product Material ID": "PM-002", "Material Name": "Aluminum Foil", "Roll Width": "38mm", "Turns/Layer": "120", "Layer Count": "3", "Qty Wound": "5045", "Machine": "WM-04", "Rejected": "5", "Remarks": "Within tolerance" },
+                          { "Product Material ID": "PM-003", "Material Name": "Contact Wire", "Roll Width": "2mm", "Turns/Layer": "N/A", "Layer Count": "N/A", "Qty Wound": "10100", "Machine": "WM-04", "Rejected": "0", "Remarks": "Good" },
+                        ], "winding", "Winding");
+                      }}
+                      className="flex items-center gap-1.5 h-[34px] px-3 bg-white border border-[#EBEBEB] rounded-[8px] text-[13px] font-medium text-[#171717] hover:bg-gray-50 transition-colors"
+                    >
+                      <Download className="w-4 h-4" /> Export
+                    </button>
                   </div>
                 </div>
               </div>
@@ -360,8 +373,18 @@ export default function ProductOrderDetail({ params }: DetailPageProps) {
                   </table>
                 </div>
                 <div className="flex justify-end items-center mt-4 gap-3">
-                  
-                  
+                  <button
+                    onClick={() => {
+                      exportToExcel([
+                        { "Product Material ID": "PM-001", "Material Name": "Polypropylene Film", "Spray Type": "Zinc-spray", "Batch Code": "ZS-447", "Coating Thickness (μm)": "12", "Qty Sprayed": "5050", "Booth ID": "SB-02", "Rejected": "8", "Remarks": "Good coverage" },
+                        { "Product Material ID": "PM-002", "Material Name": "Aluminum Foil", "Spray Type": "Zinc-spray", "Batch Code": "ZS-447", "Coating Thickness (μm)": "11", "Qty Sprayed": "5045", "Booth ID": "SB-02", "Rejected": "3", "Remarks": "Uniform coating" },
+                        { "Product Material ID": "PM-003", "Material Name": "Contact Wire", "Spray Type": "N/A", "Batch Code": "N/A", "Coating Thickness (μm)": "N/A", "Qty Sprayed": "10100", "Booth ID": "N/A", "Rejected": "0", "Remarks": "No spray required" },
+                      ], "spray", "Spray");
+                    }}
+                    className="flex items-center gap-1.5 h-[34px] px-3 bg-white border border-[#EBEBEB] rounded-[8px] text-[13px] font-medium text-[#171717] hover:bg-gray-50 transition-colors"
+                  >
+                    <Download className="w-4 h-4" /> Export
+                  </button>
                 </div>
               </div>
             </div>
@@ -431,8 +454,18 @@ export default function ProductOrderDetail({ params }: DetailPageProps) {
                   </table>
                 </div>
                 <div className="flex justify-end items-center mt-4 gap-3">
-                  
-                  
+                  <button
+                    onClick={() => {
+                      exportToExcel([
+                        { "Product Material ID": "PM-001", "Material Name": "Polypropylene Film", "Solder Type": "Lead-free", "Temperature °C": "245", "Joint Quality": "Excellent", "Qty Soldered": "5042", "Station ID": "SO-01", "Rejected": "5", "Remarks": "All joints inspected" },
+                        { "Product Material ID": "PM-002", "Material Name": "Aluminum Foil", "Solder Type": "Lead-free", "Temperature °C": "245", "Joint Quality": "Excellent", "Qty Soldered": "5042", "Station ID": "SO-01", "Rejected": "2", "Remarks": "Good adhesion" },
+                        { "Product Material ID": "PM-003", "Material Name": "Contact Wire", "Solder Type": "Lead-free", "Temperature °C": "245", "Joint Quality": "Excellent", "Qty Soldered": "10100", "Station ID": "SO-01", "Rejected": "0", "Remarks": "Perfect joints" },
+                      ], "soldering", "Soldering");
+                    }}
+                    className="flex items-center gap-1.5 h-[34px] px-3 bg-white border border-[#EBEBEB] rounded-[8px] text-[13px] font-medium text-[#171717] hover:bg-gray-50 transition-colors"
+                  >
+                    <Download className="w-4 h-4" /> Export
+                  </button>
                 </div>
               </div>
             </div>
@@ -512,8 +545,18 @@ export default function ProductOrderDetail({ params }: DetailPageProps) {
                     <AlertTriangle className="w-4 h-4"/> 1 delay flag
                   </div>
                   <div className="flex gap-3">
-                    
-                    
+                    <button
+                      onClick={() => {
+                        exportToExcel([
+                          { "Product Material ID": "PM-001", "Material Name": "Polypropylene Film", "Epoxy Type": "Araldite 2011", "Fill %": "72%", "Cure Status": "Pending", "Qty Completed": "3250", "Oven Temp °C": "158", "Rejected": "18", "Remarks": "Temp variance +2°C" },
+                          { "Product Material ID": "PM-002", "Material Name": "Aluminum Foil", "Epoxy Type": "Araldite 2011", "Fill %": "70%", "Cure Status": "Pending", "Qty Completed": "3240", "Oven Temp °C": "158", "Rejected": "12", "Remarks": "Monitoring" },
+                          { "Product Material ID": "PM-003", "Material Name": "Contact Wire", "Epoxy Type": "N/A", "Fill %": "N/A", "Cure Status": "N/A", "Qty Completed": "6500", "Oven Temp °C": "N/A", "Rejected": "0", "Remarks": "No epoxy required" },
+                        ], "epoxy", "Epoxy");
+                      }}
+                      className="flex items-center gap-1.5 h-[34px] px-3 bg-white border border-[#EBEBEB] rounded-[8px] text-[13px] font-medium text-[#171717] hover:bg-gray-50 transition-colors"
+                    >
+                      <Download className="w-4 h-4" /> Export
+                    </button>
                   </div>
                 </div>
               </div>

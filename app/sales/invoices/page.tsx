@@ -2,6 +2,7 @@
 
 import { Search, Download, ChevronDown } from "lucide-react";
 import { MobileHeader } from "@/components/MobileHeader";
+import { exportToExcel } from "@/lib/exportExcel";
 
 function ChannelBadge({ channel }: { channel: string }) {
   let bg = "bg-[#F5F7FA]";
@@ -65,7 +66,19 @@ export default function InvoicesPage() {
             </select>
             <ChevronDown className="w-4 h-4 text-[#5C5C5C] absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
-          <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 h-[44px] px-6 bg-[#00B6E2] text-white rounded-[8px] font-medium text-[14px] hover:bg-[#0092b5] transition-colors shadow-sm">
+          <button onClick={() => {
+            const exportData = invoices.map((row: any) => ({
+              "# Invoice": row.id ?? "",
+              "Customer Name": row.customer ?? "",
+              "Email Address": row.email ?? "",
+              "Mobile Number": row.phone ?? "",
+              "Vendor Name": row.vendor ?? "",
+              "Channel": row.channel ?? "",
+              "Date": row.date ?? "",
+              "Amount": row.amount ?? "",
+            }));
+            exportToExcel(exportData, "invoices", "Invoices");
+          }} className="flex-1 sm:flex-none flex items-center justify-center gap-2 h-[44px] px-6 bg-[#00B6E2] text-white rounded-[8px] font-medium text-[14px] hover:bg-[#0092b5] transition-colors shadow-sm">
             <Download className="w-4 h-4" />
             Export
           </button>

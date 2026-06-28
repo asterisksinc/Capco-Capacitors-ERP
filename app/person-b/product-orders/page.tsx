@@ -5,7 +5,7 @@ import { Plus, X, ChevronDown, Search, Info, ChevronLeft, ChevronRight, QrCode, 
 import { useMemo, useState } from "react";
 import { useStore } from "@/hooks/useStore";
 import { MobileHeader } from "@/components/MobileHeader";
-import { QRCodeModal } from "@/components/QRCodeModal";
+import { QRCodeModal, type QRModalData } from "@/components/QRCodeModal";
 
 type ProductOrderRow = {
   id: string;
@@ -112,7 +112,7 @@ function StatusBadge({ status }: { status: string }) {
 export default function PersonBProductOrdersPage() {
   const { store, addProductOrder, deleteProductOrder } = useStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [qrId, setQrId] = useState<string | null>(null);
+  const [qrData, setQrData] = useState<QRModalData | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [formData, setFormData] = useState<ProductOrderFormData>(() => createDefaultFormData());
@@ -652,7 +652,7 @@ export default function PersonBProductOrdersPage() {
                     </td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.timestamp}</td>
                     <td className="px-4 py-4 whitespace-nowrap">
-                      <button onClick={() => setQrId(row.id)} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors">
+                      <button onClick={() => setQrData({ id: row.id, type: "PO", details: { "Product Code": row.code, "Type": row.type, "Grade": row.grade, "Batch Size": row.batchSize, "Status": row.status } })} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors">
                         <QrCode className="w-4 h-4" />
                       </button>
                     </td>
@@ -723,7 +723,7 @@ export default function PersonBProductOrdersPage() {
 
       </div>
 
-      {qrId && <QRCodeModal id={qrId} onClose={() => setQrId(null)} />}
+      {qrData && <QRCodeModal id={qrData.id} type={qrData.type} details={qrData.details} onClose={() => setQrData(null)} />}
     </div>
   );
 }

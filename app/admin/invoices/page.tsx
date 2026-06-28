@@ -4,6 +4,7 @@ import { MobileHeader } from "@/components/MobileHeader";
 import { useState } from "react";
 import { Search, Download, ChevronDown, Menu, Bell, User as UserIcon } from "lucide-react";
 import { useMobileMenu } from "@/components/MobileMenuContext";
+import { exportToExcel } from "@/lib/exportExcel";
 
 export default function InvoicesPage() {
   const { setIsMobileMenuOpen } = useMobileMenu();
@@ -86,7 +87,19 @@ export default function InvoicesPage() {
               <ChevronDown className="w-4 h-4 text-[#5C5C5C] absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
             
-            <button className="h-[44px] px-4 bg-[#00B6E2] border border-[#00B6E2] text-white rounded-[8px] flex items-center gap-2 text-[14px] font-medium transition-colors hover:bg-[#00A0E3]">
+            <button onClick={() => {
+              const exportData = data.map((row: any) => ({
+                "# Invoice": row.invoice ?? "",
+                "Customer Name": row.customer ?? "",
+                "Email Address": row.email ?? "",
+                "Mobile Number": row.mobile ?? "",
+                "Vendor Name": row.vendor ?? "",
+                "Channel": row.channel ?? "",
+                "Date": row.date ?? "",
+                "Amount": row.amount ?? "",
+              }));
+              exportToExcel(exportData, "invoices-admin", "Invoices");
+            }} className="h-[44px] px-4 bg-[#00B6E2] border border-[#00B6E2] text-white rounded-[8px] flex items-center gap-2 text-[14px] font-medium transition-colors hover:bg-[#00A0E3]">
               <Download className="w-4 h-4" />
               Export
             </button>

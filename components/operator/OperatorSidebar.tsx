@@ -17,7 +17,7 @@ import Image from "next/image";
 export function OperatorSidebar() {
   const pathname = usePathname();
 
-  const navItems = [
+  let navItems = [
     { name: "Overview", href: "/person-a/overview", icon: LayoutDashboard },
     { name: "Work Orders", href: "/person-a/workorder", icon: Calendar },
     { name: "Product Orders", href: "/person-a/product-orders", icon: Calendar },
@@ -26,6 +26,16 @@ export function OperatorSidebar() {
     { name: "Material Returns", href: "/person-a/material-returns", icon: Undo2 },
     { name: "Pipeline", href: "/person-a/pipeline", icon: Share2 },
   ];
+
+  if (pathname.startsWith("/person-a-metallisation")) {
+    navItems = [
+      { name: "Work Orders", href: "/person-a-metallisation/workorder", icon: Calendar },
+    ];
+  } else if (pathname.startsWith("/person-a-slitting")) {
+    navItems = [
+      { name: "Work Orders", href: "/person-a-slitting/workorder", icon: Calendar },
+    ];
+  }
 
   return (
     <aside className="w-[260px] bg-[#F5F7FA] h-screen hidden md:flex flex-col border-r border-[#EBEBEB] fixed left-0 top-0 font-dm-sans z-20">
