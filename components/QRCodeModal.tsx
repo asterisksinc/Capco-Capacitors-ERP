@@ -75,20 +75,18 @@ export function QRCodeModal({
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, size, stickerH);
 
-    // Header
-    ctx.fillStyle = "#00B6E2";
-    ctx.fillRect(0, 0, size, 56);
-    ctx.fillStyle = "#ffffff";
-    ctx.font = "bold 22px Inter, system-ui, sans-serif";
-    ctx.textAlign = "left";
-    ctx.fillText("✦  CAPCO", 24, 28);
-    ctx.font = "12px Inter, system-ui, sans-serif";
-    ctx.fillStyle = "rgba(255,255,255,0.85)";
-    ctx.fillText("Capacitors", 24, 46);
+    const logoImg = new Image();
+    logoImg.crossOrigin = "anonymous";
+    logoImg.src = "/logo%20(2).svg";
+    logoImg.onload = () => {
+      // Header
+      ctx.fillStyle = "#00B6E2";
+      ctx.fillRect(0, 0, size, 56);
+      ctx.drawImage(logoImg, 16, 8, 120, 40);
 
-    // QR code
-    const svgEl = svgRef.current?.querySelector("svg");
-    if (svgEl) {
+      // QR code
+      const svgEl = svgRef.current?.querySelector("svg");
+      if (!svgEl) return;
       const clone = svgEl.cloneNode(true) as SVGSVGElement;
       clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
       const serializer = new XMLSerializer();
@@ -111,7 +109,7 @@ export function QRCodeModal({
         if (type) {
           const label = TYPE_LABELS[type] || type;
           const badgeX = size / 2;
-          const badgeY = qrY + qrSize + 14;
+          const badgeY = qrY + qrSize + 28;
           ctx.font = "bold 11px Inter, system-ui, sans-serif";
           const tw = ctx.measureText(label).width;
           const bx = badgeX - tw / 2 - 12;
@@ -128,7 +126,7 @@ export function QRCodeModal({
         }
 
         // Entity ID
-        const idY = 276 + (type ? 0 : -10);
+        const idY = 276 + (type ? 14 : -10);
         ctx.font = "bold 16px Inter, system-ui, sans-serif";
         ctx.fillStyle = "#171717";
         ctx.textAlign = "center";
@@ -179,7 +177,7 @@ export function QRCodeModal({
         }, "image/png");
       };
       img.src = url;
-    }
+    };
   }, [id, type, details]);
 
   const typeLabel = type ? TYPE_LABELS[type] || type : null;
@@ -203,13 +201,20 @@ export function QRCodeModal({
           {isSticker ? (
             <>
               {/* Header */}
-              <div className="w-full bg-[#00B6E2] rounded-[10px] px-5 py-3 mb-4">
-                <p className="text-white text-[18px] font-bold tracking-tight">
-                  ✦  CAPCO
-                </p>
-                <p className="text-white/80 text-[11px] -mt-1">
-                  Capacitors
-                </p>
+              <div className="w-full bg-[#00B6E2] rounded-[10px] px-4 py-2.5 mb-5">
+                <img
+                  src="/logo%20(2).svg"
+                  alt="Capco Capacitors"
+                  className="h-8 w-auto brightness-0 invert"
+                />
+              </div>
+
+              {/* QR code */}
+              <div
+                ref={svgRef}
+                className="bg-white p-2 rounded-[10px] border border-[#EBEBEB] mb-6"
+              >
+                <QRCodeSVG value={id} size={160} level="M" />
               </div>
 
               {/* Type badge */}
@@ -224,14 +229,6 @@ export function QRCodeModal({
               <p className="text-[#171717] text-[16px] font-bold mb-2 text-center break-all">
                 {id}
               </p>
-
-              {/* QR code */}
-              <div
-                ref={svgRef}
-                className="bg-white p-2 rounded-[10px] border border-[#EBEBEB] mb-3"
-              >
-                <QRCodeSVG value={id} size={160} level="M" />
-              </div>
 
               {/* Separator */}
               <div className="w-full border-t border-[#E5E7EB] my-1" />
