@@ -17,7 +17,7 @@ import Image from "next/image";
 export function PersonBSidebar() {
   const pathname = usePathname();
 
-  let navItems = [
+  const navItems = [
     { name: "Overview", href: "/person-b/overview", icon: LayoutDashboard },
     { name: "Work Orders", href: "/person-b/workorder", icon: Calendar },
     { name: "Product Orders", href: "/person-b/product-orders", icon: Calendar },
@@ -26,16 +26,6 @@ export function PersonBSidebar() {
     { name: "Material Returns", href: "/person-b/material-returns", icon: Undo2 },
     { name: "Pipeline", href: "/person-b/pipeline", icon: Share2 },
   ];
-
-  if (pathname.startsWith("/person-b-winding")) {
-    navItems = [
-      { name: "Work Orders", href: "/person-b-winding/workorder", icon: Calendar },
-    ];
-  } else if (pathname.startsWith("/person-b-spray")) {
-    navItems = [
-      { name: "Work Orders", href: "/person-b-spray/workorder", icon: Calendar },
-    ];
-  }
 
   return (
     <aside className="w-[260px] bg-[#F5F7FA] h-screen hidden md:flex flex-col border-r border-[#EBEBEB] fixed left-0 top-0 font-dm-sans z-20">
