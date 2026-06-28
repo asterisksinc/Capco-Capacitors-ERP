@@ -1,10 +1,11 @@
 "use client";
 
 import { use, useState, useMemo } from "react";
-import { Plus, X, ChevronRight, Trash2 } from "lucide-react";
+import { Plus, X, ChevronRight, Trash2, Download } from "lucide-react";
 import { useStore } from "@/hooks/useStore";
 import Link from "next/link";
 import { MobileHeader } from "@/components/MobileHeader";
+import { exportToExcel } from "@/lib/exportExcel";
 
 type DetailPageProps = {
   params: Promise<{ detailpage: string }>;
@@ -186,13 +187,34 @@ export default function PersonAProductOrderDetail({ params }: DetailPageProps) {
             <h2 className="text-[16px] font-semibold text-[#171717]">Assigned Stocks</h2>
             <p className="text-[13px] text-[#5C5C5C] mt-1">{assignedStocks.length} stock item(s) assigned to this product order</p>
           </div>
-          <button onClick={() => { setSelectedIds(new Set()); setIsModalOpen(true); }} className="flex items-center gap-2 bg-[#00B6E2] text-white text-[14px] font-medium rounded-[6px] h-[40px] px-[18px] hover:bg-[#0092b5] transition-colors shrink-0">
-            <Plus className="w-4 h-4" strokeWidth={2.5} />
-            <span className="hidden sm:inline">Assign Stock</span>
-            <span className="sm:hidden">Assign</span>
-          </button>
-        </div>
-        <div className="overflow-x-auto">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => {
+                  const exportData = assignedStocks.map((row: any) => ({
+                    "Stock ID": row.stockId ?? "",
+                    "Linked WO": row.linkedWoId ?? "",
+                    "Weight": row.weight ?? "",
+                    "Width": row.width ?? "",
+                    "Micron": row.micron ?? "",
+                    "Grade": row.grade ?? "",
+                    "Stage": row.stage ?? "",
+                    "Assigned At": row.assignedAt ?? "",
+                  }));
+                  exportToExcel(exportData, `assigned-stocks-${detailpage}`, "Assigned Stocks");
+                }}
+                className="flex items-center gap-2 h-[40px] px-3 bg-white border border-[#EBEBEB] rounded-[6px] text-[14px] font-medium text-[#171717] hover:bg-gray-50 transition-colors shrink-0"
+              >
+                <Download className="w-4 h-4" />
+                <span className="hidden sm:inline">Export</span>
+              </button>
+              <button onClick={() => { setSelectedIds(new Set()); setIsModalOpen(true); }} className="flex items-center gap-2 bg-[#00B6E2] text-white text-[14px] font-medium rounded-[6px] h-[40px] px-[18px] hover:bg-[#0092b5] transition-colors shrink-0">
+                <Plus className="w-4 h-4" strokeWidth={2.5} />
+                <span className="hidden sm:inline">Assign Stock</span>
+                <span className="sm:hidden">Assign</span>
+              </button>
+            </div>
+          </div>
+          <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-[700px]">
             <thead>
               <tr className="bg-[#F5F7FA] border-b border-[#EBEBEB]">

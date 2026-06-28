@@ -4,6 +4,7 @@ import { MobileHeader } from "@/components/MobileHeader";
 import { useState } from "react";
 import { Search, Download, Menu, Bell, User as UserIcon } from "lucide-react";
 import { useMobileMenu } from "@/components/MobileMenuContext";
+import { exportToExcel } from "@/lib/exportExcel";
 
 export default function FinishedGoodsPage() {
   const { setIsMobileMenuOpen } = useMobileMenu();
@@ -58,7 +59,17 @@ export default function FinishedGoodsPage() {
             />
           </div>
 
-          <button className="h-[44px] px-4 bg-[#00B6E2] border border-[#00B6E2] text-white rounded-[8px] flex items-center gap-2 text-[14px] font-medium transition-colors hover:bg-[#00A0E3] self-start md:self-auto">
+          <button onClick={() => {
+            const exportData = data.map((row: any) => ({
+              "Order ID": row.orderId ?? "",
+              "Product Code": row.productCode ?? "",
+              "Product Name": row.productName ?? "",
+              "Quantity": row.quantity ?? "",
+              "Grade": row.grade ?? "",
+              "Last Updated Date": row.lastUpdated ?? "",
+            }));
+            exportToExcel(exportData, "finished-goods", "Finished Goods");
+          }} className="h-[44px] px-4 bg-[#00B6E2] border border-[#00B6E2] text-white rounded-[8px] flex items-center gap-2 text-[14px] font-medium transition-colors hover:bg-[#00A0E3] self-start md:self-auto">
             <Download className="w-4 h-4" />
             Export
           </button>

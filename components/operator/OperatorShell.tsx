@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { X } from "lucide-react";
 import { OperatorSidebar } from "./OperatorSidebar";
 import { OperatorTopbar } from "./OperatorTopbar";
@@ -20,6 +21,18 @@ const mobileNavItems = [
 
 function OperatorShellContent({ children }: { children: ReactNode }) {
   const { isMobileMenuOpen, setIsMobileMenuOpen } = useMobileMenu();
+  const pathname = usePathname();
+
+  let activeMobileNav = mobileNavItems;
+  if (pathname.startsWith("/person-a-metallisation")) {
+    activeMobileNav = [
+      { name: "Work Orders", href: "/person-a-metallisation/workorder", icon: Calendar },
+    ];
+  } else if (pathname.startsWith("/person-a-slitting")) {
+    activeMobileNav = [
+      { name: "Work Orders", href: "/person-a-slitting/workorder", icon: Calendar },
+    ];
+  }
 
   return (
     <>
@@ -55,7 +68,7 @@ function OperatorShellContent({ children }: { children: ReactNode }) {
             </div>
 
             <nav className="flex-1 px-4 py-6 space-y-2">
-              {mobileNavItems.map((item) => {
+              {activeMobileNav.map((item) => {
                 const Icon = item.icon;
                 return (
                   <Link

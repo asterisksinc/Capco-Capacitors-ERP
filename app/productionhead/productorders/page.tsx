@@ -12,7 +12,7 @@ import { OptionsDropdown } from "@/components/table/OptionsDropdown";
 import { FilterPopover, FilterChips, type FilterConfig, type FilterState, type EnumFilter, type TextFilter, type NumberRangeFilter } from "@/components/table/FilterPopover";
 import { exportToExcel, convertDataToExportFormat } from "@/lib/exportExcel";
 import { MobileHeader, MobileSpacer } from "@/components/MobileHeader";
-import { QRCodeModal } from "@/components/QRCodeModal";
+import { QRCodeModal, type QRModalData } from "@/components/QRCodeModal";
 
 const STATUS_OPTIONS = ["Yet to Start", "In-progress", "Completed"];
 const STAGE_OPTIONS = ["Yet to Start", "Raw Material", "Metallisation", "Slitting", "Completed"];
@@ -91,7 +91,7 @@ function StatusBadge({ status }: { status: string }) {
 export default function SupervisorProductOrdersPage() {
   const { store, addProductOrder, deleteProductOrder } = useStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [qrId, setQrId] = useState<string | null>(null);
+  const [qrData, setQrData] = useState<QRModalData | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [formData, setFormData] = useState({
     poId: "PO-CC-4567",
@@ -674,7 +674,7 @@ export default function SupervisorProductOrdersPage() {
                     </td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.timestamp}</td>
                     <td className="px-4 py-4 whitespace-nowrap">
-                      <button onClick={() => setQrId(row.id)} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors">
+                      <button onClick={() => setQrData({ id: row.id, type: "PO", details: { "Product Code": row.code, "Type": row.type, "Grade": row.grade, "Batch Size": row.batchSize, "Status": row.status } })} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors">
                         <QrCode className="w-4 h-4" />
                       </button>
                     </td>
@@ -724,7 +724,7 @@ export default function SupervisorProductOrdersPage() {
 
       </div>
 
-      {qrId && <QRCodeModal id={qrId} onClose={() => setQrId(null)} />}
+      {qrData && <QRCodeModal id={qrData.id} type={qrData.type} details={qrData.details} onClose={() => setQrData(null)} />}
     </div>
   );
 }

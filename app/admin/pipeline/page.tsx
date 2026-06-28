@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useStore } from "@/hooks/useStore";
 import { MobileHeader } from "@/components/MobileHeader";
 import { computeWorkflowProgress } from "../../../lib/data";
+import { exportToExcel } from "@/lib/exportExcel";
 
 export default function PipelinePage() {
   const { store, mounted } = useStore();
@@ -251,7 +252,34 @@ export default function PipelinePage() {
                 </div>
               )}
               
-              <button className="h-[44px] px-4 bg-white border border-[#00B6E2] text-[#00B6E2] rounded-[8px] flex items-center gap-2 text-[14px] font-medium transition-colors hover:bg-[#F0FDFF]">
+              <button onClick={() => {
+                if (listType === "product") {
+                  const rows = viewMode === "list" ? productOrdersList : store.productOrders;
+                  const exportData = rows.map((row: any) => ({
+                    "Order ID": row.id ?? "",
+                    "Product Code": row.code ?? "",
+                    "Capacitor Type": row.type ?? "",
+                    "Grade": row.grade ?? "",
+                    "Batch Size": row.batch ?? row.batchSize ?? "",
+                    "Status": row.status ?? "",
+                    "Stage": row.stage ?? "",
+                    "Created Timestamp": row.date ?? row.timestamp ?? "",
+                  }));
+                  exportToExcel(exportData, "pipeline-orders", "Product Orders");
+                } else {
+                  const rows = viewMode === "list" ? workOrdersList : store.workOrders;
+                  const exportData = rows.map((row: any) => ({
+                    "Work Orders ID": row.id ?? "",
+                    "Micron": row.micron ?? "",
+                    "Width": row.width ?? "",
+                    "Quantity": row.qty ?? row.quantity ?? "",
+                    "Stage": row.stage ?? "",
+                    "Date": row.date ?? "",
+                    "Status": row.status ?? "",
+                  }));
+                  exportToExcel(exportData, "pipeline-orders", "Work Orders");
+                }
+              }} className="h-[44px] px-4 bg-white border border-[#00B6E2] text-[#00B6E2] rounded-[8px] flex items-center gap-2 text-[14px] font-medium transition-colors hover:bg-[#F0FDFF]">
                 <Download className="w-4 h-4" />
                 Export
               </button>

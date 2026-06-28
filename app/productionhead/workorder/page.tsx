@@ -14,7 +14,7 @@ import { OptionsDropdown } from "@/components/table/OptionsDropdown";
 import { FilterPopover, FilterChips, type FilterConfig, type FilterState, type EnumFilter, type TextFilter, type NumberRangeFilter } from "@/components/table/FilterPopover";
 import { exportToExcel } from "@/lib/exportExcel";
 import { MobileHeader, MobileSpacer } from "@/components/MobileHeader";
-import { QRCodeModal } from "@/components/QRCodeModal";
+import { QRCodeModal, type QRModalData } from "@/components/QRCodeModal";
 
 const WO_STATUS_OPTIONS = ["Yet to Start", "In-progress", "Completed"];
 const WO_STAGE_OPTIONS = ["Metalisation", "Raw Material", "Metallisation", "Slitting"];
@@ -65,7 +65,7 @@ function StatusBadge({ status }: { status: string }) {
 export default function SupervisorWorkOrderPage() {
   const { store, workOrders: rows, mounted, addWorkOrder } = useStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [qrId, setQrId] = useState<string | null>(null);
+  const [qrData, setQrData] = useState<QRModalData | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [formData, setFormData] = useState({ micron: "", width: "", quantity: "" });
 
@@ -400,7 +400,7 @@ export default function SupervisorWorkOrderPage() {
               <div className="flex items-center justify-between">
                 <span className="text-[14px] font-medium text-[#00B6E2]">{row.id}</span>
                 <div className="flex items-center gap-2">
-                  <button onClick={() => setQrId(row.id)} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors">
+                  <button onClick={() => setQrData({ id: row.id, type: "WO", details: { Micron: row.micron, Width: row.width, Quantity: row.qty, Date: row.date, Status: row.status } })} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors">
                     <QrCode className="w-4 h-4" />
                   </button>
                   <StatusBadge status={row.status} />
@@ -474,7 +474,7 @@ export default function SupervisorWorkOrderPage() {
                       />
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap">
-                      <button onClick={() => setQrId(row.id)} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors">
+                      <button onClick={() => setQrData({ id: row.id, type: "WO", details: { Micron: row.micron, Width: row.width, Quantity: row.qty, Date: row.date, Status: row.status } })} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors">
                         <QrCode className="w-4 h-4" />
                       </button>
                     </td>
@@ -493,7 +493,7 @@ export default function SupervisorWorkOrderPage() {
         </section>
       </div>
 
-      {qrId && <QRCodeModal id={qrId} onClose={() => setQrId(null)} />}
+      {qrData && <QRCodeModal id={qrData.id} type={qrData.type} details={qrData.details} onClose={() => setQrData(null)} />}
     </div>
   );
 }

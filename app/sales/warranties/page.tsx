@@ -2,6 +2,7 @@
 
 import { Search, Download, ChevronDown } from "lucide-react";
 import { MobileHeader } from "@/components/MobileHeader";
+import { exportToExcel } from "@/lib/exportExcel";
 
 function StatusBadge({ status }: { status: string }) {
   let bg = "bg-[#F5F7FA]";
@@ -63,7 +64,18 @@ export default function RegisteredWarrantiesPage() {
             </select>
             <ChevronDown className="w-4 h-4 text-[#5C5C5C] absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
-          <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 h-[44px] px-6 bg-[#00B6E2] text-white rounded-[8px] font-medium text-[14px] hover:bg-[#0092b5] transition-colors shadow-sm">
+          <button onClick={() => {
+            const exportData = warranties.map((row: any) => ({
+              "Warranty ID": row.id ?? "",
+              "Customer Name": row.customer ?? "",
+              "Product": row.product ?? "",
+              "Serial Number": row.serial ?? "",
+              "Warranty Period": row.period ?? "",
+              "Expiry Date": row.expiry ?? "",
+              "Status": row.status ?? "",
+            }));
+            exportToExcel(exportData, "warranties", "Warranties");
+          }} className="flex-1 sm:flex-none flex items-center justify-center gap-2 h-[44px] px-6 bg-[#00B6E2] text-white rounded-[8px] font-medium text-[14px] hover:bg-[#0092b5] transition-colors shadow-sm">
             <Download className="w-4 h-4" />
             Export
           </button>

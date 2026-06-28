@@ -12,7 +12,8 @@ import { SortableHeader } from "@/components/table/SortableHeader";
 import { TableToolbar } from "@/components/table/TableToolbar";
 import { OptionsDropdown } from "@/components/table/OptionsDropdown";
 import { MobileHeader } from "@/components/MobileHeader";
-import { QRCodeModal } from "@/components/QRCodeModal";
+import { QRCodeModal, type QRModalData } from "@/components/QRCodeModal";
+import { exportToExcel } from "@/lib/exportExcel";
 
 type DetailPageProps = {
   params: Promise<{ detailpage: string }>;
@@ -175,7 +176,7 @@ export default function PersonBWorkOrderDetailPage({ params }: DetailPageProps) 
   const [windingRowsInput, setWindingRowsInput] = useState<WindingForm[]>([createWindingRow()]);
   const [sprayRowsInput, setSprayRowsInput] = useState<SprayForm[]>([createSprayRow()]);
   const [modalImage, setModalImage] = useState<string | null>(null);
-  const [qrId, setQrId] = useState<string | null>(null);
+  const [qrData, setQrData] = useState<QRModalData | null>(null);
 
   const currentConfig = useMemo(() => {
     switch (activeTab) {
@@ -718,18 +719,32 @@ export default function PersonBWorkOrderDetailPage({ params }: DetailPageProps) 
           <TableToolbar
             dateRange={dateRange}
             onDateRangeChange={setDateRange}
-            onExport={() => alert("Exporting data...")}
+            onExport={() => {
+              const exportData = currentData.map((row: any) => ({
+                ...(activeTab === "Winding" ? {
+                  "WD ID": row.wdId ?? "",
+                  "Linked PM ID": row.linkedPmId ?? "",
+                  "Film Width": row.filmWidth ?? "",
+                  "Winding Tension": row.windingTension ?? "",
+                  "Turns Count": row.turnsCount ?? "",
+                  "Quantity Wound": row.quantityWound ?? "",
+                  "Stage": row.stage ?? "",
+                  "Timestamp": row.timestamp ?? "",
+                } : {
+                  "SP ID": row.spId ?? "",
+                  "Linked WD ID": row.linkedWdId ?? "",
+                  "Spray Type": row.sprayType ?? "",
+                  "Feed Rate": row.feedRate ?? "",
+                  "Pressure Setting": row.pressureSitting ?? "",
+                  "Stage": row.stage ?? "",
+                  "Timestamp": row.timestamp ?? "",
+                })
+              }));
+              exportToExcel(exportData, `workorder-detail-${activeTab.toLowerCase().replace(/\s+/g, "-")}`, activeTab);
+            }}
           />
 
-          <button
-            onClick={openModal}
-            className="flex items-center justify-center gap-2 bg-[#00B6E2] text-white text-[14px] font-medium rounded-[6px] h-[40px] px-[18px] hover:bg-[#0092b5] transition-colors shrink-0 w-full sm:w-auto"
-          >
-            <Plus className="w-4 h-4 shrink-0" strokeWidth={2.5} />
-            <span className="leading-tight truncate">
-              {activeTab === "Winding" ? "Add Winding" : "Add Spray"}
-            </span>
-          </button>
+          {/* Add button removed to make view-only */}
         </div>
 
         <div className="bg-white border border-[#EBEBEB] rounded-[12px] overflow-hidden">
@@ -755,14 +770,17 @@ export default function PersonBWorkOrderDetailPage({ params }: DetailPageProps) 
                   <tr key={idx} className="hover:bg-gray-50/50 transition-colors group">
                     {currentConfig.columns.map((col) => {
                       if (String(col.key) === "options") {
-                        const rowId = activeTab === "Winding" ? (row as any).wdId : (row as any).spId;
+                        const isWD = activeTab === "Winding";
+                        const rowId = isWD ? (row as any).wdId : (row as any).spId;
+                        const qrType = isWD ? "WD" : "SP";
+                        const qrDetails: Record<string, string> = isWD
+                          ? { "WD ID": (row as any).wdId ?? "", "Linked PM ID": (row as any).linkedPmId ?? "", "Film Width": (row as any).filmWidth ?? "", "Quantity Wound": (row as any).quantityWound ?? "", "Status": (row as any).status ?? "" }
+                          : { "SP ID": (row as any).spId ?? "", "Linked WD ID": (row as any).linkedWdId ?? "", "Spray Type": (row as any).sprayType ?? "", "Status": (row as any).status ?? "" };
                         return (
                           <td key={String(col.key)} className="px-4 py-3 whitespace-nowrap">
-                            <OptionsDropdown
-                              onEdit={() => alert(`Edit ${activeTab} Row ${idx}`)}
-                              onDelete={() => alert(`Delete ${activeTab} Row ${idx}`)}
-                              onQrCode={() => setQrId(rowId)}
-                            />
+                            <button onClick={() => setQrData({ id: rowId, type: qrType, details: qrDetails })} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors p-1" title="Show QR Code">
+                              <QrCode className="w-4 h-4" />
+                            </button>
                           </td>
                         );
                       }
@@ -793,7 +811,7 @@ export default function PersonBWorkOrderDetailPage({ params }: DetailPageProps) 
           </div>
         </div>
       </section>
-      {qrId && <QRCodeModal id={qrId} onClose={() => setQrId(null)} />}
+      {qrData && <QRCodeModal id={qrData.id} type={qrData.type} details={qrData.details} onClose={() => setQrData(null)} />}
     </div>
   );
 }

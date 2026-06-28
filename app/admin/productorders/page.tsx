@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Search, QrCode } from "lucide-react";
-import { QRCodeModal } from "@/components/QRCodeModal";
+import { QRCodeModal, type QRModalData } from "@/components/QRCodeModal";
 import Link from "next/link";
 import { useStore } from "@/hooks/useStore";
 import { MobileHeader } from "@/components/MobileHeader";
@@ -10,6 +10,7 @@ import type { TableConfig } from "@/hooks/useTableControls";
 import { useTableControls } from "@/hooks/useTableControls";
 import { SortableHeader } from "@/components/table/SortableHeader";
 import { TableToolbar } from "@/components/table/TableToolbar";
+import { exportToExcel } from "@/lib/exportExcel";
 import { type ProductOrderSummary } from "../../../lib/data";
 
 const productOrderConfig: TableConfig<ProductOrderSummary> = {
@@ -30,7 +31,7 @@ const productOrderConfig: TableConfig<ProductOrderSummary> = {
 export default function ProductOrdersPage() {
   const { store, mounted } = useStore();
   const [searchQuery, setSearchQuery] = useState("");
-  const [qrId, setQrId] = useState<string | null>(null);
+  const [qrData, setQrData] = useState<QRModalData | null>(null);
 
   const productOrders = store.productOrders;
 
@@ -119,7 +120,19 @@ export default function ProductOrdersPage() {
             />
           </div>
 
-          <TableToolbar dateRange={dateRange} onDateRangeChange={setDateRange} onExport={() => alert("Exporting data...")} />
+          <TableToolbar dateRange={dateRange} onDateRangeChange={setDateRange} onExport={() => {
+            const exportData = filteredData.map((row: any) => ({
+              "Order ID": row.id ?? "",
+              "Product Code": row.code ?? "",
+              "Capacitor Type": row.type ?? "",
+              "Grade": row.grade ?? "",
+              "Batch Size": row.batchSize ?? "",
+              "Status": row.status ?? "",
+              "Stage": row.stage ?? "",
+              "Created Timestamp": row.timestamp ?? "",
+            }));
+            exportToExcel(exportData, "product-orders", "Product Orders");
+          }} />
         </div>
 
         {/* TABLE */}
@@ -182,7 +195,7 @@ export default function ProductOrdersPage() {
                         const cleanId = row.id.replace('#', '');
                         return (
                           <td key={String(col.key)} className="px-6 py-4">
-                            <button onClick={() => setQrId(cleanId)} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors p-1">
+                            <button onClick={() => setQrData({ id: cleanId, type: "PO", details: { "Product Code": row.code, "Type": row.type, "Grade": row.grade, "Batch Size": row.batchSize, "Status": row.status } })} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors p-1">
                               <QrCode className="w-4 h-4" />
                             </button>
                           </td>
@@ -217,7 +230,7 @@ export default function ProductOrdersPage() {
           </div>
         </div>
       </section>
-      {qrId && <QRCodeModal id={qrId} onClose={() => setQrId(null)} />}
+      {qrData && <QRCodeModal id={qrData.id} type={qrData.type} details={qrData.details} onClose={() => setQrData(null)} />}
     </div>
   );
 }

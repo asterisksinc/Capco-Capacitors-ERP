@@ -6,6 +6,7 @@ import { Search, Download, Filter, Menu, Bell, User } from "lucide-react";
 import Link from "next/link";
 import { useMobileMenu } from "@/components/MobileMenuContext";
 import { useStore } from "@/hooks/useStore";
+import { exportToExcel } from "@/lib/exportExcel";
 
 export default function VendorPurchasesPage() {
   const { setIsMobileMenuOpen } = useMobileMenu();
@@ -85,7 +86,18 @@ export default function VendorPurchasesPage() {
           </div>
 
           <div className="flex items-center gap-3">
-            <button className="h-[44px] px-4 bg-white border border-[#00B6E2] text-[#00B6E2] rounded-[8px] flex items-center gap-2 text-[14px] font-medium transition-colors hover:bg-[#F0FDFF]">
+            <button onClick={() => {
+              const exportData = filteredPurchases.map((row: any) => ({
+                "UNIQUE ID": row.id ?? "",
+                "Vendor Name": row.vendorName ?? "",
+                "Purchase Date": row.purchaseDate ?? "",
+                "Direction": row.direction ?? "",
+                "Order Amount": row.grandTotal ?? "",
+                "Paid Amount": row.amountPaid ?? "",
+                "Status": row.status ?? "",
+              }));
+              exportToExcel(exportData, "vendor-purchases", "Vendor Purchases");
+            }} className="h-[44px] px-4 bg-white border border-[#00B6E2] text-[#00B6E2] rounded-[8px] flex items-center gap-2 text-[14px] font-medium transition-colors hover:bg-[#F0FDFF]">
               <Download className="w-4 h-4" />
               Export
             </button>

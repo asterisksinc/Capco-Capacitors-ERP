@@ -69,6 +69,10 @@ function sanitizeStore(raw: unknown): StoreData {
           supplier: String(row.supplier ?? ''),
           stage: String(row.stage ?? 'METALLISATION'),
           status: (row.status as WorkflowStatus) ?? 'Yet to Start' as WorkflowStatus,
+          actualWeight: row.actualWeight ? String(row.actualWeight) : undefined,
+          damagedWeight: row.damagedWeight ? String(row.damagedWeight) : undefined,
+          usedWeight: row.usedWeight ? String(row.usedWeight) : undefined,
+          wastageWeight: row.wastageWeight ? String(row.wastageWeight) : undefined,
         }));
       const metRows = (Array.isArray(value.metallisationRows) ? value.metallisationRows : [])
         .filter(isRecord).map((row) => ({
@@ -341,6 +345,13 @@ export function useStore() {
     return true;
   };
 
+  const deleteInventoryItem = (rawMaterialId: string) => {
+    const nextStore = loadStore();
+    nextStore.inventoryItems = nextStore.inventoryItems.filter((i) => i.rawMaterialId !== rawMaterialId);
+    saveStore(nextStore);
+    return true;
+  };
+
   const getAvailableInventory = () => {
     return store.inventoryItems.filter((item) => item.status === "In Inventory");
   };
@@ -459,5 +470,5 @@ export function useStore() {
     saveStore(nextStore);
   };
 
-  return { store, mounted, workOrders, addWorkOrder, deleteWorkOrder, addFlowRow, updateFlowRowField, updateInventoryStatus, addInventoryItem, getAvailableInventory, addProductOrder, deleteProductOrder, addMaterialRequest, issueMaterialRequest, cancelMaterialRequest, addMaterialReturn, acceptMaterialReturn, rejectMaterialReturn, assignStockToProductOrder, removeAssignedStock, getAssignedStocks, addVendorPurchase, updateVendorPurchase, vendorPurchases: store.vendorPurchases };
+  return { store, mounted, workOrders, addWorkOrder, deleteWorkOrder, addFlowRow, updateFlowRowField, updateInventoryStatus, addInventoryItem, deleteInventoryItem, getAvailableInventory, addProductOrder, deleteProductOrder, addMaterialRequest, issueMaterialRequest, cancelMaterialRequest, addMaterialReturn, acceptMaterialReturn, rejectMaterialReturn, assignStockToProductOrder, removeAssignedStock, getAssignedStocks, addVendorPurchase, updateVendorPurchase, vendorPurchases: store.vendorPurchases };
 }

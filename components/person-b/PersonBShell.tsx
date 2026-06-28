@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { X } from "lucide-react";
 
 import { PersonBSidebar } from "./PersonBSidebar";
@@ -11,6 +12,7 @@ import { LayoutDashboard, Calendar, BarChart2, Share2, ClipboardList, Undo2 } fr
 
 const mobileNavItems = [
   { name: "Overview", href: "/person-b/overview", icon: LayoutDashboard },
+  { name: "Work Orders", href: "/person-b/workorder", icon: Calendar },
   { name: "Product Orders", href: "/person-b/product-orders", icon: Calendar },
   { name: "Stock", href: "/person-b/stock", icon: BarChart2 },
   { name: "Material Requests", href: "/person-b/material-requests", icon: ClipboardList },
@@ -20,6 +22,18 @@ const mobileNavItems = [
 
 function PersonBShellContent({ children }: { children: ReactNode }) {
   const { isMobileMenuOpen, setIsMobileMenuOpen } = useMobileMenu();
+  const pathname = usePathname();
+
+  let activeMobileNav = mobileNavItems;
+  if (pathname.startsWith("/person-b-winding")) {
+    activeMobileNav = [
+      { name: "Work Orders", href: "/person-b-winding/workorder", icon: Calendar },
+    ];
+  } else if (pathname.startsWith("/person-b-spray")) {
+    activeMobileNav = [
+      { name: "Work Orders", href: "/person-b-spray/workorder", icon: Calendar },
+    ];
+  }
 
   return (
     <>
@@ -53,7 +67,7 @@ function PersonBShellContent({ children }: { children: ReactNode }) {
             </div>
 
             <nav className="flex-1 px-4 py-6 space-y-2">
-              {mobileNavItems.map((item) => {
+              {activeMobileNav.map((item) => {
                 const Icon = item.icon;
                 return (
                   <Link

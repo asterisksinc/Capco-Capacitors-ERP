@@ -10,7 +10,8 @@ import { useTableControls } from "@/hooks/useTableControls";
 import { SortableHeader } from "@/components/table/SortableHeader";
 import { TableToolbar } from "@/components/table/TableToolbar";
 import { OptionsDropdown } from "@/components/table/OptionsDropdown";
-import { QRCodeModal } from "@/components/QRCodeModal";
+import { QRCodeModal, type QRModalData } from "@/components/QRCodeModal";
+import { exportToExcel } from "@/lib/exportExcel";
 
 type DetailPageProps = {
   params: Promise<{ id: string }>;
@@ -149,7 +150,7 @@ export default function AdminProductOrderDetailPage({ params }: DetailPageProps)
     spId: generateId("SP"), linkedWdId: "", sprayType: "Zinc-spray", feedRate: "", pressureSitting: ""
   });
   const [modalImage, setModalImage] = useState<string | null>(null);
-  const [qrId, setQrId] = useState<string | null>(null);
+  const [qrData, setQrData] = useState<QRModalData | null>(null);
 
   const assignedStocks = useMemo(() => getAssignedStocks(poId), [store.assignments, poId, mounted]);
 
@@ -584,7 +585,58 @@ export default function AdminProductOrderDetailPage({ params }: DetailPageProps)
 
         <div className="px-4 md:px-6 py-6 flex flex-col gap-4">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <TableToolbar dateRange={dateRange} onDateRangeChange={setDateRange} onExport={() => alert("Exporting data...")} />
+            <TableToolbar dateRange={dateRange} onDateRangeChange={setDateRange} onExport={() => {
+              const exportData = currentData.map((row: any) => ({
+                ...(activeTab === "Product Material" ? {
+                  "PM-ID": row.stockId ?? "",
+                  "Linked WO ID": row.linkedWoId ?? "",
+                  "Weight": row.weight ?? "",
+                  "Width": row.width ?? "",
+                  "Micron": row.micron ?? "",
+                  "Grade": row.grade ?? "",
+                  "Handover By": row.handoverBy ?? "",
+                  "Assigned At": row.timestamp ?? "",
+                } : activeTab === "Metallisation" ? {
+                  "MC-ID": row.coilNo ?? "",
+                  "RM ID": row.rmId ?? "",
+                  "Machine No.": row.machineNo ?? "",
+                  "Weight": row.weight ?? "",
+                  "Optical Density": row.opticalDensity ?? "",
+                  "Resistance": row.resistance ?? "",
+                  "Next Stage": row.nextStage ?? "",
+                  "Timestamp": row.timestamp ?? "",
+                  "Status": row.status ?? "",
+                } : activeTab === "Slitting" ? {
+                  "PM-ID": row.productNo ?? "",
+                  "Parent MC-ID": row.parentMcId ?? "",
+                  "RM ID": row.rmId ?? "",
+                  "Weight": row.weight ?? "",
+                  "Thickness": row.thickness ?? "",
+                  "Grade": row.grade ?? "",
+                  "Stage": row.stage ?? "",
+                  "Timestamp": row.timestampAdded ?? "",
+                  "Status": row.status ?? "",
+                } : activeTab === "Winding" ? {
+                  "WD-ID": row.wdId ?? "",
+                  "Linked PM-ID": row.linkedPmId ?? "",
+                  "Film Width": row.filmWidth ?? "",
+                  "Winding Tension": row.windingTension ?? "",
+                  "Turns Count": row.turnsCount ?? "",
+                  "Quantity Wound": row.quantityWound ?? "",
+                  "Stage": row.stage ?? "",
+                  "Timestamp": row.timestamp ?? "",
+                } : {
+                  "SP-ID": row.spId ?? "",
+                  "Linked WD-ID": row.linkedWdId ?? "",
+                  "Spray Type": row.sprayType ?? "",
+                  "Feed Rate": row.feedRate ?? "",
+                  "Pressure Sitting": row.pressureSitting ?? "",
+                  "Stage": row.stage ?? "",
+                  "Timestamp": row.timestamp ?? "",
+                })
+              }));
+              exportToExcel(exportData, `productorder-detail-${activeTab.toLowerCase().replace(/\s+/g, "-")}`, activeTab);
+            }} />
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
               {activeTab === "Winding" && (
                 <button onClick={openWindingModal} className="h-[40px] px-4 bg-[#00B6E2] hover:bg-[#0092b5] text-white text-[14px] font-medium rounded-[8px] flex items-center justify-center gap-2 whitespace-nowrap transition-colors w-full sm:w-auto">
@@ -621,15 +673,19 @@ export default function AdminProductOrderDetailPage({ params }: DetailPageProps)
                   <tr key={i} className="hover:bg-gray-50 transition-colors">
                     {currentConfig.columns.map((col) => {
                       if (String(col.key) === "qr") {
-                        const rowId = activeTab === "Product Material" ? (row as any).stockId :
-                                      activeTab === "Metallisation" ? (row as any).coilNo :
-                                      activeTab === "Slitting" ? (row as any).productNo :
-                                      activeTab === "Winding" ? (row as any).wdId :
-                                      (row as any).spId;
+                        const qrRowData: QRModalData = activeTab === "Product Material"
+                          ? { id: (row as any).stockId, type: "PM", details: { "PM-ID": (row as any).stockId, "Weight": (row as any).weight, "Width": (row as any).width, "Micron": (row as any).micron, "Grade": (row as any).grade } }
+                          : activeTab === "Metallisation"
+                          ? { id: (row as any).coilNo, type: "MC", details: { "MC-ID": (row as any).coilNo, "RM ID": (row as any).rmId, "Machine No.": (row as any).machineNo, "Weight": (row as any).weight, "Status": (row as any).status } }
+                          : activeTab === "Slitting"
+                          ? { id: (row as any).productNo, type: "PM", details: { "PM-ID": (row as any).productNo, "Parent MC-ID": (row as any).parentMcId, "RM ID": (row as any).rmId, "Weight": (row as any).weight, "Grade": (row as any).grade, "Status": (row as any).status } }
+                          : activeTab === "Winding"
+                          ? { id: (row as any).wdId, type: "WD", details: { "WD-ID": (row as any).wdId, "Linked PM-ID": (row as any).linkedPmId, "Film Width": (row as any).filmWidth, "Winding Tension": (row as any).windingTension, "Stage": (row as any).stage } }
+                          : { id: (row as any).spId, type: "SP", details: { "SP-ID": (row as any).spId, "Linked WD-ID": (row as any).linkedWdId, "Spray Type": (row as any).sprayType, "Stage": (row as any).stage } };
                         return (
                           <td key={String(col.key)} className="px-5 py-3 whitespace-nowrap">
                             <button
-                              onClick={() => setQrId(rowId)}
+                              onClick={() => setQrData(qrRowData)}
                               className="inline-flex items-center justify-center w-8 h-8 rounded-full hover:bg-[#F5F7FA] transition-colors text-[#5C5C5C] hover:text-[#00B6E2]"
                               title="Show QR Code"
                             >
@@ -670,7 +726,7 @@ export default function AdminProductOrderDetailPage({ params }: DetailPageProps)
           </div>
         </div>
       </section>
-      {qrId && <QRCodeModal id={qrId} onClose={() => setQrId(null)} />}
+      {qrData && <QRCodeModal {...qrData} onClose={() => setQrData(null)} />}
     </div>
   );
 }
