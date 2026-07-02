@@ -24,8 +24,9 @@ type RawMaterialForm = {
   rawMaterialId: string;
   micron: string;
   width: string;
+  netWeight: string;
+  temperature: string;
   supplier: string;
-  actualWeight: string;
   damagedWeight: string;
   usedWeight: string;
 };
@@ -36,11 +37,13 @@ const supplierOptions = ["VedaCap Industries", "ElectroForge Capacitors", "NextG
 const rawMaterialConfig: TableConfig<RawMaterialRow> = {
   columns: [
     { key: "rollNo", label: "Roll No", type: "text", sortable: true },
-    { key: "actualWeight", label: "Actual Weight", type: "text", sortable: true },
+    { key: "netWeight", label: "Net Weight", type: "text", sortable: true },
     { key: "damagedWeight", label: "Damaged Weight", type: "text", sortable: true },
     { key: "usedWeight", label: "Used Weight", type: "text", sortable: true },
     { key: "wastageWeight", label: "Wastage/Left Weight", type: "text", sortable: true },
-    { key: "thickness", label: "Thickness", type: "text", sortable: true },
+    { key: "thickness", label: "Micron", type: "text", sortable: true },
+    { key: "width", label: "Width (m)", type: "text", sortable: true },
+    { key: "temperature", label: "Temperature", type: "text", sortable: true },
     { key: "supplier", label: "Company/Supplier", type: "text", sortable: true },
     { key: "stage", label: "Stage", type: "enum", sortable: false, filter: "dropdown", options: ["Raw Material", "METALLISATION"] },
     { key: "status", label: "Status", type: "enum", sortable: false, filter: "dropdown", options: ["Yet to Start", "In-progress", "Completed"] },
@@ -52,8 +55,9 @@ const defaultRawMaterialForm: RawMaterialForm = {
   rawMaterialId: "",
   micron: "4.5",
   width: "1.0",
+  netWeight: "",
+  temperature: "25°C",
   supplier: supplierOptions[0],
-  actualWeight: "",
   damagedWeight: "0",
   usedWeight: "",
 };
@@ -140,7 +144,7 @@ export default function StoreHeadWorkOrderDetailPage({ params }: DetailPageProps
   };
 
   const isRawMaterialRowValid = (row: RawMaterialForm) => {
-    const actual = parseFloat(row.actualWeight) || 0;
+    const net = parseFloat(row.netWeight) || 0;
     const damaged = parseFloat(row.damagedWeight) || 0;
     const used = parseFloat(row.usedWeight) || 0;
     
@@ -148,10 +152,10 @@ export default function StoreHeadWorkOrderDetailPage({ params }: DetailPageProps
       row.rawMaterialId.trim() &&
       micronOptions.includes(row.micron.trim()) &&
       row.width.trim() &&
-      actual > 0 &&
+      net > 0 &&
       damaged >= 0 &&
       used >= 0 &&
-      (damaged + used <= actual) &&
+      (damaged + used <= net) &&
       row.supplier.trim()
     );
   };
@@ -184,19 +188,21 @@ export default function StoreHeadWorkOrderDetailPage({ params }: DetailPageProps
     const payload = rawMaterialRowsInput;
     payload.forEach((item) => {
       const cleanRMId = (item.rawMaterialId || "").trim().toUpperCase();
-      const actual = parseFloat(item.actualWeight) || 0;
+      const net = parseFloat(item.netWeight) || 0;
       const damaged = parseFloat(item.damagedWeight) || 0;
       const used = parseFloat(item.usedWeight) || 0;
-      const wastage = actual - damaged - used;
+      const wastage = net - damaged - used;
 
       addFlowRow(orderId, "Raw Material", {
         rollNo: cleanRMId || generateId("RM"),
-        weight: `${used || "0"}kgs`, // Fallback for standard weight property
+        weight: `${used || "0"}kgs`,
         thickness: item.micron,
+        width: item.width || "1.0",
+        netWeight: item.netWeight || "",
+        temperature: item.temperature || "25°C",
         supplier: item.supplier || "Unknown",
         stage: "METALLISATION",
         status: "Yet to Start",
-        actualWeight: `${actual.toFixed(1)}kgs`,
         damagedWeight: `${damaged.toFixed(1)}kgs`,
         usedWeight: `${used.toFixed(1)}kgs`,
         wastageWeight: `${wastage.toFixed(1)}kgs`,
@@ -269,8 +275,9 @@ export default function StoreHeadWorkOrderDetailPage({ params }: DetailPageProps
                       rawMaterialId: inv ? inv.rawMaterialId : id,
                       micron: inv?.micron ?? row.micron,
                       width: inv?.width ?? row.width,
+                      netWeight: inv?.netWeight ?? row.netWeight,
+                      temperature: inv?.temperature ?? row.temperature,
                       supplier: inv?.supplier ?? row.supplier,
-                      actualWeight: inv ? parseFloat(inv.weight).toString() : row.actualWeight,
                     });
                   }}
                   onScanData={(data) => {
@@ -283,8 +290,9 @@ export default function StoreHeadWorkOrderDetailPage({ params }: DetailPageProps
                         rawMaterialId: inv.rawMaterialId,
                         micron: inv.micron,
                         width: inv.width,
+                        netWeight: inv.netWeight ?? "",
+                        temperature: inv.temperature ?? "25°C",
                         supplier: inv.supplier,
-                        actualWeight: parseFloat(inv.weight).toString(),
                       });
                     } else {
                       updateRawMaterialRow(idx, { rawMaterialId: data });
@@ -297,7 +305,7 @@ export default function StoreHeadWorkOrderDetailPage({ params }: DetailPageProps
                 <datalist id={`inv-list-${idx}`}>
                   {availableInventory.map((inv) => (
                     <option key={inv.rawMaterialId} value={inv.rawMaterialId}>
-                      {inv.rawMaterialId} ({inv.weight})
+                      {inv.rawMaterialId} ({inv.netWeight ?? inv.weight})
                     </option>
                   ))}
                 </datalist>
@@ -314,15 +322,19 @@ export default function StoreHeadWorkOrderDetailPage({ params }: DetailPageProps
                 </select>
               </div>
               <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-medium text-[#171717]">Width</label>
+                <label className="text-[13px] font-medium text-[#171717]">Width (m)</label>
                 <input type="number" step="0.1" value={row.width} onChange={(e) => updateRawMaterialRow(idx, { width: e.target.value })} placeholder="Enter width" className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]" />
               </div>
               <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-medium text-[#171717]">Actual Weight (Kgs)</label>
+                <label className="text-[13px] font-medium text-[#171717]">Net Weight (Kgs)</label>
                 <div className="relative">
-                  <input type="number" min="0" step="0.1" value={row.actualWeight} onChange={(e) => updateRawMaterialRow(idx, { actualWeight: e.target.value })} placeholder="Enter actual weight" className="h-[42px] w-full rounded-[8px] border border-[#DDE1E8] pl-3 pr-12 text-[14px]" />
+                  <input type="number" min="0" step="0.1" value={row.netWeight} onChange={(e) => updateRawMaterialRow(idx, { netWeight: e.target.value })} placeholder="Enter net weight" className="h-[42px] w-full rounded-[8px] border border-[#DDE1E8] pl-3 pr-12 text-[14px]" />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[12px] font-medium text-[#5C5C5C]">Kgs</span>
                 </div>
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="text-[13px] font-medium text-[#171717]">Temperature</label>
+                <input type="text" value={row.temperature} onChange={(e) => updateRawMaterialRow(idx, { temperature: e.target.value })} placeholder="e.g. 25°C" className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]" />
               </div>
               <div className="flex flex-col gap-2">
                 <label className="text-[13px] font-medium text-[#171717]">Damaged Weight (Kgs)</label>
@@ -341,7 +353,7 @@ export default function StoreHeadWorkOrderDetailPage({ params }: DetailPageProps
               <div className="flex flex-col gap-2">
                 <label className="text-[13px] font-medium text-[#171717]">Wastage/Left Weight (Kgs)</label>
                 <div className="relative">
-                  <input type="text" readOnly value={((parseFloat(row.actualWeight) || 0) - (parseFloat(row.damagedWeight) || 0) - (parseFloat(row.usedWeight) || 0)).toFixed(1)} className="h-[42px] w-full rounded-[8px] border border-[#DDE1E8] bg-gray-50 px-3 text-[14px] text-gray-500" />
+                  <input type="text" readOnly value={((parseFloat(row.netWeight) || 0) - (parseFloat(row.damagedWeight) || 0) - (parseFloat(row.usedWeight) || 0)).toFixed(1)} className="h-[42px] w-full rounded-[8px] border border-[#DDE1E8] bg-gray-50 px-3 text-[14px] text-gray-500" />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[12px] font-medium text-[#5C5C5C]">Kgs</span>
                 </div>
               </div>
@@ -363,17 +375,18 @@ export default function StoreHeadWorkOrderDetailPage({ params }: DetailPageProps
   const renderReviewCards = () => {
     const rows = rawMaterialRowsInput;
     return rows.map((item, idx) => {
-      const actual = parseFloat(item.actualWeight) || 0;
+      const net = parseFloat(item.netWeight) || 0;
       const damaged = parseFloat(item.damagedWeight) || 0;
       const used = parseFloat(item.usedWeight) || 0;
-      const wastage = actual - damaged - used;
+      const wastage = net - damaged - used;
       return (
         <div key={`raw-${idx}`} className="rounded-[12px] border border-[#78CFFA] bg-[#F4FBFF] p-4 grid grid-cols-1 md:grid-cols-2 gap-y-2 gap-x-6 text-[14px] text-[#49526A]">
           <p>Raw Material ID: {item.rawMaterialId || "Auto"}</p>
           <p>Supplier: {item.supplier || "Unknown"}</p>
           <p>Micron: {item.micron}</p>
           <p>Width: {item.width}</p>
-          <p>Actual Weight: {actual.toFixed(1)} kgs</p>
+          <p>Net Weight: {net.toFixed(1)} kgs</p>
+          <p>Temperature: {item.temperature || "25°C"}</p>
           <p>Damaged Weight: {damaged.toFixed(1)} kgs</p>
           <p>Used Weight: {used.toFixed(1)} kgs</p>
           <p>Wastage/Left Weight: {wastage.toFixed(1)} kgs</p>
@@ -590,11 +603,13 @@ export default function StoreHeadWorkOrderDetailPage({ params }: DetailPageProps
             onExport={() => {
               const exportData = currentData.map((row: any) => ({
                 "Roll No": row.rollNo ?? "",
-                "Actual Weight": row.actualWeight || row.weight || "-",
+                "Net Weight": row.netWeight ?? row.weight ?? "",
                 "Damaged Weight": row.damagedWeight || "0.0kgs",
                 "Used Weight": row.usedWeight || row.weight || "-",
                 "Wastage/Left Weight": row.wastageWeight || "0.0kgs",
-                "Thickness": row.thickness ?? "",
+                "Micron": row.thickness ?? "",
+                "Width (m)": row.width ?? "",
+                "Temperature": row.temperature ?? "",
                 "Supplier": row.supplier ?? "",
                 "Stage": row.stage ?? "",
                 "Status": row.status ?? "",
@@ -637,7 +652,7 @@ export default function StoreHeadWorkOrderDetailPage({ params }: DetailPageProps
                       if (String(col.key) === "options") {
                         return (
                           <td key={String(col.key)} className="px-4 py-3 whitespace-nowrap">
-                            <button onClick={() => setQrData({ id: (row as any).rollNo, type: "RM", details: { "Roll No": (row as any).rollNo ?? "", "Weight": (row as any).weight ?? "", "Thickness": (row as any).thickness ?? "", "Supplier": (row as any).supplier ?? "", "Status": (row as any).status ?? "" } })} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors">
+                            <button onClick={() => setQrData({ id: (row as any).rollNo, type: "RM", details: { "Roll No": (row as any).rollNo ?? "", "Net Weight": (row as any).netWeight ?? (row as any).weight ?? "", "Micron": (row as any).thickness ?? "", "Width (m)": (row as any).width ?? "", "Temperature": (row as any).temperature ?? "-", "Supplier": (row as any).supplier ?? "", "Status": (row as any).status ?? "" } })} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors">
                               <QrCode className="w-4 h-4" />
                             </button>
                           </td>
@@ -654,8 +669,7 @@ export default function StoreHeadWorkOrderDetailPage({ params }: DetailPageProps
                       const val = row[col.key as keyof RawMaterialRow];
                       let displayVal = val;
                       if (!val) {
-                        if (col.key === "actualWeight") displayVal = row.weight || "-";
-                        else if (col.key === "usedWeight") displayVal = row.weight || "-";
+                        if (col.key === "usedWeight") displayVal = row.weight || "-";
                         else if (col.key === "damagedWeight") displayVal = "0.0kgs";
                         else if (col.key === "wastageWeight") displayVal = "0.0kgs";
                       }

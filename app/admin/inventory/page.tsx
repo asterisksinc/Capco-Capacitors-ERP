@@ -36,6 +36,9 @@ const defaultForm = {
   micron: "4.5",
   width: "1.0",
   weight: "",
+  netWeight: "",
+  grossWeight: "",
+  temperature: "25°C",
   supplier: supplierOptions[0],
 };
 
@@ -94,6 +97,11 @@ export default function AdminInventoryPage() {
       form.width.trim() &&
       form.weight.trim() &&
       Number(form.weight) > 0 &&
+      form.netWeight.trim() &&
+      Number(form.netWeight) > 0 &&
+      form.grossWeight.trim() &&
+      Number(form.grossWeight) > 0 &&
+      form.temperature.trim() &&
       form.supplier.trim()
     );
   };
@@ -119,7 +127,10 @@ export default function AdminInventoryPage() {
       rollId: form.rollId.trim(),
       micron: form.micron,
       width: form.width,
-      weight: `${form.weight}kgs`,
+      weight: `${form.netWeight}kgs`,
+      netWeight: `${form.netWeight}kgs`,
+      grossWeight: `${form.grossWeight}kgs`,
+      temperature: form.temperature,
       supplier: form.supplier,
       date: getDateString(),
       status: "In Inventory",
@@ -140,22 +151,29 @@ export default function AdminInventoryPage() {
     const micron = normalizedRow["micron"] || "4.5";
     const width = normalizedRow["width"] || "1.0";
     let weight = String(normalizedRow["weight"] || "");
+    let netWeight = String(normalizedRow["netweight"] || "");
+    let grossWeight = String(normalizedRow["grossweight"] || "");
+    const temperature = normalizedRow["temperature"] || "";
     const supplier = normalizedRow["supplier"] || supplierOptions[0];
     const date = normalizedRow["date"] || normalizedRow["datereceived"] || getDateString();
     let status = normalizedRow["status"] || "In Inventory";
 
     if (!rawMaterialId || !rollId) return null;
 
-    if (weight && !weight.toLowerCase().endsWith("kgs")) {
-      weight = `${weight}kgs`;
-    }
+    const addKgsSuffix = (v: string) => v && !v.toLowerCase().endsWith("kgs") ? `${v}kgs` : v;
+    weight = addKgsSuffix(weight);
+    netWeight = addKgsSuffix(netWeight || weight);
+    grossWeight = addKgsSuffix(grossWeight || weight);
 
     return {
       rawMaterialId: String(rawMaterialId).trim().toUpperCase(),
       rollId: String(rollId).trim(),
       micron: String(micron).trim(),
       width: String(width).trim(),
-      weight: String(weight).trim(),
+      weight: String(netWeight).trim(),
+      netWeight: String(netWeight).trim(),
+      grossWeight: String(grossWeight).trim(),
+      temperature: String(temperature).trim(),
       supplier: String(supplier).trim(),
       date: String(date).trim(),
       status: (status === "Being Used" || status === "Used Completely") ? status : "In Inventory"
@@ -212,8 +230,10 @@ export default function AdminInventoryPage() {
       "Raw Material ID": item.rawMaterialId,
       "Roll ID": item.rollId,
       "Micron": item.micron,
-      "Width": item.width,
-      "Weight": item.weight,
+      "Width (m)": item.width,
+      "Net Weight": item.netWeight ?? item.weight,
+      "Gross Weight": item.grossWeight ?? "",
+      "Temperature": item.temperature ?? "",
       "Supplier": item.supplier,
       "Date": item.date,
       "Status": item.status,
@@ -366,14 +386,16 @@ export default function AdminInventoryPage() {
         {/* DATA TABLE */}
         <section className="bg-white rounded-[12px] flex flex-col gap-4 overflow-hidden border border-[#EBEBEB]">
           <div className="overflow-x-auto min-h-[300px]">
-            <table className="w-full text-left border-collapse min-w-[1000px]">
+            <table className="w-full text-left border-collapse min-w-[1200px]">
               <thead>
                 <tr className="bg-[#F5F7FA] border-b border-[#EBEBEB]">
                   <th className="px-4 py-[12px] text-[13px] font-semibold text-[#667085]">Raw Material ID</th>
                   <th className="px-4 py-[12px] text-[13px] font-semibold text-[#667085]">Roll ID</th>
                   <th className="px-4 py-[12px] text-[13px] font-semibold text-[#667085]">Micron</th>
                   <th className="px-4 py-[12px] text-[13px] font-semibold text-[#667085]">Width (m)</th>
-                  <th className="px-4 py-[12px] text-[13px] font-semibold text-[#667085]">Weight</th>
+                  <th className="px-4 py-[12px] text-[13px] font-semibold text-[#667085]">Net Weight</th>
+                  <th className="px-4 py-[12px] text-[13px] font-semibold text-[#667085]">Gross Weight</th>
+                  <th className="px-4 py-[12px] text-[13px] font-semibold text-[#667085]">Temperature</th>
                   <th className="px-4 py-[12px] text-[13px] font-semibold text-[#667085]">Supplier</th>
                   <th className="px-4 py-[12px] text-[13px] font-semibold text-[#667085]">Date Received</th>
                   <th className="px-4 py-[12px] text-[13px] font-semibold text-[#667085]">QR Code</th>
@@ -388,11 +410,13 @@ export default function AdminInventoryPage() {
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.rollId}</td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.micron}</td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.width}</td>
-                    <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.weight}</td>
+                    <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.netWeight ?? row.weight}</td>
+                    <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.grossWeight ?? "-"}</td>
+                    <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.temperature ?? "-"}</td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.supplier}</td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.date}</td>
                     <td className="px-4 py-4 whitespace-nowrap">
-                      <button onClick={() => setQrData({ id: row.rawMaterialId, type: "RM", details: { "Roll ID": row.rollId, "Micron": row.micron, "Width": row.width, "Weight": row.weight, "Supplier": row.supplier, "Status": row.status } })} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors p-1" title="View QR Code">
+                      <button onClick={() => setQrData({ id: row.rawMaterialId, type: "RM", details: { "Roll ID": row.rollId, "Micron": row.micron, "Width (m)": row.width, "Net Weight": row.netWeight ?? row.weight, "Gross Weight": row.grossWeight ?? "-", "Temperature": row.temperature ?? "-", "Supplier": row.supplier, "Status": row.status } })} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors p-1" title="View QR Code">
                         <QrCode className="w-4 h-4" />
                       </button>
                     </td>
@@ -408,7 +432,7 @@ export default function AdminInventoryPage() {
                     </td>
                   </tr>
                 )) : (
-                  <tr><td colSpan={10} className="px-4 py-12 text-center text-[#5C5C5C] text-[14px]">No inventory raw materials found.</td></tr>
+                  <tr><td colSpan={12} className="px-4 py-12 text-center text-[#5C5C5C] text-[14px]">No inventory raw materials found.</td></tr>
                 )}
               </tbody>
             </table>
@@ -448,15 +472,26 @@ export default function AdminInventoryPage() {
                         </select>
                       </div>
                       <div className="flex flex-col gap-2">
-                        <label className="text-[13px] font-medium text-[#171717]">Width</label>
+                        <label className="text-[13px] font-medium text-[#171717]">Width (m)</label>
                         <input type="number" step="0.1" value={form.width} onChange={(e) => setForm({ ...form, width: e.target.value })} placeholder="Enter width" className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]" />
                       </div>
                       <div className="flex flex-col gap-2">
-                        <label className="text-[13px] font-medium text-[#171717]">Weight (Kgs)</label>
+                        <label className="text-[13px] font-medium text-[#171717]">Net Weight (Kgs)</label>
                         <div className="relative">
-                          <input type="number" min="0.1" step="0.1" value={form.weight} onChange={(e) => setForm({ ...form, weight: e.target.value })} placeholder="Enter weight" className="h-[42px] w-full rounded-[8px] border border-[#DDE1E8] pl-3 pr-12 text-[14px]" />
+                          <input type="number" min="0.1" step="0.1" value={form.netWeight} onChange={(e) => setForm({ ...form, netWeight: e.target.value })} placeholder="Enter net weight" className="h-[42px] w-full rounded-[8px] border border-[#DDE1E8] pl-3 pr-12 text-[14px]" />
                           <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[12px] font-medium text-[#5C5C5C]">Kgs</span>
                         </div>
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <label className="text-[13px] font-medium text-[#171717]">Gross Weight (Kgs)</label>
+                        <div className="relative">
+                          <input type="number" min="0.1" step="0.1" value={form.grossWeight} onChange={(e) => setForm({ ...form, grossWeight: e.target.value })} placeholder="Enter gross weight" className="h-[42px] w-full rounded-[8px] border border-[#DDE1E8] pl-3 pr-12 text-[14px]" />
+                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[12px] font-medium text-[#5C5C5C]">Kgs</span>
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <label className="text-[13px] font-medium text-[#171717]">Temperature</label>
+                        <input type="text" value={form.temperature} onChange={(e) => setForm({ ...form, temperature: e.target.value })} placeholder="e.g. 25°C" className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]" />
                       </div>
                       <div className="flex flex-col gap-2">
                         <label className="text-[13px] font-medium text-[#171717]">Supplier</label>
@@ -482,7 +517,9 @@ export default function AdminInventoryPage() {
                     <p>Roll ID: <span className="font-semibold text-black">{form.rollId}</span></p>
                     <p>Micron: <span className="font-semibold text-black">{form.micron}</span></p>
                     <p>Width: <span className="font-semibold text-black">{form.width}</span></p>
-                    <p>Weight: <span className="font-semibold text-black">{form.weight}kgs</span></p>
+                    <p>Net Weight: <span className="font-semibold text-black">{form.netWeight}kgs</span></p>
+                    <p>Gross Weight: <span className="font-semibold text-black">{form.grossWeight}kgs</span></p>
+                    <p>Temperature: <span className="font-semibold text-black">{form.temperature}</span></p>
                     <p>Supplier: <span className="font-semibold text-black">{form.supplier}</span></p>
                   </div>
                 </div>
@@ -550,7 +587,7 @@ export default function AdminInventoryPage() {
               <div className="rounded-[8px] bg-[#F9FAFB] border border-[#EBEBEB] p-4 flex flex-col gap-2">
                 <p className="text-[13px] font-semibold text-[#171717]">Template Setup</p>
                 <p className="text-[12px] text-[#5C5C5C] leading-normal">
-                  Make sure your file columns match the template: <span className="font-semibold text-black">Raw Material ID, Roll ID, Micron, Width, Weight, Supplier, Date, Status</span>.
+                  Make sure your file columns match the template: <span className="font-semibold text-black">Raw Material ID, Roll ID, Micron, Width, Net Weight, Gross Weight, Temperature, Supplier, Date, Status</span>.
                 </p>
                 <a href="/sample_inventory.csv" download className="text-[#00B6E2] hover:underline font-semibold text-[13px] mt-1 flex items-center gap-1.5 self-start">
                   <Download className="w-3.5 h-3.5" /> Download Sample CSV Template

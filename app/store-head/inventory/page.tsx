@@ -17,6 +17,9 @@ type InventoryForm = {
   micron: string;
   width: string;
   weight: string;
+  netWeight: string;
+  grossWeight: string;
+  temperature: string;
   supplier: string;
 };
 
@@ -53,6 +56,9 @@ const defaultForm: InventoryForm = {
   micron: "4.5",
   width: "1.0",
   weight: "",
+  netWeight: "",
+  grossWeight: "",
+  temperature: "25°C",
   supplier: supplierOptions[0],
 };
 
@@ -156,8 +162,10 @@ export default function StoreHeadInventoryPage() {
                 "Raw Material ID": row.rawMaterialId ?? "",
                 "Roll ID": row.rollId ?? "",
                 "Micron": row.micron ?? "",
-                "Width": row.width ?? "",
-                "Weight": row.weight ?? "",
+                "Width (m)": row.width ?? "",
+                "Net Weight": row.netWeight ?? row.weight ?? "",
+                "Gross Weight": row.grossWeight ?? "",
+                "Temperature": row.temperature ?? "",
                 "Supplier": row.supplier ?? "",
                 "Date": row.date ?? "",
                 "Status": row.status ?? "",
@@ -173,14 +181,16 @@ export default function StoreHeadInventoryPage() {
 
         <section className="bg-white rounded-[12px] flex flex-col gap-4 overflow-hidden">
           <div className="border border-[#EAECF0] rounded-[8px] overflow-x-auto min-h-[300px]">
-            <table className="w-full text-left border-collapse min-w-[1000px]">
+            <table className="w-full text-left border-collapse min-w-[1200px]">
               <thead>
                 <tr className="bg-[#F5F7FA] border-b border-[#EBEBEB]">
                   <th className="px-4 py-[11px] text-[13px] font-semibold text-[#667085]">Raw Material ID</th>
                   <th className="px-4 py-[11px] text-[13px] font-semibold text-[#667085]">Roll ID</th>
                   <th className="px-4 py-[11px] text-[13px] font-semibold text-[#667085]">Micron</th>
-                  <th className="px-4 py-[11px] text-[13px] font-semibold text-[#667085]">Width</th>
-                  <th className="px-4 py-[11px] text-[13px] font-semibold text-[#667085]">Weight</th>
+                  <th className="px-4 py-[11px] text-[13px] font-semibold text-[#667085]">Width (m)</th>
+                  <th className="px-4 py-[11px] text-[13px] font-semibold text-[#667085]">Net Weight</th>
+                  <th className="px-4 py-[11px] text-[13px] font-semibold text-[#667085]">Gross Weight</th>
+                  <th className="px-4 py-[11px] text-[13px] font-semibold text-[#667085]">Temperature</th>
                   <th className="px-4 py-[11px] text-[13px] font-semibold text-[#667085]">Supplier</th>
                   <th className="px-4 py-[11px] text-[13px] font-semibold text-[#667085]">Date</th>
                   <th className="px-4 py-[11px] text-[13px] font-semibold text-[#667085]">QR</th>
@@ -194,18 +204,20 @@ export default function StoreHeadInventoryPage() {
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.rollId}</td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.micron}</td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.width}</td>
-                    <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.weight}</td>
+                    <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.netWeight ?? row.weight}</td>
+                    <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.grossWeight ?? "-"}</td>
+                    <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.temperature ?? "-"}</td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.supplier}</td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.date}</td>
                     <td className="px-4 py-4 whitespace-nowrap">
-                      <button onClick={() => setQrData({ id: row.rawMaterialId, type: "RM", details: { "Roll ID": row.rollId, "Micron": row.micron, "Width": row.width, "Weight": row.weight, "Supplier": row.supplier, "Status": row.status } })} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors">
+                      <button onClick={() => setQrData({ id: row.rawMaterialId, type: "RM", details: { "Roll ID": row.rollId, "Micron": row.micron, "Width (m)": row.width, "Net Weight": row.netWeight ?? row.weight, "Gross Weight": row.grossWeight ?? "-", "Temperature": row.temperature ?? "-", "Supplier": row.supplier, "Status": row.status } })} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors">
                         <QrCode className="w-4 h-4" />
                       </button>
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap"><StatusBadge status={row.status} /></td>
                   </tr>
                 )) : (
-                  <tr><td colSpan={9} className="px-4 py-8 text-center text-[#5C5C5C] text-[14px]">No inventory items found.</td></tr>
+                  <tr><td colSpan={11} className="px-4 py-8 text-center text-[#5C5C5C] text-[14px]">No inventory items found.</td></tr>
                 )}
               </tbody>
             </table>
