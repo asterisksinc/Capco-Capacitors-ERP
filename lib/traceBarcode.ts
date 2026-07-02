@@ -27,6 +27,10 @@ interface RawMaterialRow {
   supplier: string;
   stage: string;
   status: string;
+  netWeight?: string;
+  grossWeight?: string;
+  width?: string;
+  temperature?: string;
 }
 
 interface MetallisationRow {

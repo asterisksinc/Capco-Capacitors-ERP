@@ -40,6 +40,10 @@ export type RawMaterialRow = {
   damagedWeight?: string;
   usedWeight?: string;
   wastageWeight?: string;
+  netWeight?: string;
+  grossWeight?: string;
+  width?: string;
+  temperature?: string;
 };
 
 export type MetallisationRow = {
@@ -112,6 +116,9 @@ export type InventoryItem = {
   supplier: string;
   date: string;
   status: "In Inventory" | "Being Used" | "Used Completely";
+  netWeight?: string;
+  grossWeight?: string;
+  temperature?: string;
 };
 
 export type MaterialRequestItem = {
@@ -204,35 +211,35 @@ export const godownRawMaterialIds = Array.from(
 
 export function createSeedInventory(): InventoryItem[] {
   return [
-    { rawMaterialId: "RM-8301", rollId: "RL-2401-001", micron: "4.5", width: "1.0", weight: "58.5kgs", supplier: "VedaCap Industries", date: "10/01/2025", status: "In Inventory" },
-    { rawMaterialId: "RM-8302", rollId: "RL-2401-002", micron: "6.5", width: "1.2", weight: "45.2kgs", supplier: "ElectroForge Capacitors", date: "10/01/2025", status: "In Inventory" },
-    { rawMaterialId: "RM-8303", rollId: "RL-2401-003", micron: "5.0", width: "0.8", weight: "62.8kgs", supplier: "NextGen Metallic Pvt Ltd", date: "11/01/2025", status: "In Inventory" },
-    { rawMaterialId: "RM-8304", rollId: "RL-2401-004", micron: "4.5", width: "1.0", weight: "55.0kgs", supplier: "VedaCap Industries", date: "11/01/2025", status: "In Inventory" },
-    { rawMaterialId: "RM-8305", rollId: "RL-2401-005", micron: "7.5", width: "1.5", weight: "48.3kgs", supplier: "ElectroForge Capacitors", date: "12/01/2025", status: "In Inventory" },
-    { rawMaterialId: "RM-8306", rollId: "RL-2402-001", micron: "3.5", width: "0.9", weight: "52.1kgs", supplier: "NextGen Metallic Pvt Ltd", date: "12/01/2025", status: "In Inventory" },
-    { rawMaterialId: "RM-8307", rollId: "RL-2402-002", micron: "6.0", width: "1.1", weight: "60.0kgs", supplier: "VedaCap Industries", date: "13/01/2025", status: "In Inventory" },
-    { rawMaterialId: "RM-8308", rollId: "RL-2402-003", micron: "5.5", width: "1.0", weight: "47.5kgs", supplier: "ElectroForge Capacitors", date: "13/01/2025", status: "In Inventory" },
-    { rawMaterialId: "RM-8309", rollId: "RL-2402-004", micron: "4.0", width: "0.8", weight: "53.8kgs", supplier: "NextGen Metallic Pvt Ltd", date: "14/01/2025", status: "In Inventory" },
-    { rawMaterialId: "RM-8310", rollId: "RL-2402-005", micron: "6.5", width: "1.2", weight: "49.2kgs", supplier: "VedaCap Industries", date: "14/01/2025", status: "In Inventory" },
-    { rawMaterialId: "RM-3401", rollId: "RL-2403-001", micron: "4.0", width: "0.8", weight: "50.0kgs", supplier: "ElectroForge Capacitors", date: "15/01/2025", status: "In Inventory" },
-    { rawMaterialId: "RM-3402", rollId: "RL-2403-002", micron: "5.5", width: "1.0", weight: "55.5kgs", supplier: "NextGen Metallic Pvt Ltd", date: "15/01/2025", status: "In Inventory" },
+    { rawMaterialId: "RM-8301", rollId: "RL-2401-001", micron: "4.5", width: "1.0", weight: "58.5kgs", netWeight: "58.5kgs", grossWeight: "60.0kgs", temperature: "25°C", supplier: "VedaCap Industries", date: "10/01/2025", status: "In Inventory" },
+    { rawMaterialId: "RM-8302", rollId: "RL-2401-002", micron: "6.5", width: "1.2", weight: "45.2kgs", netWeight: "45.2kgs", grossWeight: "47.0kgs", temperature: "26°C", supplier: "ElectroForge Capacitors", date: "10/01/2025", status: "In Inventory" },
+    { rawMaterialId: "RM-8303", rollId: "RL-2401-003", micron: "5.0", width: "0.8", weight: "62.8kgs", netWeight: "62.8kgs", grossWeight: "64.5kgs", temperature: "24°C", supplier: "NextGen Metallic Pvt Ltd", date: "11/01/2025", status: "In Inventory" },
+    { rawMaterialId: "RM-8304", rollId: "RL-2401-004", micron: "4.5", width: "1.0", weight: "55.0kgs", netWeight: "55.0kgs", grossWeight: "56.8kgs", temperature: "25°C", supplier: "VedaCap Industries", date: "11/01/2025", status: "In Inventory" },
+    { rawMaterialId: "RM-8305", rollId: "RL-2401-005", micron: "7.5", width: "1.5", weight: "48.3kgs", netWeight: "48.3kgs", grossWeight: "50.1kgs", temperature: "27°C", supplier: "ElectroForge Capacitors", date: "12/01/2025", status: "In Inventory" },
+    { rawMaterialId: "RM-8306", rollId: "RL-2402-001", micron: "3.5", width: "0.9", weight: "52.1kgs", netWeight: "52.1kgs", grossWeight: "53.8kgs", temperature: "24°C", supplier: "NextGen Metallic Pvt Ltd", date: "12/01/2025", status: "In Inventory" },
+    { rawMaterialId: "RM-8307", rollId: "RL-2402-002", micron: "6.0", width: "1.1", weight: "60.0kgs", netWeight: "60.0kgs", grossWeight: "62.0kgs", temperature: "25°C", supplier: "VedaCap Industries", date: "13/01/2025", status: "In Inventory" },
+    { rawMaterialId: "RM-8308", rollId: "RL-2402-003", micron: "5.5", width: "1.0", weight: "47.5kgs", netWeight: "47.5kgs", grossWeight: "49.2kgs", temperature: "26°C", supplier: "ElectroForge Capacitors", date: "13/01/2025", status: "In Inventory" },
+    { rawMaterialId: "RM-8309", rollId: "RL-2402-004", micron: "4.0", width: "0.8", weight: "53.8kgs", netWeight: "53.8kgs", grossWeight: "55.5kgs", temperature: "24°C", supplier: "NextGen Metallic Pvt Ltd", date: "14/01/2025", status: "In Inventory" },
+    { rawMaterialId: "RM-8310", rollId: "RL-2402-005", micron: "6.5", width: "1.2", weight: "49.2kgs", netWeight: "49.2kgs", grossWeight: "51.0kgs", temperature: "25°C", supplier: "VedaCap Industries", date: "14/01/2025", status: "In Inventory" },
+    { rawMaterialId: "RM-3401", rollId: "RL-2403-001", micron: "4.0", width: "0.8", weight: "50.0kgs", netWeight: "50.0kgs", grossWeight: "51.5kgs", temperature: "26°C", supplier: "ElectroForge Capacitors", date: "15/01/2025", status: "In Inventory" },
+    { rawMaterialId: "RM-3402", rollId: "RL-2403-002", micron: "5.5", width: "1.0", weight: "55.5kgs", netWeight: "55.5kgs", grossWeight: "57.0kgs", temperature: "25°C", supplier: "NextGen Metallic Pvt Ltd", date: "15/01/2025", status: "In Inventory" },
   ];
 }
 
 export function createSeedStore() {
   const inventory: InventoryItem[] = [
-    { rawMaterialId: "RM-8301", rollId: "RL-2401-001", micron: "4.5", width: "1.0", weight: "58.5kgs", supplier: "VedaCap Industries", date: "10/01/2025", status: "Being Used" },
-    { rawMaterialId: "RM-8302", rollId: "RL-2401-002", micron: "6.5", width: "1.2", weight: "45.2kgs", supplier: "ElectroForge Capacitors", date: "10/01/2025", status: "Used Completely" },
-    { rawMaterialId: "RM-8303", rollId: "RL-2401-003", micron: "5.0", width: "0.8", weight: "62.8kgs", supplier: "NextGen Metallic Pvt Ltd", date: "11/01/2025", status: "Being Used" },
-    { rawMaterialId: "RM-8304", rollId: "RL-2401-004", micron: "4.5", width: "1.0", weight: "55.0kgs", supplier: "VedaCap Industries", date: "11/01/2025", status: "Being Used" },
-    { rawMaterialId: "RM-8305", rollId: "RL-2401-005", micron: "7.5", width: "1.5", weight: "48.3kgs", supplier: "ElectroForge Capacitors", date: "12/01/2025", status: "Being Used" },
-    { rawMaterialId: "RM-8306", rollId: "RL-2402-001", micron: "3.5", width: "0.9", weight: "52.1kgs", supplier: "NextGen Metallic Pvt Ltd", date: "12/01/2025", status: "In Inventory" },
-    { rawMaterialId: "RM-8307", rollId: "RL-2402-002", micron: "6.0", width: "1.1", weight: "60.0kgs", supplier: "VedaCap Industries", date: "13/01/2025", status: "In Inventory" },
-    { rawMaterialId: "RM-8308", rollId: "RL-2402-003", micron: "5.5", width: "1.0", weight: "47.5kgs", supplier: "ElectroForge Capacitors", date: "13/01/2025", status: "In Inventory" },
-    { rawMaterialId: "RM-8309", rollId: "RL-2402-004", micron: "4.0", width: "0.8", weight: "53.8kgs", supplier: "NextGen Metallic Pvt Ltd", date: "14/01/2025", status: "In Inventory" },
-    { rawMaterialId: "RM-8310", rollId: "RL-2402-005", micron: "6.5", width: "1.2", weight: "49.2kgs", supplier: "VedaCap Industries", date: "14/01/2025", status: "In Inventory" },
-    { rawMaterialId: "RM-3401", rollId: "RL-2403-001", micron: "4.0", width: "0.8", weight: "50.0kgs", supplier: "ElectroForge Capacitors", date: "15/01/2025", status: "In Inventory" },
-    { rawMaterialId: "RM-3402", rollId: "RL-2403-002", micron: "5.5", width: "1.0", weight: "55.5kgs", supplier: "NextGen Metallic Pvt Ltd", date: "15/01/2025", status: "In Inventory" },
+    { rawMaterialId: "RM-8301", rollId: "RL-2401-001", micron: "4.5", width: "1.0", weight: "58.5kgs", supplier: "VedaCap Industries", date: "10/01/2025", status: "Being Used", netWeight: "58.5kgs", grossWeight: "60.0kgs", temperature: "25°C" },
+    { rawMaterialId: "RM-8302", rollId: "RL-2401-002", micron: "6.5", width: "1.2", weight: "45.2kgs", supplier: "ElectroForge Capacitors", date: "10/01/2025", status: "Used Completely", netWeight: "45.2kgs", grossWeight: "47.0kgs", temperature: "26°C" },
+    { rawMaterialId: "RM-8303", rollId: "RL-2401-003", micron: "5.0", width: "0.8", weight: "62.8kgs", supplier: "NextGen Metallic Pvt Ltd", date: "11/01/2025", status: "Being Used", netWeight: "62.8kgs", grossWeight: "64.5kgs", temperature: "24°C" },
+    { rawMaterialId: "RM-8304", rollId: "RL-2401-004", micron: "4.5", width: "1.0", weight: "55.0kgs", supplier: "VedaCap Industries", date: "11/01/2025", status: "Being Used", netWeight: "55.0kgs", grossWeight: "56.8kgs", temperature: "25°C" },
+    { rawMaterialId: "RM-8305", rollId: "RL-2401-005", micron: "7.5", width: "1.5", weight: "48.3kgs", supplier: "ElectroForge Capacitors", date: "12/01/2025", status: "Being Used", netWeight: "48.3kgs", grossWeight: "50.1kgs", temperature: "27°C" },
+    { rawMaterialId: "RM-8306", rollId: "RL-2402-001", micron: "3.5", width: "0.9", weight: "52.1kgs", supplier: "NextGen Metallic Pvt Ltd", date: "12/01/2025", status: "In Inventory", netWeight: "52.1kgs", grossWeight: "53.8kgs", temperature: "24°C" },
+    { rawMaterialId: "RM-8307", rollId: "RL-2402-002", micron: "6.0", width: "1.1", weight: "60.0kgs", supplier: "VedaCap Industries", date: "13/01/2025", status: "In Inventory", netWeight: "60.0kgs", grossWeight: "62.0kgs", temperature: "25°C" },
+    { rawMaterialId: "RM-8308", rollId: "RL-2402-003", micron: "5.5", width: "1.0", weight: "47.5kgs", supplier: "ElectroForge Capacitors", date: "13/01/2025", status: "In Inventory", netWeight: "47.5kgs", grossWeight: "49.2kgs", temperature: "26°C" },
+    { rawMaterialId: "RM-8309", rollId: "RL-2402-004", micron: "4.0", width: "0.8", weight: "53.8kgs", supplier: "NextGen Metallic Pvt Ltd", date: "14/01/2025", status: "In Inventory", netWeight: "53.8kgs", grossWeight: "55.5kgs", temperature: "24°C" },
+    { rawMaterialId: "RM-8310", rollId: "RL-2402-005", micron: "6.5", width: "1.2", weight: "49.2kgs", supplier: "VedaCap Industries", date: "14/01/2025", status: "In Inventory", netWeight: "49.2kgs", grossWeight: "51.0kgs", temperature: "25°C" },
+    { rawMaterialId: "RM-3401", rollId: "RL-2403-001", micron: "4.0", width: "0.8", weight: "50.0kgs", supplier: "ElectroForge Capacitors", date: "15/01/2025", status: "In Inventory", netWeight: "50.0kgs", grossWeight: "51.5kgs", temperature: "26°C" },
+    { rawMaterialId: "RM-3402", rollId: "RL-2403-002", micron: "5.5", width: "1.0", weight: "55.5kgs", supplier: "NextGen Metallic Pvt Ltd", date: "15/01/2025", status: "In Inventory", netWeight: "55.5kgs", grossWeight: "57.0kgs", temperature: "25°C" },
   ];
 
   const now = new Date();
@@ -254,8 +261,8 @@ export function createSeedStore() {
     "WO-2026-001": {
       overview: { wordCount: "4.5µ x 1.0mm", micron: "4.5", width: "1.0", quantity: "5000", stage: "Completed", date: d(-5), status: "Completed" },
       rawMaterialRows: [
-        { rollNo: "RM-8301", weight: "58.5kgs", thickness: "4.5", supplier: "VedaCap Industries", stage: "METALLISATION", status: "Completed" },
-        { rollNo: "RM-8302", weight: "45.2kgs", thickness: "6.5", supplier: "ElectroForge Capacitors", stage: "METALLISATION", status: "Completed" },
+        { rollNo: "RM-8301", weight: "58.5kgs", thickness: "4.5", supplier: "VedaCap Industries", stage: "METALLISATION", status: "Completed", netWeight: "58.5kgs", grossWeight: "60.0kgs", width: "1.0", temperature: "25°C" },
+        { rollNo: "RM-8302", weight: "45.2kgs", thickness: "6.5", supplier: "ElectroForge Capacitors", stage: "METALLISATION", status: "Completed", netWeight: "45.2kgs", grossWeight: "47.0kgs", width: "1.2", temperature: "26°C" },
       ],
       metallisationRows: [
         { coilNo: "MC-1001", rmId: "RM-8301", machineNo: "M-01", weight: "58.5kgs", opticalDensity: "2.4", resistance: "1.5 Ohms", timestamp: `${d(-4)} 10:30`, nextStage: "SLITTING", status: "Completed" },
@@ -277,8 +284,8 @@ export function createSeedStore() {
     "WO-2026-002": {
       overview: { wordCount: "6.5µ x 1.2mm", micron: "6.5", width: "1.2", quantity: "3000", stage: "Metallisation", date: d(-4), status: "In-progress" },
       rawMaterialRows: [
-        { rollNo: "RM-8303", weight: "62.8kgs", thickness: "5.0", supplier: "NextGen Metallic Pvt Ltd", stage: "METALLISATION", status: "Completed" },
-        { rollNo: "RM-8304", weight: "55.0kgs", thickness: "4.5", supplier: "VedaCap Industries", stage: "METALLISATION", status: "Completed" },
+        { rollNo: "RM-8303", weight: "62.8kgs", thickness: "5.0", supplier: "NextGen Metallic Pvt Ltd", stage: "METALLISATION", status: "Completed", netWeight: "62.8kgs", grossWeight: "64.5kgs", width: "0.8", temperature: "24°C" },
+        { rollNo: "RM-8304", weight: "55.0kgs", thickness: "4.5", supplier: "VedaCap Industries", stage: "METALLISATION", status: "Completed", netWeight: "55.0kgs", grossWeight: "56.8kgs", width: "1.0", temperature: "25°C" },
       ],
       metallisationRows: [
         { coilNo: "MC-2001", rmId: "RM-8303", machineNo: "M-02", weight: "62.8kgs", opticalDensity: "2.5", resistance: "1.4 Ohms", timestamp: `${d(-2)} 09:00`, nextStage: "SLITTING", status: "Completed" },
@@ -291,7 +298,7 @@ export function createSeedStore() {
     "WO-2026-003": {
       overview: { wordCount: "5.0µ x 0.8mm", micron: "5.0", width: "0.8", quantity: "4500", stage: "Raw Material", date: d(-3), status: "Yet to Start" },
       rawMaterialRows: [
-        { rollNo: "RM-8305", weight: "48.3kgs", thickness: "7.5", supplier: "ElectroForge Capacitors", stage: "METALLISATION", status: "Yet to Start" },
+        { rollNo: "RM-8305", weight: "48.3kgs", thickness: "7.5", supplier: "ElectroForge Capacitors", stage: "METALLISATION", status: "Yet to Start", netWeight: "48.3kgs", grossWeight: "50.1kgs", width: "1.5", temperature: "27°C" },
       ],
       metallisationRows: [],
       slittingRows: [],
@@ -301,7 +308,7 @@ export function createSeedStore() {
     "WO-2026-004": {
       overview: { wordCount: "7.5µ x 1.5mm", micron: "7.5", width: "1.5", quantity: "2500", stage: "Raw Material", date: d(-2), status: "Yet to Start" },
       rawMaterialRows: [
-        { rollNo: "RM-3401", weight: "50.0kgs", thickness: "4.0", supplier: "ElectroForge Capacitors", stage: "METALLISATION", status: "Yet to Start" },
+        { rollNo: "RM-3401", weight: "50.0kgs", thickness: "4.0", supplier: "ElectroForge Capacitors", stage: "METALLISATION", status: "Yet to Start", netWeight: "50.0kgs", grossWeight: "51.5kgs", width: "0.8", temperature: "24°C" },
       ],
       metallisationRows: [],
       slittingRows: [],
@@ -311,7 +318,7 @@ export function createSeedStore() {
     "WO-2026-005": {
       overview: { wordCount: "3.5µ x 0.9mm", micron: "3.5", width: "0.9", quantity: "6000", stage: "Raw Material", date: d(-1), status: "Yet to Start" },
       rawMaterialRows: [
-        { rollNo: "RM-8306", weight: "52.1kgs", thickness: "3.5", supplier: "NextGen Metallic Pvt Ltd", stage: "METALLISATION", status: "Yet to Start" },
+        { rollNo: "RM-8306", weight: "52.1kgs", thickness: "3.5", supplier: "NextGen Metallic Pvt Ltd", stage: "METALLISATION", status: "Yet to Start", netWeight: "52.1kgs", grossWeight: "53.8kgs", width: "0.9", temperature: "24°C" },
       ],
       metallisationRows: [],
       slittingRows: [],

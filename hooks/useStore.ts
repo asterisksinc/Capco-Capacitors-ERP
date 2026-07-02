@@ -73,6 +73,10 @@ function sanitizeStore(raw: unknown): StoreData {
           damagedWeight: row.damagedWeight ? String(row.damagedWeight) : undefined,
           usedWeight: row.usedWeight ? String(row.usedWeight) : undefined,
           wastageWeight: row.wastageWeight ? String(row.wastageWeight) : undefined,
+          netWeight: row.netWeight ? String(row.netWeight) : (row.weight ? String(row.weight) : undefined),
+          grossWeight: row.grossWeight ? String(row.grossWeight) : undefined,
+          width: row.width ? String(row.width) : undefined,
+          temperature: row.temperature ? String(row.temperature) : undefined,
         }));
       const metRows = (Array.isArray(value.metallisationRows) ? value.metallisationRows : [])
         .filter(isRecord).map((row) => ({
@@ -151,7 +155,12 @@ function sanitizeStore(raw: unknown): StoreData {
   }
 
   const inventoryItems: InventoryItem[] = Array.isArray(raw.inventoryItems)
-    ? raw.inventoryItems.filter((row): row is InventoryItem => isRecord(row))
+    ? raw.inventoryItems.filter((row): row is InventoryItem => isRecord(row)).map((row) => ({
+        ...row,
+        netWeight: (row as any).netWeight || (row as any).weight || '',
+        grossWeight: (row as any).grossWeight || '',
+        temperature: (row as any).temperature || '',
+      })) as InventoryItem[]
     : createSeedInventory();
 
   const productOrders: ProductOrderSummary[] = Array.isArray(raw.productOrders)

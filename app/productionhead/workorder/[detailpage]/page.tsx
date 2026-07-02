@@ -22,6 +22,10 @@ type ModalStep = 1 | 2 | 3;
 type RawMaterialForm = {
   rollNo: string;
   thickness: string;
+  width: string;
+  netWeight: string;
+  grossWeight: string;
+  temperature: string;
   supplier: string;
   actualWeight: string;
   damagedWeight: string;
@@ -56,6 +60,10 @@ function hasPositiveNumber(value: string) {
 const defaultRawMaterialForm: RawMaterialForm = {
   rollNo: "",
   thickness: micronOptions[0],
+  width: "1.0",
+  netWeight: "",
+  grossWeight: "",
+  temperature: "25°C",
   supplier: supplierOptions[0],
   actualWeight: "",
   damagedWeight: "0",
@@ -69,11 +77,15 @@ function createRawMaterialRow(): RawMaterialForm {
 const rawMaterialConfig: TableConfig<any> = {
   columns: [
     { key: "rollNo", label: "Roll No", type: "text", sortable: true },
+    { key: "netWeight", label: "Net Weight", type: "text", sortable: true },
+    { key: "grossWeight", label: "Gross Weight", type: "text", sortable: true },
+    { key: "thickness", label: "Micron", type: "number", sortable: true },
+    { key: "width", label: "Width (m)", type: "text", sortable: true },
+    { key: "temperature", label: "Temperature", type: "text", sortable: true },
     { key: "actualWeight", label: "Actual Weight", type: "text", sortable: true },
     { key: "damagedWeight", label: "Damaged Weight", type: "text", sortable: true },
     { key: "usedWeight", label: "Used Weight", type: "text", sortable: true },
     { key: "wastageWeight", label: "Wastage/Left Weight", type: "text", sortable: true },
-    { key: "thickness", label: "Thickness", type: "number", sortable: true },
     { key: "supplier", label: "Company/Supplier", type: "text", sortable: true },
     { key: "stage", label: "Stage", type: "enum", sortable: false, filter: "dropdown", options: ["Raw Material", "METALLISATION"] },
     { key: "status", label: "Status", type: "enum", sortable: false, filter: "dropdown", options: ["Yet to Start", "In-progress", "Completed"] },
@@ -222,8 +234,12 @@ export default function SupervisorWorkOrderDetailPage({ params }: DetailPageProp
 
       addFlowRow(orderId, "Raw Material", {
         rollNo: item.rollNo || generateId("RM"),
-        weight: `${used || "0"}kgs`, // Fallback for standard weight property
+        weight: `${used || "0"}kgs`,
         thickness: item.thickness,
+        width: item.width || "1.0",
+        netWeight: item.netWeight || "",
+        grossWeight: item.grossWeight || "",
+        temperature: item.temperature || "25°C",
         supplier: item.supplier || "Unknown",
         stage: "METALLISATION",
         status: "Yet to Start",
@@ -281,22 +297,6 @@ export default function SupervisorWorkOrderDetailPage({ params }: DetailPageProp
                 <input value={row.rollNo} onChange={(e) => updateRawMaterialRow(idx, { rollNo: e.target.value })} onBlur={(e) => !e.target.value.trim() && updateRawMaterialRow(idx, { rollNo: generateId("RM") })} placeholder="Enter roll no" className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]" />
               </div>
               <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-medium text-[#171717]">Actual Weight (Kgs)</label>
-                <input type="number" min="0" step="0.1" value={row.actualWeight} onChange={(e) => updateRawMaterialRow(idx, { actualWeight: e.target.value })} placeholder="Enter actual weight" className="h-[42px] w-full rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]" />
-              </div>
-              <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-medium text-[#171717]">Damaged Weight (Kgs)</label>
-                <input type="number" min="0" step="0.1" value={row.damagedWeight} onChange={(e) => updateRawMaterialRow(idx, { damagedWeight: e.target.value })} placeholder="Enter damaged weight" className="h-[42px] w-full rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]" />
-              </div>
-              <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-medium text-[#171717]">Used Weight (Kgs)</label>
-                <input type="number" min="0" step="0.1" value={row.usedWeight} onChange={(e) => updateRawMaterialRow(idx, { usedWeight: e.target.value })} placeholder="Enter used weight" className="h-[42px] w-full rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]" />
-              </div>
-              <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-medium text-[#171717]">Wastage/Left Weight (Kgs)</label>
-                <input type="text" readOnly value={((parseFloat(row.actualWeight) || 0) - (parseFloat(row.damagedWeight) || 0) - (parseFloat(row.usedWeight) || 0)).toFixed(1)} className="h-[42px] w-full rounded-[8px] border border-[#DDE1E8] bg-gray-50 px-3 text-[14px] text-gray-500" />
-              </div>
-              <div className="flex flex-col gap-2">
                 <label className="text-[13px] font-medium text-[#171717]">Micron / Thickness</label>
                 <select value={row.thickness} onChange={(e) => updateRawMaterialRow(idx, { thickness: e.target.value })} className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]">
                   {micronOptions.map((option) => (
@@ -305,6 +305,53 @@ export default function SupervisorWorkOrderDetailPage({ params }: DetailPageProp
                 </select>
               </div>
               <div className="flex flex-col gap-2">
+                <label className="text-[13px] font-medium text-[#171717]">Width (m)</label>
+                <input type="number" step="0.1" value={row.width} onChange={(e) => updateRawMaterialRow(idx, { width: e.target.value })} placeholder="Enter width" className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]" />
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="text-[13px] font-medium text-[#171717]">Net Weight (Kgs)</label>
+                <div className="relative">
+                  <input type="number" min="0" step="0.1" value={row.netWeight} onChange={(e) => updateRawMaterialRow(idx, { netWeight: e.target.value })} placeholder="Enter net weight" className="h-[42px] w-full rounded-[8px] border border-[#DDE1E8] pl-3 pr-12 text-[14px]" />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[12px] font-medium text-[#5C5C5C]">Kgs</span>
+                </div>
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="text-[13px] font-medium text-[#171717]">Gross Weight (Kgs)</label>
+                <div className="relative">
+                  <input type="number" min="0" step="0.1" value={row.grossWeight} onChange={(e) => updateRawMaterialRow(idx, { grossWeight: e.target.value })} placeholder="Enter gross weight" className="h-[42px] w-full rounded-[8px] border border-[#DDE1E8] pl-3 pr-12 text-[14px]" />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[12px] font-medium text-[#5C5C5C]">Kgs</span>
+                </div>
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="text-[13px] font-medium text-[#171717]">Temperature</label>
+                <input type="text" value={row.temperature} onChange={(e) => updateRawMaterialRow(idx, { temperature: e.target.value })} placeholder="e.g. 25°C" className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]" />
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="text-[13px] font-medium text-[#171717]">Actual Weight (Kgs)</label>
+                <div className="relative">
+                  <input type="number" min="0" step="0.1" value={row.actualWeight} onChange={(e) => updateRawMaterialRow(idx, { actualWeight: e.target.value })} placeholder="Enter actual weight" className="h-[42px] w-full rounded-[8px] border border-[#DDE1E8] pl-3 pr-12 text-[14px]" />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[12px] font-medium text-[#5C5C5C]">Kgs</span>
+                </div>
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="text-[13px] font-medium text-[#171717]">Damaged Weight (Kgs)</label>
+                <div className="relative">
+                  <input type="number" min="0" step="0.1" value={row.damagedWeight} onChange={(e) => updateRawMaterialRow(idx, { damagedWeight: e.target.value })} placeholder="Enter damaged weight" className="h-[42px] w-full rounded-[8px] border border-[#DDE1E8] pl-3 pr-12 text-[14px]" />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[12px] font-medium text-[#5C5C5C]">Kgs</span>
+                </div>
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="text-[13px] font-medium text-[#171717]">Used Weight (Kgs)</label>
+                <div className="relative">
+                  <input type="number" min="0" step="0.1" value={row.usedWeight} onChange={(e) => updateRawMaterialRow(idx, { usedWeight: e.target.value })} placeholder="Enter used weight" className="h-[42px] w-full rounded-[8px] border border-[#DDE1E8] pl-3 pr-12 text-[14px]" />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[12px] font-medium text-[#5C5C5C]">Kgs</span>
+                </div>
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="text-[13px] font-medium text-[#171717]">Wastage/Left Weight (Kgs)</label>
+                <input type="text" readOnly value={((parseFloat(row.actualWeight) || 0) - (parseFloat(row.damagedWeight) || 0) - (parseFloat(row.usedWeight) || 0)).toFixed(1)} className="h-[42px] w-full rounded-[8px] border border-[#DDE1E8] bg-gray-50 px-3 text-[14px] text-gray-500" />
+              </div>
+              <div className="flex flex-col gap-2 md:col-span-2">
                 <label className="text-[13px] font-medium text-[#171717]">Supplier</label>
                 <select value={row.supplier} onChange={(e) => updateRawMaterialRow(idx, { supplier: e.target.value })} className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]">
                   {supplierOptions.map((option) => (
@@ -331,6 +378,10 @@ export default function SupervisorWorkOrderDetailPage({ params }: DetailPageProp
           <p>Roll No: {item.rollNo || "Auto"}</p>
           <p>Supplier: {item.supplier || "Unknown"}</p>
           <p>Micron: {item.thickness}</p>
+          <p>Width: {item.width}</p>
+          <p>Net Weight: {item.netWeight || "0"} kgs</p>
+          <p>Gross Weight: {item.grossWeight || "0"} kgs</p>
+          <p>Temperature: {item.temperature || "25°C"}</p>
           <p>Actual Weight: {actual.toFixed(1)} kgs</p>
           <p>Damaged Weight: {damaged.toFixed(1)} kgs</p>
           <p>Used Weight: {used.toFixed(1)} kgs</p>
@@ -561,8 +612,11 @@ export default function SupervisorWorkOrderDetailPage({ params }: DetailPageProp
   const exportData = currentData.map((row: any) => ({
     ...(activeTab === "Raw Material" ? {
       "Roll No": row.rollNo ?? "",
-      "Weight": row.weight ?? "",
-      "Thickness": row.thickness ?? "",
+      "Net Weight": row.netWeight ?? row.weight ?? "",
+      "Gross Weight": row.grossWeight ?? "",
+      "Micron": row.thickness ?? "",
+      "Width (m)": row.width ?? "",
+      "Temperature": row.temperature ?? "",
       "Supplier": row.supplier ?? "",
       "Stage": row.stage ?? "",
       "Status": row.status ?? "",
@@ -621,7 +675,7 @@ export default function SupervisorWorkOrderDetailPage({ params }: DetailPageProp
                         const rowId = isRM ? (row as any).rollNo : isMC ? (row as any).coilNo : (row as any).productNo;
                         const qrType = isRM ? "RM" : isMC ? "MC" : "PM";
                         const qrDetails: Record<string, string> = isRM
-                          ? { "Roll No": (row as any).rollNo ?? "", "Weight": (row as any).weight ?? "", "Thickness": (row as any).thickness ?? "", "Supplier": (row as any).supplier ?? "", "Status": (row as any).status ?? "" }
+                          ? { "Roll No": (row as any).rollNo ?? "", "Net Weight": (row as any).netWeight ?? (row as any).weight ?? "", "Gross Weight": (row as any).grossWeight ?? "-", "Micron": (row as any).thickness ?? "", "Width (m)": (row as any).width ?? "", "Temperature": (row as any).temperature ?? "-", "Supplier": (row as any).supplier ?? "", "Status": (row as any).status ?? "" }
                           : isMC
                           ? { "Coil No": (row as any).coilNo ?? "", "RM ID": (row as any).rmId ?? "", "Machine No": (row as any).machineNo ?? "", "Weight": (row as any).weight ?? "", "Status": (row as any).status ?? "" }
                           : { "Product No": (row as any).productNo ?? "", "RM ID": (row as any).rmId ?? "", "Weight": (row as any).weight ?? "", "Grade": (row as any).grade ?? "", "Status": (row as any).status ?? "" };
@@ -643,8 +697,9 @@ export default function SupervisorWorkOrderDetailPage({ params }: DetailPageProp
                       const val = row[col.key];
                       let displayVal = val;
                       if (activeTab === "Raw Material" && !val) {
-                        if (col.key === "actualWeight") displayVal = row.weight || "-";
-                        else if (col.key === "usedWeight") displayVal = row.weight || "-";
+                        const fallbackWeight = (row as any).netWeight ?? (row as any).weight ?? "-";
+                        if (col.key === "actualWeight") displayVal = fallbackWeight;
+                        else if (col.key === "usedWeight") displayVal = fallbackWeight;
                         else if (col.key === "damagedWeight") displayVal = "0.0kgs";
                         else if (col.key === "wastageWeight") displayVal = "0.0kgs";
                       }

@@ -48,11 +48,15 @@ const gradeOptions = ["AA", "A", "B", "C", "D"];
 const rawMaterialConfig: TableConfig<any> = {
   columns: [
     { key: "rollNo", label: "Roll No", type: "text", sortable: true },
+    { key: "netWeight", label: "Net Weight", type: "text", sortable: true },
+    { key: "grossWeight", label: "Gross Weight", type: "text", sortable: true },
+    { key: "thickness", label: "Micron", type: "text", sortable: true },
+    { key: "width", label: "Width (m)", type: "text", sortable: true },
+    { key: "temperature", label: "Temperature", type: "text", sortable: true },
     { key: "actualWeight", label: "Actual Weight", type: "text", sortable: true },
     { key: "damagedWeight", label: "Damaged Weight", type: "text", sortable: true },
     { key: "usedWeight", label: "Used Weight", type: "text", sortable: true },
     { key: "wastageWeight", label: "Wastage/Left Weight", type: "text", sortable: true },
-    { key: "thickness", label: "Thickness", type: "text", sortable: true },
     { key: "supplier", label: "Company/Supplier", type: "text", sortable: true },
     { key: "stage", label: "Stage", type: "enum", sortable: false, filter: "dropdown", options: ["Raw Material", "METALLISATION"] },
     { key: "status", label: "Status", type: "enum", sortable: false, filter: "dropdown", options: ["Yet to Start", "In-progress", "Completed"] },
@@ -802,8 +806,11 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
               const exportData = currentData.map((row: any) => ({
                 ...(activeTab === "Raw Material" ? {
                   "Roll No": row.rollNo ?? "",
-                  "Weight": row.weight ?? "",
-                  "Thickness": row.thickness ?? "",
+                  "Net Weight": row.netWeight ?? row.weight ?? "",
+                  "Gross Weight": row.grossWeight ?? "",
+                  "Micron": row.thickness ?? "",
+                  "Width (m)": row.width ?? "",
+                  "Temperature": row.temperature ?? "",
                   "Supplier": row.supplier ?? "",
                   "Stage": row.stage ?? "",
                   "Status": row.status ?? "",
@@ -882,7 +889,7 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
                         const rowId = isRM ? (row as any).rollNo : isMC ? (row as any).coilNo : (row as any).productNo;
                         const qrType = isRM ? "RM" : isMC ? "MC" : "PM";
                         const qrDetails: Record<string, string> = isRM
-                          ? { "Roll No": (row as any).rollNo ?? "", "Weight": (row as any).weight ?? "", "Thickness": (row as any).thickness ?? "", "Supplier": (row as any).supplier ?? "", "Status": (row as any).status ?? "" }
+                          ? { "Roll No": (row as any).rollNo ?? "", "Net Weight": (row as any).netWeight ?? (row as any).weight ?? "", "Gross Weight": (row as any).grossWeight ?? "-", "Micron": (row as any).thickness ?? "", "Width (m)": (row as any).width ?? "", "Temperature": (row as any).temperature ?? "-", "Supplier": (row as any).supplier ?? "", "Status": (row as any).status ?? "" }
                           : isMC
                           ? { "Coil No": (row as any).coilNo ?? "", "RM ID": (row as any).rmId ?? "", "Machine No": (row as any).machineNo ?? "", "Weight": (row as any).weight ?? "", "Status": (row as any).status ?? "" }
                           : { "Product No": (row as any).productNo ?? "", "RM ID": (row as any).rmId ?? "", "Weight": (row as any).weight ?? "", "Grade": (row as any).grade ?? "", "Status": (row as any).status ?? "" };
@@ -904,7 +911,7 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
                         const rowId = isRM ? (row as any).rollNo : isMC ? (row as any).coilNo : (row as any).productNo;
                         const qrType = isRM ? "RM" : isMC ? "MC" : "PM";
                         const qrDetails: Record<string, string> = isRM
-                          ? { "Roll No": (row as any).rollNo ?? "", "Weight": (row as any).weight ?? "", "Thickness": (row as any).thickness ?? "", "Supplier": (row as any).supplier ?? "", "Status": (row as any).status ?? "" }
+                          ? { "Roll No": (row as any).rollNo ?? "", "Net Weight": (row as any).netWeight ?? (row as any).weight ?? "", "Gross Weight": (row as any).grossWeight ?? "-", "Micron": (row as any).thickness ?? "", "Width (m)": (row as any).width ?? "", "Temperature": (row as any).temperature ?? "-", "Supplier": (row as any).supplier ?? "", "Status": (row as any).status ?? "" }
                           : isMC
                           ? { "Coil No": (row as any).coilNo ?? "", "RM ID": (row as any).rmId ?? "", "Machine No": (row as any).machineNo ?? "", "Weight": (row as any).weight ?? "", "Status": (row as any).status ?? "" }
                           : { "Product No": (row as any).productNo ?? "", "RM ID": (row as any).rmId ?? "", "Weight": (row as any).weight ?? "", "Grade": (row as any).grade ?? "", "Status": (row as any).status ?? "" };
@@ -926,8 +933,9 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
                       const val = row[col.key];
                       let displayVal = val;
                       if (activeTab === "Raw Material" && !val) {
-                        if (col.key === "actualWeight") displayVal = row.weight || "-";
-                        else if (col.key === "usedWeight") displayVal = row.weight || "-";
+                        const fallbackWeight = (row as any).netWeight ?? (row as any).weight ?? "-";
+                        if (col.key === "actualWeight") displayVal = fallbackWeight;
+                        else if (col.key === "usedWeight") displayVal = fallbackWeight;
                         else if (col.key === "damagedWeight") displayVal = "0.0kgs";
                         else if (col.key === "wastageWeight") displayVal = "0.0kgs";
                       }
