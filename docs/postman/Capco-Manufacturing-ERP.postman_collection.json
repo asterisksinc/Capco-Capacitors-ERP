@@ -1,0 +1,379 @@
+{
+  "info": {
+    "name": "Capco Manufacturing ERP",
+    "description": "Supabase Auth and PostgREST collection for Capco Manufacturing ERP backend APIs.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "supabaseUrl", "value": "https://YOUR-PROJECT-REF.supabase.co" },
+    { "key": "anonKey", "value": "your_supabase_anon_key" },
+    { "key": "accessToken", "value": "" },
+    { "key": "workOrderId", "value": "50000000-0000-0000-0000-000000000001" },
+    { "key": "productOrderId", "value": "90000000-0000-0000-0000-000000000001" },
+    { "key": "inventoryId", "value": "40000000-0000-0000-0000-000000000003" },
+    { "key": "stockId", "value": "80000000-0000-0000-0000-000000000001" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+  },
+  "item": [
+    {
+      "name": "Auth - Request OTP",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "apikey", "value": "{{anonKey}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{supabaseUrl}}/auth/v1/otp",
+        "body": { "mode": "raw", "raw": "{\n  \"phone\": \"+919900000001\",\n  \"create_user\": false\n}" },
+        "description": "Success response: { \"message_id\": \"...\" }\nError response: { \"message\": \"Invalid phone\" }"
+      }
+    },
+    {
+      "name": "Auth - Verify OTP",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "apikey", "value": "{{anonKey}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{supabaseUrl}}/auth/v1/verify",
+        "body": { "mode": "raw", "raw": "{\n  \"phone\": \"+919900000001\",\n  \"token\": \"123456\",\n  \"type\": \"sms\"\n}" },
+        "description": "Success response: { \"access_token\": \"...\", \"user\": {} }\nError response: { \"message\": \"Token has expired or is invalid\" }"
+      }
+    },
+    {
+      "name": "Auth - Password Login",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "apikey", "value": "{{anonKey}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{supabaseUrl}}/auth/v1/token?grant_type=password",
+        "body": { "mode": "raw", "raw": "{\n  \"email\": \"superadmin@capco.local\",\n  \"password\": \"Capco@123\"\n}" },
+        "description": "Success response: { \"access_token\": \"...\" }\nError response: { \"error_description\": \"Invalid login credentials\" }"
+      }
+    },
+    {
+      "name": "Dashboard - Work Order Counts",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "apikey", "value": "{{anonKey}}" },
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+        ],
+        "url": "{{supabaseUrl}}/rest/v1/work_orders?select=status",
+        "description": "Success response: [{ \"status\": \"Completed\" }]\nError response: { \"message\": \"JWT expired\" }"
+      }
+    },
+    {
+      "name": "Inventory - List",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "apikey", "value": "{{anonKey}}" },
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+        ],
+        "url": "{{supabaseUrl}}/rest/v1/inventory?select=*,qr_references(qr_payload,qr_url)&order=created_at.desc",
+        "description": "Success response: [{ \"raw_material_code\": \"RM-8301\", \"status\": \"Being Used\" }]\nError response: { \"message\": \"permission denied\" }"
+      }
+    },
+    {
+      "name": "Inventory - Create",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "apikey", "value": "{{anonKey}}" },
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Prefer", "value": "return=representation" }
+        ],
+        "url": "{{supabaseUrl}}/rest/v1/inventory",
+        "body": { "mode": "raw", "raw": "{\n  \"raw_material_code\": \"RM-9001\",\n  \"raw_material_name\": \"BOPP Capacitor Film\",\n  \"roll_no\": \"RL-2607-001\",\n  \"micron\": 4.5,\n  \"width_m\": 1.0,\n  \"net_weight_kg\": 58.5,\n  \"gross_weight_kg\": 60.0,\n  \"current_weight_kg\": 58.5,\n  \"supplier\": \"VedaCap Industries\",\n  \"temperature_c\": 25,\n  \"status\": \"In Inventory\",\n  \"stage\": \"Inventory\"\n}" },
+        "description": "Success response: [{ \"id\": \"...\", \"raw_material_code\": \"RM-9001\" }]\nError response: { \"message\": \"duplicate key value violates unique constraint\" }"
+      }
+    },
+    {
+      "name": "Work Orders - List",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "apikey", "value": "{{anonKey}}" },
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+        ],
+        "url": "{{supabaseUrl}}/rest/v1/work_orders?select=*,qr_references(qr_payload,qr_url)&order=created_at.desc",
+        "description": "Success response: [{ \"work_order_no\": \"WO-2026-001\" }]\nError response: { \"message\": \"permission denied\" }"
+      }
+    },
+    {
+      "name": "Work Orders - Create",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "apikey", "value": "{{anonKey}}" },
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Prefer", "value": "return=representation" }
+        ],
+        "url": "{{supabaseUrl}}/rest/v1/work_orders",
+        "body": { "mode": "raw", "raw": "{\n  \"work_order_no\": \"WO-2026-010\",\n  \"micron\": 4.5,\n  \"width_m\": 1.0,\n  \"quantity\": 5000,\n  \"stage\": \"Raw Material\",\n  \"status\": \"Yet to Start\"\n}" },
+        "description": "Success response: [{ \"work_order_no\": \"WO-2026-010\" }]\nError response: { \"message\": \"new row violates row-level security policy\" }"
+      }
+    },
+    {
+      "name": "Work Orders - Details",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "apikey", "value": "{{anonKey}}" },
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+        ],
+        "url": "{{supabaseUrl}}/rest/v1/work_orders?id=eq.{{workOrderId}}&select=*,work_order_materials(*,inventory(*)),metallisation(*),slitting(*)",
+        "description": "Success response: [{ \"id\": \"...\", \"metallisation\": [] }]\nError response: { \"message\": \"invalid input syntax for type uuid\" }"
+      }
+    },
+    {
+      "name": "Work Orders - Assign Raw Material",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "apikey", "value": "{{anonKey}}" },
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Prefer", "value": "return=representation" }
+        ],
+        "url": "{{supabaseUrl}}/rest/v1/work_order_materials",
+        "body": { "mode": "raw", "raw": "{\n  \"work_order_id\": \"{{workOrderId}}\",\n  \"inventory_id\": \"{{inventoryId}}\",\n  \"assigned_to\": \"20000000-0000-0000-0000-000000000004\",\n  \"assigned_by\": \"20000000-0000-0000-0000-000000000003\",\n  \"quantity_kg\": 20,\n  \"status\": \"Issued\"\n}" },
+        "description": "Success response: [{ \"status\": \"Issued\" }]\nError response: { \"message\": \"duplicate key value violates unique constraint\" }"
+      }
+    },
+    {
+      "name": "Product Orders - List",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "apikey", "value": "{{anonKey}}" },
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+        ],
+        "url": "{{supabaseUrl}}/rest/v1/product_orders?select=*,qr_references(qr_payload,qr_url)&order=created_at.desc",
+        "description": "Success response: [{ \"product_order_no\": \"PO-CC-0001\" }]\nError response: { \"message\": \"permission denied\" }"
+      }
+    },
+    {
+      "name": "Product Orders - Create",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "apikey", "value": "{{anonKey}}" },
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Prefer", "value": "return=representation" }
+        ],
+        "url": "{{supabaseUrl}}/rest/v1/product_orders",
+        "body": { "mode": "raw", "raw": "{\n  \"product_order_no\": \"PO-CC-0010\",\n  \"product_code\": \"C-630V-47uF\",\n  \"product_name\": \"Snubber Capacitor\",\n  \"capacitor_type\": \"Snubber\",\n  \"grade\": \"AA\",\n  \"specifications\": { \"capacitance\": \"47uF\", \"voltage_rating\": \"630V DC\" },\n  \"quantity\": 345,\n  \"batch_size\": 345,\n  \"customer\": \"Omega Drives\",\n  \"instructions\": \"Priority batch\"\n}" },
+        "description": "Success response: [{ \"product_order_no\": \"PO-CC-0010\" }]\nError response: { \"message\": \"new row violates row-level security policy\" }"
+      }
+    },
+    {
+      "name": "Product Orders - Details",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "apikey", "value": "{{anonKey}}" },
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+        ],
+        "url": "{{supabaseUrl}}/rest/v1/product_orders?id=eq.{{productOrderId}}&select=*,product_order_materials(*,stock(*)),winding(*),spray(*),finished_goods(*)",
+        "description": "Success response: [{ \"id\": \"...\", \"product_order_materials\": [] }]\nError response: { \"message\": \"invalid input syntax for type uuid\" }"
+      }
+    },
+    {
+      "name": "Product Orders - Assign Stock",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "apikey", "value": "{{anonKey}}" },
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Prefer", "value": "return=representation" }
+        ],
+        "url": "{{supabaseUrl}}/rest/v1/product_order_materials",
+        "body": { "mode": "raw", "raw": "{\n  \"product_order_id\": \"{{productOrderId}}\",\n  \"stock_id\": \"{{stockId}}\",\n  \"assigned_by\": \"20000000-0000-0000-0000-000000000006\",\n  \"assigned_to\": \"20000000-0000-0000-0000-000000000007\",\n  \"weight_kg\": 28.5,\n  \"width_m\": 1.0,\n  \"micron\": 4.5,\n  \"grade\": \"AA\",\n  \"status\": \"Issued\"\n}" },
+        "description": "Success response: [{ \"status\": \"Issued\" }]\nError response: { \"message\": \"duplicate key value violates unique constraint\" }"
+      }
+    },
+    {
+      "name": "Stages - Add Metallisation",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "apikey", "value": "{{anonKey}}" },
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Prefer", "value": "return=representation" }
+        ],
+        "url": "{{supabaseUrl}}/rest/v1/metallisation",
+        "body": { "mode": "raw", "raw": "{\n  \"metallisation_no\": \"MC-2001\",\n  \"work_order_id\": \"{{workOrderId}}\",\n  \"raw_material_id\": \"{{inventoryId}}\",\n  \"operator_id\": \"20000000-0000-0000-0000-000000000005\",\n  \"machine_no\": \"MET-02\",\n  \"weight_kg\": 55,\n  \"weight_after_metallisation_kg\": 54.3,\n  \"optical_density\": 2.4,\n  \"resistance_ohms\": 1.5,\n  \"factory_wastage_kg\": 0.7,\n  \"qc_details\": { \"qc\": \"pass\" }\n}" },
+        "description": "Success response: [{ \"metallisation_no\": \"MC-2001\" }]\nError response: { \"message\": \"duplicate key value violates unique constraint\" }"
+      }
+    },
+    {
+      "name": "Stages - Add Slitting",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "apikey", "value": "{{anonKey}}" },
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Prefer", "value": "return=representation" }
+        ],
+        "url": "{{supabaseUrl}}/rest/v1/slitting",
+        "body": { "mode": "raw", "raw": "{\n  \"slitting_no\": \"SL-2001\",\n  \"work_order_id\": \"{{workOrderId}}\",\n  \"operator_id\": \"20000000-0000-0000-0000-000000000006\",\n  \"product_no\": \"PM-2001\",\n  \"weight_kg\": 28.5,\n  \"thickness_micron\": 4.5,\n  \"number_of_bags\": 3,\n  \"grade\": \"AA\",\n  \"grade_each_bag\": [\"AA\", \"AA\", \"A\"],\n  \"weight_each_bag\": [9.5, 9.4, 9.6]\n}" },
+        "description": "Success response: [{ \"slitting_no\": \"SL-2001\" }]\nError response: { \"message\": \"new row violates row-level security policy\" }"
+      }
+    },
+    {
+      "name": "Stages - Add Winding",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "apikey", "value": "{{anonKey}}" },
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Prefer", "value": "return=representation" }
+        ],
+        "url": "{{supabaseUrl}}/rest/v1/winding",
+        "body": { "mode": "raw", "raw": "{\n  \"winding_no\": \"WD-2001\",\n  \"product_order_id\": \"{{productOrderId}}\",\n  \"operator_id\": \"20000000-0000-0000-0000-000000000008\",\n  \"film_width\": \"7mm\",\n  \"winding_tension\": \"0.5 N\",\n  \"film_turns\": 120,\n  \"turns_count\": 360,\n  \"quantity_wound\": 1200\n}" },
+        "description": "Success response: [{ \"winding_no\": \"WD-2001\" }]\nError response: { \"message\": \"duplicate key value violates unique constraint\" }"
+      }
+    },
+    {
+      "name": "Stages - Add Spray",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "apikey", "value": "{{anonKey}}" },
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Prefer", "value": "return=representation" }
+        ],
+        "url": "{{supabaseUrl}}/rest/v1/spray",
+        "body": { "mode": "raw", "raw": "{\n  \"spray_no\": \"SP-2001\",\n  \"product_order_id\": \"{{productOrderId}}\",\n  \"operator_id\": \"20000000-0000-0000-0000-000000000009\",\n  \"spray_type\": \"Zinc-spray\",\n  \"feed_rate\": \"0.5 kg/hr\",\n  \"pressure_setting\": \"120 PSI\",\n  \"mfd\": \"98.4\",\n  \"no_of_coats\": 2,\n  \"thickness_maintained\": \"Within tolerance\",\n  \"quantity\": 1190\n}" },
+        "description": "Success response: [{ \"spray_no\": \"SP-2001\" }]\nError response: { \"message\": \"new row violates row-level security policy\" }"
+      }
+    },
+    {
+      "name": "Stock - List",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "apikey", "value": "{{anonKey}}" },
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+        ],
+        "url": "{{supabaseUrl}}/rest/v1/stock?select=*,slitting(slitting_no,product_no),work_orders(work_order_no)&order=created_at.desc",
+        "description": "Success response: [{ \"stock_no\": \"PM-1001\" }]\nError response: { \"message\": \"permission denied\" }"
+      }
+    },
+    {
+      "name": "Material Requests - List",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "apikey", "value": "{{anonKey}}" },
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+        ],
+        "url": "{{supabaseUrl}}/rest/v1/material_requests?select=*,stock(stock_no,weight_kg,grade)&order=created_at.desc",
+        "description": "Success response: [{ \"request_no\": \"MR-1001\" }]\nError response: { \"message\": \"permission denied\" }"
+      }
+    },
+    {
+      "name": "Material Requests - Create",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "apikey", "value": "{{anonKey}}" },
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Prefer", "value": "return=representation" }
+        ],
+        "url": "{{supabaseUrl}}/rest/v1/material_requests",
+        "body": { "mode": "raw", "raw": "{\n  \"request_no\": \"MR-2001\",\n  \"material_type\": \"stock\",\n  \"stock_id\": \"{{stockId}}\",\n  \"requested_quantity\": 20,\n  \"grade\": \"AA\",\n  \"requested_by\": \"20000000-0000-0000-0000-000000000007\",\n  \"status\": \"Pending\"\n}" },
+        "description": "Success response: [{ \"request_no\": \"MR-2001\" }]\nError response: { \"message\": \"duplicate key value violates unique constraint\" }"
+      }
+    },
+    {
+      "name": "Material Returns - List",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "apikey", "value": "{{anonKey}}" },
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+        ],
+        "url": "{{supabaseUrl}}/rest/v1/material_returns?select=*,stock(stock_no,weight_kg,grade)&order=created_at.desc",
+        "description": "Success response: [{ \"return_no\": \"RET-1001\" }]\nError response: { \"message\": \"permission denied\" }"
+      }
+    },
+    {
+      "name": "Pipeline - List",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "apikey", "value": "{{anonKey}}" },
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+        ],
+        "url": "{{supabaseUrl}}/rest/v1/pipeline_tracking?select=*&order=created_at.desc",
+        "description": "Success response: [{ \"entity_type\": \"work_order\", \"to_stage\": \"Metallisation\" }]\nError response: { \"message\": \"permission denied\" }"
+      }
+    },
+    {
+      "name": "Users - List",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "apikey", "value": "{{anonKey}}" },
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+        ],
+        "url": "{{supabaseUrl}}/rest/v1/profiles?select=id,full_name,email,phone,status,last_login_at,roles(id,code,name)&order=created_at.desc",
+        "description": "Success response: [{ \"full_name\": \"Aarav Mehta\" }]\nError response: { \"message\": \"permission denied\" }"
+      }
+    },
+    {
+      "name": "Vendor Purchases - List",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "apikey", "value": "{{anonKey}}" },
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+        ],
+        "url": "{{supabaseUrl}}/rest/v1/vendor_purchases?select=*,vendor_purchase_items(*)&order=purchase_date.desc",
+        "description": "Success response: [{ \"purchase_no\": \"VP-1001\" }]\nError response: { \"message\": \"permission denied\" }"
+      }
+    },
+    {
+      "name": "Finished Goods - List",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "apikey", "value": "{{anonKey}}" },
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+        ],
+        "url": "{{supabaseUrl}}/rest/v1/finished_goods?select=*,product_orders(product_order_no)&order=updated_at.desc",
+        "description": "Success response: [{ \"finished_good_no\": \"FG-1001\" }]\nError response: { \"message\": \"permission denied\" }"
+      }
+    },
+    {
+      "name": "QR References - Lookup",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "apikey", "value": "{{anonKey}}" },
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+        ],
+        "url": "{{supabaseUrl}}/rest/v1/qr_references?select=*&qr_payload=eq.capco://stock/PM-1001",
+        "description": "Success response: [{ \"entity_type\": \"stock\", \"entity_code\": \"PM-1001\" }]\nError response: { \"message\": \"permission denied\" }"
+      }
+    }
+  ]
+}
