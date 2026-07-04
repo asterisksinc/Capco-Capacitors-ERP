@@ -28,7 +28,11 @@ export const workOrderService = {
     return workOrderService.list({ filters });
   },
   getById(id: string) {
-    return supabaseRest.getById("work_orders", id, "*,qr_references(qr_payload,qr_url),work_order_materials(*,inventory(*)),metallisation(*),slitting(*)");
+    return supabaseRest.getById(
+      "work_orders",
+      id,
+      "*,created_by_profile:profiles!work_orders_created_by_fkey(id,full_name,email,phone,worker_label,team_name),qr_references(qr_payload,qr_url),work_order_materials(*,inventory(*)),metallisation(*,created_by_profile:profiles!metallisation_created_by_fkey(id,full_name,email,phone,worker_label,team_name),operator:profiles!metallisation_operator_id_fkey(id,full_name,email,phone,worker_label,team_name)),slitting(*,created_by_profile:profiles!slitting_created_by_fkey(id,full_name,email,phone,worker_label,team_name),operator:profiles!slitting_operator_id_fkey(id,full_name,email,phone,worker_label,team_name))",
+    );
   },
   counts() {
     return supabaseRest.list<{ status: WorkflowStatus }>("work_orders", { select: "status" }).then((rows) => ({

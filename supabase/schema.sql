@@ -106,6 +106,9 @@ create table if not exists public.profiles (
   id uuid primary key default gen_random_uuid(),
   auth_user_id uuid unique references auth.users(id) on delete set null,
   role_id uuid not null references public.roles(id),
+  reports_to uuid references public.profiles(id) on delete set null,
+  team_name text,
+  worker_label text,
   full_name text not null,
   email text unique,
   phone text not null unique,
@@ -117,6 +120,11 @@ create table if not exists public.profiles (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.profiles
+  add column if not exists reports_to uuid references public.profiles(id) on delete set null,
+  add column if not exists team_name text,
+  add column if not exists worker_label text;
 
 create table if not exists public.qr_references (
   id uuid primary key default gen_random_uuid(),
@@ -493,6 +501,8 @@ begin
 end $$;
 
 create index if not exists idx_profiles_role_id on public.profiles(role_id);
+create index if not exists idx_profiles_reports_to on public.profiles(reports_to);
+create index if not exists idx_profiles_team_name on public.profiles(team_name);
 create index if not exists idx_profiles_phone on public.profiles(phone);
 create index if not exists idx_inventory_status_stage on public.inventory(status, stage);
 create index if not exists idx_inventory_assigned_wo on public.inventory(assigned_work_order_id);

@@ -2,6 +2,9 @@ import { supabaseRest, type ListParams, type RoleCode } from "./supabaseClient";
 
 export type UserPayload = {
   role_id: string;
+  reports_to?: string;
+  team_name?: string;
+  worker_label?: string;
   full_name: string;
   email?: string;
   phone: string;
@@ -40,6 +43,14 @@ export const userService = {
   },
   roles() {
     return supabaseRest.list<Role>("roles", { order: "name", ascending: true });
+  },
+  teamMembers(managerId: string) {
+    return supabaseRest.list("profiles", {
+      select: "id,full_name,email,phone,status,team_name,worker_label,reports_to,roles(id,code,name)",
+      filters: { reports_to: managerId },
+      order: "worker_label",
+      ascending: true,
+    });
   },
   create(payload: UserPayload) {
     return supabaseRest.create("profiles", payload);

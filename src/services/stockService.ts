@@ -15,7 +15,9 @@ export type StockPayload = {
 export const stockService = {
   list(params?: ListParams) {
     return supabaseRest.list("stock", {
-      select: params?.select ?? "*,slitting(slitting_no,product_no),work_orders(work_order_no),qr_references(qr_payload,qr_url)",
+      select:
+        params?.select ??
+        "*,created_by_profile:profiles!stock_created_by_fkey(id,full_name,email,phone,worker_label,team_name),slitting(slitting_no,product_no,created_by_profile:profiles!slitting_created_by_fkey(id,full_name,email,phone,worker_label,team_name),operator:profiles!slitting_operator_id_fkey(id,full_name,email,phone,worker_label,team_name)),work_orders(work_order_no),qr_references(qr_payload,qr_url)",
       order: params?.order ?? "created_at",
       ascending: params?.ascending,
       filters: params?.filters,
@@ -24,7 +26,11 @@ export const stockService = {
     });
   },
   getById(id: string) {
-    return supabaseRest.getById("stock", id, "*,slitting(*),work_orders(*),qr_references(qr_payload,qr_url)");
+    return supabaseRest.getById(
+      "stock",
+      id,
+      "*,created_by_profile:profiles!stock_created_by_fkey(id,full_name,email,phone,worker_label,team_name),slitting(*,created_by_profile:profiles!slitting_created_by_fkey(id,full_name,email,phone,worker_label,team_name),operator:profiles!slitting_operator_id_fkey(id,full_name,email,phone,worker_label,team_name)),work_orders(*),qr_references(qr_payload,qr_url)",
+    );
   },
   counts() {
     return supabaseRest.list<{ status: WorkflowStatus; stage: string }>("stock", { select: "status,stage" }).then((rows) => ({

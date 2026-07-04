@@ -16,19 +16,25 @@ insert into public.roles (id, code, name, description, permissions) values
 ('10000000-0000-0000-0000-000000000011','accountant','Accountant','Vendor purchases and payments','{"modules":["vendor_purchases","finished_goods"],"actions":["read","create","update","export"]}')
 on conflict (code) do update set name = excluded.name, permissions = excluded.permissions, updated_at = now();
 
-insert into public.profiles (id, role_id, full_name, email, phone, status, metadata) values
-('20000000-0000-0000-0000-000000000001','10000000-0000-0000-0000-000000000001','Aarav Mehta','superadmin@capco.local','+919900000001','active','{"password_seed":"Capco@123","login_note":"Create matching Supabase Auth user for password login or OTP testing."}'),
-('20000000-0000-0000-0000-000000000002','10000000-0000-0000-0000-000000000002','Priya Menon','production@capco.local','+919900000002','active','{"password_seed":"Capco@123"}'),
-('20000000-0000-0000-0000-000000000003','10000000-0000-0000-0000-000000000003','Sanjay Rao','store@capco.local','+919900000003','active','{"password_seed":"Capco@123"}'),
-('20000000-0000-0000-0000-000000000004','10000000-0000-0000-0000-000000000004','Kiran Shah','persona@capco.local','+919900000004','active','{"password_seed":"Capco@123"}'),
-('20000000-0000-0000-0000-000000000005','10000000-0000-0000-0000-000000000005','Ramesh Patel','operator1@capco.local','+919900000005','active','{"password_seed":"Capco@123"}'),
-('20000000-0000-0000-0000-000000000006','10000000-0000-0000-0000-000000000006','Nikhil Jain','operator2@capco.local','+919900000006','active','{"password_seed":"Capco@123"}'),
-('20000000-0000-0000-0000-000000000007','10000000-0000-0000-0000-000000000007','Rajesh Kumar','personb@capco.local','+919900000007','active','{"password_seed":"Capco@123"}'),
-('20000000-0000-0000-0000-000000000008','10000000-0000-0000-0000-000000000008','Deepak Iyer','operator3@capco.local','+919900000008','active','{"password_seed":"Capco@123"}'),
-('20000000-0000-0000-0000-000000000009','10000000-0000-0000-0000-000000000009','Farhan Ali','operator4@capco.local','+919900000009','active','{"password_seed":"Capco@123"}'),
-('20000000-0000-0000-0000-000000000010','10000000-0000-0000-0000-000000000010','Meera Joshi','sales@capco.local','+919900000010','active','{"password_seed":"Capco@123"}'),
-('20000000-0000-0000-0000-000000000011','10000000-0000-0000-0000-000000000011','Anita Desai','accountant@capco.local','+919900000011','active','{"password_seed":"Capco@123"}')
-on conflict (phone) do update set full_name = excluded.full_name, role_id = excluded.role_id, email = excluded.email, status = excluded.status, updated_at = now();
+insert into public.profiles (id, role_id, reports_to, team_name, worker_label, full_name, email, phone, status, metadata) values
+('20000000-0000-0000-0000-000000000001','10000000-0000-0000-0000-000000000001',null,'Administration','Super Admin','Aarav Mehta','superadmin@capco.local','+919900000001','active','{"password_seed":"Capco@123","login_note":"Create matching Supabase Auth user for password login or OTP testing."}'),
+('20000000-0000-0000-0000-000000000002','10000000-0000-0000-0000-000000000002',null,'Production','Production Head','Priya Menon','production@capco.local','+919900000002','active','{"password_seed":"Capco@123"}'),
+('20000000-0000-0000-0000-000000000003','10000000-0000-0000-0000-000000000003',null,'Store','Store Head','Sanjay Rao','store@capco.local','+919900000003','active','{"password_seed":"Capco@123"}'),
+('20000000-0000-0000-0000-000000000004','10000000-0000-0000-0000-000000000004','20000000-0000-0000-0000-000000000002','Person A Team','Person A','Kiran Shah','persona@capco.local','+919900000004','active','{"password_seed":"Capco@123"}'),
+('20000000-0000-0000-0000-000000000005','10000000-0000-0000-0000-000000000005','20000000-0000-0000-0000-000000000004','Person A Team','Metal 1','Ramesh Patel','metal1@capco.local','+919900000005','active','{"password_seed":"Capco@123"}'),
+('20000000-0000-0000-0000-000000000006','10000000-0000-0000-0000-000000000006','20000000-0000-0000-0000-000000000004','Person A Team','Slitting 1','Nikhil Jain','slitting1@capco.local','+919900000006','active','{"password_seed":"Capco@123"}'),
+('20000000-0000-0000-0000-000000000007','10000000-0000-0000-0000-000000000007','20000000-0000-0000-0000-000000000002','Person B Team','Person B','Rajesh Kumar','personb@capco.local','+919900000007','active','{"password_seed":"Capco@123"}'),
+('20000000-0000-0000-0000-000000000008','10000000-0000-0000-0000-000000000008','20000000-0000-0000-0000-000000000007','Person B Team','Winding 1','Deepak Iyer','winding1@capco.local','+919900000008','active','{"password_seed":"Capco@123"}'),
+('20000000-0000-0000-0000-000000000009','10000000-0000-0000-0000-000000000009','20000000-0000-0000-0000-000000000007','Person B Team','Spray 1','Farhan Ali','spray1@capco.local','+919900000009','active','{"password_seed":"Capco@123"}'),
+('20000000-0000-0000-0000-000000000010','10000000-0000-0000-0000-000000000010',null,'Sales','Sales','Meera Joshi','sales@capco.local','+919900000010','active','{"password_seed":"Capco@123"}'),
+('20000000-0000-0000-0000-000000000011','10000000-0000-0000-0000-000000000011',null,'Accounts','Accountant','Anita Desai','accountant@capco.local','+919900000011','active','{"password_seed":"Capco@123"}'),
+('20000000-0000-0000-0000-000000000012','10000000-0000-0000-0000-000000000005','20000000-0000-0000-0000-000000000004','Person A Team','Metal 2','Suresh Nair','metal2@capco.local','+919900000012','active','{"password_seed":"Capco@123"}'),
+('20000000-0000-0000-0000-000000000013','10000000-0000-0000-0000-000000000005','20000000-0000-0000-0000-000000000004','Person A Team','Metal 3','Imran Khan','metal3@capco.local','+919900000013','active','{"password_seed":"Capco@123"}'),
+('20000000-0000-0000-0000-000000000014','10000000-0000-0000-0000-000000000006','20000000-0000-0000-0000-000000000004','Person A Team','Slitting 2','Harish Babu','slitting2@capco.local','+919900000014','active','{"password_seed":"Capco@123"}'),
+('20000000-0000-0000-0000-000000000015','10000000-0000-0000-0000-000000000006','20000000-0000-0000-0000-000000000004','Person A Team','Slitting 3','Manoj Verma','slitting3@capco.local','+919900000015','active','{"password_seed":"Capco@123"}'),
+('20000000-0000-0000-0000-000000000016','10000000-0000-0000-0000-000000000008','20000000-0000-0000-0000-000000000007','Person B Team','Winding 2','Arun Das','winding2@capco.local','+919900000016','active','{"password_seed":"Capco@123"}'),
+('20000000-0000-0000-0000-000000000017','10000000-0000-0000-0000-000000000009','20000000-0000-0000-0000-000000000007','Person B Team','Spray 2','Vijay Reddy','spray2@capco.local','+919900000017','active','{"password_seed":"Capco@123"}')
+on conflict (phone) do update set full_name = excluded.full_name, role_id = excluded.role_id, reports_to = excluded.reports_to, team_name = excluded.team_name, worker_label = excluded.worker_label, email = excluded.email, status = excluded.status, updated_at = now();
 
 insert into public.qr_references (id, entity_type, entity_code, qr_payload, qr_url, created_by) values
 ('30000000-0000-0000-0000-000000000001','inventory','RM-8301','capco://inventory/RM-8301',null,'20000000-0000-0000-0000-000000000001'),
@@ -38,7 +44,11 @@ insert into public.qr_references (id, entity_type, entity_code, qr_payload, qr_u
 ('30000000-0000-0000-0000-000000000005','work_order','WO-2026-002','capco://work-orders/WO-2026-002',null,'20000000-0000-0000-0000-000000000002'),
 ('30000000-0000-0000-0000-000000000006','product_order','PO-CC-0001','capco://product-orders/PO-CC-0001',null,'20000000-0000-0000-0000-000000000002'),
 ('30000000-0000-0000-0000-000000000007','product_order','PO-CC-0002','capco://product-orders/PO-CC-0002',null,'20000000-0000-0000-0000-000000000002'),
-('30000000-0000-0000-0000-000000000008','stock','PM-1001','capco://stock/PM-1001',null,'20000000-0000-0000-0000-000000000006')
+('30000000-0000-0000-0000-000000000008','stock','PM-1001','capco://stock/PM-1001',null,'20000000-0000-0000-0000-000000000006'),
+('30000000-0000-0000-0000-000000000009','metallisation','MC-1001','capco://metallisation/MC-1001',null,'20000000-0000-0000-0000-000000000005'),
+('30000000-0000-0000-0000-000000000010','metallisation','MC-1002','capco://metallisation/MC-1002',null,'20000000-0000-0000-0000-000000000005'),
+('30000000-0000-0000-0000-000000000011','slitting','SL-1001','capco://slitting/SL-1001',null,'20000000-0000-0000-0000-000000000006'),
+('30000000-0000-0000-0000-000000000012','slitting','SL-1002','capco://slitting/SL-1002',null,'20000000-0000-0000-0000-000000000006')
 on conflict (qr_payload) do nothing;
 
 insert into public.inventory (id, raw_material_code, raw_material_name, roll_no, micron, width_m, net_weight_kg, gross_weight_kg, current_weight_kg, actual_weight_kg, damaged_weight_kg, used_weight_kg, wastage_weight_kg, wet_weight_kg, supplier, temperature_c, date_received, status, stage, assigned_work_order_id, qr_reference_id, created_by) values
@@ -63,13 +73,13 @@ insert into public.work_order_materials (id, work_order_id, inventory_id, assign
 on conflict (work_order_id, inventory_id) do nothing;
 
 insert into public.metallisation (id, metallisation_no, work_order_id, raw_material_id, operator_id, coil_no, machine_no, weight_kg, weight_after_metallisation_kg, optical_density, resistance_ohms, factory_wastage_kg, factory_wastage_image_url, photo_url, qc_details, next_stage, status, qr_reference_id, created_by, created_at) values
-('60000000-0000-0000-0000-000000000001','MC-1001','50000000-0000-0000-0000-000000000001','40000000-0000-0000-0000-000000000001','20000000-0000-0000-0000-000000000005','MC-1001','MET-01',58.5,57.9,2.40,1.50,0.6,'https://example.local/qc/mc-1001-wastage.jpg','https://example.local/qc/mc-1001.jpg','{"qc":"pass","remarks":"OD stable across roll"}','Slitting','Completed',null,'20000000-0000-0000-0000-000000000005','2026-06-26 13:00+05:30'),
-('60000000-0000-0000-0000-000000000002','MC-1002','50000000-0000-0000-0000-000000000001','40000000-0000-0000-0000-000000000002','20000000-0000-0000-0000-000000000005','MC-1002','MET-01',45.2,44.8,2.35,1.62,0.4,'https://example.local/qc/mc-1002-wastage.jpg','https://example.local/qc/mc-1002.jpg','{"qc":"pass","remarks":"Minor edge trimming"}','Slitting','Completed',null,'20000000-0000-0000-0000-000000000005','2026-06-26 17:00+05:30')
+('60000000-0000-0000-0000-000000000001','MC-1001','50000000-0000-0000-0000-000000000001','40000000-0000-0000-0000-000000000001','20000000-0000-0000-0000-000000000005','MC-1001','MET-01',58.5,57.9,2.40,1.50,0.6,'https://example.local/qc/mc-1001-wastage.jpg','https://example.local/qc/mc-1001.jpg','{"qc":"pass","remarks":"OD stable across roll"}','Slitting','Completed','30000000-0000-0000-0000-000000000009','20000000-0000-0000-0000-000000000005','2026-06-26 13:00+05:30'),
+('60000000-0000-0000-0000-000000000002','MC-1002','50000000-0000-0000-0000-000000000001','40000000-0000-0000-0000-000000000002','20000000-0000-0000-0000-000000000012','MC-1002','MET-01',45.2,44.8,2.35,1.62,0.4,'https://example.local/qc/mc-1002-wastage.jpg','https://example.local/qc/mc-1002.jpg','{"qc":"pass","remarks":"Minor edge trimming"}','Slitting','Completed','30000000-0000-0000-0000-000000000010','20000000-0000-0000-0000-000000000012','2026-06-26 17:00+05:30')
 on conflict (metallisation_no) do update set status = excluded.status, updated_at = now();
 
 insert into public.slitting (id, slitting_no, work_order_id, metallisation_id, raw_material_id, operator_id, product_no, weight_kg, thickness_micron, width_m, number_of_bags, grade, grade_each_bag, weight_each_bag, remarks, status, qr_reference_id, created_by, created_at) values
-('70000000-0000-0000-0000-000000000001','SL-1001','50000000-0000-0000-0000-000000000001','60000000-0000-0000-0000-000000000001','40000000-0000-0000-0000-000000000001','20000000-0000-0000-0000-000000000006','PM-1001',28.5,4.5,1.0,3,'AA','["AA","AA","A"]','[9.5,9.4,9.6]','Ready for premium winding','Completed','30000000-0000-0000-0000-000000000008','20000000-0000-0000-0000-000000000006','2026-06-27 10:30+05:30'),
-('70000000-0000-0000-0000-000000000002','SL-1002','50000000-0000-0000-0000-000000000001','60000000-0000-0000-0000-000000000002','40000000-0000-0000-0000-000000000002','20000000-0000-0000-0000-000000000006','PM-1002',44.8,6.5,1.2,4,'A','["A","A","A","B"]','[11.2,11.1,11.4,11.1]','Standard lot','Completed',null,'20000000-0000-0000-0000-000000000006','2026-06-27 14:30+05:30')
+('70000000-0000-0000-0000-000000000001','SL-1001','50000000-0000-0000-0000-000000000001','60000000-0000-0000-0000-000000000001','40000000-0000-0000-0000-000000000001','20000000-0000-0000-0000-000000000006','PM-1001',28.5,4.5,1.0,3,'AA','["AA","AA","A"]','[9.5,9.4,9.6]','Ready for premium winding','Completed','30000000-0000-0000-0000-000000000011','20000000-0000-0000-0000-000000000006','2026-06-27 10:30+05:30'),
+('70000000-0000-0000-0000-000000000002','SL-1002','50000000-0000-0000-0000-000000000001','60000000-0000-0000-0000-000000000002','40000000-0000-0000-0000-000000000002','20000000-0000-0000-0000-000000000014','PM-1002',44.8,6.5,1.2,4,'A','["A","A","A","B"]','[11.2,11.1,11.4,11.1]','Standard lot','Completed','30000000-0000-0000-0000-000000000012','20000000-0000-0000-0000-000000000014','2026-06-27 14:30+05:30')
 on conflict (slitting_no) do update set status = excluded.status, updated_at = now();
 
 insert into public.stock (id, stock_no, slitting_id, work_order_id, weight_kg, width_m, micron, grade, quantity, status, stage, qr_reference_id, created_by) values

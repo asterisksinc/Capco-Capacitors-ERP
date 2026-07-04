@@ -64,9 +64,20 @@ export type SprayPayload = {
   quantity: number;
 };
 
+const stageSelects: Record<string, string> = {
+  metallisation:
+    "*,created_by_profile:profiles!metallisation_created_by_fkey(id,full_name,email,phone,worker_label,team_name),operator:profiles!metallisation_operator_id_fkey(id,full_name,email,phone,worker_label,team_name),work_orders(work_order_no),inventory(raw_material_code,roll_no)",
+  slitting:
+    "*,created_by_profile:profiles!slitting_created_by_fkey(id,full_name,email,phone,worker_label,team_name),operator:profiles!slitting_operator_id_fkey(id,full_name,email,phone,worker_label,team_name),work_orders(work_order_no),metallisation(metallisation_no),inventory(raw_material_code,roll_no)",
+  winding:
+    "*,created_by_profile:profiles!winding_created_by_fkey(id,full_name,email,phone,worker_label,team_name),operator:profiles!winding_operator_id_fkey(id,full_name,email,phone,worker_label,team_name),product_orders(product_order_no)",
+  spray:
+    "*,created_by_profile:profiles!spray_created_by_fkey(id,full_name,email,phone,worker_label,team_name),operator:profiles!spray_operator_id_fkey(id,full_name,email,phone,worker_label,team_name),product_orders(product_order_no),winding(winding_no)",
+};
+
 function listStage(table: string, params?: ListParams) {
   return supabaseRest.list(table, {
-    select: params?.select ?? "*",
+    select: params?.select ?? stageSelects[table] ?? "*",
     order: params?.order ?? "created_at",
     ascending: params?.ascending,
     filters: params?.filters,
@@ -80,6 +91,18 @@ export const productionStageService = {
   listSlitting: (params?: ListParams) => listStage("slitting", params),
   listWinding: (params?: ListParams) => listStage("winding", params),
   listSpray: (params?: ListParams) => listStage("spray", params),
+  getMetallisationById(id: string) {
+    return supabaseRest.getById("metallisation", id, stageSelects.metallisation);
+  },
+  getSlittingById(id: string) {
+    return supabaseRest.getById("slitting", id, stageSelects.slitting);
+  },
+  getWindingById(id: string) {
+    return supabaseRest.getById("winding", id, stageSelects.winding);
+  },
+  getSprayById(id: string) {
+    return supabaseRest.getById("spray", id, stageSelects.spray);
+  },
   addMetallisation(payload: MetallisationPayload) {
     return supabaseRest.create("metallisation", {
       ...payload,

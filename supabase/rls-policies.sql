@@ -71,7 +71,12 @@ create policy "roles_read_authenticated" on public.roles for select to authentic
 
 drop policy if exists "profiles_read_scoped" on public.profiles;
 create policy "profiles_read_scoped" on public.profiles for select to authenticated
-using (public.is_admin_role() or id = public.current_profile_id());
+using (
+  public.is_admin_role()
+  or id = public.current_profile_id()
+  or reports_to = public.current_profile_id()
+  or id in (select reports_to from public.profiles where id = public.current_profile_id())
+);
 
 drop policy if exists "profiles_admin_write" on public.profiles;
 create policy "profiles_admin_write" on public.profiles for all to authenticated
