@@ -15,26 +15,19 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json().catch(() => null);
-
-  const identifier = typeof body?.identifier === "string" ? body.identifier.trim() : "";
-  const email = typeof body?.email === "string" ? body.email.trim() : "";
   const phone = typeof body?.phone === "string" ? body.phone.trim() : "";
-  const password = typeof body?.password === "string" ? body.password : "";
-  const loginId = identifier || email || phone;
 
-  if (!loginId || !password) {
+  if (!/^\+[0-9]{8,15}$/.test(phone)) {
     return NextResponse.json(
       {
         ok: false,
-        message: "email/phone and password are required",
+        message: "A valid phone number with country code is required",
       },
       { status: 400 },
     );
   }
 
-  const isPhone = /^\+?[0-9]{8,15}$/.test(loginId);
-
-  const response = await fetch(new URL("/auth/v1/token?grant_type=password", supabaseUrl), {
+  const response = await fetch(new URL("/auth/v1/otp", supabaseUrl), {
     method: "POST",
     headers: {
       apikey: supabaseAnonKey,
@@ -43,8 +36,8 @@ export async function POST(request: Request) {
       Accept: "application/json",
     },
     body: JSON.stringify({
-      [isPhone ? "phone" : "email"]: loginId,
-      password,
+      phone,
+      create_user: false,
     }),
   });
 
@@ -54,7 +47,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         ok: false,
-        message: data?.msg || data?.message || "Invalid login",
+        message: data?.msg || data?.message || "Unable to send OTP",
         details: data,
       },
       { status: response.status },
@@ -63,12 +56,7 @@ export async function POST(request: Request) {
 
   return NextResponse.json({
     ok: true,
-    session: {
-      access_token: data?.access_token,
-      refresh_token: data?.refresh_token,
-      expires_in: data?.expires_in,
-      token_type: data?.token_type,
-    },
-    user: data?.user,
+    message: "OTP sent successfully",
+    details: data,
   });
 }

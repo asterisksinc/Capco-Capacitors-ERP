@@ -15,26 +15,20 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json().catch(() => null);
-
-  const identifier = typeof body?.identifier === "string" ? body.identifier.trim() : "";
-  const email = typeof body?.email === "string" ? body.email.trim() : "";
   const phone = typeof body?.phone === "string" ? body.phone.trim() : "";
-  const password = typeof body?.password === "string" ? body.password : "";
-  const loginId = identifier || email || phone;
+  const token = typeof body?.token === "string" ? body.token.trim() : "";
 
-  if (!loginId || !password) {
+  if (!/^\+[0-9]{8,15}$/.test(phone) || !/^[0-9]{6}$/.test(token)) {
     return NextResponse.json(
       {
         ok: false,
-        message: "email/phone and password are required",
+        message: "A valid phone number and 6-digit OTP are required",
       },
       { status: 400 },
     );
   }
 
-  const isPhone = /^\+?[0-9]{8,15}$/.test(loginId);
-
-  const response = await fetch(new URL("/auth/v1/token?grant_type=password", supabaseUrl), {
+  const response = await fetch(new URL("/auth/v1/verify", supabaseUrl), {
     method: "POST",
     headers: {
       apikey: supabaseAnonKey,
@@ -43,8 +37,9 @@ export async function POST(request: Request) {
       Accept: "application/json",
     },
     body: JSON.stringify({
-      [isPhone ? "phone" : "email"]: loginId,
-      password,
+      phone,
+      token,
+      type: "sms",
     }),
   });
 
@@ -54,7 +49,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         ok: false,
-        message: data?.msg || data?.message || "Invalid login",
+        message: data?.msg || data?.message || "Invalid OTP",
         details: data,
       },
       { status: response.status },
