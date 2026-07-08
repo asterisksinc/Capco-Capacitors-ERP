@@ -135,7 +135,7 @@ export default function StoreHeadOverviewPage() {
                 {recentWOs.map((wo) => (
                   <tr key={wo.id}>
                     <td className="py-2.5 text-[13px] text-[#00B6E2] font-medium">
-                      <Link href={`/store-head/workorder/${wo.id || wo.work_order_no}`} className="hover:underline">{wo.work_order_no}</Link>
+                      <Link href={`/store-head/workorder/${wo.work_order_no || wo.id}`} className="hover:underline">{wo.work_order_no}</Link>
                     </td>
                     <td className="py-2.5 text-[13px] text-[#5C5C5C]">{wo.micron}</td>
                     <td className="py-2.5"><StatusBadge status={wo.status} /></td>

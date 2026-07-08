@@ -3,7 +3,7 @@
 import { WO_STATUS_OPTIONS, WO_STAGE_OPTIONS } from "@/lib/constants";
 import { StatusBadge } from "@/components/StatusBadge";
 import { use, useState, useEffect, useMemo } from "react";
-import { ChevronRight, Layers, Ruler, Package, QrCode, Loader2 } from "lucide-react";
+import { ChevronRight, Layers, Ruler, Package, QrCode, Loader2, FileText } from "lucide-react";
 import { workOrderService } from "@/src/services/workOrderService";
 import { MobileHeader } from "@/components/MobileHeader";
 import type { TableConfig } from "@/hooks/useTableControls";
@@ -76,6 +76,7 @@ export default function AdminWorkOrderDetailPage({ params }: DetailPageProps) {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabType>("Raw Material");
   const [qrData, setQrData] = useState<QRModalData | null>(null);
+  const [isDocModalOpen, setIsDocModalOpen] = useState(false);
 
   useEffect(() => {
     async function fetchWO() {
@@ -125,9 +126,9 @@ export default function AdminWorkOrderDetailPage({ params }: DetailPageProps) {
       resistance: m.resistance_ohms != null ? `${m.resistance_ohms} Ohms` : "-",
       timestamp: m.created_at
         ? new Date(m.created_at).toLocaleString("en-GB", {
-            day: "2-digit", month: "short", year: "numeric",
-            hour: "2-digit", minute: "2-digit",
-          })
+          day: "2-digit", month: "short", year: "numeric",
+          hour: "2-digit", minute: "2-digit",
+        })
         : "-",
       nextStage: m.next_stage || "Slitting",
       status: m.status || "-",
@@ -204,22 +205,22 @@ export default function AdminWorkOrderDetailPage({ params }: DetailPageProps) {
     const exportData = currentData.map((row: any) => ({
       ...(activeTab === "Raw Material"
         ? {
-            "Roll No": row.rollNo ?? "",
-            "Net Weight": row.netWeight ?? "",
-            "Gross Weight": row.grossWeight ?? "",
-            "Micron": row.thickness ?? "",
-            "Width (m)": row.width ?? "",
-            "Temperature": row.temperature ?? "",
-            "Actual Weight": row.actualWeight ?? "",
-            "Damaged Weight": row.damagedWeight ?? "",
-            "Used Weight": row.usedWeight ?? "",
-            "Wastage Weight": row.wastageWeight ?? "",
-            "Supplier": row.supplier ?? "",
-            "Stage": row.stage ?? "",
-            "Status": row.status ?? "",
-          }
+          "Roll No": row.rollNo ?? "",
+          "Net Weight": row.netWeight ?? "",
+          "Gross Weight": row.grossWeight ?? "",
+          "Micron": row.thickness ?? "",
+          "Width (m)": row.width ?? "",
+          "Temperature": row.temperature ?? "",
+          "Actual Weight": row.actualWeight ?? "",
+          "Damaged Weight": row.damagedWeight ?? "",
+          "Used Weight": row.usedWeight ?? "",
+          "Wastage Weight": row.wastageWeight ?? "",
+          "Supplier": row.supplier ?? "",
+          "Stage": row.stage ?? "",
+          "Status": row.status ?? "",
+        }
         : activeTab === "Metallisation"
-        ? {
+          ? {
             "Coil No": row.coilNo ?? "",
             "RM ID": row.rmId ?? "",
             "Machine No": row.machineNo ?? "",
@@ -230,7 +231,7 @@ export default function AdminWorkOrderDetailPage({ params }: DetailPageProps) {
             "Next Stage": row.nextStage ?? "",
             "Status": row.status ?? "",
           }
-        : {
+          : {
             "Product No": row.productNo ?? "",
             "Coil ID": row.rmId ?? "",
             "Weight": row.weight ?? "",
@@ -335,14 +336,13 @@ export default function AdminWorkOrderDetailPage({ params }: DetailPageProps) {
         {/* Tab bar */}
         <div className="flex items-center gap-2 border-b border-[#EBEBEB] pb-4 overflow-x-auto overflow-y-hidden scrollbar-none">
           {(["Raw Material", "Metallisation", "Slitting"] as TabType[]).map((tab) => (
-              <button
-                key={tab}
+            <button
+              key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-3 md:px-4 py-2 text-[13px] md:text-[14px] font-medium rounded-[8px] transition-colors whitespace-nowrap shrink-0 ${
-                activeTab === tab
+              className={`px-3 md:px-4 py-2 text-[13px] md:text-[14px] font-medium rounded-[8px] transition-colors whitespace-nowrap shrink-0 ${activeTab === tab
                   ? "bg-[#00B6E2] text-white"
                   : "bg-white text-[#5C5C5C] hover:bg-[#F5F7FA]"
-              }`}
+                }`}
             >
               {tab}
             </button>
@@ -351,6 +351,13 @@ export default function AdminWorkOrderDetailPage({ params }: DetailPageProps) {
 
         {/* Toolbar */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <button
+            onClick={() => setIsDocModalOpen(true)}
+            className="flex items-center justify-center gap-2 bg-white border border-[#DDE1E8] text-[#171717] text-[13px] font-medium rounded-[8px] h-[36px] px-4 hover:bg-[#F5F7FA] transition-colors self-start sm:self-auto shadow-sm whitespace-nowrap"
+          >
+            <FileText className="w-4 h-4 text-gray-600" />
+            Docs Uploaded
+          </button>
           <TableToolbar dateRange={dateRange} onDateRangeChange={setDateRange} onExport={exportCurrentTab} />
         </div>
 
@@ -380,8 +387,8 @@ export default function AdminWorkOrderDetailPage({ params }: DetailPageProps) {
                         const qrDetails: Record<string, string> = isRM
                           ? { "Roll No": (row as any).rollNo ?? "", "Net Weight": (row as any).netWeight ?? "", "Micron": (row as any).thickness ?? "", "Width (m)": (row as any).width ?? "", "Supplier": (row as any).supplier ?? "", "Status": (row as any).status ?? "" }
                           : isMC
-                          ? { "Coil No": (row as any).coilNo ?? "", "RM ID": (row as any).rmId ?? "", "Machine No": (row as any).machineNo ?? "", "Weight": (row as any).weight ?? "", "Status": (row as any).status ?? "" }
-                          : { "Product No": (row as any).productNo ?? "", "Coil ID": (row as any).rmId ?? "", "Weight": (row as any).weight ?? "", "Grade": (row as any).grade ?? "", "Status": (row as any).status ?? "" };
+                            ? { "Coil No": (row as any).coilNo ?? "", "RM ID": (row as any).rmId ?? "", "Machine No": (row as any).machineNo ?? "", "Weight": (row as any).weight ?? "", "Status": (row as any).status ?? "" }
+                            : { "Product No": (row as any).productNo ?? "", "Coil ID": (row as any).rmId ?? "", "Weight": (row as any).weight ?? "", "Grade": (row as any).grade ?? "", "Status": (row as any).status ?? "" };
                         return (
                           <td key={key} className="px-4 py-3 whitespace-nowrap">
                             <button onClick={() => setQrData({ id: rowId, type: qrType, details: qrDetails })} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors p-1" title="Show QR Code">
@@ -419,6 +426,54 @@ export default function AdminWorkOrderDetailPage({ params }: DetailPageProps) {
       </section>
 
       {qrData && <QRCodeModal id={qrData.id} type={qrData.type} details={qrData.details} onClose={() => setQrData(null)} />}
+
+      {isDocModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#171717]/40 backdrop-blur-sm px-4">
+          <div className="bg-white rounded-[16px] w-full max-w-[600px] shadow-lg flex flex-col overflow-hidden">
+            <div className="flex items-start justify-between px-6 py-5 border-b border-[#EBEBEB]">
+              <div className="flex flex-col gap-1">
+                <h2 className="text-[18px] md:text-[22px] leading-tight font-semibold text-[#171717]">Uploaded Document</h2>
+                <p className="text-[11px] md:text-[14px] text-[#5C5C5C]">View the document uploaded for {activeTab} stage.</p>
+              </div>
+            </div>
+            <div className="p-6 flex flex-col items-center justify-center bg-[#FAFCFF] min-h-[300px]">
+              {activeTab === "Raw Material" ? (
+                <div className="flex flex-col items-center gap-3">
+                  <img src="https://via.placeholder.com/400x300.png?text=Raw+Material+Doc" alt="Raw Material Document" className="rounded-[8px] border border-[#EBEBEB] shadow-sm max-w-full" />
+                  <p className="text-[13px] text-[#5C5C5C]">IMG_RAW_MAT_1.jpeg</p>
+                </div>
+              ) : activeTab === "Metallisation" ? (
+                <div className="flex flex-col items-center gap-3">
+                  <img src="https://via.placeholder.com/400x300.png?text=Metallisation+Doc" alt="Metallisation Document" className="rounded-[8px] border border-[#EBEBEB] shadow-sm max-w-full" />
+                  <p className="text-[13px] text-[#5C5C5C]">IMG_MET_1.jpeg</p>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-4 text-center">
+                  <div className="w-16 h-16 rounded-full bg-[#F5F7FA] border border-[#EBEBEB] flex items-center justify-center">
+                    <span className="text-[#A1A1AA] text-[13px]">No image</span>
+                  </div>
+                  <p className="text-[14px] font-medium text-[#171717]">No document uploaded for this stage</p>
+                </div>
+              )}
+            </div>
+            <div className="flex items-center justify-end gap-3 px-6 py-5 bg-[#FAFAFA] border-t border-[#EBEBEB]">
+              <button
+                onClick={() => setIsDocModalOpen(false)}
+                className="px-4 py-2 text-[14px] font-medium text-[#171717] bg-white border border-[#DDE1E8] rounded-[8px] hover:bg-[#F5F7FA] transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => setIsDocModalOpen(false)}
+                disabled={activeTab === "Slitting"}
+                className="px-4 py-2 text-[14px] font-medium text-white bg-[#00B6E2] rounded-[8px] hover:bg-[#009BCC] transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Close & Download
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

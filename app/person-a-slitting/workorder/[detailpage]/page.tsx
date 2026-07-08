@@ -279,7 +279,8 @@ export default function OperatorSlittingDetailPage({ params }: DetailPageProps) 
 
   const [metallisationRowsInput, setMetallisationRowsInput] = useState<MetallisationForm[]>([createMetallisationRow("")]);
   const [slittingRowsInput, setSlittingRowsInput] = useState<SlittingForm[]>([createSlittingRow("")]);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  type CapturedImage = { url: string; name: string; id: string };
+  const [capturedImage, setCapturedImage] = useState<CapturedImage | null>(null);
   const [qrData, setQrData] = useState<QRModalData | null>(null);
 
   const currentConfig = useMemo(() => {
@@ -320,6 +321,7 @@ export default function OperatorSlittingDetailPage({ params }: DetailPageProps) 
     setModalStep(1);
     setShowValidationHint(false);
     setSlittingReviewRemarks("");
+    setCapturedImage(null);
     setMetallisationRowsInput([createMetallisationRow(availableRollIds[0] ?? "")]);
     setSlittingRowsInput([createSlittingRow(availableCoilIds[0] ?? "")]);
   };
@@ -725,8 +727,8 @@ export default function OperatorSlittingDetailPage({ params }: DetailPageProps) 
       <MobileHeader title="Work Orders details" />
 
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#171717]/40 backdrop-blur-sm px-4">
-          <div className="bg-white rounded-[16px] w-full max-w-[80%] shadow-lg flex flex-col overflow-hidden">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#171717]/40 backdrop-blur-sm md:px-4">
+          <div className="bg-white rounded-[16px] w-full max-w-[95%] sm:max-w-[80%] shadow-lg flex flex-col overflow-hidden">
             {renderStepHeader()}
             
             <div className="max-h-[58vh] overflow-y-auto px-6 py-5">
@@ -745,70 +747,71 @@ export default function OperatorSlittingDetailPage({ params }: DetailPageProps) 
                     </div>
                   )}
                   <div className="rounded-[12px] border border-[#DDE1E8] bg-white p-4 flex flex-col gap-3">
-                    <div className="flex items-center justify-between">
-                      <label className="text-[13px] font-medium text-[#171717]">Attach Image</label>
-                      <div className="flex items-center gap-2">
-                        <div className="relative">
-                          <input 
-                            type="file" 
-                            accept="image/*" 
-                            capture="environment"
-                            id="cameraInput"
-                            className="hidden"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) {
-                                const reader = new FileReader();
-                                reader.onload = (ev) => setImagePreview(ev.target?.result as string);
-                                reader.readAsDataURL(file);
-                              }
-                            }} 
-                          />
-                          <label 
-                            htmlFor="cameraInput"
-                            className="flex items-center justify-center gap-2 bg-[#F5F7FA] border border-[#DDE1E8] text-[#5C5C5C] text-[13px] font-medium rounded-[6px] h-[36px] px-3 hover:bg-[#EBEBEB] transition-colors cursor-pointer"
-                          >
-                            {imagePreview ? "Retake Photo" : "Take Photo"}
-                          </label>
-                        </div>
-                        <div className="relative">
-                          <input 
-                            type="file" 
-                            accept="image/*" 
-                            id="uploadInput"
-                            className="hidden"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) {
-                                const reader = new FileReader();
-                                reader.onload = (ev) => setImagePreview(ev.target?.result as string);
-                                reader.readAsDataURL(file);
-                              }
-                            }} 
-                          />
-                          <label 
-                            htmlFor="uploadInput"
-                            className="flex items-center justify-center gap-2 bg-[#F5F7FA] border border-[#DDE1E8] text-[#5C5C5C] text-[13px] font-medium rounded-[6px] h-[36px] px-3 hover:bg-[#EBEBEB] transition-colors cursor-pointer"
-                          >
-                            Upload
-                          </label>
+                    {!capturedImage ? (
+                      <div className="flex items-center justify-between">
+                        <label className="text-[13px] font-medium text-[#171717]">Attach Image</label>
+                        <div className="flex items-center gap-2">
+                          <div className="relative">
+                            <input 
+                              type="file" 
+                              accept="image/*" 
+                              capture="environment"
+                              id="cameraInput"
+                              className="hidden"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  const reader = new FileReader();
+                                  reader.onload = (ev) => {
+                                    const ext = file.name.split('.').pop() || 'jpeg';
+                                    const randomId = Math.random().toString(36).substring(2, 8).toUpperCase();
+                                    setCapturedImage({
+                                      url: ev.target?.result as string,
+                                      name: `IMG_${Date.now()}.${ext}`,
+                                      id: randomId
+                                    });
+                                  };
+                                  reader.readAsDataURL(file);
+                                }
+                              }} 
+                            />
+                            <label 
+                              htmlFor="cameraInput"
+                              className="flex items-center justify-center gap-2 bg-[#F5F7FA] border border-[#DDE1E8] text-[#5C5C5C] text-[13px] font-medium rounded-[6px] h-[36px] px-3 hover:bg-[#EBEBEB] transition-colors cursor-pointer"
+                            >
+                              Take Photo
+                            </label>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    {imagePreview && (
-                      <img src={imagePreview} alt="Preview" className="max-h-[200px] w-auto rounded-[8px] border border-[#DDE1E8] object-cover" />
+                    ) : (
+                      <div className="flex items-start md:items-center justify-between gap-4 rounded-[8px]">
+                        <div className="flex gap-2 flex-col md:flex-row">
+                          <img src={capturedImage.url} alt="Preview" className="w-14 h-14 rounded-md border border-[#EBEBEB] object-cover shrink-0" />
+                          <div className="flex flex-col gap-1">
+                            <p className="text-[12px] md:text-[14px] font-semibold text-[#171717]">{capturedImage.name}</p>
+                            <p className="text-[10px] md:text-[12px] text-[#6B7280]">ID: {capturedImage.id}</p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => setCapturedImage(null)}
+                          className="text-[#5C5C5C] hover:text-[#171717] transition-colors"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
                     )}
                   </div>
                 </div>
               )}
               {modalStep === 3 && (
                 <div className="rounded-[16px] border border-[#D6EEF9] bg-[radial-gradient(circle_at_center,_#ECF8FD_0%,_#F8FCFF_45%,_#FFFFFF_100%)] p-10 flex flex-col items-center text-center gap-4">
-                  <div className="w-16 h-16 rounded-full bg-[#E6F7FF] border border-[#9DDBF6] flex items-center justify-center">
-                    <div className="w-10 h-10 rounded-full bg-[#00B6E2] flex items-center justify-center">
-                      <Check className="w-6 h-6 text-white" />
+                  <div className="w-13 md:w-16 h-13 md:h-16 rounded-full bg-[#E6F7FF] border border-[#9DDBF6] flex items-center justify-center">
+                    <div className="w-7 md:w-10 h-7 md:h-10 rounded-full bg-[#00B6E2] flex items-center justify-center">
+                      <Check className="w-4 md:w-6 h-4 md:h-6 text-white" />
                     </div>
                   </div>
-                  <p className="text-[27px] leading-tight text-[#171717] font-semibold">Details submitted successfully.</p>
+                  <p className="text-[18px] md:text-[27px] leading-tight text-[#171717] font-semibold">Details submitted successfully.</p>
                 </div>
               )}
             </div>
@@ -816,21 +819,21 @@ export default function OperatorSlittingDetailPage({ params }: DetailPageProps) 
             <div className="flex items-center justify-between px-6 py-5 bg-[#FAFAFA] border-t border-[#EBEBEB]">
               {modalStep === 1 && (
                 <>
-                  <button onClick={closeModal} className="h-[40px] px-4 bg-white border border-[#EBEBEB] text-[#171717] text-[14px] font-medium rounded-[6px] hover:bg-gray-50">Cancel</button>
+                  <button onClick={closeModal} className="h-[40px] px-2 md:px-4 bg-white border border-[#EBEBEB] text-[#171717] text-[10px] md:text-[14px] font-medium rounded-[6px] hover:bg-gray-50">Cancel</button>
                   <div className="flex items-center gap-2">
-                    <button onClick={addCurrentItemToDraft} className="h-[40px] px-4 bg-white border border-[#00B6E2] text-[#00B6E2] text-[14px] font-medium rounded-[6px] hover:bg-[#F0FDFF]">Add More Items</button>
-                    <button onClick={() => { if (!isCurrentStepOneValid) { setShowValidationHint(true); return; } setModalStep(2); }} className={`h-[40px] px-5 text-[14px] font-medium rounded-[6px] ${isCurrentStepOneValid ? "bg-[#00B6E2] text-white hover:bg-[#0092b5]" : "bg-[#A7DDEB] text-white cursor-not-allowed"}`}>Next</button>
+                    <button onClick={addCurrentItemToDraft} className="h-[40px] px-2 md:px-4 bg-white border border-[#00B6E2] text-[#00B6E2] text-[10px] md:text-[14px] font-medium rounded-[6px] hover:bg-[#F0FDFF]">Add More Items</button>
+                    <button onClick={() => { if (!isCurrentStepOneValid) { setShowValidationHint(true); return; } setModalStep(2); }} className={`h-[40px] px-2 md:px-5 text-[10px] md:text-[14px] font-medium rounded-[6px] ${isCurrentStepOneValid ? "bg-[#00B6E2] text-white hover:bg-[#0092b5]" : "bg-[#A7DDEB] text-white cursor-not-allowed"}`}>Next</button>
                   </div>
                 </>
               )}
               {modalStep === 2 && (
                 <>
-                  <button onClick={() => setModalStep(1)} className="h-[40px] px-4 bg-white border border-[#EBEBEB] text-[#171717] text-[14px] font-medium rounded-[6px] hover:bg-gray-50">Back</button>
-                  <button onClick={submitCurrentStage} className={`h-[40px] px-5 text-[14px] font-medium rounded-[6px] ${isStepTwoValid ? "bg-[#00B6E2] text-white hover:bg-[#0092b5]" : "bg-[#A7DDEB] text-white cursor-not-allowed"}`}>Submit Logs</button>
+                  <button onClick={() => setModalStep(1)} className="h-[40px] px-2 md:px-4 bg-white border border-[#EBEBEB] text-[#171717] text-[10px] md:text-[14px] font-medium rounded-[6px] hover:bg-gray-50">Back</button>
+                  <button onClick={submitCurrentStage} className={`h-[40px] px-2 md:px-5 text-[10px] md:text-[14px] font-medium rounded-[6px] ${isStepTwoValid ? "bg-[#00B6E2] text-white hover:bg-[#0092b5]" : "bg-[#A7DDEB] text-white cursor-not-allowed"}`}>Submit Logs</button>
                 </>
               )}
               {modalStep === 3 && (
-                <button onClick={closeModal} className="h-[40px] px-5 bg-[#00B6E2] text-white text-[14px] font-medium rounded-[6px] hover:bg-[#0092b5]">Done</button>
+                <button onClick={closeModal} className="h-[40px] px-2 md:px-5 bg-[#00B6E2] text-white text-[10px] md:text-[14px] font-medium rounded-[6px] hover:bg-[#0092b5]">Done</button>
               )}
             </div>
           </div>

@@ -45,7 +45,7 @@ const rawMaterialConfig: TableConfig<RawMaterialRow> = {
 export default function StoreHeadWorkOrderDetailPage({ params }: DetailPageProps) {
   const { detailpage } = use(params);
   const orderId = detailpage.toUpperCase();
-  
+
   const [workOrderFlowData, setWorkOrderFlowData] = useState<any>(null);
   const [availableInventory, setAvailableInventory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,7 +55,8 @@ export default function StoreHeadWorkOrderDetailPage({ params }: DetailPageProps
   const [showValidationHint, setShowValidationHint] = useState(false);
 
   const [selectedInventoryIds, setSelectedInventoryIds] = useState<string[]>([]);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  type CapturedImage = { url: string; name: string; id: string };
+  const [capturedImage, setCapturedImage] = useState<CapturedImage | null>(null);
   const [qrData, setQrData] = useState<QRModalData | null>(null);
 
   const loadData = async () => {
@@ -109,14 +110,14 @@ export default function StoreHeadWorkOrderDetailPage({ params }: DetailPageProps
     if (!workOrderFlowData) return availableInventory;
     const woMicron = workOrderFlowData.micron?.toString();
     const woWidth = workOrderFlowData.width_m?.toString();
-    
+
     return availableInventory.filter(item => {
       const itemMicron = item.micron?.toString();
       const itemWidth = item.width_m?.toString();
-      
+
       const matchMicron = woMicron ? itemMicron === woMicron : true;
       const matchWidth = woWidth ? itemWidth === woWidth : true;
-      
+
       return matchMicron && matchWidth;
     });
   }, [availableInventory, workOrderFlowData]);
@@ -127,7 +128,7 @@ export default function StoreHeadWorkOrderDetailPage({ params }: DetailPageProps
   const resetModalState = () => {
     setModalStep(1);
     setShowValidationHint(false);
-    setImagePreview(null);
+    setCapturedImage(null);
     setSelectedInventoryIds([]);
   };
 
@@ -166,18 +167,18 @@ export default function StoreHeadWorkOrderDetailPage({ params }: DetailPageProps
         work_order_id: workOrderFlowData.id,
         inventory_ids: selectedInventoryIds,
         assigned_to: workOrderFlowData.assigned_to || "",
-        assigned_by: "", 
+        assigned_by: "",
         quantity_kg_by_inventory_id
       });
-      
+
       await workOrderService.update(workOrderFlowData.id, {
         stage: "Ready for Metallisation",
         status: "In-progress"
       });
-      
+
       await Promise.all(
-        selectedInventoryIds.map(id => 
-          inventoryService.update(id, { status: "Being Used" }).catch(() => {})
+        selectedInventoryIds.map(id =>
+          inventoryService.update(id, { status: "Being Used" }).catch(() => { })
         )
       );
 
@@ -236,11 +237,10 @@ export default function StoreHeadWorkOrderDetailPage({ params }: DetailPageProps
             <label
               key={item.id}
               onClick={() => toggleInventorySelection(item.id)}
-              className={`flex flex-col gap-3 p-4 rounded-[8px] border transition-colors cursor-pointer ${
-                isSelected
-                  ? "border-[#00B6E2] bg-[#F4FBFF]"
-                  : "border-[#DDE1E8] bg-white hover:border-[#A7DDEB]"
-              }`}
+              className={`flex flex-col gap-3 p-4 rounded-[8px] border transition-colors cursor-pointer ${isSelected
+                ? "border-[#00B6E2] bg-[#F4FBFF]"
+                : "border-[#DDE1E8] bg-white hover:border-[#A7DDEB]"
+                }`}
             >
               <div className="flex items-center gap-3">
                 <div className={`w-5 h-5 rounded-[4px] border flex items-center justify-center shrink-0 ${isSelected ? "bg-[#00B6E2] border-[#00B6E2]" : "border-[#DDE1E8] bg-white"}`}>
@@ -303,59 +303,60 @@ export default function StoreHeadWorkOrderDetailPage({ params }: DetailPageProps
             <p className="text-[13px] text-[#6B7280]">Review all values before submitting to the workflow queue.</p>
           </div>
           {renderReviewCards()}
-          <div className="rounded-[12px] border border-[#DDE1E8] bg-white p-4 flex flex-col gap-3">
-            <div className="flex items-center justify-between">
-              <label className="text-[13px] font-medium text-[#171717]">Attach Image</label>
-              <div className="flex items-center gap-2">
-                <div className="relative">
-                  <input 
-                    type="file" 
-                    accept="image/*" 
-                    capture="environment"
-                    id="cameraInput"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        const reader = new FileReader();
-                        reader.onload = (ev) => setImagePreview(ev.target?.result as string);
-                        reader.readAsDataURL(file);
-                      }
-                    }} 
-                  />
-                  <label 
-                    htmlFor="cameraInput"
-                    className="flex items-center justify-center gap-2 bg-[#F5F7FA] border border-[#DDE1E8] text-[#5C5C5C] text-[13px] font-medium rounded-[6px] h-[36px] px-3 hover:bg-[#EBEBEB] transition-colors cursor-pointer"
-                  >
-                    {imagePreview ? "Retake Photo" : "Take Photo"}
-                  </label>
-                </div>
-                <div className="relative">
-                  <input 
-                    type="file" 
-                    accept="image/*" 
-                    id="uploadInput"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        const reader = new FileReader();
-                        reader.onload = (ev) => setImagePreview(ev.target?.result as string);
-                        reader.readAsDataURL(file);
-                      }
-                    }} 
-                  />
-                  <label 
-                    htmlFor="uploadInput"
-                    className="flex items-center justify-center gap-2 bg-[#F5F7FA] border border-[#DDE1E8] text-[#5C5C5C] text-[13px] font-medium rounded-[6px] h-[36px] px-3 hover:bg-[#EBEBEB] transition-colors cursor-pointer"
-                  >
-                    Upload
-                  </label>
+          <div className="rounded-[12px] border border-[#DDE1E8] bg-white p-2 md:p-4 flex flex-col gap-3">
+            {!capturedImage ? (
+              <div className="flex items-center justify-between">
+                <label className="text-[13px] font-medium text-[#171717]">Attach Image</label>
+                <div className="flex items-center gap-2">
+                  <div className="relative">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      id="cameraInput"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onload = (ev) => {
+                            const ext = file.name.split('.').pop() || 'jpeg';
+                            const randomId = Math.random().toString(36).substring(2, 8).toUpperCase();
+                            setCapturedImage({
+                              url: ev.target?.result as string,
+                              name: `IMG_${Date.now()}.${ext}`,
+                              id: randomId
+                            });
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
+                    <label
+                      htmlFor="cameraInput"
+                      className="flex items-center justify-center gap-2 bg-[#F5F7FA] border border-[#DDE1E8] text-[#5C5C5C] text-[13px] font-medium rounded-[6px] h-[36px] px-3 hover:bg-[#EBEBEB] transition-colors cursor-pointer"
+                    >
+                      Take Photo
+                    </label>
+                  </div>
                 </div>
               </div>
-            </div>
-            {imagePreview && (
-              <img src={imagePreview} alt="Preview" className="max-h-[200px] w-auto rounded-[8px] border border-[#DDE1E8] object-cover" />
+            ) : (
+              <div className="flex items-start md:items-center justify-between gap-4 rounded-[8px] ">
+                <div className="flex gap-2 flex-col md:flex-row">
+                  <img src={capturedImage.url} alt="Preview" className="w-14 h-14 rounded-md border border-[#EBEBEB] object-cover shrink-0" />
+                  <div className="flex flex-col gap-1">
+                    <p className="text-[12px] md:text-[14px] font-semibold text-[#171717]">{capturedImage.name}</p>
+                    <p className="text-[10px] md:text-[12px] text-[#6B7280]">ID: {capturedImage.id}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setCapturedImage(null)}
+                  className="text-[#5C5C5C] hover:text-[#171717] min-h-full transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -365,13 +366,13 @@ export default function StoreHeadWorkOrderDetailPage({ params }: DetailPageProps
     return (
       <div className="px-6 py-8">
         <div className="rounded-[16px] border border-[#D6EEF9] bg-[radial-gradient(circle_at_center,_#ECF8FD_0%,_#F8FCFF_45%,_#FFFFFF_100%)] p-8 md:p-10 flex flex-col items-center text-center gap-4">
-          <div className="w-16 h-16 rounded-full bg-[#E6F7FF] border border-[#9DDBF6] flex items-center justify-center">
-            <div className="w-10 h-10 rounded-full bg-[#00B6E2] flex items-center justify-center">
-              <Check className="w-6 h-6 text-white" />
+          <div className="w-13 md:w-16 h-13 md:h-16 rounded-full bg-[#E6F7FF] border border-[#9DDBF6] flex items-center justify-center">
+            <div className="w-7 md:w-10 h-7 md:h-10 rounded-full bg-[#00B6E2] flex items-center justify-center">
+              <Check className="w-4 md:w-6 h-4 md:h-6 text-white" />
             </div>
           </div>
-          <p className="text-[27px] leading-tight text-[#171717] font-semibold">Your details have been submitted successfully.</p>
-          <p className="text-[15px] text-[#667085] max-w-[460px]">We are reviewing this entry and notifying the next stage once processing is complete.</p>
+          <p className="text-[14px] lg:text-[27px] leading-tight text-[#171717] font-semibold">Your details have been submitted successfully.</p>
+          <p className="text-[10px] lg:text-[15px] text-[#667085] max-w-[460px]">We are reviewing this entry and notifying the next stage once processing is complete.</p>
         </div>
       </div>
     );
@@ -386,8 +387,8 @@ export default function StoreHeadWorkOrderDetailPage({ params }: DetailPageProps
           <div className="bg-white rounded-[16px] w-full max-w-[860px] shadow-lg flex flex-col overflow-hidden">
             <div className="flex items-start justify-between px-6 py-5 border-b border-[#EBEBEB]">
               <div className="flex flex-col gap-1">
-                <h2 className="text-[28px] leading-tight font-semibold text-[#171717]">Add Raw Material Details</h2>
-                <p className="text-[15px] text-[#5C5C5C]">Capture the raw material details for work order {orderId}</p>
+                <h2 className="text-[18px] md:text-[28px] leading-tight font-semibold text-[#171717]">Add Raw Material Details</h2>
+                <p className="text-[11px] md:text-[15px] text-[#5C5C5C]">Capture the raw material details for work order {orderId}</p>
               </div>
               <button onClick={closeModal} className="text-[#5C5C5C] hover:text-[#171717] transition-colors p-1">
                 <X className="w-5 h-5" />
@@ -589,7 +590,7 @@ export default function StoreHeadWorkOrderDetailPage({ params }: DetailPageProps
                           </td>
                         );
                       }
-                      
+
                       const val = row[col.key as keyof RawMaterialRow];
                       let displayVal = val;
                       if (!val) {

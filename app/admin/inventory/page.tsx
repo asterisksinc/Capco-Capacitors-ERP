@@ -493,8 +493,8 @@ export default function AdminInventoryPage() {
           <div className="bg-white rounded-[16px] w-full max-w-[660px] shadow-lg flex flex-col overflow-hidden">
             <div className="flex items-start justify-between px-6 py-5 border-b border-[#EBEBEB]">
               <div className="flex flex-col gap-1">
-                <h2 className="text-[24px] leading-tight font-semibold text-[#171717]">Add Inventory Item</h2>
-                <p className="text-[14px] text-[#5C5C5C]">Record a new raw material received from supplier</p>
+                <h2 className="text-[18px] md:text-[24px] leading-tight font-semibold text-[#171717]">Add Inventory Item</h2>
+                <p className="text-[11px] md:text-[14px] text-[#5C5C5C]">Record a new raw material received from supplier</p>
               </div>
               <button onClick={() => setIsAddModalOpen(false)} className="text-[#5C5C5C] hover:text-[#171717] transition-colors p-1"><X className="w-5 h-5" /></button>
             </div>
@@ -574,12 +574,12 @@ export default function AdminInventoryPage() {
               {addStep === 3 && (
                 <div className="px-6 py-8">
                   <div className="rounded-[16px] border border-[#D6EEF9] bg-[radial-gradient(circle_at_center,_#ECF8FD_0%,_#F8FCFF_45%,_#FFFFFF_100%)] p-8 md:p-10 flex flex-col items-center text-center gap-4">
-                    <div className="w-16 h-16 rounded-full bg-[#E6F7FF] border border-[#9DDBF6] flex items-center justify-center">
-                      <div className="w-10 h-10 rounded-full bg-[#00B6E2] flex items-center justify-center">
-                        <Check className="w-6 h-6 text-white" />
+                    <div className="w-13 md:w-16 h-13 md:h-16 rounded-full bg-[#E6F7FF] border border-[#9DDBF6] flex items-center justify-center">
+                      <div className="w-7 md:w-10 h-7 md:h-10 rounded-full bg-[#00B6E2] flex items-center justify-center">
+                        <Check className="w-4 md:w-6 h-4 md:h-6 text-white" />
                       </div>
                     </div>
-                    <p className="text-[24px] leading-tight text-[#171717] font-semibold">Inventory item added successfully.</p>
+                    <p className="text-[14px] lg:text-[27px] leading-tight text-[#171717] font-semibold">Inventory item added successfully.</p>
                   </div>
                 </div>
               )}
