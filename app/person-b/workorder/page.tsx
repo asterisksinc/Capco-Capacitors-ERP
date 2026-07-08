@@ -1,3 +1,5 @@
+import { WO_STATUS_OPTIONS, WO_STAGE_OPTIONS } from "@/lib/constants";
+import { StatusBadge } from "@/components/StatusBadge";
 "use client";
 
 import { Search, QrCode, Scan, X, Layers, Clock, Activity, CheckCircle } from "lucide-react";
@@ -14,8 +16,8 @@ import { exportToExcel } from "@/lib/exportExcel";
 import { MobileHeader } from "@/components/MobileHeader";
 import { QRCodeModal, type QRModalData } from "@/components/QRCodeModal";
 
-const WO_STATUS_OPTIONS = ["Yet to Start", "In-progress", "Completed"];
-const WO_STAGE_OPTIONS = ["Metallisation", "Raw Material", "Slitting"];
+
+
 
 const statusFilter: EnumFilter = { label: "Status", key: "status", options: WO_STATUS_OPTIONS };
 const stageFilter: EnumFilter = { label: "Stage", key: "stage", options: WO_STAGE_OPTIONS };
@@ -42,23 +44,12 @@ const workOrderConfig: TableConfig<ComputedWorkOrderSummary> = {
     { key: "qty", label: "Quantity", type: "number", sortable: true },
     { key: "stage", label: "Stage", type: "text", sortable: true },
     { key: "date", label: "Date", type: "date", sortable: true },
-    { key: "status", label: "Status", type: "enum", sortable: false, filter: "dropdown", options: ["Yet to Start", "In-progress", "Completed"] },
+    { key: "status", label: "Status", type: "enum", sortable: false, filter: "dropdown", options: WO_STATUS_OPTIONS },
     { key: "options", label: "Action", type: "text", sortable: false }
   ]
 };
 
-function StatusBadge({ status }: { status: string }) {
-  if (status === "Yet to Start") {
-    return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#FFF0F1] text-[#FB3748] text-[12px] font-medium leading-tight">Yet to Start</span>;
-  }
-  if (status === "In-progress") {
-    return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#FFF4ED] text-[#E19242] text-[12px] font-medium leading-tight">In-progress</span>;
-  }
-  if (status === "Completed") {
-    return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#E8F8F0] text-[#1CB061] text-[12px] font-medium leading-tight">Completed</span>;
-  }
-  return null;
-}
+
 
 export default function PersonBWorkOrderPage() {
   const { workOrders: rows, mounted, deleteWorkOrder } = useStore();

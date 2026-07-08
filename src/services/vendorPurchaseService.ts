@@ -22,6 +22,9 @@ export const vendorPurchaseService = {
       offset: params?.offset,
     });
   },
+  getById(id: string) {
+    return supabaseRest.getById("vendor_purchases", id, "*,vendor_purchase_items(*)");
+  },
   counts() {
     return supabaseRest.list<{ order_amount: number; paid_amount: number; status: string }>("vendor_purchases", { select: "order_amount,paid_amount,status" }).then((rows) => {
       const totalValue = rows.reduce((sum, row) => sum + Number(row.order_amount ?? 0), 0);

@@ -1,5 +1,7 @@
 "use client";
 
+import { WO_STATUS_OPTIONS, WO_STAGE_OPTIONS } from "@/lib/constants";
+import { StatusBadge } from "@/components/StatusBadge";
 import { use, useState, useMemo } from "react";
 import Link from "next/link";
 import { Plus, X, ChevronRight, Check, QrCode } from "lucide-react";
@@ -15,6 +17,11 @@ import { OptionsDropdown } from "@/components/table/OptionsDropdown";
 import { MobileHeader } from "@/components/MobileHeader";
 import { QRCodeModal, type QRModalData } from "@/components/QRCodeModal";
 import { exportToExcel } from "@/lib/exportExcel";
+import { workOrderService } from "@/src/services/workOrderService";
+import { productionStageService } from "@/src/services/productionStageService";
+import { authService } from "@/src/services/authService";
+import { stockService } from "@/src/services/stockService";
+import { useEffect } from "react";
 
 type DetailPageProps = {
   params: Promise<{ detailpage: string }>;
@@ -41,6 +48,7 @@ type SlittingForm = {
   weight: string;
   grade: string;
   remarks: string;
+  isVerified?: boolean;
 };
 
 const micronOptions = ["2", "2.5", "3", "3.5", "4", "4.5", "4.5HT", "5", "5.5", "6", "6.5", "7", "7.5"];
@@ -60,7 +68,7 @@ const rawMaterialConfig: TableConfig<any> = {
     { key: "wastageWeight", label: "Wastage/Left Weight", type: "text", sortable: true },
     { key: "supplier", label: "Company/Supplier", type: "text", sortable: true },
     { key: "stage", label: "Stage", type: "enum", sortable: false, filter: "dropdown", options: ["Raw Material", "METALLISATION"] },
-    { key: "status", label: "Status", type: "enum", sortable: false, filter: "dropdown", options: ["Yet to Start", "In-progress", "Completed"] },
+    { key: "status", label: "Status", type: "enum", sortable: false, filter: "dropdown", options: WO_STATUS_OPTIONS },
     { key: "qr", label: "QR", type: "text", sortable: false },
     { key: "options", label: "Action", type: "text", sortable: false },
   ],
@@ -76,7 +84,7 @@ const metallisationConfig: TableConfig<any> = {
     { key: "resistance", label: "Resistance", type: "text", sortable: true },
     { key: "timestamp", label: "Timestamp", type: "date", sortable: true },
     { key: "nextStage", label: "Next Stage", type: "text", sortable: false },
-    { key: "status", label: "Status", type: "enum", sortable: false, filter: "dropdown", options: ["Yet to Start", "In-progress", "Completed"] },
+    { key: "status", label: "Status", type: "enum", sortable: false, filter: "dropdown", options: WO_STATUS_OPTIONS },
     { key: "qr", label: "QR", type: "text", sortable: false },
     { key: "options", label: "Action", type: "text", sortable: false },
   ],
@@ -91,7 +99,7 @@ const slittingConfig: TableConfig<any> = {
     { key: "grade", label: "Grade", type: "text", sortable: true },
     { key: "timestampAdded", label: "Timestamp Added", type: "date", sortable: true },
     { key: "stage", label: "Stage", type: "enum", sortable: false, filter: "dropdown", options: ["Slitting", "Ready for Winding", "Completed"] },
-    { key: "status", label: "Status", type: "enum", sortable: false, filter: "dropdown", options: ["Yet to Start", "In-progress", "Completed"] },
+    { key: "status", label: "Status", type: "enum", sortable: false, filter: "dropdown", options: WO_STATUS_OPTIONS },
     { key: "qr", label: "QR", type: "text", sortable: false },
     { key: "options", label: "Action", type: "text", sortable: false },
   ],
@@ -117,18 +125,7 @@ const defaultSlittingForm: SlittingForm = {
   remarks: "",
 };
 
-function StatusBadge({ status }: { status: string }) {
-  if (status === "Yet to Start") {
-    return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#FFF0F1] text-[#FB3748] text-[12px] font-medium leading-tight shrink-0">Yet to Start</span>;
-  }
-  if (status === "In-progress") {
-    return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#FFF4ED] text-[#E19242] text-[12px] font-medium leading-tight shrink-0">In-progress</span>;
-  }
-  if (status === "Completed") {
-    return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#E8F8F0] text-[#1CB061] text-[12px] font-medium leading-tight shrink-0">Completed</span>;
-  }
-  return null;
-}
+
 
 function getDateString() {
   const today = new Date();
@@ -173,38 +170,116 @@ function createSlittingRow(defaultRmId: string): SlittingForm {
 export default function OperatorSlittingDetailPage({ params }: DetailPageProps) {
   const { detailpage } = use(params);
   const orderId = detailpage.toUpperCase();
-  const { store, mounted, addFlowRow } = useStore();
-  const workOrderFlowData = store.flowDataMap[orderId];
+
+  const [loading, setLoading] = useState(true);
+  const [woData, setWoData] = useState<any>(null);
+
+  const fetchWorkOrder = async () => {
+    try {
+      const data = await workOrderService.getByWorkOrderNo(orderId);
+      if (data) {
+        setWoData(data);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchWorkOrder();
+  }, [orderId]);
+
+  const workOrderFlowData = useMemo(() => {
+    if (!woData) return null;
+    return {
+      overview: {
+        wordCount: 1,
+        micron: woData.micron ? `${woData.micron}µ` : "-",
+        width: woData.width_m ? `${woData.width_m}m` : (woData.width ? `${woData.width}mm` : "-"),
+        quantity: woData.quantity ? `${woData.quantity}kg` : "-",
+        date: new Date(woData.created_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
+      },
+      rawMaterialRows: (woData.work_order_materials || []).map((rm: any) => {
+        const inv = rm.inventory || {};
+        const actual = rm.quantity_kg ?? 0;
+        return {
+          rollNo: inv.raw_material_code || inv.roll_no || "-",
+          raw_material_id: inv.id || rm.raw_material_id, // we need this for submission
+          netWeight: inv.net_weight_kg != null ? `${inv.net_weight_kg}kgs` : "-",
+          grossWeight: inv.gross_weight_kg != null ? `${inv.gross_weight_kg}kgs` : "-",
+          thickness: inv.micron || "-",
+          width: inv.width_m || "-",
+          temperature: inv.temperature_c != null ? `${inv.temperature_c}°C` : "-",
+          actualWeight: actual ? `${actual}kgs` : "-",
+          damagedWeight: "0",
+          usedWeight: actual ? `${actual}kgs` : "-",
+          wastageWeight: "0",
+          supplier: inv.supplier || "-",
+          stage: "Raw Material",
+          status: rm.status || "Completed",
+        };
+      }),
+      metallisationRows: (woData.metallisation || []).map((met: any) => ({
+        coilNo: met.metallisation_no || met.id,
+        metallisation_id: met.id,
+        rmId: met.raw_material_id || "-",
+        machineNo: met.machine_no || "-",
+        weight: met.weight_kg || "0",
+        opticalDensity: met.optical_density || "0",
+        resistance: met.resistance_ohms || "0",
+        timestamp: new Date(met.created_at).toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }),
+        nextStage: "Slitting",
+        status: met.status || "Completed",
+      })),
+      slittingRows: (woData.slitting || []).map((slit: any) => ({
+        productNo: slit.product_no || slit.slitting_no || slit.id,
+        rmId: slit.metallisation_id || "-",
+        weight: slit.weight_kg || "0",
+        thickness: slit.thickness_micron || "-",
+        grade: slit.grade || "-",
+        timestampAdded: new Date(slit.created_at).toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }),
+        stage: "Ready for Winding",
+        status: slit.status || "Completed",
+      })),
+    };
+  }, [woData]);
+
+  const workflowProgress = {
+    stage: woData?.stage || "Raw Material",
+    status: woData?.status || "Yet to Start",
+  };
 
   const [activeTab, setActiveTab] = useState<TabType>("Raw Material");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalStep, setModalStep] = useState<ModalStep>(1);
   const [showValidationHint, setShowValidationHint] = useState(false);
   const [slittingReviewRemarks, setSlittingReviewRemarks] = useState("");
-  const workflowProgress = computeWorkflowProgress(workOrderFlowData);
 
-  const availableRollIds = Array.from(new Set(workOrderFlowData?.rawMaterialRows
-    .map((row) => row.rollNo) ?? []));
+  const availableRollIds: string[] = Array.from(new Set(workOrderFlowData?.rawMaterialRows
+    .map((row: any) => row.rollNo) ?? [])) as string[];
   const rmLookup = useMemo(() => {
-    const map = new Map<string, { weight: string; thickness: string; supplier: string }>();
+    const map = new Map<string, { weight: string; thickness: string; supplier: string, raw_material_id: string }>();
     for (const row of workOrderFlowData?.rawMaterialRows ?? []) {
-      map.set(row.rollNo, { weight: row.weight, thickness: row.thickness, supplier: row.supplier });
+      map.set(row.rollNo, { weight: row.weight, thickness: row.thickness, supplier: row.supplier, raw_material_id: row.raw_material_id });
     }
     return map;
   }, [workOrderFlowData]);
 
-  const availableCoilIds = Array.from(new Set(workOrderFlowData?.metallisationRows
-    .map((row) => row.coilNo) ?? []));
+  const availableCoilIds: string[] = Array.from(new Set(workOrderFlowData?.metallisationRows
+    .map((row: any) => row.coilNo) ?? [])) as string[];
   const coilLookup = useMemo(() => {
-    const map = new Map<string, { weight: string; opticalDensity: string; resistance: string }>();
+    const map = new Map<string, { weight: string; opticalDensity: string; resistance: string, metallisation_id: string }>();
     for (const row of workOrderFlowData?.metallisationRows ?? []) {
-      map.set(row.coilNo, { weight: row.weight, opticalDensity: row.opticalDensity, resistance: row.resistance });
+      map.set(row.coilNo, { weight: row.weight, opticalDensity: row.opticalDensity, resistance: row.resistance, metallisation_id: row.metallisation_id });
     }
     return map;
   }, [workOrderFlowData]);
 
   const [metallisationRowsInput, setMetallisationRowsInput] = useState<MetallisationForm[]>([createMetallisationRow("")]);
   const [slittingRowsInput, setSlittingRowsInput] = useState<SlittingForm[]>([createSlittingRow("")]);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [qrData, setQrData] = useState<QRModalData | null>(null);
 
   const currentConfig = useMemo(() => {
@@ -229,14 +304,17 @@ export default function OperatorSlittingDetailPage({ params }: DetailPageProps) 
   const {
     processedData,
     sortConfig,
-    handleSort,
+    handleSort: handleSortRaw,
     filters,
     handleFilterChange,
     dateRange,
     setDateRange,
   } = useTableControls({ data: currentData, config: currentConfig });
 
-  if (!mounted || !workOrderFlowData) return null;
+  const handleSort = handleSortRaw as (key: string | number | symbol) => void;
+
+  if (loading) return <div className="p-6 text-center text-[#5C5C5C]">Loading details...</div>;
+  if (!workOrderFlowData) return <div className="p-6 text-center text-[#5C5C5C]">Work Order not found</div>;
 
   const resetModalState = () => {
     setModalStep(1);
@@ -316,50 +394,76 @@ export default function OperatorSlittingDetailPage({ params }: DetailPageProps) 
     setSlittingRowsInput((prev) => prev.filter((_, idx) => idx !== index));
   };
 
-  const submitCurrentStage = () => {
+  const submitCurrentStage = async () => {
     if (!isCurrentStepOneValid || !isStepTwoValid) {
       setShowValidationHint(true);
       return;
     }
 
-    const date = getDateString();
-    const dateTime = getDateTimeString();
-
-    if (activeTab === "Metallisation") {
-      const payload = metallisationRowsInput;
-      payload.forEach((item) => {
-        addFlowRow(orderId, "Metallisation", {
-          coilNo: item.coilNo || generateId("MC"),
-          rmId: item.rmId || "-",
-          machineNo: item.machineNo || "M-01",
-          weight: `${item.weight || "0"}kgs`,
-          opticalDensity: item.opticalDensity,
-          resistance: `${item.resistance} Ohms`,
-          timestamp: dateTime,
-          nextStage: item.nextStage || "SLITTING",
-          status: "In-progress",
+    try {
+      const user = await authService.getCurrentProfile();
+      
+      if (activeTab === "Metallisation") {
+        const payload = metallisationRowsInput;
+        for (const item of payload) {
+          const rmData = rmLookup.get(item.rmId);
+          await productionStageService.addMetallisation({
+            metallisation_no: item.coilNo,
+            work_order_id: woData.id,
+            raw_material_id: rmData?.raw_material_id || "",
+            machine_no: item.machineNo,
+            weight_kg: parseFloat(item.weight) || 0,
+            optical_density: parseFloat(item.opticalDensity) || 0,
+            resistance_ohms: parseFloat(item.resistance) || 0,
+            operator_id: user?.id,
+          });
+        }
+        await workOrderService.update(woData.id, {
+          stage: "Slitting",
+          status: "In-progress"
         });
-      });
-    }
+      }
 
-    if (activeTab === "Slitting") {
-      const payload = slittingRowsInput;
-      payload.forEach((item) => {
-        addFlowRow(orderId, "Slitting", {
-          productNo: item.productNo || generateId("PM"),
-          rmId: item.associatedRmId || "-",
-          weight: `${item.weight || "0"}kgs`,
-          thickness: item.micron,
-          grade: item.grade,
-          remarks: slittingReviewRemarks,
-          timestampAdded: date,
+      if (activeTab === "Slitting") {
+        const payload = slittingRowsInput;
+        for (const item of payload) {
+          const coilData = coilLookup.get(item.associatedRmId);
+          const slittingRecord = await productionStageService.addSlitting({
+            slitting_no: generateId("SLIT"),
+            work_order_id: woData.id,
+            metallisation_id: coilData?.metallisation_id || undefined,
+            product_no: item.productNo,
+            weight_kg: parseFloat(item.weight) || 0,
+            thickness_micron: parseFloat(item.micron) || 0,
+            width_m: parseFloat(item.width) || 0,
+            grade: item.grade,
+            remarks: slittingReviewRemarks,
+            operator_id: user?.id,
+          });
+
+          await stockService.create({
+            stock_no: generateId("STK"),
+            slitting_id: (slittingRecord as any).id,
+            work_order_id: woData.id,
+            weight_kg: parseFloat(item.weight) || 0,
+            width_m: parseFloat(item.width) || 0,
+            micron: parseFloat(item.micron) || 0,
+            grade: item.grade,
+            stage: "Ready for Winding"
+          });
+        }
+        await workOrderService.update(woData.id, {
           stage: "Ready for Winding",
-          status: "Completed",
+          status: "In-progress"
         });
-      });
-    }
+      }
 
-    setModalStep(3);
+      setModalStep(3);
+      fetchWorkOrder();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to save data");
+    }
   };
 
   const overviewFields = [
@@ -459,7 +563,7 @@ export default function OperatorSlittingDetailPage({ params }: DetailPageProps) 
                     className="h-[42px] rounded-[8px] border border-[#DDE1E8] pl-3 text-[14px]"
                   />
                   <datalist id={`rm-list-${idx}`}>
-                    {availableRollIds.map((rollId) => (
+                    {availableRollIds.map((rollId: string) => (
                       <option key={rollId} value={rollId}>{rollId}</option>
                     ))}
                   </datalist>
@@ -517,32 +621,44 @@ export default function OperatorSlittingDetailPage({ params }: DetailPageProps) 
               </div>
               <div className="flex flex-col gap-2">
                 <label className="text-[13px] font-medium text-[#171717]">Coil ID (from Metallisation)</label>
-                <ScannerInput 
-                  value={row.associatedRmId} 
-                  onChange={(e) => {
-                    const id = e.target.value;
-                    const coil = coilLookup.get(id);
-                    updateSlittingRow(idx, {
-                      associatedRmId: id,
-                      weight: coil?.weight ?? row.weight,
-                    });
-                  }}
-                  onScanData={(data) => {
-                    const coil = coilLookup.get(data);
-                    updateSlittingRow(idx, {
-                      associatedRmId: data,
-                      weight: coil?.weight ?? row.weight,
-                    });
-                  }}
-                  list={`coil-list-${idx}`}
-                  placeholder="Scan Coil ID..."
-                  className="h-[42px] rounded-[8px] border border-[#DDE1E8] pl-3 text-[14px]"
-                />
-                <datalist id={`coil-list-${idx}`}>
-                  {availableCoilIds.map((coilId) => (
-                    <option key={coilId} value={coilId}>{coilId}</option>
-                  ))}
-                </datalist>
+                <div className="relative flex flex-col gap-1">
+                  <ScannerInput 
+                    isSelect
+                    scanDisabled={!row.associatedRmId}
+                    value={row.associatedRmId} 
+                    onChange={(e) => {
+                      const id = e.target.value;
+                      const coil = coilLookup.get(id);
+                      updateSlittingRow(idx, {
+                        associatedRmId: id,
+                        weight: coil?.weight ?? row.weight,
+                        isVerified: true, // Marked as true for prototyping purpose;
+                      });
+                    }}
+                    onScanData={(data) => {
+                      const cleanData = data.trim();
+                      if (cleanData === row.associatedRmId) {
+                        updateSlittingRow(idx, { isVerified: true });
+                      } else {
+                        alert(`Scanned barcode (${cleanData}) does not match selected Coil ID (${row.associatedRmId})`);
+                      }
+                    }}
+                    className={`h-[42px] rounded-[8px] border pl-3 text-[14px] ${row.isVerified ? "border-[#12B76A] bg-[#ECFDF3]" : "border-[#DDE1E8]"}`}
+                  >
+                    <option value="" disabled>Select Coil ID...</option>
+                    {availableCoilIds.map((coilId: string) => (
+                      <option key={coilId} value={coilId}>{coilId}</option>
+                    ))}
+                  </ScannerInput>
+                  {row.associatedRmId && !row.isVerified && (
+                    <span className="text-[11px] text-[#F79009]">Scan barcode to verify</span>
+                  )}
+                  {row.isVerified && (
+                    <span className="text-[11px] text-[#12B76A] font-medium flex items-center gap-1">
+                      <Check className="w-3 h-3" /> Verified
+                    </span>
+                  )}
+                </div>
               </div>
               <div className="flex flex-col gap-2">
                 <label className="text-[13px] font-medium text-[#171717]">Micron</label>
@@ -628,6 +744,61 @@ export default function OperatorSlittingDetailPage({ params }: DetailPageProps) 
                       <input value={slittingReviewRemarks} onChange={(e) => setSlittingReviewRemarks(e.target.value)} placeholder="Enter review remarks" className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]" />
                     </div>
                   )}
+                  <div className="rounded-[12px] border border-[#DDE1E8] bg-white p-4 flex flex-col gap-3">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[13px] font-medium text-[#171717]">Attach Image</label>
+                      <div className="flex items-center gap-2">
+                        <div className="relative">
+                          <input 
+                            type="file" 
+                            accept="image/*" 
+                            capture="environment"
+                            id="cameraInput"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                const reader = new FileReader();
+                                reader.onload = (ev) => setImagePreview(ev.target?.result as string);
+                                reader.readAsDataURL(file);
+                              }
+                            }} 
+                          />
+                          <label 
+                            htmlFor="cameraInput"
+                            className="flex items-center justify-center gap-2 bg-[#F5F7FA] border border-[#DDE1E8] text-[#5C5C5C] text-[13px] font-medium rounded-[6px] h-[36px] px-3 hover:bg-[#EBEBEB] transition-colors cursor-pointer"
+                          >
+                            {imagePreview ? "Retake Photo" : "Take Photo"}
+                          </label>
+                        </div>
+                        <div className="relative">
+                          <input 
+                            type="file" 
+                            accept="image/*" 
+                            id="uploadInput"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                const reader = new FileReader();
+                                reader.onload = (ev) => setImagePreview(ev.target?.result as string);
+                                reader.readAsDataURL(file);
+                              }
+                            }} 
+                          />
+                          <label 
+                            htmlFor="uploadInput"
+                            className="flex items-center justify-center gap-2 bg-[#F5F7FA] border border-[#DDE1E8] text-[#5C5C5C] text-[13px] font-medium rounded-[6px] h-[36px] px-3 hover:bg-[#EBEBEB] transition-colors cursor-pointer"
+                          >
+                            Upload
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                    {imagePreview && (
+                      <img src={imagePreview} alt="Preview" className="max-h-[200px] w-auto rounded-[8px] border border-[#DDE1E8] object-cover" />
+                    )}
+                  </div>
                 </div>
               )}
               {modalStep === 3 && (
@@ -763,14 +934,14 @@ export default function OperatorSlittingDetailPage({ params }: DetailPageProps) 
             }}
           />
 
-          {activeTab !== "Raw Material" && (
+          {activeTab !== "Raw Material" && activeTab !== "Metallisation" && (
             <button
               onClick={openModal}
               className="flex items-center justify-center gap-2 bg-[#00B6E2] text-white text-[14px] font-medium rounded-[6px] h-[40px] px-[18px] hover:bg-[#0092b5] transition-colors shrink-0 w-full sm:w-auto"
             >
               <Plus className="w-4 h-4 shrink-0" strokeWidth={2.5} />
               <span className="leading-tight truncate">
-                {activeTab === "Metallisation" ? "Add Metallisation" : "Add Slitting"}
+                Add Slitting
               </span>
             </button>
           )}
@@ -779,7 +950,7 @@ export default function OperatorSlittingDetailPage({ params }: DetailPageProps) 
         {/* Scrollable tab bar on mobile */}
         <div className="overflow-x-auto -mx-4 md:mx-0 px-4 md:px-0">
           <div className="flex items-center gap-2 border-b border-[#EBEBEB] pb-4 min-w-max">
-            {["Raw Material", "Metallisation", "Slitting"].map((tab) => (
+            {(["Raw Material", "Metallisation", "Slitting"] as TabType[]).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab as TabType)}

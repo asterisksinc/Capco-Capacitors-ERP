@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { Search, X } from "lucide-react";
-import { useStore } from "@/hooks/useStore";
+import { materialRequestService } from "@/src/services/materialRequestService";
 import type { TableConfig } from "@/hooks/useTableControls";
 import { useTableControls } from "@/hooks/useTableControls";
 import { SortableHeader } from "@/components/table/SortableHeader";
@@ -33,24 +33,38 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export default function PersonAMaterialRequestsPage() {
-  const { store, mounted, issueMaterialRequest, cancelMaterialRequest } = useStore();
+  const [data, setData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [isIssueModalOpen, setIsIssueModalOpen] = useState(false);
   const [issueReqId, setIssueReqId] = useState("");
-  const [issueItems, setIssueItems] = useState<MaterialRequestItem[]>([]);
+  const [issueItems, setIssueItems] = useState<any[]>([]);
 
-  const data = useMemo(() => {
-    return store.materialRequests.map((req) => {
-      const first = req.items[0];
-      return {
-        ...req,
-        weightInfo: first?.weight ?? "-",
-        grade: first?.grade ?? "-",
-        requestedQty: first?.requestedQty ?? "-",
-      };
-    });
-  }, [store.materialRequests]);
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const rows = await materialRequestService.list();
+      setData(rows.map((row: any) => ({
+        id: row.request_no || row.id,
+        originalId: row.id,
+        weightInfo: row.stock?.weight_kg ? String(row.stock.weight_kg) : "-",
+        grade: row.stock?.grade || row.grade || "-",
+        requestedQty: row.requested_quantity ? String(row.requested_quantity) : "-",
+        status: row.status || "Pending",
+        createdAt: new Date(row.created_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
+        issuedAt: row.updated_at ? new Date(row.updated_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "-",
+      })));
+    } catch (err) {
+      console.error("Failed to load material requests", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
 
   const {
     processedData,
@@ -64,16 +78,14 @@ export default function PersonAMaterialRequestsPage() {
 
   const handleSort = handleSortRaw as (key: string | number | symbol) => void;
 
-  const pendingCount = useMemo(() => store.materialRequests.filter((r) => r.status === "Pending").length, [store.materialRequests]);
-
   const filteredData = processedData.filter((row) => {
     if (searchQuery && !row.id.toLowerCase().includes(searchQuery.toLowerCase())) return false;
     return true;
   });
 
   const openIssueModal = (req: any) => {
-    setIssueReqId(req.id);
-    setIssueItems(req.items.map((item: MaterialRequestItem) => ({ ...item })));
+    setIssueReqId(req.originalId);
+    setIssueItems([{ weight: req.weightInfo, grade: req.grade, requestedQty: req.requestedQty, issuedQty: req.requestedQty }]);
     setIsIssueModalOpen(true);
   };
 
@@ -81,12 +93,26 @@ export default function PersonAMaterialRequestsPage() {
     setIssueItems(issueItems.map((item, i) => i === idx ? { ...item, issuedQty: val } : item));
   };
 
-  const submitIssue = () => {
-    issueMaterialRequest(issueReqId, issueItems);
-    setIsIssueModalOpen(false);
+  const submitIssue = async () => {
+    try {
+      await materialRequestService.issue(issueReqId, "Person A", Number(issueItems[0].issuedQty));
+      setIsIssueModalOpen(false);
+      loadData();
+    } catch (err) {
+      console.error("Failed to issue material", err);
+    }
   };
 
-  if (!mounted) return null;
+  const cancelMaterialRequest = async (id: string) => {
+    try {
+      await materialRequestService.cancel(id, "Person A");
+      loadData();
+    } catch (err) {
+      console.error("Failed to cancel material", err);
+    }
+  };
+
+  if (loading) return <div className="p-6 text-center text-[#5C5C5C]">Loading material requests...</div>;
 
   return (
     <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-white flex flex-col overflow-x-hidden">
@@ -168,7 +194,7 @@ export default function PersonAMaterialRequestsPage() {
                         {row.status === "Pending" && (
                           <>
                             <button onClick={() => openIssueModal(row)} className="text-[11px] bg-[#00B6E2] text-white px-2 py-1 rounded-[4px] hover:bg-[#0092b5]">Issue</button>
-                            <button onClick={() => cancelMaterialRequest(row.id)} className="text-[11px] bg-[#FB3748] text-white px-2 py-1 rounded-[4px] hover:bg-[#d92d20]">Reject</button>
+                            <button onClick={() => cancelMaterialRequest(row.originalId)} className="text-[11px] bg-[#FB3748] text-white px-2 py-1 rounded-[4px] hover:bg-[#d92d20]">Reject</button>
                           </>
                         )}
                         {row.status !== "Pending" && <span className="text-[12px] text-[#A1A1AA]">-</span>}

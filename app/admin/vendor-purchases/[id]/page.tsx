@@ -1,26 +1,57 @@
 "use client";
 import { MobileHeader } from "@/components/MobileHeader";
 
-import { useState } from "react";
-import { ArrowLeft, Download, FileText, Menu, Bell, User } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ArrowLeft, Download, FileText, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useMobileMenu } from "@/components/MobileMenuContext";
-import { useStore } from "@/hooks/useStore";
 import { InvoiceViewModal } from "@/components/admin/InvoiceViewModal";
 import { PaymentReceiptModal } from "@/components/admin/PaymentReceiptModal";
 import type { PaymentHistoryEntry } from "@/lib/data";
+import { vendorPurchaseService } from "@/src/services/vendorPurchaseService";
 
 export default function VendorPurchaseDetailPage() {
-  const { setIsMobileMenuOpen } = useMobileMenu();
   const pathname = usePathname();
-  const id = pathname.split("/").pop();
-  const { vendorPurchases } = useStore();
-
+  const id = pathname.split("/").pop() || "";
+  
+  const [loading, setLoading] = useState(true);
+  const [purchase, setPurchase] = useState<any>(null);
   const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
   const [selectedReceipt, setSelectedReceipt] = useState<(PaymentHistoryEntry & { entryBalance: number; previousPaymentsTotal: number }) | null>(null);
 
-  const purchase = vendorPurchases.find(p => p.id === id);
+  useEffect(() => {
+    async function fetchPurchaseDetails() {
+      try {
+        const data = await vendorPurchaseService.getById(id) as any;
+        if (data) {
+          setPurchase({
+            id: data.purchase_no || data.id,
+            vendorName: data.vendor_name || "-",
+            purchaseDate: data.purchase_date ? new Date(data.purchase_date).toLocaleDateString("en-GB") : "-",
+            direction: data.direction || "Credit",
+            grandTotal: String(data.order_amount || 0),
+            amountPaid: String(data.paid_amount || 0),
+            status: data.status || "Due",
+            // For now, if there is no payment history in the DB, default to empty
+            paymentHistory: data.paymentHistory || [] 
+          });
+        }
+      } catch (err) {
+        console.error("Failed to load purchase:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchPurchaseDetails();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-white flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-[#00B6E2]" />
+      </div>
+    );
+  }
 
   if (!purchase) {
     return (
@@ -137,12 +168,7 @@ export default function VendorPurchaseDetailPage() {
                     </td>
                   </tr>
                 ) : (
-                  purchase.paymentHistory.map((ph, idx, arr) => {
-                    // Calculate running balance for this row
-                    // History is usually stored newest-first in our implementation, so we need to be careful
-                    // Let's assume it's chronological or we compute it on the fly.
-                    // Actually, in `useStore` we did `paymentHistory: [newHistoryEntry, ...(purchase.paymentHistory || [])]` 
-                    // which means it's newest first. Let's reverse it for the table so it's oldest first (chronological).
+                  purchase.paymentHistory.map((ph: any, idx: number, arr: any[]) => {
                     const chronHistory = [...arr].reverse();
                     
                     let runningTotalPaid = 0;
@@ -158,8 +184,6 @@ export default function VendorPurchaseDetailPage() {
                       };
                     });
 
-                    // But we map over `arr` to maintain index tracking or map over `tableRows` reversed back.
-                    // Let's just use `tableRows` sorted newest first.
                     return tableRows.reverse().map((row, i) => (
                       <tr key={row.id} className="hover:bg-[#F9FAFB] transition-colors">
                         <td className="px-6 py-4 text-[14px] font-medium text-[#171717]">{row.id}</td>

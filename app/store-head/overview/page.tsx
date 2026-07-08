@@ -1,9 +1,12 @@
 "use client";
 
-import { useStore } from "@/hooks/useStore";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Layers, ClipboardList, Clock, Package } from "lucide-react";
 import { MobileHeader } from "@/components/MobileHeader";
+import { dashboardService } from "@/src/services/dashboardService";
+import { workOrderService } from "@/src/services/workOrderService";
+import { inventoryService } from "@/src/services/inventoryService";
 
 function StatusBadge({ status }: { status: string }) {
   if (status === "Yet to Start") {
@@ -19,28 +22,47 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export default function StoreHeadOverviewPage() {
-  const { store, mounted, workOrders } = useStore();
+  const [stats, setStats] = useState<{
+    inventoryInStock: number;
+    totalWorkOrders: number;
+    pendingAssignments: number;
+    rawMaterialsBeingUsed: number;
+  } | null>(null);
 
-  if (!mounted) return null;
+  const [recentWOs, setRecentWOs] = useState<any[]>([]);
+  const [lowStock, setLowStock] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const inventory = store.inventoryItems;
-  const inStock = inventory.filter((r) => r.status === "In Inventory").length;
-  const beingUsed = inventory.filter((r) => r.status === "Being Used").length;
-  const usedUp = inventory.filter((r) => r.status === "Used Completely").length;
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const [dashboardStats, wos, inventory] = await Promise.all([
+          dashboardService.storeHead(),
+          workOrderService.list({ limit: 5 }),
+          inventoryService.list({ limit: 5, filters: { status: "In Inventory" } }),
+        ]);
 
-  const totalWO = workOrders.length;
-  const woInProgress = workOrders.filter((w) => w.status === "In-progress").length;
-  const woCompleted = workOrders.filter((w) => w.status === "Completed").length;
-  const woYetToStart = workOrders.filter((w) => w.status === "Yet to Start").length;
+        setStats(dashboardStats);
+        setRecentWOs(wos);
+        setLowStock(inventory);
+      } catch (err) {
+        console.error("Failed to load store head dashboard", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
 
-  const recentWOs = workOrders.slice(0, 5);
-  const lowStock = inventory.filter((r) => r.status === "In Inventory").slice(0, 5);
+  if (loading || !stats) {
+    return <div className="p-6 text-center text-[#5C5C5C]">Loading overview...</div>;
+  }
 
   const kpiStats = [
-    { label: "Inventory In Stock", value: String(inStock), icon: Package, valClass: "text-[#1CB061]", subtext: `${beingUsed} being used · ${usedUp} depleted` },
-    { label: "Total Work Orders", value: String(totalWO), icon: Layers, valClass: "text-[#171717]", subtext: `${woInProgress} in-progress · ${woCompleted} completed` },
-    { label: "Pending Assignment", value: String(woYetToStart), icon: Clock, valClass: "text-[#E19242]", subtext: "Work orders yet to start" },
-    { label: "RM Being Used", value: String(beingUsed), icon: ClipboardList, valClass: "text-[#00B6E2]", subtext: "Raw materials in process" },
+    { label: "Inventory In Stock", value: String(stats.inventoryInStock), icon: Package, valClass: "text-[#1CB061]", subtext: "Available" },
+    { label: "Total Work Orders", value: String(stats.totalWorkOrders), icon: Layers, valClass: "text-[#171717]", subtext: "All time" },
+    { label: "Pending Assignment", value: String(stats.pendingAssignments), icon: Clock, valClass: "text-[#E19242]", subtext: "Work orders yet to start" },
+    { label: "RM Being Used", value: String(stats.rawMaterialsBeingUsed), icon: ClipboardList, valClass: "text-[#00B6E2]", subtext: "Raw materials in process" },
   ];
 
   return (
@@ -113,7 +135,7 @@ export default function StoreHeadOverviewPage() {
                 {recentWOs.map((wo) => (
                   <tr key={wo.id}>
                     <td className="py-2.5 text-[13px] text-[#00B6E2] font-medium">
-                      <Link href={`/store-head/workorder/${wo.id}`} className="hover:underline">{wo.id}</Link>
+                      <Link href={`/store-head/workorder/${wo.id || wo.work_order_no}`} className="hover:underline">{wo.work_order_no}</Link>
                     </td>
                     <td className="py-2.5 text-[13px] text-[#5C5C5C]">{wo.micron}</td>
                     <td className="py-2.5"><StatusBadge status={wo.status} /></td>
@@ -142,10 +164,10 @@ export default function StoreHeadOverviewPage() {
               </thead>
               <tbody className="divide-y divide-[#F0F0F0]">
                 {lowStock.map((item) => (
-                  <tr key={item.rawMaterialId}>
-                    <td className="py-2.5 text-[13px] text-[#00B6E2] font-medium">{item.rawMaterialId}</td>
+                  <tr key={item.id}>
+                    <td className="py-2.5 text-[13px] text-[#00B6E2] font-medium">{item.raw_material_code}</td>
                     <td className="py-2.5 text-[13px] text-[#5C5C5C]">{item.supplier}</td>
-                    <td className="py-2.5 text-[13px] text-[#5C5C5C]">{item.weight}</td>
+                    <td className="py-2.5 text-[13px] text-[#5C5C5C]">{item.net_weight_kg} kgs</td>
                   </tr>
                 ))}
               </tbody>

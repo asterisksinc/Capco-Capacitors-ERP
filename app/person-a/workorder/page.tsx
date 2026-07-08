@@ -1,10 +1,12 @@
 "use client";
 
-import { Search, Scan, X, QrCode } from "lucide-react";
+import { WO_STATUS_OPTIONS, WO_STAGE_OPTIONS } from "@/lib/constants";
+import { StatusBadge } from "@/components/StatusBadge";
+import { Search, QrCode } from "lucide-react";
 import Link from "next/link";
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Layers, Zap, Scissors, CheckCircle } from "lucide-react";
-import { useStore, type ComputedWorkOrderSummary } from "@/hooks/useStore";
+import { workOrderService } from "@/src/services/workOrderService";
 import type { TableConfig } from "@/hooks/useTableControls";
 import { useTableControls } from "@/hooks/useTableControls";
 import { SortableHeader } from "@/components/table/SortableHeader";
@@ -15,8 +17,8 @@ import { exportToExcel } from "@/lib/exportExcel";
 import { MobileHeader } from "@/components/MobileHeader";
 import { QRCodeModal, type QRModalData } from "@/components/QRCodeModal";
 
-const WO_STATUS_OPTIONS = ["Yet to Start", "In-progress", "Completed"];
-const WO_STAGE_OPTIONS = ["Raw Material", "Metallisation", "Slitting"];
+
+
 
 const statusFilter: EnumFilter = { label: "Status", key: "status", options: WO_STATUS_OPTIONS };
 const stageFilter: EnumFilter = { label: "Stage", key: "stage", options: WO_STAGE_OPTIONS };
@@ -35,47 +37,67 @@ const filterConfig: FilterConfig = {
   numberRanges: numberFilters,
 };
 
-const workOrderConfig: TableConfig<ComputedWorkOrderSummary> = {
+const workOrderConfig: TableConfig<any> = {
   columns: [
     { key: "id", label: "Work Orders ID", type: "text", sortable: true },
     { key: "micron", label: "Micron", type: "text", sortable: true },
     { key: "width", label: "Width", type: "text", sortable: true },
     { key: "qty", label: "Quantity", type: "number", sortable: true },
     { key: "stage", label: "Stage", type: "text", sortable: true },
-    { key: "date", label: "Date", type: "date", sortable: true },
-    { key: "status", label: "Status", type: "enum", sortable: false, filter: "dropdown", options: ["Yet to Start", "In-progress", "Completed"] },
+    { key: "date", label: "Timestamp", type: "date", sortable: true },
+    { key: "status", label: "Status", type: "enum", sortable: false, filter: "dropdown", options: WO_STATUS_OPTIONS },
     { key: "qr", label: "QR", type: "text", sortable: false },
     { key: "options", label: "Action", type: "text", sortable: false }
   ]
 };
 
-function StatusBadge({ status }: { status: string }) {
-  if (status === "Yet to Start") {
-    return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#FFF0F1] text-[#FB3748] text-[12px] font-medium leading-tight">Yet to Start</span>;
-  }
-  if (status === "In-progress") {
-    return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#FFF4ED] text-[#E19242] text-[12px] font-medium leading-tight">In-progress</span>;
-  }
-  if (status === "Completed") {
-    return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#E8F8F0] text-[#1CB061] text-[12px] font-medium leading-tight">Completed</span>;
-  }
-  return null;
-}
+
 
 export default function OperatorWorkOrderPage() {
-  const { workOrders: rows, mounted, deleteWorkOrder } = useStore();
+  const [workOrders, setWorkOrders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [qrData, setQrData] = useState<QRModalData | null>(null);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const data = await workOrderService.list();
+        setWorkOrders(data);
+      } catch (err) {
+        console.error("Failed to load work orders", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
+
+  const data = useMemo(() => {
+    return workOrders.map((wo) => ({
+      id: wo.work_order_no || wo.id,
+      originalId: wo.id,
+      micron: wo.micron ? `${wo.micron}µ` : "-",
+      width: wo.width_m ? `${wo.width_m}m` : (wo.width ? `${wo.width}mm` : "-"),
+      qty: wo.quantity ? `${wo.quantity}kg` : "-",
+      date: new Date(wo.created_at).toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: true }),
+      status: wo.status,
+      stage: wo.stage,
+      actionHref: `/person-a/workorder/${wo.id}`,
+    }));
+  }, [workOrders]);
 
   const {
     processedData,
     sortConfig,
-    handleSort,
+    handleSort: handleSortRaw,
     filters,
     handleFilterChange,
     dateRange,
     setDateRange
-  } = useTableControls({ data: rows, config: workOrderConfig });
+  } = useTableControls({ data, config: workOrderConfig });
+
+  const handleSort = handleSortRaw as (key: string | number | symbol) => void;
 
   const [tableFilters, setTableFilters] = useState<FilterState>(() => {
     const state: FilterState = {};
@@ -122,12 +144,12 @@ export default function OperatorWorkOrderPage() {
     return true;
   });
 
-  const totalWorkOrders = rows.length;
-  const metallisationCount = rows.filter((row) => row.stage.toLowerCase().includes("metallisation")).length;
-  const slittingCount = rows.filter((row) => row.stage.toLowerCase().includes("slitting")).length;
-  const completedCount = rows.filter((row) => row.status === "Completed").length;
-  const inProgressCount = rows.filter((row) => row.status === "In-progress").length;
-  const yetToStartCount = rows.filter((row) => row.status === "Yet to Start").length;
+  const totalWorkOrders = workOrders.length;
+  const metallisationCount = workOrders.filter((row) => row.stage?.toLowerCase().includes("metallisation")).length;
+  const slittingCount = workOrders.filter((row) => row.stage?.toLowerCase().includes("slitting")).length;
+  const completedCount = workOrders.filter((row) => row.status === "Completed").length;
+  const inProgressCount = workOrders.filter((row) => row.status === "In-progress").length;
+  const yetToStartCount = workOrders.filter((row) => row.status === "Yet to Start").length;
 
   const kpiStats = [
     { label: "Total Work Orders", value: String(totalWorkOrders), icon: Layers, valClass: "text-[#171717]", subtext: `Yet ${yetToStartCount} | In-progress ${inProgressCount} | Completed ${completedCount}` },
@@ -136,7 +158,7 @@ export default function OperatorWorkOrderPage() {
     { label: "Completed", value: String(completedCount), icon: CheckCircle, valClass: "text-[#171717]", subtext: "Ready for next stage" },
   ];
 
-  if (!mounted) return null;
+  if (loading) return <div className="p-6 text-center text-[#5C5C5C]">Loading work orders...</div>;
 
   return (
     <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-white flex flex-col relative overflow-x-hidden">
@@ -272,9 +294,10 @@ export default function OperatorWorkOrderPage() {
                         viewHref={`/person-a/workorder/${row.id}`}
                         status={row.status}
                         onEdit={() => {}}
-                        onDelete={() => {
+                        onDelete={async () => {
                           if (confirm(`Are you sure you want to delete ${row.id}?`)) {
-                            deleteWorkOrder(row.id);
+                            await workOrderService.remove(row.originalId);
+                            setWorkOrders(workOrders.filter(w => w.id !== row.originalId));
                           }
                         }}
                       />

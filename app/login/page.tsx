@@ -3,12 +3,14 @@
 import Image from "next/image";
 import { ArrowRight, CheckCircle2, Clock3, Edit3, Eye, EyeOff, LockKeyhole, Phone, ShieldCheck } from "lucide-react";
 import { FormEvent, KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
+import { authService } from "@/src/services/authService";
+// import { getRouteForRole } from "@/lib/roleRouting";
 
 type AuthMode = "otp" | "password";
 type OtpStage = "phone" | "verify";
 
-const tokenKey = "__capco_supabase_access_token";
-const dashboardPath = "/productionhead/workorder";
+// const tokenKey = "__capco_supabase_access_token";
+// const dashboardPath = "/productionhead/workorder";
 
 function onlyDigits(value: string) {
   return value.replace(/\D/g, "");
@@ -51,25 +53,32 @@ export default function LoginPage() {
     return () => window.clearTimeout(timer);
   }, [resendSeconds, stage]);
 
-  function persistSession(session?: { access_token?: string }) {
-    if (session?.access_token) {
-      window.localStorage.setItem(tokenKey, session.access_token);
-    }
-    window.location.href = dashboardPath;
-  }
+  // async function persistSession(session?: { access_token?: string }) {
+    // if (session?.access_token) {
+    //   window.localStorage.setItem(tokenKey, session.access_token);
+    // }
+    // try {
+    //   const profile = await authService.getCurrentProfile();
+    //   const destination = getRouteForRole(profile?.roles?.code);
+    //   window.location.href = destination;
+    // } catch (error) {
+    //   window.location.href = "/unauthorized";
+    // }
+    // window.location.href = "/productionhead/workorder";
+  // }
 
-  async function submitJson(path: string, payload: unknown) {
-    const response = await fetch(path, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    const data = await response.json().catch(() => null);
-    if (!response.ok || !data?.ok) {
-      throw new Error(data?.message || "Something went wrong");
-    }
-    return data;
-  }
+  // async function submitJson(path: string, payload: unknown) {
+  //   const response = await fetch(path, {
+  //     method: "POST",
+  //     headers: { "Content-Type": "application/json" },
+  //     body: JSON.stringify(payload),
+  //   });
+  //   const data = await response.json().catch(() => null);
+  //   if (!response.ok || !data?.ok) {
+  //     throw new Error(data?.message || "Something went wrong");
+  //   }
+  //   return data;
+  // }
 
   async function requestOtp() {
     setMessage("");
@@ -79,7 +88,7 @@ export default function LoginPage() {
     }
     setIsSubmitting(true);
     try {
-      await submitJson("/auth/otp/request", { phone: normalizePhone(phone) });
+      await authService.requestOtp(normalizePhone(phone));
       setStage("verify");
       setResendSeconds(30);
       window.setTimeout(() => otpRefs.current[0]?.focus(), 100);
@@ -99,11 +108,8 @@ export default function LoginPage() {
     }
     setIsSubmitting(true);
     try {
-      const data = await submitJson("/auth/otp/verify", {
-        phone: normalizePhone(phone),
-        token: otpCode,
-      });
-      persistSession(data.session);
+      await authService.verifyOtp(normalizePhone(phone), otpCode);
+      // persistSession();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Invalid OTP");
     } finally {
@@ -121,8 +127,9 @@ export default function LoginPage() {
     setIsSubmitting(true);
     try {
       const id = /^\d{10}$/.test(onlyDigits(passwordId)) && !passwordId.includes("@") ? normalizePhone(passwordId) : passwordId.trim();
-      const data = await submitJson("/auth/login", { identifier: id, password });
-      persistSession(data.session);
+      const res = await authService.loginWithPassword(id, password);
+      window.location.href = '/admin';
+      // persistSession();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Invalid login");
     } finally {

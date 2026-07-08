@@ -1,37 +1,34 @@
 "use client";
 
-import { useStore } from "@/hooks/useStore";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { MobileHeader } from "@/components/MobileHeader";
+import { workOrderService } from "@/src/services/workOrderService";
 
 export default function OperatorPipelinePage() {
-  const { store, mounted } = useStore();
+  const [workOrders, setWorkOrders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  if (!mounted) return null;
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const data = await workOrderService.list();
+        setWorkOrders(data);
+      } catch (err) {
+        console.error("Failed to load work orders", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
 
-  const readyForMet = store.workOrders.filter((wo) => {
-    const flow = store.flowDataMap[wo.id];
-    if (!flow) return false;
-    const hasRm = flow.rawMaterialRows.length > 0;
-    const noMet = flow.metallisationRows.length === 0;
-    return hasRm && noMet;
-  });
+  if (loading) return <div className="p-6 text-center text-[#5C5C5C]">Loading pipeline...</div>;
 
-  const inMet = store.workOrders.filter((wo) => {
-    const flow = store.flowDataMap[wo.id];
-    return flow && flow.metallisationRows.length > 0 && flow.slittingRows.length === 0;
-  });
-
-  const inSlit = store.workOrders.filter((wo) => {
-    const flow = store.flowDataMap[wo.id];
-    return flow && flow.slittingRows.length > 0 && flow.slittingRows.some((s) => s.status !== "Completed");
-  });
-
-  const completed = store.workOrders.filter((wo) => {
-    const flow = store.flowDataMap[wo.id];
-    if (!flow || flow.slittingRows.length === 0) return false;
-    return flow.slittingRows.every((s) => s.status === "Completed");
-  });
+  const readyForMet = workOrders.filter((wo) => wo.stage === "Raw Material" && wo.status === "In-progress");
+  const inMet = workOrders.filter((wo) => wo.stage === "Metallisation" && wo.status !== "Completed");
+  const inSlit = workOrders.filter((wo) => wo.stage === "Slitting" && wo.status !== "Completed");
+  const completed = workOrders.filter((wo) => wo.status === "Completed");
 
   const columns = [
     { title: "Ready for Metallisation", wos: readyForMet, color: "bg-[#FFF4ED]" },
@@ -55,20 +52,14 @@ export default function OperatorPipelinePage() {
               {col.wos.length === 0 ? (
                 <p className="text-[12px] text-[#5C5C5C] py-2">None</p>
               ) : (
-                col.wos.map((wo) => {
-                  const flow = store.flowDataMap[wo.id];
-                  const metCount = flow?.metallisationRows.length ?? 0;
-                  const slitCount = flow?.slittingRows.length ?? 0;
-                  return (
+                col.wos.map((wo) => (
                     <Link key={wo.id} href={`/person-a/workorder/${wo.id}`}
                       className="block p-3 rounded-[8px] border border-[#EBEBEB] hover:border-[#00B6E2] transition-colors bg-white">
-                      <p className="text-[13px] font-medium text-[#00B6E2]">{wo.id}</p>
-                      <p className="text-[11px] text-[#5C5C5C] mt-1">{wo.micron}µ x {wo.width}mm</p>
-                      {metCount > 0 && <p className="text-[11px] text-[#5C5C5C]">{metCount} met coil(s)</p>}
-                      {slitCount > 0 && <p className="text-[11px] text-[#5C5C5C]">{slitCount} slit product(s)</p>}
+                      <p className="text-[13px] font-medium text-[#00B6E2]">{wo.work_order_no || wo.id}</p>
+                      <p className="text-[11px] text-[#5C5C5C] mt-1">{wo.micron}µ x {wo.width_m || wo.width}mm</p>
                     </Link>
-                  );
-                })
+                  )
+                )
               )}
             </div>
           </div>

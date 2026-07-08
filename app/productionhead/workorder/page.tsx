@@ -3,9 +3,11 @@
 import { Plus, X, ChevronDown, Search, Download, QrCode } from "lucide-react";
 import { ScannerInput } from "@/components/ScannerInput";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { type WorkOrderSummary } from "../../../lib/data";
-import { useStore, type ComputedWorkOrderSummary } from "@/hooks/useStore";
+import { type ComputedWorkOrderSummary } from "@/hooks/useStore";
+import { workOrderService } from "@/src/services/workOrderService";
+import { Loader2 } from "lucide-react";
 import type { TableConfig } from "@/hooks/useTableControls";
 import { useTableControls } from "@/hooks/useTableControls";
 import { SortableHeader } from "@/components/table/SortableHeader";
@@ -15,9 +17,8 @@ import { FilterPopover, FilterChips, type FilterConfig, type FilterState, type E
 import { exportToExcel } from "@/lib/exportExcel";
 import { MobileHeader, MobileSpacer } from "@/components/MobileHeader";
 import { QRCodeModal, type QRModalData } from "@/components/QRCodeModal";
-
-const WO_STATUS_OPTIONS = ["Yet to Start", "In-progress", "Completed"];
-const WO_STAGE_OPTIONS = ["Metalisation", "Raw Material", "Metallisation", "Slitting"];
+import { StatusBadge } from "@/components/StatusBadge";
+import { WO_STATUS_OPTIONS, WO_STAGE_OPTIONS } from "@/lib/constants";
 
 const statusFilter: EnumFilter = { label: "Status", key: "status", options: WO_STATUS_OPTIONS };
 const stageFilter: EnumFilter = { label: "Stage", key: "stage", options: WO_STAGE_OPTIONS };
@@ -36,38 +37,55 @@ const filterConfig: FilterConfig = {
   numberRanges: numberFilters,
 };
 
-const workOrderConfig: TableConfig<ComputedWorkOrderSummary> = {
+export type WorkOrderRow = ComputedWorkOrderSummary & { uuid?: string };
+
+const workOrderConfig: TableConfig<WorkOrderRow> = {
   columns: [
     { key: "id", label: "Work Orders ID", type: "text", sortable: true },
     { key: "micron", label: "Micron", type: "number", sortable: true },
     { key: "width", label: "Width", type: "number", sortable: true },
     { key: "qty", label: "Quantity", type: "number", sortable: true },
-    { key: "stage", label: "Stage", type: "enum", sortable: false, filter: "dropdown", options: ["Metalisation", "Raw Material", "Metallisation", "Slitting"] },
-    { key: "date", label: "Date", type: "date", sortable: true },
-    { key: "status", label: "Status", type: "enum", sortable: false, filter: "dropdown", options: ["Yet to Start", "In-progress", "Completed"] },
+    { key: "stage", label: "Stage", type: "enum", sortable: false, filter: "dropdown", options: WO_STAGE_OPTIONS },
+    { key: "date", label: "Timestamp", type: "date", sortable: true },
+    { key: "status", label: "Status", type: "enum", sortable: false, filter: "dropdown", options: WO_STATUS_OPTIONS },
     { key: "options", label: "Action", type: "text", sortable: false }
   ]
 };
 
-function StatusBadge({ status }: { status: string }) {
-  if (status === "Yet to Start") {
-    return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#FFF0F1] text-[#FB3748] text-[12px] font-medium leading-tight">Yet to Start</span>;
-  }
-  if (status === "In-progress") {
-    return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#FFF4ED] text-[#E19242] text-[12px] font-medium leading-tight">In-progress</span>;
-  }
-  if (status === "Completed") {
-    return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#E8F8F0] text-[#1CB061] text-[12px] font-medium leading-tight">Completed</span>;
-  }
-  return null;
-}
 
 export default function SupervisorWorkOrderPage() {
-  const { store, workOrders: rows, mounted, addWorkOrder } = useStore();
+  const [rows, setRows] = useState<(ComputedWorkOrderSummary & { uuid?: string })[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [qrData, setQrData] = useState<QRModalData | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [formData, setFormData] = useState({ micron: "", width: "", quantity: "" });
+  const [isLoading, setIsLoading] = useState(true);
+
+  const loadData = async () => {
+    setIsLoading(true);
+    try {
+      const data = await workOrderService.list();
+      const mapped = data.map((wo: any) => ({
+        uuid: wo.id,
+        id: wo.work_order_no || wo.id,
+        micron: wo.micron?.toString() || "-",
+        width: wo.width_m?.toString() || "-",
+        qty: wo.quantity?.toString() || "-",
+        stage: wo.stage || "Raw Material",
+        date: wo.created_at ? new Date(wo.created_at).toLocaleString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: true }) : "-",
+        status: wo.status || "Yet to Start"
+      }));
+      setRows(mapped);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
 
   const {
     processedData,
@@ -124,7 +142,13 @@ export default function SupervisorWorkOrderPage() {
     return true;
   });
 
-  if (!mounted) return null;
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-72px)] bg-white">
+        <Loader2 className="w-8 h-8 animate-spin text-[#00B6E2]" />
+      </div>
+    );
+  }
 
   const openEditWorkOrder = (order: ComputedWorkOrderSummary) => {
     setFormData({
@@ -135,30 +159,34 @@ export default function SupervisorWorkOrderPage() {
     setIsModalOpen(true);
   };
 
-  const handleCreateWorkOrder = () => {
-    if (!formData.micron || !formData.width || !formData.quantity) return;
-    
-    const nextIdNum = rows.reduce((maxId, row) => {
-      const parsed = Number.parseInt(row.id.replace("WO-", ""), 10);
-      return Number.isNaN(parsed) ? maxId : Math.max(maxId, parsed);
-    }, 0) + 1;
-    const newId = `WO-${String(nextIdNum).padStart(4, '0')}`;
-    
-    const today = new Date();
-    const dateStr = `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
+  const handleCreateWorkOrder = async () => {
+  if (!formData.micron || !formData.width || !formData.quantity) return;
 
-    const newWorkOrder: WorkOrderSummary = {
-      id: newId,
-      micron: formData.micron,
-      width: formData.width,
-      qty: formData.quantity,
-      date: dateStr,
-    };
+  const currentYear = new Date().getFullYear();
 
-    addWorkOrder(newWorkOrder);
+  const nextIdNum = rows.reduce((maxId, row) => {
+    const match = row.id.match(/WO-\d{4}-(\d+)/);
+    const parsed = match ? Number.parseInt(match[1], 10) : NaN;
+    return Number.isNaN(parsed) ? maxId : Math.max(maxId, parsed);
+  }, 0) + 1;
+
+  const newId = `WO-${currentYear}-${String(nextIdNum).padStart(3, "0")}`;
+
+  try {
+    await workOrderService.create({
+      work_order_no: newId,
+      micron: Number(formData.micron),
+      width_m: Number(formData.width),
+      quantity: Number(formData.quantity),
+    });
+    await loadData();
     setIsModalOpen(false);
     setFormData({ micron: "", width: "", quantity: "" });
-  };
+  } catch (error) {
+    console.error(error);
+    alert("Failed to create work order");
+  }
+};
 
   const totalWorkOrders = rows.length;
   const rawMaterialCount = rows.filter((row) => row.stage.toLowerCase().includes("raw material")).length;
@@ -239,7 +267,9 @@ export default function SupervisorWorkOrderPage() {
                     className="w-full h-[44px] bg-white border border-[#EBEBEB] rounded-[8px] px-3 text-[14px] text-[#171717] appearance-none focus:outline-none focus:border-[#00B6E2] transition-colors"
                   >
                     <option value="" disabled hidden>Select micron...</option>
+                    <option value="4.5">4.5 Micron</option>
                     <option value="5">5 Micron</option>
+                    <option value="5.5">5.5 Micron</option>
                     <option value="7">7 Micron</option>
                     <option value="8">8 Micron</option>
                     <option value="12">12 Micron</option>
@@ -466,9 +496,17 @@ export default function SupervisorWorkOrderPage() {
                         viewHref={`/productionhead/workorder/${row.id}`}
                         status={row.status}
                         onEdit={() => openEditWorkOrder(row)}
-                        onDelete={() => {
+                        onDelete={async () => {
                           if (confirm(`Are you sure you want to delete ${row.id}?`)) {
-                            // Handle delete
+                            if ((row as any).uuid) {
+                              try {
+                                await workOrderService.remove((row as any).uuid);
+                                await loadData();
+                              } catch (e) {
+                                console.error(e);
+                                alert("Failed to delete work order");
+                              }
+                            }
                           }
                         }}
                       />

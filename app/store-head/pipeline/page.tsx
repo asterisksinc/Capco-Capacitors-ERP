@@ -1,9 +1,9 @@
 "use client";
 
-import { useStore } from "@/hooks/useStore";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
-import { useMemo } from "react";
 import { MobileHeader } from "@/components/MobileHeader";
+import { workOrderService } from "@/src/services/workOrderService";
 
 function StatusBadge({ status }: { status: string }) {
   if (status === "Yet to Start") {
@@ -19,30 +19,30 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export default function StoreHeadPipelinePage() {
-  const { store, mounted, workOrders } = useStore();
+  const [workOrders, setWorkOrders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  if (!mounted) return null;
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const data = await workOrderService.list();
+        setWorkOrders(data);
+      } catch (err) {
+        console.error("Failed to load work orders", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
+
+  if (loading) return <div className="p-6 text-center text-[#5C5C5C]">Loading pipeline...</div>;
 
   const columns = useMemo(() => {
-    const rawMat = workOrders.filter((wo) => {
-      const flow = store.flowDataMap[wo.id];
-      return flow && flow.rawMaterialRows.length > 0 && flow.metallisationRows.length === 0;
-    });
-
-    const inProgress = workOrders.filter((wo) => {
-      const flow = store.flowDataMap[wo.id];
-      return flow && flow.metallisationRows.length > 0;
-    });
-
-    const completed = workOrders.filter((wo) => {
-      const flow = store.flowDataMap[wo.id];
-      return flow && flow.slittingRows.length > 0 && flow.slittingRows.every((s) => s.status === "Completed");
-    });
-
-    const noRm = workOrders.filter((wo) => {
-      const flow = store.flowDataMap[wo.id];
-      return !flow || flow.rawMaterialRows.length === 0;
-    });
+    const noRm = workOrders.filter((wo) => wo.stage === "Raw Material" && wo.status === "Yet to Start");
+    const rawMat = workOrders.filter((wo) => wo.stage === "Raw Material" && wo.status === "In-progress");
+    const inProgress = workOrders.filter((wo) => (wo.stage === "Metallisation" || wo.stage === "Slitting") && wo.status !== "Completed");
+    const completed = workOrders.filter((wo) => wo.status === "Completed");
 
     return [
       { title: "No RMs Assigned", wos: noRm, color: "bg-[#FFF0F1]" },
@@ -50,7 +50,7 @@ export default function StoreHeadPipelinePage() {
       { title: "In Progress", wos: inProgress, color: "bg-[#F0F6FF]" },
       { title: "Completed", wos: completed, color: "bg-[#F0FDF4]" },
     ];
-  }, [workOrders, store.flowDataMap]);
+  }, [workOrders]);
 
   return (
     <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-[#FAFAFA] flex flex-col w-full pb-12 overflow-x-hidden">
@@ -70,14 +70,12 @@ export default function StoreHeadPipelinePage() {
                 <p className="text-[12px] text-[#5C5C5C] py-2">None</p>
               ) : (
                 col.wos.map((wo) => {
-                  const flow = store.flowDataMap[wo.id];
-                  const rmCount = flow?.rawMaterialRows.length ?? 0;
                   return (
                     <Link key={wo.id} href={`/store-head/workorder/${wo.id}`}
                       className="block p-3 rounded-[8px] border border-[#EBEBEB] hover:border-[#00B6E2] transition-colors bg-white">
-                      <p className="text-[13px] font-medium text-[#00B6E2]">{wo.id}</p>
-                      <p className="text-[11px] text-[#5C5C5C] mt-1">{wo.micron}µ x {wo.width}mm</p>
-                      <p className="text-[11px] text-[#5C5C5C]">{rmCount} RM(s) &bull; <StatusBadge status={wo.status} /></p>
+                      <p className="text-[13px] font-medium text-[#00B6E2]">{wo.work_order_no || wo.id}</p>
+                      <p className="text-[11px] text-[#5C5C5C] mt-1">{wo.micron}µ x {wo.width_m || wo.width}mm</p>
+                      <p className="text-[11px] text-[#5C5C5C]"><StatusBadge status={wo.status} /></p>
                     </Link>
                   );
                 })

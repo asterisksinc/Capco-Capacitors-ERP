@@ -1,5 +1,7 @@
 "use client";
 
+import { WO_STATUS_OPTIONS, WO_STAGE_OPTIONS } from "@/lib/constants";
+import { StatusBadge } from "@/components/StatusBadge";
 import { use, useState, useMemo } from "react";
 import Link from "next/link";
 import { Plus, X, ChevronRight, Check, QrCode } from "lucide-react";
@@ -15,6 +17,10 @@ import { OptionsDropdown } from "@/components/table/OptionsDropdown";
 import { MobileHeader } from "@/components/MobileHeader";
 import { QRCodeModal, type QRModalData } from "@/components/QRCodeModal";
 import { exportToExcel } from "@/lib/exportExcel";
+import { workOrderService } from "@/src/services/workOrderService";
+import { productionStageService } from "@/src/services/productionStageService";
+import { authService } from "@/src/services/authService";
+import { useEffect } from "react";
 
 type DetailPageProps = {
   params: Promise<{ detailpage: string }>;
@@ -31,6 +37,7 @@ type MetallisationForm = {
   opticalDensity: string;
   resistance: string;
   nextStage: string;
+  isVerified?: boolean;
 };
 
 const rawMaterialConfig: TableConfig<any> = {
@@ -47,7 +54,7 @@ const rawMaterialConfig: TableConfig<any> = {
     { key: "wastageWeight", label: "Wastage/Left Weight", type: "text", sortable: true },
     { key: "supplier", label: "Company/Supplier", type: "text", sortable: true },
     { key: "stage", label: "Stage", type: "enum", sortable: false, filter: "dropdown", options: ["Raw Material", "METALLISATION"] },
-    { key: "status", label: "Status", type: "enum", sortable: false, filter: "dropdown", options: ["Yet to Start", "In-progress", "Completed"] },
+    { key: "status", label: "Status", type: "enum", sortable: false, filter: "dropdown", options: WO_STATUS_OPTIONS },
     { key: "qr", label: "QR", type: "text", sortable: false },
     { key: "options", label: "Action", type: "text", sortable: false },
   ],
@@ -63,7 +70,7 @@ const metallisationConfig: TableConfig<any> = {
     { key: "resistance", label: "Resistance", type: "text", sortable: true },
     { key: "timestamp", label: "Timestamp", type: "date", sortable: true },
     { key: "nextStage", label: "Next Stage", type: "text", sortable: false },
-    { key: "status", label: "Status", type: "enum", sortable: false, filter: "dropdown", options: ["Yet to Start", "In-progress", "Completed"] },
+    { key: "status", label: "Status", type: "enum", sortable: false, filter: "dropdown", options: WO_STATUS_OPTIONS },
     { key: "qr", label: "QR", type: "text", sortable: false },
     { key: "options", label: "Action", type: "text", sortable: false },
   ],
@@ -79,18 +86,7 @@ const defaultMetallisationForm: MetallisationForm = {
   nextStage: "Slitting",
 };
 
-function StatusBadge({ status }: { status: string }) {
-  if (status === "Yet to Start") {
-    return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#FFF0F1] text-[#FB3748] text-[12px] font-medium leading-tight shrink-0">Yet to Start</span>;
-  }
-  if (status === "In-progress") {
-    return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#FFF4ED] text-[#E19242] text-[12px] font-medium leading-tight shrink-0">In-progress</span>;
-  }
-  if (status === "Completed") {
-    return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#E8F8F0] text-[#1CB061] text-[12px] font-medium leading-tight shrink-0">Completed</span>;
-  }
-  return null;
-}
+
 
 function getDateString() {
   const today = new Date();
@@ -127,26 +123,93 @@ function createMetallisationRow(defaultRmId: string): MetallisationForm {
 export default function OperatorMetallisationDetailPage({ params }: DetailPageProps) {
   const { detailpage } = use(params);
   const orderId = detailpage.toUpperCase();
-  const { store, mounted, addFlowRow } = useStore();
-  const workOrderFlowData = store.flowDataMap[orderId];
+
+  const [loading, setLoading] = useState(true);
+  const [woData, setWoData] = useState<any>(null);
+
+  const fetchWorkOrder = async () => {
+    try {
+      const data = await workOrderService.getByWorkOrderNo(orderId);
+      if (data) {
+        setWoData(data);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchWorkOrder();
+  }, [orderId]);
+
+  const workOrderFlowData = useMemo(() => {
+    if (!woData) return null;
+    return {
+      overview: {
+        wordCount: 1,
+        micron: woData.micron ? `${woData.micron}µ` : "-",
+        width: woData.width_m ? `${woData.width_m}m` : (woData.width ? `${woData.width}mm` : "-"),
+        quantity: woData.quantity ? `${woData.quantity}kg` : "-",
+        date: new Date(woData.created_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
+      },
+      rawMaterialRows: (woData.work_order_materials || []).map((rm: any) => {
+        const inv = rm.inventory || {};
+        const actual = rm.quantity_kg ?? 0;
+        return {
+          rollNo: inv.raw_material_code || inv.roll_no || "-",
+          raw_material_id: inv.id || rm.raw_material_id, // we need this for submission
+          netWeight: inv.net_weight_kg != null ? `${inv.net_weight_kg}kgs` : "-",
+          grossWeight: inv.gross_weight_kg != null ? `${inv.gross_weight_kg}kgs` : "-",
+          thickness: inv.micron || "-",
+          width: inv.width_m || "-",
+          temperature: inv.temperature_c != null ? `${inv.temperature_c}°C` : "-",
+          actualWeight: actual ? `${actual}kgs` : "-",
+          damagedWeight: "0",
+          usedWeight: actual ? `${actual}kgs` : "-",
+          wastageWeight: "0",
+          supplier: inv.supplier || "-",
+          stage: "Raw Material",
+          status: rm.status || "Completed",
+        };
+      }),
+      metallisationRows: (woData.metallisation || []).map((met: any) => ({
+        coilNo: met.metallisation_no || met.id,
+        rmId: met.raw_material_id || "-",
+        machineNo: met.machine_no || "-",
+        weight: met.weight_kg || "0",
+        opticalDensity: met.optical_density || "0",
+        resistance: met.resistance_ohms || "0",
+        timestamp: new Date(met.created_at).toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }),
+        nextStage: "Slitting",
+        status: met.status || "Completed",
+      })),
+    };
+  }, [woData]);
+
+  const workflowProgress = {
+    stage: woData?.stage || "Raw Material",
+    status: woData?.status || "Yet to Start",
+  };
 
   const [activeTab, setActiveTab] = useState<TabType>("Raw Material");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalStep, setModalStep] = useState<ModalStep>(1);
   const [showValidationHint, setShowValidationHint] = useState(false);
-  const workflowProgress = computeWorkflowProgress(workOrderFlowData);
 
-  const availableRollIds = Array.from(new Set(workOrderFlowData?.rawMaterialRows
-    .map((row) => row.rollNo) ?? []));
+  const availableRollIds: string[] = Array.from(new Set(workOrderFlowData?.rawMaterialRows
+    .map((row: any) => row.rollNo) ?? [])) as string[];
       const rmLookup = useMemo(() => {
-        const map = new Map<string, { weight: string; thickness: string; supplier: string }>();
+        const map = new Map<string, { weight: string; thickness: string; supplier: string, raw_material_id: string }>();
         for (const row of workOrderFlowData?.rawMaterialRows ?? []) {
-          map.set(row.rollNo, { weight: row.netWeight ?? row.weight, thickness: row.thickness, supplier: row.supplier });
+          map.set(row.rollNo, { weight: row.netWeight ?? row.weight, thickness: row.thickness, supplier: row.supplier, raw_material_id: row.raw_material_id });
         }
         return map;
       }, [workOrderFlowData]);
 
   const [metallisationRowsInput, setMetallisationRowsInput] = useState<MetallisationForm[]>([createMetallisationRow("")]);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [qrData, setQrData] = useState<QRModalData | null>(null);
 
   const currentConfig = useMemo(() => {
@@ -169,14 +232,17 @@ export default function OperatorMetallisationDetailPage({ params }: DetailPagePr
   const {
     processedData,
     sortConfig,
-    handleSort,
+    handleSort: handleSortRaw,
     filters,
     handleFilterChange,
     dateRange,
     setDateRange,
   } = useTableControls({ data: currentData, config: currentConfig });
 
-  if (!mounted || !workOrderFlowData) return null;
+  const handleSort = handleSortRaw as (key: string | number | symbol) => void;
+
+  if (loading) return <div className="p-6 text-center text-[#5C5C5C]">Loading details...</div>;
+  if (!workOrderFlowData) return <div className="p-6 text-center text-[#5C5C5C]">Work Order not found</div>;
 
   const resetModalState = () => {
     setModalStep(1);
@@ -225,30 +291,43 @@ export default function OperatorMetallisationDetailPage({ params }: DetailPagePr
     setMetallisationRowsInput((prev) => prev.filter((_, idx) => idx !== index));
   };
 
-  const submitCurrentStage = () => {
+  const submitCurrentStage = async () => {
     if (!isCurrentStepOneValid) {
       setShowValidationHint(true);
       return;
     }
 
-    const dateTime = getDateTimeString();
-    const payload = metallisationRowsInput;
-    
-    payload.forEach((item) => {
-      addFlowRow(orderId, "Metallisation", {
-        coilNo: item.coilNo || generateId("MC"),
-        rmId: item.rmId || "-",
-        machineNo: item.machineNo || "M-01",
-        weight: `${item.weight || "0"}kgs`,
-        opticalDensity: item.opticalDensity,
-        resistance: `${item.resistance} Ohms`,
-        timestamp: dateTime,
-        nextStage: item.nextStage || "SLITTING",
-        status: "In-progress",
-      });
-    });
+    try {
+      const user = await authService.getCurrentProfile();
+      const payload = metallisationRowsInput;
+      
+      for (const item of payload) {
+        // Find raw_material_id from the rmLookup
+        const rmData = rmLookup.get(item.rmId);
+        
+        await productionStageService.addMetallisation({
+          metallisation_no: item.coilNo,
+          work_order_id: woData.id,
+          raw_material_id: rmData?.raw_material_id || "",
+          machine_no: item.machineNo,
+          weight_kg: parseFloat(item.weight) || 0,
+          optical_density: parseFloat(item.opticalDensity) || 0,
+          resistance_ohms: parseFloat(item.resistance) || 0,
+          operator_id: user?.id,
+        });
+      }
 
-    setModalStep(3);
+      await workOrderService.update(woData.id, {
+        stage: "Slitting",
+        status: "In-progress"
+      });
+
+      setModalStep(3);
+      fetchWorkOrder(); // Refresh data from backend
+    } catch (err) {
+      console.error(err);
+      alert("Failed to save data");
+    }
   };
 
   const overviewFields = [
@@ -325,32 +404,44 @@ export default function OperatorMetallisationDetailPage({ params }: DetailPagePr
               </div>
               <div className="flex flex-col gap-2">
                 <label className="text-[13px] font-medium text-[#171717]">RM ID</label>
-                <ScannerInput 
-                  value={row.rmId} 
-                  onChange={(e) => {
-                    const id = e.target.value;
-                    const rm = rmLookup.get(id);
-                    updateMetallisationRow(idx, {
-                      rmId: id,
-                      weight: rm?.weight ?? row.weight,
-                    });
-                  }} 
-                  onScanData={(data) => {
-                    const rm = rmLookup.get(data);
-                    updateMetallisationRow(idx, {
-                      rmId: data,
-                      weight: rm?.weight ?? row.weight,
-                    });
-                  }}
-                  list={`rm-list-${idx}`}
-                  placeholder="Scan RM ID..."
-                  className="h-[42px] rounded-[8px] border border-[#DDE1E8] pl-3 text-[14px]"
-                />
-                <datalist id={`rm-list-${idx}`}>
-                  {availableRollIds.map((rollId) => (
-                    <option key={rollId} value={rollId}>{rollId}</option>
-                  ))}
-                </datalist>
+                <div className="relative flex flex-col gap-1">
+                  <ScannerInput
+                    isSelect
+                    scanDisabled={!row.rmId}
+                    value={row.rmId}
+                    onChange={(e) => {
+                      const id = e.target.value;
+                      const rm = rmLookup.get(id);
+                      updateMetallisationRow(idx, {
+                        rmId: id,
+                        weight: rm?.weight ?? row.weight,
+                        isVerified: true, // Marked as verified for prototyping purposes;
+                      });
+                    }}
+                    onScanData={(data) => {
+                      const cleanData = data.trim();
+                      if (cleanData === row.rmId) {
+                        updateMetallisationRow(idx, { isVerified: true });
+                      } else {
+                        alert(`Scanned barcode (${cleanData}) does not match selected RM ID (${row.rmId})`);
+                      }
+                    }}
+                    className={`h-[42px] rounded-[8px] border pl-3 text-[14px] ${row.isVerified ? "border-[#12B76A] bg-[#ECFDF3]" : "border-[#DDE1E8]"}`}
+                  >
+                    <option value="" disabled>Select RM ID...</option>
+                    {availableRollIds.map((rollId: string) => (
+                      <option key={rollId} value={rollId}>{rollId}</option>
+                    ))}
+                  </ScannerInput>
+                  {row.rmId && !row.isVerified && (
+                    <span className="text-[11px] text-[#F79009]">Scan barcode to verify</span>
+                  )}
+                  {row.isVerified && (
+                    <span className="text-[11px] text-[#12B76A] font-medium flex items-center gap-1">
+                      <Check className="w-3 h-3" /> Verified
+                    </span>
+                  )}
+                </div>
               </div>
               <div className="flex flex-col gap-2">
                 <label className="text-[13px] font-medium text-[#171717]">Machine No.</label>
@@ -415,6 +506,61 @@ export default function OperatorMetallisationDetailPage({ params }: DetailPagePr
                     <p className="text-[13px] text-[#6B7280]">Review details before saving to logs.</p>
                   </div>
                   {renderReviewCards()}
+                  <div className="rounded-[12px] border border-[#DDE1E8] bg-white p-4 flex flex-col gap-3">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[13px] font-medium text-[#171717]">Attach Image</label>
+                      <div className="flex items-center gap-2">
+                        <div className="relative">
+                          <input 
+                            type="file" 
+                            accept="image/*" 
+                            capture="environment"
+                            id="cameraInput"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                const reader = new FileReader();
+                                reader.onload = (ev) => setImagePreview(ev.target?.result as string);
+                                reader.readAsDataURL(file);
+                              }
+                            }} 
+                          />
+                          <label 
+                            htmlFor="cameraInput"
+                            className="flex items-center justify-center gap-2 bg-[#F5F7FA] border border-[#DDE1E8] text-[#5C5C5C] text-[13px] font-medium rounded-[6px] h-[36px] px-3 hover:bg-[#EBEBEB] transition-colors cursor-pointer"
+                          >
+                            {imagePreview ? "Retake Photo" : "Take Photo"}
+                          </label>
+                        </div>
+                        <div className="relative">
+                          <input 
+                            type="file" 
+                            accept="image/*" 
+                            id="uploadInput"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                const reader = new FileReader();
+                                reader.onload = (ev) => setImagePreview(ev.target?.result as string);
+                                reader.readAsDataURL(file);
+                              }
+                            }} 
+                          />
+                          <label 
+                            htmlFor="uploadInput"
+                            className="flex items-center justify-center gap-2 bg-[#F5F7FA] border border-[#DDE1E8] text-[#5C5C5C] text-[13px] font-medium rounded-[6px] h-[36px] px-3 hover:bg-[#EBEBEB] transition-colors cursor-pointer"
+                          >
+                            Upload
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                    {imagePreview && (
+                      <img src={imagePreview} alt="Preview" className="max-h-[200px] w-auto rounded-[8px] border border-[#DDE1E8] object-cover" />
+                    )}
+                  </div>
                 </div>
               )}
               {modalStep === 3 && (

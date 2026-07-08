@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { Plus, X, ChevronDown, Search, Info, ChevronLeft, ChevronRight, QrCode } from "lucide-react";
-import { useState } from "react";
-import { useStore } from "@/hooks/useStore";
+import { useState, useEffect } from "react";
+import { productOrderService } from "@/src/services/productOrderService";
+import { dashboardService } from "@/src/services/dashboardService";
+import { Loader2 } from "lucide-react";
 import type { TableConfig } from "@/hooks/useTableControls";
 import { useTableControls } from "@/hooks/useTableControls";
 import { SortableHeader } from "@/components/table/SortableHeader";
@@ -89,8 +91,43 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export default function SupervisorProductOrdersPage() {
-  const { store, addProductOrder, deleteProductOrder } = useStore();
+  const [productOrders, setProductOrders] = useState<(ProductOrderRow & { uuid?: string })[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [stats, setStats] = useState<any>(null);
+
+  const loadData = async () => {
+    setIsLoading(true);
+    try {
+      const [data, dbStats] = await Promise.all([
+        productOrderService.list(),
+        dashboardService.productionHead()
+      ]);
+      const mapped = data.map((po: any) => ({
+        uuid: po.id,
+        id: po.product_order_no || po.id,
+        code: po.product_code || "-",
+        type: po.capacitor_type || "-",
+        grade: po.grade || "-",
+        batchSize: po.batch_size?.toString() || "-",
+        status: po.status || "Yet to Start",
+        stage: po.stage || "Raw Material",
+        timestamp: po.created_at ? new Date(po.created_at).toLocaleDateString("en-GB") : "-"
+      }));
+      setProductOrders(mapped);
+      setStats(dbStats);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  // All hooks MUST be called before any conditional returns (Rules of Hooks)
   const [qrData, setQrData] = useState<QRModalData | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [formData, setFormData] = useState({
@@ -107,6 +144,28 @@ export default function SupervisorProductOrdersPage() {
     customerName: "",
     customerReference: "",
     specialInstructions: ""
+  });
+
+  const {
+    processedData,
+    sortConfig,
+    handleSort,
+    filters,
+    handleFilterChange,
+    dateRange,
+    setDateRange
+  } = useTableControls({ data: productOrders, config: productOrderConfig });
+
+  const [tableFilters, setTableFilters] = useState<FilterState>(() => {
+    const state: FilterState = {};
+    state.status = [...STATUS_OPTIONS];
+    state.stage = [...STAGE_OPTIONS];
+    state.productCode = "";
+    state.capacitorType = "";
+    state.grade = "";
+    state.batchSizeMin = "";
+    state.batchSizeMax = "";
+    return state;
   });
 
   const generateProductOrderId = () => `PO-CC-${String(Date.now()).slice(-6)}`;
@@ -150,31 +209,13 @@ export default function SupervisorProductOrdersPage() {
     setIsModalOpen(true);
   };
 
-  const productOrders: ProductOrderRow[] = store.productOrders.length > 0
-    ? store.productOrders as ProductOrderRow[]
-    : [];
-
-  const {
-    processedData,
-    sortConfig,
-    handleSort,
-    filters,
-    handleFilterChange,
-    dateRange,
-    setDateRange
-  } = useTableControls({ data: productOrders, config: productOrderConfig });
-
-  const [tableFilters, setTableFilters] = useState<FilterState>(() => {
-    const state: FilterState = {};
-    state.status = [...STATUS_OPTIONS];
-    state.stage = [...STAGE_OPTIONS];
-    state.productCode = "";
-    state.capacitorType = "";
-    state.grade = "";
-    state.batchSizeMin = "";
-    state.batchSizeMax = "";
-    return state;
-  });
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-72px)] bg-white">
+        <Loader2 className="w-8 h-8 animate-spin text-[#00B6E2]" />
+      </div>
+    );
+  }
 
   const handleApplyFilters = (newFilters: FilterState) => {
     setTableFilters(newFilters);
@@ -208,7 +249,7 @@ export default function SupervisorProductOrdersPage() {
     return true;
   });
 
-  const handleCreateOrder = () => {
+  const handleCreateOrder = async () => {
     if (
       !formData.productCode ||
       !formData.capacitorType ||
@@ -218,41 +259,39 @@ export default function SupervisorProductOrdersPage() {
       return;
     }
 
-    const now = new Date();
-    const timestamp = `${String(now.getDate()).padStart(2, "0")}/${String(now.getMonth() + 1).padStart(2, "0")}/${now.getFullYear()}:${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
     const generatedOrderId = formData.poId.trim() || generateProductOrderId();
-    const normalizedId = generatedOrderId.startsWith("#")
-      ? formData.poId.trim()
-      : `#${generatedOrderId}`;
 
-    const newOrder: ProductOrderRow = {
-      id: normalizedId,
-      code: formData.productCode,
-      type: formData.capacitorType,
-      grade: formData.grade.toUpperCase(),
-      batchSize: formData.batchSize,
-      status: "Yet to Start",
-      stage: "Yet to Start",
-      timestamp,
-    };
-
-    addProductOrder(newOrder);
-    setIsModalOpen(false);
-    setFormData({
-      poId: generateProductOrderId(),
-      productCode: "",
-      capacitance: "",
-      voltage: "",
-      capacitorType: "",
-      grade: "",
-      tolerance: "",
-      dielectric: "",
-      batchSize: "",
-      priority: "",
-      customerName: "",
-      customerReference: "",
-      specialInstructions: ""
-    });
+    try {
+      await productOrderService.create({
+        product_order_no: generatedOrderId,
+        product_code: formData.productCode,
+        capacitor_type: formData.capacitorType,
+        grade: formData.grade.toUpperCase(),
+        batch_size: Number(formData.batchSize),
+        quantity: Number(formData.batchSize), // assuming batch size is qty here
+        instructions: formData.specialInstructions,
+      });
+      await loadData();
+      setIsModalOpen(false);
+      setFormData({
+        poId: generateProductOrderId(),
+        productCode: "",
+        capacitance: "",
+        voltage: "",
+        capacitorType: "",
+        grade: "",
+        tolerance: "",
+        dielectric: "",
+        batchSize: "",
+        priority: "",
+        customerName: "",
+        customerReference: "",
+        specialInstructions: ""
+      });
+    } catch (error) {
+      console.error(error);
+      alert("Failed to create product order");
+    }
   };
 
   const searchedData = filteredData.filter((row) =>
@@ -531,10 +570,10 @@ export default function SupervisorProductOrdersPage() {
         {/* Stats Section - Mobile 2x2 grid */}
         <section className="grid grid-cols-2 gap-0 md:hidden bg-white border border-[#EBEBEB] rounded-[12px]">
           {[
-            { title: "Total Orders", value: "148", valClass: "text-[#171717]", subtextClass: "text-[#5C5C5C]", subtext: "" },
-            { title: "Units Planned", value: "24,500", valClass: "text-[#171717]", subtextClass: "text-[#5C5C5C]", subtext: "" },
-            { title: "In Progress", value: "32", valClass: "text-[#171717]", subtextClass: "text-[#5C5C5C]", subtext: "" },
-            { title: "Completed", value: "116", valClass: "text-[#171717]", subtextClass: "text-[#5C5C5C]", subtext: "" },
+            { title: "Total Orders", value: String(productOrders.length), valClass: "text-[#171717]", subtextClass: "text-[#5C5C5C]", subtext: "" },
+            { title: "Units Planned", value: String(productOrders.reduce((sum, po) => sum + (Number(po.batchSize) || 0), 0)), valClass: "text-[#171717]", subtextClass: "text-[#5C5C5C]", subtext: "" },
+            { title: "In Progress", value: String(productOrders.filter(po => po.status === 'In-progress').length), valClass: "text-[#171717]", subtextClass: "text-[#5C5C5C]", subtext: "" },
+            { title: "Completed", value: String(productOrders.filter(po => po.status === 'Completed').length), valClass: "text-[#171717]", subtextClass: "text-[#5C5C5C]", subtext: "" },
           ].map((stat, i) => (
             <div key={i} className={`p-3 ${i % 2 === 0 ? 'border-r border-b border-[#EBEBEB]' : 'border-b border-[#EBEBEB]'}`}>
               <div className="flex flex-col gap-1">
@@ -551,9 +590,9 @@ export default function SupervisorProductOrdersPage() {
             <div className="flex flex-col gap-[8px]">
               <p className="text-[12px] font-medium text-[#5C5C5C] leading-tight">Total Product Orders</p>
               <div className="flex items-baseline gap-3">
-                <span className="text-[20px] font-semibold leading-tight text-[#171717]">148</span>
+                <span className="text-[20px] font-semibold leading-tight text-[#171717]">{productOrders.length}</span>
                 <span className="text-[12px] leading-tight text-[#5C5C5C]">
-                  <span className="text-[#1CB061] font-medium">12%</span> vs Last Month
+                  Total
                 </span>
               </div>
             </div>
@@ -564,9 +603,9 @@ export default function SupervisorProductOrdersPage() {
             <div className="flex flex-col gap-[8px]">
               <p className="text-[12px] font-medium text-[#5C5C5C] leading-tight">Units Planned</p>
               <div className="flex items-baseline gap-3">
-                <span className="text-[20px] font-semibold leading-tight text-[#171717]">24,500</span>
+                <span className="text-[20px] font-semibold leading-tight text-[#171717]">{productOrders.reduce((sum, po) => sum + (Number(po.batchSize) || 0), 0)}</span>
                 <span className="text-[12px] leading-tight text-[#5C5C5C]">
-                  18 active SKUs
+                  Total Units
                 </span>
               </div>
             </div>
@@ -577,9 +616,9 @@ export default function SupervisorProductOrdersPage() {
             <div className="flex flex-col gap-[8px]">
               <p className="text-[12px] font-medium text-[#5C5C5C] leading-tight">In-Progress Orders</p>
               <div className="flex items-baseline gap-3">
-                <span className="text-[20px] font-semibold leading-tight text-[#171717]">37</span>
+                <span className="text-[20px] font-semibold leading-tight text-[#171717]">{productOrders.filter(po => po.status === 'In-progress').length}</span>
                 <span className="text-[12px] leading-tight text-[#5C5C5C]">
-                  <span className="text-[#1CB061] font-medium">+0.2%</span> vs Last Month
+                  Active
                 </span>
               </div>
             </div>
@@ -590,8 +629,8 @@ export default function SupervisorProductOrdersPage() {
             <div className="flex flex-col gap-[8px]">
               <p className="text-[12px] font-medium text-[#5C5C5C] leading-tight">Pending Orders</p>
               <div className="flex items-baseline gap-3">
-                <span className="text-[20px] font-semibold leading-tight text-[#171717]">22</span>
-                <span className="text-[12px] leading-tight text-[#FB3748] font-medium">Critical</span>
+                <span className="text-[20px] font-semibold leading-tight text-[#171717]">{productOrders.filter(po => po.status === 'Yet to Start').length}</span>
+                <span className="text-[12px] leading-tight text-[#FB3748] font-medium">To Start</span>
               </div>
             </div>
           </div>
@@ -683,9 +722,17 @@ export default function SupervisorProductOrdersPage() {
                         viewHref={`/productionhead/productorders/${row.id.replace('#', '')}`}
                         status={row.status}
                         onEdit={() => openEditModal(row)}
-                        onDelete={() => {
+                        onDelete={async () => {
                           if (confirm(`Are you sure you want to delete ${row.id}?`)) {
-                            deleteProductOrder(row.id);
+                            if ((row as any).uuid) {
+                              try {
+                                await productOrderService.remove((row as any).uuid);
+                                await loadData();
+                              } catch (e) {
+                                console.error(e);
+                                alert("Failed to delete product order");
+                              }
+                            }
                           }
                         }}
                       />

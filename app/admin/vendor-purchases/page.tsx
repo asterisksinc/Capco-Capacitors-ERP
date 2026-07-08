@@ -1,22 +1,52 @@
 "use client";
 import { MobileHeader } from "@/components/MobileHeader";
 
-import { useState } from "react";
-import { Search, Download, Filter, Menu, Bell, User } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { Search, Download, Filter, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { useMobileMenu } from "@/components/MobileMenuContext";
-import { useStore } from "@/hooks/useStore";
+import { vendorPurchaseService } from "@/src/services/vendorPurchaseService";
 import { exportToExcel } from "@/lib/exportExcel";
 
 export default function VendorPurchasesPage() {
-  const { setIsMobileMenuOpen } = useMobileMenu();
   const [searchQuery, setSearchQuery] = useState("");
-  const { vendorPurchases } = useStore();
+  const [loading, setLoading] = useState(true);
+  const [purchases, setPurchases] = useState<any[]>([]);
 
-  const filteredPurchases = vendorPurchases.filter(p => 
-    p.id.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    p.vendorName.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  useEffect(() => {
+    async function fetchPurchases() {
+      try {
+        const data = await vendorPurchaseService.list();
+        setPurchases(
+          (data as any[]).map((p) => ({
+            id: p.purchase_no || p.id,
+            vendorName: p.vendor_name || "-",
+            purchaseDate: p.purchase_date ? new Date(p.purchase_date).toLocaleDateString("en-GB") : "-",
+            direction: p.direction || "Credit",
+            grandTotal: String(p.order_amount || 0),
+            amountPaid: String(p.paid_amount || 0),
+            status: p.status || "Due",
+          }))
+        );
+      } catch (err) {
+        console.error("Failed to fetch vendor purchases", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchPurchases();
+  }, []);
+
+  const filteredPurchases = useMemo(() => {
+    return purchases.filter((p) =>
+      p.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.vendorName.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [purchases, searchQuery]);
+
+  const totalPurchases = purchases.length;
+  const totalValue = purchases.reduce((acc, curr) => acc + parseFloat(curr.grandTotal || "0"), 0);
+  const totalPaid = purchases.reduce((acc, curr) => acc + parseFloat(curr.amountPaid || "0"), 0);
+  const outstanding = totalValue - totalPaid;
 
   return (
     <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-white flex flex-col w-full max-w-full">
@@ -49,24 +79,26 @@ export default function VendorPurchasesPage() {
         <div className="bg-white border border-[#EBEBEB] rounded-[12px] p-4 md:p-6 flex flex-col md:flex-row md:items-center gap-4 md:gap-0">
           <div className="flex-1 flex flex-col gap-1 border-b md:border-b-0 md:border-r border-[#EBEBEB] last:border-0 pb-3 md:pb-0">
             <p className="text-[13px] text-[#5C5C5C]">Total Purchases</p>
-            <span className="text-[24px] font-semibold text-[#171717]">{vendorPurchases.length}</span>
+            <span className="text-[24px] font-semibold text-[#171717]">
+              {loading ? "-" : totalPurchases}
+            </span>
           </div>
           <div className="flex-1 flex flex-col gap-1 border-b md:border-b-0 md:border-r border-[#EBEBEB] last:border-0 pb-3 md:pb-0 md:pl-6">
             <p className="text-[13px] text-[#5C5C5C]">Total Value (₹)</p>
             <span className="text-[24px] font-semibold text-[#171717]">
-              {vendorPurchases.reduce((acc, curr) => acc + parseFloat(curr.grandTotal || "0"), 0).toLocaleString()}
+              {loading ? "-" : totalValue.toLocaleString()}
             </span>
           </div>
           <div className="flex-1 flex flex-col gap-1 border-b md:border-b-0 md:border-r border-[#EBEBEB] last:border-0 pb-3 md:pb-0 md:pl-6">
             <p className="text-[13px] text-[#5C5C5C]">Total Paid (₹)</p>
             <span className="text-[24px] font-semibold text-[#1CB061]">
-              {vendorPurchases.reduce((acc, curr) => acc + parseFloat(curr.amountPaid || "0"), 0).toLocaleString()}
+              {loading ? "-" : totalPaid.toLocaleString()}
             </span>
           </div>
           <div className="flex-1 flex flex-col gap-1 md:pl-6">
             <p className="text-[13px] text-[#5C5C5C]">Outstanding (₹)</p>
             <span className="text-[24px] font-semibold text-[#FB3748]">
-              {vendorPurchases.reduce((acc, curr) => acc + (parseFloat(curr.grandTotal || "0") - parseFloat(curr.amountPaid || "0")), 0).toLocaleString()}
+              {loading ? "-" : outstanding.toLocaleString()}
             </span>
           </div>
         </div>
@@ -86,18 +118,21 @@ export default function VendorPurchasesPage() {
           </div>
 
           <div className="flex items-center gap-3">
-            <button onClick={() => {
-              const exportData = filteredPurchases.map((row: any) => ({
-                "UNIQUE ID": row.id ?? "",
-                "Vendor Name": row.vendorName ?? "",
-                "Purchase Date": row.purchaseDate ?? "",
-                "Direction": row.direction ?? "",
-                "Order Amount": row.grandTotal ?? "",
-                "Paid Amount": row.amountPaid ?? "",
-                "Status": row.status ?? "",
-              }));
-              exportToExcel(exportData, "vendor-purchases", "Vendor Purchases");
-            }} className="h-[44px] px-4 bg-white border border-[#00B6E2] text-[#00B6E2] rounded-[8px] flex items-center gap-2 text-[14px] font-medium transition-colors hover:bg-[#F0FDFF]">
+            <button
+              onClick={() => {
+                const exportData = filteredPurchases.map((row: any) => ({
+                  "UNIQUE ID": row.id ?? "",
+                  "Vendor Name": row.vendorName ?? "",
+                  "Purchase Date": row.purchaseDate ?? "",
+                  "Direction": row.direction ?? "",
+                  "Order Amount": row.grandTotal ?? "",
+                  "Paid Amount": row.amountPaid ?? "",
+                  "Status": row.status ?? "",
+                }));
+                exportToExcel(exportData, "vendor-purchases", "Vendor Purchases");
+              }}
+              className="h-[44px] px-4 bg-white border border-[#00B6E2] text-[#00B6E2] rounded-[8px] flex items-center gap-2 text-[14px] font-medium transition-colors hover:bg-[#F0FDFF]"
+            >
               <Download className="w-4 h-4" />
               Export
             </button>
@@ -125,7 +160,15 @@ export default function VendorPurchasesPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#EBEBEB]">
-                {filteredPurchases.length === 0 ? (
+                {loading ? (
+                  <tr>
+                    <td colSpan={8} className="px-6 py-20 text-center">
+                      <div className="flex justify-center items-center h-full">
+                        <Loader2 className="w-8 h-8 animate-spin text-[#00B6E2]" />
+                      </div>
+                    </td>
+                  </tr>
+                ) : filteredPurchases.length === 0 ? (
                   <tr>
                     <td colSpan={8} className="px-6 py-10 text-center text-[#5C5C5C] text-[14px]">
                       No vendor purchases found. Check Accountant dashboard to add some.
@@ -138,8 +181,12 @@ export default function VendorPurchasesPage() {
                       <td className="px-6 py-4 text-[14px] text-[#5C5C5C]">{row.vendorName}</td>
                       <td className="px-6 py-4 text-[14px] text-[#5C5C5C]">{row.purchaseDate}</td>
                       <td className="px-6 py-4 text-[14px] text-[#5C5C5C]">{row.direction}</td>
-                      <td className="px-6 py-4 text-[14px] text-[#5C5C5C]">₹{parseFloat(row.grandTotal || "0").toLocaleString()}</td>
-                      <td className="px-6 py-4 text-[14px] text-[#5C5C5C]">₹{parseFloat(row.amountPaid || "0").toLocaleString()}</td>
+                      <td className="px-6 py-4 text-[14px] text-[#5C5C5C]">
+                        ₹{parseFloat(row.grandTotal || "0").toLocaleString()}
+                      </td>
+                      <td className="px-6 py-4 text-[14px] text-[#5C5C5C]">
+                        ₹{parseFloat(row.amountPaid || "0").toLocaleString()}
+                      </td>
                       <td className="px-6 py-4">
                         {row.status === "Due" && (
                           <span className="inline-flex px-2.5 py-1 rounded-[12px] bg-[#FFF0F1] text-[#FB3748] text-[12px] font-medium whitespace-nowrap">

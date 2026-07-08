@@ -43,8 +43,8 @@ export const stockService = {
       completedLots: rows.filter((row) => row.status === "Completed").length,
     }));
   },
-  create(payload: StockPayload) {
-    return supabaseRest.create("stock", { ...payload, quantity: payload.quantity ?? 1, status: payload.status ?? "Pending", stage: "Stock" });
+  create(payload: StockPayload & { stage?: string }) {
+    return supabaseRest.create("stock", { ...payload, quantity: payload.quantity ?? 1, status: payload.status ?? "Pending", stage: payload.stage ?? "Ready for Winding" });
   },
   update(id: string, payload: Partial<StockPayload>) {
     return supabaseRest.update("stock", id, payload);

@@ -1,38 +1,72 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { Search, Download, Filter, ChevronDown, Calendar } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { Search, Download, Filter, ChevronDown, Calendar, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { useStore } from "@/hooks/useStore";
+import { workOrderService } from "@/src/services/workOrderService";
+import { productOrderService } from "@/src/services/productOrderService";
 import { MobileHeader } from "@/components/MobileHeader";
-import { computeWorkflowProgress } from "../../../lib/data";
 import { exportToExcel } from "@/lib/exportExcel";
 
 export default function PipelinePage() {
-  const { store, mounted } = useStore();
+  const [loading, setLoading] = useState(true);
+  const [workOrders, setWorkOrders] = useState<any[]>([]);
+  const [productOrders, setProductOrders] = useState<any[]>([]);
   const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban");
   const [listType, setListType] = useState<"product" | "work">("work");
   const [searchQuery, setSearchQuery] = useState("");
 
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const [wos, pos] = await Promise.all([
+          workOrderService.list(),
+          productOrderService.list()
+        ]);
+        
+        setWorkOrders(wos.map((wo: any) => ({
+          id: wo.work_order_no,
+          micron: wo.micron,
+          width: wo.width_m,
+          quantity: wo.quantity,
+          qty: wo.quantity, // alias
+          stage: wo.stage || "Raw Material",
+          date: wo.created_at ? new Date(wo.created_at).toLocaleDateString("en-GB") : "-",
+          status: wo.status || "Yet to Start"
+        })));
+        
+        setProductOrders(pos.map((po: any) => ({
+          id: po.product_order_no,
+          code: po.product_code || "-",
+          type: po.capacitor_type || "-",
+          grade: po.grade || "-",
+          batch: po.batch_size || po.quantity || 0,
+          status: po.status || "Yet to Start",
+          stage: po.stage || "Raw Material",
+          date: po.created_at ? new Date(po.created_at).toLocaleDateString("en-GB") : "-"
+        })));
+      } catch (err) {
+        console.error("Failed to fetch pipeline data:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
+
   const kanbanColumns = useMemo(() => {
-    if (!mounted) return [];
-    
     // Metallisation Stage
-    const metallisationCards = store.workOrders.map(wo => {
-      const flow = store.flowDataMap[wo.id];
-      const progress = computeWorkflowProgress(flow);
-      return { id: wo.id, status: progress.status, micron: wo.micron, width: wo.width, qty: wo.qty, date: wo.date, stage: progress.stage, isPO: false as const };
-    }).filter(c => c.stage === "Raw Material" || c.stage === "Metallisation");
+    const metallisationCards = workOrders.map(wo => {
+      return { id: wo.id, status: wo.status, micron: wo.micron, width: wo.width, qty: wo.qty, date: wo.date, stage: wo.stage, isPO: false as const };
+    }).filter(c => c.stage === "Raw Material" || c.stage === "Metallisation" || c.stage === "Yet to Start" || c.stage === "Work Order");
 
     // Slitting Stage
-    const slittingCards = store.workOrders.map(wo => {
-      const flow = store.flowDataMap[wo.id];
-      const progress = computeWorkflowProgress(flow);
-      return { id: wo.id, status: progress.status, micron: wo.micron, width: wo.width, qty: wo.qty, date: wo.date, stage: progress.stage, isPO: false as const };
+    const slittingCards = workOrders.map(wo => {
+      return { id: wo.id, status: wo.status, micron: wo.micron, width: wo.width, qty: wo.qty, date: wo.date, stage: wo.stage, isPO: false as const };
     }).filter(c => c.stage === "Slitting");
 
     // Winding Stage
-    const windingCards = store.productOrders.filter(po => {
+    const windingCards = productOrders.filter(po => {
       return po.stage === "Yet to Start" || po.stage === "Raw Material" || po.stage === "Metallisation" || po.stage === "Slitting" || po.stage === "Winding";
     }).map(po => ({
       id: po.id,
@@ -41,13 +75,13 @@ export default function PipelinePage() {
       code: po.code,
       type: po.type,
       grade: po.grade,
-      batch: po.batchSize,
-      qty: po.batchSize,
-      date: po.timestamp.split(':')[0]
+      batch: po.batch,
+      qty: po.batch,
+      date: po.date
     }));
 
     // Spray Stage
-    const sprayCards = store.productOrders.filter(po => {
+    const sprayCards = productOrders.filter(po => {
       return po.stage === "Spray" || po.stage === "Completed";
     }).map(po => ({
       id: po.id,
@@ -56,9 +90,9 @@ export default function PipelinePage() {
       code: po.code,
       type: po.type,
       grade: po.grade,
-      batch: po.batchSize,
-      qty: po.batchSize,
-      date: po.timestamp.split(':')[0]
+      batch: po.batch,
+      qty: po.batch,
+      date: po.date
     }));
 
     return [
@@ -99,67 +133,50 @@ export default function PipelinePage() {
         }))
       }
     ];
-  }, [store, mounted]);
+  }, [workOrders, productOrders]);
 
   const workOrdersList = useMemo(() => {
-    if (!mounted) return [];
-    return store.workOrders.map(wo => {
-      const flow = store.flowDataMap[wo.id];
-      const progress = computeWorkflowProgress(flow);
+    return workOrders.map(wo => {
       return {
         id: wo.id,
         micron: wo.micron,
         width: wo.width,
-        quantity: wo.qty,
-        stage: progress.stage,
+        quantity: wo.quantity,
+        stage: wo.stage,
         date: wo.date,
-        status: progress.status,
-        statusColor: progress.status === "Completed" ? "text-[#1CB061]" : progress.status === "In-progress" ? "text-[#E19242]" : "text-[#FB3748]",
-        statusBg: progress.status === "Completed" ? "bg-[#E8F8F0]" : progress.status === "In-progress" ? "bg-[#FFF4ED]" : "bg-[#FFF0F1]"
+        status: wo.status,
+        statusColor: wo.status === "Completed" ? "text-[#1CB061]" : wo.status === "In-progress" ? "text-[#E19242]" : "text-[#FB3748]",
+        statusBg: wo.status === "Completed" ? "bg-[#E8F8F0]" : wo.status === "In-progress" ? "bg-[#FFF4ED]" : "bg-[#FFF0F1]"
       };
     }).filter(row => {
       if (searchQuery && !row.id.toLowerCase().includes(searchQuery.toLowerCase())) return false;
       return true;
     });
-  }, [store, mounted, searchQuery]);
+  }, [workOrders, searchQuery]);
 
   const productOrdersList = useMemo(() => {
-    if (!mounted) return [];
-    return store.productOrders.map(po => ({
-      id: po.id,
-      code: po.code,
-      type: po.type,
-      grade: po.grade,
-      batch: po.batchSize,
-      status: po.status,
-      stage: po.stage,
-      date: po.timestamp
+    return productOrders.map(po => ({
+      ...po
     })).filter(row => {
       const search = searchQuery.toLowerCase();
       if (searchQuery && !row.id.toLowerCase().includes(search) && !row.code.toLowerCase().includes(search)) return false;
       return true;
     });
-  }, [store, mounted, searchQuery]);
+  }, [productOrders, searchQuery]);
 
-  const totalWos = store.workOrders.length;
-  const totalPos = store.productOrders.length;
+  const totalWos = workOrders.length;
+  const totalPos = productOrders.length;
   const inProgressCount = useMemo(() => {
-    if (!mounted) return 0;
-    const activeWos = store.workOrders.filter(w => {
-      const flow = store.flowDataMap[w.id];
-      return computeWorkflowProgress(flow).status === "In-progress";
-    }).length;
-    const activePos = store.productOrders.filter(p => p.status === "In-progress").length;
+    const activeWos = workOrders.filter(w => w.status === "In-progress").length;
+    const activePos = productOrders.filter(p => p.status === "In-progress").length;
     return activeWos + activePos;
-  }, [store, mounted]);
+  }, [workOrders, productOrders]);
 
   const kpiStats = [
     { label: "Active Work Orders", value: String(totalWos), subtext: "Live floor execution", subColor: "text-[#00B6E2]" },
     { label: "Active Product Orders", value: String(totalPos), subtext: "Client demands", subColor: "text-[#1CB061]" },
     { label: "In-Progress Stages", value: String(inProgressCount), subtext: "Under active processing", subColor: "text-[#E19242]" },
   ];
-
-  if (!mounted) return null;
 
   return (
     <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-white flex flex-col w-full max-w-full relative">
@@ -194,7 +211,7 @@ export default function PipelinePage() {
             <div key={i} className="flex-1 flex flex-row md:flex-col justify-between md:justify-start items-center md:items-start border-b md:border-b-0 md:border-r border-[#EBEBEB] last:border-0 pb-3 md:pb-0 md:pl-6 first:pl-0">
               <div className="flex flex-col gap-1">
                 <p className="text-[13px] text-[#5C5C5C]">{item.label}</p>
-                <span className="text-[24px] font-semibold text-[#171717]">{item.value}</span>
+                <span className="text-[24px] font-semibold text-[#171717]">{loading ? "-" : item.value}</span>
               </div>
               <span className={`text-[12px] font-medium ${item.subColor} md:mt-1`}>
                 {item.subtext}
@@ -254,7 +271,7 @@ export default function PipelinePage() {
               
               <button onClick={() => {
                 if (listType === "product") {
-                  const rows = viewMode === "list" ? productOrdersList : store.productOrders;
+                  const rows = viewMode === "list" ? productOrdersList : productOrders;
                   const exportData = rows.map((row: any) => ({
                     "Order ID": row.id ?? "",
                     "Product Code": row.code ?? "",
@@ -267,7 +284,7 @@ export default function PipelinePage() {
                   }));
                   exportToExcel(exportData, "pipeline-orders", "Product Orders");
                 } else {
-                  const rows = viewMode === "list" ? workOrdersList : store.workOrders;
+                  const rows = viewMode === "list" ? workOrdersList : workOrders;
                   const exportData = rows.map((row: any) => ({
                     "Work Orders ID": row.id ?? "",
                     "Micron": row.micron ?? "",
@@ -288,7 +305,11 @@ export default function PipelinePage() {
         </div>
 
         {/* CONTENT AREA */}
-        {viewMode === "kanban" ? (
+        {loading ? (
+          <div className="flex items-center justify-center flex-1">
+            <Loader2 className="w-8 h-8 animate-spin text-[#00B6E2]" />
+          </div>
+        ) : viewMode === "kanban" ? (
           /* KANBAN BOARD */
           <div className="flex gap-4 overflow-x-auto pb-4 flex-1">
             {kanbanColumns.map((col) => (

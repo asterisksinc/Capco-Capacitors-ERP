@@ -8,8 +8,10 @@ import Link from "next/link";
 import { exportToExcel } from "@/lib/exportExcel";
 import type { EnumFilter, FilterConfig, FilterState } from "@/components/table/FilterPopover";
 import { useMobileMenu } from "@/components/MobileMenuContext";
-import { useStore } from "@/hooks/useStore";
-import type { WorkOrderSummary, ProductOrderSummary } from "../../../lib/data";
+import { workOrderService } from "@/src/services/workOrderService";
+import { productOrderService } from "@/src/services/productOrderService";
+import { dashboardService } from "@/src/services/dashboardService";
+import { Loader2 } from "lucide-react";
 
 function FilterPopover({
   config,
@@ -72,11 +74,10 @@ function FilterPopover({
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center gap-2 h-[40px] px-4 bg-white border rounded-[8px] text-[14px] font-medium transition-colors shadow-sm ${
-          hasActiveFilters()
-            ? "border-[#00B6E2] text-[#00B6E2] bg-[#F0FDFF]"
-            : "border-[#EBEBEB] text-[#171717] hover:bg-gray-50"
-        }`}
+        className={`flex items-center gap-2 h-[40px] px-4 bg-white border rounded-[8px] text-[14px] font-medium transition-colors shadow-sm ${hasActiveFilters()
+          ? "border-[#00B6E2] text-[#00B6E2] bg-[#F0FDFF]"
+          : "border-[#EBEBEB] text-[#171717] hover:bg-gray-50"
+          }`}
       >
         <Filter className="w-4 h-4" />
         Filter
@@ -157,8 +158,35 @@ type PersonColumn = {
 
 export default function OverviewPage() {
   const { setIsMobileMenuOpen } = useMobileMenu();
-  const { store, mounted, workOrders, addWorkOrder, addProductOrder } = useStore();
   const [searchQuery, setSearchQuery] = useState("");
+
+  const [workOrders, setWorkOrders] = useState<any[]>([]);
+  const [productOrders, setProductOrders] = useState<any[]>([]);
+  const [stats, setStats] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const loadData = async () => {
+    setIsLoading(true);
+    try {
+      const [woData, poData, dbStats] = await Promise.all([
+        workOrderService.list(),
+        productOrderService.list(),
+        dashboardService.productionHead()
+      ]);
+      setWorkOrders(woData || []);
+      setProductOrders(poData || []);
+      setStats(dbStats);
+    } catch (error) {
+      console.error("Failed to fetch data:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
   const [sortBy, setSortBy] = useState("name-asc");
   const [isCreateOrderOpen, setIsCreateOrderOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -196,55 +224,60 @@ export default function OverviewPage() {
     specialInstructions: ""
   });
 
-  const handleCreateProductOrder = () => {
+  const handleCreateProductOrder = async () => {
     if (!poFormData.productCode || !poFormData.capacitorType || !poFormData.grade || !poFormData.batchSize) return;
 
-    const now = new Date();
-    const timestamp = `${String(now.getDate()).padStart(2, "0")}/${String(now.getMonth() + 1).padStart(2, "0")}/${now.getFullYear()}:${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
     const generatedOrderId = poFormData.poId.trim() || `PO-CC-${String(Date.now()).slice(-6)}`;
-    const normalizedId = generatedOrderId.startsWith("#") ? poFormData.poId.trim() : `#${generatedOrderId}`;
 
-    const newOrder: ProductOrderSummary = {
-      id: normalizedId,
-      code: poFormData.productCode,
-      type: poFormData.capacitorType,
-      grade: poFormData.grade.toUpperCase(),
-      batchSize: poFormData.batchSize,
-      status: "Yet to Start",
-      stage: "Yet to Start",
-      timestamp,
-    };
-
-    addProductOrder(newOrder);
-    setIsPOModalOpen(false);
-    setPOFormData(resetPOForm());
+    try {
+      await productOrderService.create({
+        product_order_no: generatedOrderId,
+        product_code: poFormData.productCode,
+        capacitor_type: poFormData.capacitorType,
+        grade: poFormData.grade.toUpperCase(),
+        batch_size: Number(poFormData.batchSize),
+        quantity: Number(poFormData.batchSize), // assuming batch size is qty here
+        instructions: poFormData.specialInstructions,
+      });
+      await loadData();
+      setIsPOModalOpen(false);
+      setPOFormData(resetPOForm());
+    } catch (error) {
+      console.error("Failed to create PO:", error);
+      alert("Failed to create Product Order");
+    }
   };
 
-  const handleCreateWorkOrder = () => {
+  const handleCreateWorkOrder = async () => {
     if (!formData.micron || !formData.width || !formData.quantity) return;
 
-    const nextIdNum = workOrders.reduce((maxId, wo) => {
-      const parsed = Number.parseInt(wo.id.replace("WO-", ""), 10);
+    const currentYear = new Date().getFullYear();
+
+    const nextIdNum = workOrders.reduce((maxId, row) => {
+      const orderNo = row.work_order_no || row.id || "";
+      const match = orderNo.match(/WO-\d{4}-(\d+)/);
+      const parsed = match ? Number.parseInt(match[1], 10) : NaN;
       return Number.isNaN(parsed) ? maxId : Math.max(maxId, parsed);
     }, 0) + 1;
-    const newId = `WO-${String(nextIdNum).padStart(4, "0")}`;
 
-    const today = new Date();
-    const dateStr = `${String(today.getDate()).padStart(2, "0")}/${String(today.getMonth() + 1).padStart(2, "0")}/${today.getFullYear()}`;
+    const newId = `WO-${currentYear}-${String(nextIdNum).padStart(3, "0")}`;
 
-    const newWorkOrder: WorkOrderSummary = {
-      id: newId,
-      micron: formData.micron,
-      width: formData.width,
-      qty: formData.quantity,
-      date: dateStr,
-    };
-
-    addWorkOrder(newWorkOrder);
-    setIsModalOpen(false);
-    setFormData({ micron: "", width: "", quantity: "" });
+    try {
+      await workOrderService.create({
+        work_order_no: newId,
+        micron: Number(formData.micron),
+        width_m: Number(formData.width),
+        quantity: Number(formData.quantity),
+      });
+      await loadData();
+      setIsModalOpen(false);
+      setFormData({ micron: "", width: "", quantity: "" });
+    } catch (error) {
+      console.error(error);
+      alert("Failed to create work order");
+    }
   };
-  
+
   const SORT_OPTIONS = [
     { value: "name-asc", label: "Name (A-Z)" },
     { value: "name-desc", label: "Name (Z-A)" },
@@ -252,7 +285,7 @@ export default function OverviewPage() {
 
   const STAGE_OPTIONS = ["Raw Material", "Metallisation", "Slitting", "Winding", "Spray", "Epoxy", "Soldering", "Packaging", "QC"];
   const STATUS_OPTIONS = ["Yet to Start", "In-progress", "Completed"];
-  
+
   const [tableFilters, setTableFilters] = useState<FilterState>(() => {
     const filters: FilterState = {};
     filters.stage = [...STAGE_OPTIONS];
@@ -270,32 +303,39 @@ export default function OverviewPage() {
   const stageFilter = (tableFilters.stage as string[]) || STAGE_OPTIONS;
   const statusFilter = (tableFilters.status as string[]) || STATUS_OPTIONS;
 
+  const formatCardDate = (dateString?: string) => {
+    if (!dateString) return "-";
+    const d = new Date(dateString);
+    if (isNaN(d.getTime())) return dateString;
+    return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+  };
+
   const personACards: Card[] = workOrders.filter((wo) => wo.status !== "Completed").map((wo) => ({
-    id: wo.id,
-    stage: wo.stage,
-    date: wo.date,
-    status: wo.status,
+    id: wo.work_order_no || wo.id,
+    stage: wo.stage || "Raw Material",
+    date: formatCardDate(wo.created_at || wo.date),
+    status: wo.status || "Yet to Start",
   }));
 
-  const personBCards: Card[] = store.productOrders.map((po) => ({
-    id: po.id,
-    stage: po.stage,
-    date: po.timestamp?.split(":")[0]?.replace(/(\d{2})\/(\d{2})\/(\d{4}).*/, "$1/$2/$3") ?? "-",
+  const personBCards: Card[] = productOrders.map((po) => ({
+    id: po.product_order_no || po.id,
+    stage: po.stage || "Raw Material",
+    date: formatCardDate(po.created_at || po.timestamp),
     status: po.status === "Completed" ? "Completed" : po.status === "In-progress" ? "In-progress" : "Yet to Start",
   }));
 
   const completedWOs = workOrders.filter((wo) => wo.status === "Completed");
   const personCCards: Card[] = completedWOs.map((wo) => ({
-    id: wo.id,
+    id: wo.work_order_no || wo.id,
     stage: "Epoxy",
-    date: wo.date,
+    date: formatCardDate(wo.created_at || wo.date),
     status: "Yet to Start",
   })).slice(0, 3);
 
   const personDCards: Card[] = completedWOs.map((wo) => ({
-    id: wo.id,
+    id: wo.work_order_no || wo.id,
     stage: "Packaging",
-    date: wo.date,
+    date: formatCardDate(wo.created_at || wo.date),
     status: "Yet to Start",
   })).slice(0, 3);
 
@@ -308,28 +348,28 @@ export default function OverviewPage() {
 
   const filteredColumns = useMemo(() => {
     let result = [...data];
-    
+
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       result = result.map(col => ({
         ...col,
-        cards: col.cards.filter(card => 
+        cards: col.cards.filter(card =>
           card.id.toLowerCase().includes(query) ||
           card.stage.toLowerCase().includes(query)
         )
       })).filter(col => col.cards.length > 0);
     }
-    
+
     result = result.map(col => ({
       ...col,
       cards: col.cards.filter(card => stageFilter.includes(card.stage))
     })).filter(col => col.cards.length > 0);
-    
+
     result = result.map(col => ({
       ...col,
       cards: col.cards.filter(card => statusFilter.includes(card.status))
     })).filter(col => col.cards.length > 0);
-    
+
     result.sort((a, b) => {
       switch (sortBy) {
         case "name-asc":
@@ -340,7 +380,7 @@ export default function OverviewPage() {
           return 0;
       }
     });
-    
+
     return result;
   }, [data, searchQuery, sortBy, stageFilter, statusFilter]);
 
@@ -360,11 +400,18 @@ export default function OverviewPage() {
     exportToExcel(exportData, "overview-data", "Overview");
   };
 
-  if (!mounted) return null;
-  const woOpen = workOrders.filter((w) => w.status !== "Completed").length;
-  const poOpen = store.productOrders.filter((p) => p.status !== "Completed").length;
-  const woCompleted = workOrders.filter((w) => w.status === "Completed").length;
-  const poCompleted = store.productOrders.filter((p) => p.status === "Completed").length;
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-72px)] bg-white">
+        <Loader2 className="w-8 h-8 animate-spin text-[#00B6E2]" />
+      </div>
+    );
+  }
+
+  const woOpen = stats?.workOrdersOpen || workOrders.filter((w) => w.status !== "Completed").length;
+  const poOpen = stats?.productOrdersOpen || productOrders.filter((p) => p.status !== "Completed").length;
+  const woCompleted = stats?.workOrders?.completed || workOrders.filter((w) => w.status === "Completed").length;
+  const poCompleted = stats?.productOrders?.completed || productOrders.filter((p) => p.status === "Completed").length;
 
   return (
     <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-white flex flex-col w-full max-w-full">
@@ -383,7 +430,7 @@ export default function OverviewPage() {
           </div>
 
           <div className="relative">
-            <button 
+            <button
               onClick={() => setIsCreateOrderOpen(!isCreateOrderOpen)}
               className="h-[40px] px-4 flex items-center gap-2 bg-[#00B6E2] text-white rounded-[6px] text-[14px] font-medium"
             >
@@ -400,13 +447,13 @@ export default function OverviewPage() {
                   Work Order
                   <ChevronRight className="w-4 h-4 text-[#5C5C5C]" />
                 </button>
-              <button
-                onClick={() => { setIsCreateOrderOpen(false); setIsPOModalOpen(true); }}
-                className="flex items-center justify-between w-full px-4 py-3 text-[14px] text-[#171717] hover:bg-[#F5F7FA] transition-colors border-t border-[#EBEBEB]"
-              >
-                Product Order
-                <ChevronRight className="w-4 h-4 text-[#5C5C5C]" />
-              </button>
+                <button
+                  onClick={() => { setIsCreateOrderOpen(false); setIsPOModalOpen(true); }}
+                  className="flex items-center justify-between w-full px-4 py-3 text-[14px] text-[#171717] hover:bg-[#F5F7FA] transition-colors border-t border-[#EBEBEB]"
+                >
+                  Product Order
+                  <ChevronRight className="w-4 h-4 text-[#5C5C5C]" />
+                </button>
               </div>
             )}
           </div>
@@ -426,7 +473,7 @@ export default function OverviewPage() {
 
       {/* MOBILE: CREATE ORDER BUTTON */}
       <section className="px-4 mt-4 sm:hidden">
-        <button 
+        <button
           onClick={() => setIsCreateOrderOpen(true)}
           className="w-full h-12 bg-[#00B6E2] text-white rounded-xl flex items-center justify-center gap-2 text-[14px] font-medium"
         >
@@ -438,16 +485,16 @@ export default function OverviewPage() {
         {isCreateOrderOpen && (
           <>
             {/* Backdrop */}
-            <div 
+            <div
               className="fixed inset-0 z-50 bg-[#171717]/40 backdrop-blur-sm"
               onClick={() => setIsCreateOrderOpen(false)}
             />
-            
+
             {/* Bottom Sheet */}
             <div className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-[20px] shadow-lg animate-slide-up">
               <div className="flex flex-col">
                 <div className="w-10 h-1.5 bg-[#E5E5E5] rounded-full mx-auto mt-3 mb-2"></div>
-                
+
                 <button
                   onClick={() => { setIsCreateOrderOpen(false); setIsModalOpen(true); }}
                   className="flex items-center justify-between w-full px-5 py-4 text-[15px] text-[#171717] hover:bg-[#F5F7FA] border-b border-[#EBEBEB]"
@@ -462,8 +509,8 @@ export default function OverviewPage() {
                   Product Order
                   <ChevronRight className="w-5 h-5 text-[#5C5C5C]" />
                 </button>
-                
-                <button 
+
+                <button
                   onClick={() => setIsCreateOrderOpen(false)}
                   className="h-14 text-[15px] text-[#5C5C5C] hover:bg-[#F5F7FA]"
                 >
@@ -496,9 +543,9 @@ export default function OverviewPage() {
       {/* DESKTOP: STATS */}
       <section className="px-6 py-6 hidden sm:block">
         <div className="bg-white border border-[#EBEBEB] rounded-[12px] p-6 flex items-center gap-4">
-          
+
           {[
-            { label: "Product Orders Open", value: String(poOpen), change: `${store.productOrders.length} total` },
+            { label: "Product Orders Open", value: String(poOpen), change: `${productOrders.length} total` },
             { label: "Work Orders Open", value: String(woOpen), change: `${workOrders.length} total` },
             { label: "Orders Delayed", value: "0", change: "All on track" },
             { label: "Dispatch Ready Orders", value: String(woCompleted), change: "Completed" },
@@ -538,7 +585,7 @@ export default function OverviewPage() {
       {/* MOBILE: ACTION BUTTONS ROW */}
       <section className="px-4 mt-3 flex gap-2 sm:hidden">
         <div className="relative flex-1">
-          <select 
+          <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
             className="h-10 w-full border border-[#EBEBEB] rounded-lg px-3 pr-8 text-[13px]"
@@ -549,7 +596,7 @@ export default function OverviewPage() {
           </select>
           <ChevronDown className="w-4 h-4 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
         </div>
-        <button 
+        <button
           onClick={handleExport}
           className="h-10 px-4 border border-[#00B6E2] text-[#00B6E2] rounded-lg flex items-center gap-2 text-[13px]"
         >
@@ -582,9 +629,9 @@ export default function OverviewPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          
+
           <div className="relative">
-            <select 
+            <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
               className="h-[40px] border border-[#EBEBEB] rounded-[8px] px-3 pr-8 text-[14px]"
@@ -596,7 +643,7 @@ export default function OverviewPage() {
             <ChevronDown className="w-4 h-4 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
 
-          <button 
+          <button
             onClick={handleExport}
             className="h-[40px] px-4 border border-[#00B6E2] text-[#00B6E2] rounded-[6px] flex items-center gap-2"
           >
@@ -660,9 +707,9 @@ export default function OverviewPage() {
                       </div>
                     </div>
 
-                    <Link 
-                      href={card.id.startsWith("WO") || card.id.includes("WO") 
-                        ? `/productionhead/workorder/${card.id}` 
+                    <Link
+                      href={card.id.startsWith("WO") || card.id.includes("WO")
+                        ? `/productionhead/workorder/${card.id}`
                         : `/productionhead/productorders/${card.id}`}
                       className="w-full h-10 border border-[#00B6E2] text-[#00B6E2] text-[14px] font-medium rounded-lg flex items-center justify-center mt-3"
                     >
@@ -723,9 +770,9 @@ export default function OverviewPage() {
                       </div>
                     </div>
 
-                    <Link 
-                      href={card.id.startsWith("WO") || card.id.includes("WO") 
-                        ? `/productionhead/workorder/${card.id}` 
+                    <Link
+                      href={card.id.startsWith("WO") || card.id.includes("WO")
+                        ? `/productionhead/workorder/${card.id}`
                         : `/productionhead/productorders/${card.id}`}
                       className="h-8 px-3.5 border border-[#00B6E2] text-[#00B6E2] text-[14px] font-medium rounded-[6px] flex items-center justify-center"
                     >
@@ -788,7 +835,7 @@ export default function OverviewPage() {
                     <div className="relative">
                       <select
                         value={poFormData.productCode}
-                        onChange={(e) => setPOFormData({...poFormData, productCode: e.target.value})}
+                        onChange={(e) => setPOFormData({ ...poFormData, productCode: e.target.value })}
                         className="w-full h-[44px] bg-white border border-[#EBEBEB] rounded-[8px] px-3 text-[14px] text-[#5C5C5C] appearance-none focus:outline-none focus:border-[#00B6E2] transition-colors"
                       >
                         <option value="" disabled hidden>Select or Search Product Code...</option>
@@ -808,7 +855,7 @@ export default function OverviewPage() {
                     <div className="relative">
                       <select
                         value={poFormData.capacitance}
-                        onChange={(e) => setPOFormData({...poFormData, capacitance: e.target.value})}
+                        onChange={(e) => setPOFormData({ ...poFormData, capacitance: e.target.value })}
                         className="w-full h-[44px] bg-white border border-[#EBEBEB] rounded-[8px] px-3 text-[14px] text-[#5C5C5C] appearance-none focus:outline-none focus:border-[#00B6E2] transition-colors"
                       >
                         <option value="" disabled hidden>Select Value...</option>
@@ -828,7 +875,7 @@ export default function OverviewPage() {
                     <div className="relative">
                       <select
                         value={poFormData.voltage}
-                        onChange={(e) => setPOFormData({...poFormData, voltage: e.target.value})}
+                        onChange={(e) => setPOFormData({ ...poFormData, voltage: e.target.value })}
                         className="w-full h-[44px] bg-white border border-[#EBEBEB] rounded-[8px] px-3 text-[14px] text-[#5C5C5C] appearance-none focus:outline-none focus:border-[#00B6E2] transition-colors"
                       >
                         <option value="" disabled hidden>Select Voltage Rating...</option>
@@ -848,7 +895,7 @@ export default function OverviewPage() {
                     <div className="relative">
                       <select
                         value={poFormData.capacitorType}
-                        onChange={(e) => setPOFormData({...poFormData, capacitorType: e.target.value})}
+                        onChange={(e) => setPOFormData({ ...poFormData, capacitorType: e.target.value })}
                         className="w-full h-[44px] bg-white border border-[#EBEBEB] rounded-[8px] px-3 text-[14px] text-[#5C5C5C] appearance-none focus:outline-none focus:border-[#00B6E2] transition-colors"
                       >
                         <option value="" disabled hidden>Select type...</option>
@@ -875,7 +922,7 @@ export default function OverviewPage() {
                     <div className="relative">
                       <select
                         value={poFormData.grade}
-                        onChange={(e) => setPOFormData({...poFormData, grade: e.target.value})}
+                        onChange={(e) => setPOFormData({ ...poFormData, grade: e.target.value })}
                         className="w-full h-[44px] bg-white border border-[#EBEBEB] rounded-[8px] px-3 text-[14px] text-[#5C5C5C] appearance-none focus:outline-none focus:border-[#00B6E2] transition-colors"
                       >
                         <option value="" disabled hidden>Choose Grade...</option>
@@ -894,7 +941,7 @@ export default function OverviewPage() {
                     <div className="relative">
                       <select
                         value={poFormData.tolerance}
-                        onChange={(e) => setPOFormData({...poFormData, tolerance: e.target.value})}
+                        onChange={(e) => setPOFormData({ ...poFormData, tolerance: e.target.value })}
                         className="w-full h-[44px] bg-white border border-[#EBEBEB] rounded-[8px] px-3 text-[14px] text-[#5C5C5C] appearance-none focus:outline-none focus:border-[#00B6E2] transition-colors"
                       >
                         <option value="" disabled hidden>Select Value...</option>
@@ -913,7 +960,7 @@ export default function OverviewPage() {
                     <div className="relative">
                       <select
                         value={poFormData.dielectric}
-                        onChange={(e) => setPOFormData({...poFormData, dielectric: e.target.value})}
+                        onChange={(e) => setPOFormData({ ...poFormData, dielectric: e.target.value })}
                         className="w-full h-[44px] bg-white border border-[#EBEBEB] rounded-[8px] px-3 text-[14px] text-[#5C5C5C] appearance-none focus:outline-none focus:border-[#00B6E2] transition-colors"
                       >
                         <option value="" disabled hidden>Select Material...</option>
@@ -941,7 +988,7 @@ export default function OverviewPage() {
                       min="1"
                       step="1"
                       value={poFormData.batchSize}
-                      onChange={(e) => setPOFormData({...poFormData, batchSize: e.target.value})}
+                      onChange={(e) => setPOFormData({ ...poFormData, batchSize: e.target.value })}
                       placeholder="Enter batch size"
                       className="w-full h-[44px] bg-[#FAFAFA] border border-[#EBEBEB] rounded-[8px] px-3 text-[14px] text-[#5C5C5C] placeholder:text-[#A1A1AA] focus:outline-none focus:border-[#00B6E2] transition-colors"
                     />
@@ -953,7 +1000,7 @@ export default function OverviewPage() {
                     <div className="relative">
                       <select
                         value={poFormData.priority}
-                        onChange={(e) => setPOFormData({...poFormData, priority: e.target.value})}
+                        onChange={(e) => setPOFormData({ ...poFormData, priority: e.target.value })}
                         className="w-full h-[44px] bg-white border border-[#EBEBEB] rounded-[8px] px-3 text-[14px] text-[#5C5C5C] appearance-none focus:outline-none focus:border-[#00B6E2] transition-colors"
                       >
                         <option value="" disabled hidden>Select Value...</option>
@@ -1010,7 +1057,7 @@ export default function OverviewPage() {
                 <h2 className="text-[18px] font-semibold text-[#171717] leading-tight">New Work Order</h2>
                 <p className="text-[14px] text-[#5C5C5C] leading-tight">Lorem ipsum dolor sit amet, consectetur adipiscing elit</p>
               </div>
-              <button 
+              <button
                 onClick={() => setIsModalOpen(false)}
                 className="text-[#5C5C5C] hover:text-[#171717] transition-colors p-1"
               >
@@ -1024,9 +1071,9 @@ export default function OverviewPage() {
               <div className="flex flex-col gap-2">
                 <label className="text-[12px] font-medium text-[#171717] uppercase tracking-wider">MICRON</label>
                 <div className="relative">
-                  <select 
+                  <select
                     value={formData.micron}
-                    onChange={(e) => setFormData({...formData, micron: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, micron: e.target.value })}
                     className="w-full h-[44px] bg-white border border-[#EBEBEB] rounded-[8px] px-3 text-[14px] text-[#171717] appearance-none focus:outline-none focus:border-[#00B6E2] transition-colors"
                   >
                     <option value="" disabled hidden>Select micron...</option>
@@ -1044,9 +1091,9 @@ export default function OverviewPage() {
               <div className="flex flex-col gap-2">
                 <label className="text-[12px] font-medium text-[#171717] uppercase tracking-wider">WIDTH</label>
                 <div className="relative">
-                  <select 
+                  <select
                     value={formData.width}
-                    onChange={(e) => setFormData({...formData, width: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, width: e.target.value })}
                     className="w-full h-[44px] bg-white border border-[#EBEBEB] rounded-[8px] px-3 text-[14px] text-[#171717] appearance-none focus:outline-none focus:border-[#00B6E2] transition-colors"
                   >
                     <option value="" disabled hidden>Select width...</option>
@@ -1062,11 +1109,11 @@ export default function OverviewPage() {
               {/* Quantity Field */}
               <div className="flex flex-col gap-2">
                 <label className="text-[12px] font-medium text-[#171717] uppercase tracking-wider">QUANTITY</label>
-                <input 
+                <input
                   type="number"
                   placeholder="Enter Quantity"
                   value={formData.quantity}
-                  onChange={(e) => setFormData({...formData, quantity: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
                   className="w-full h-[44px] bg-white border border-[#EBEBEB] rounded-[8px] px-3 text-[14px] text-[#171717] placeholder:text-[#A1A1AA] focus:outline-none focus:border-[#00B6E2] transition-colors"
                 />
               </div>
@@ -1074,13 +1121,13 @@ export default function OverviewPage() {
 
             {/* Modal Footer */}
             <div className="flex items-center justify-between px-6 py-5 bg-[#FAFAFA]">
-              <button 
+              <button
                 onClick={() => setIsModalOpen(false)}
                 className="h-[40px] px-4 bg-white border border-[#EBEBEB] text-[#171717] text-[14px] font-medium rounded-[6px] hover:bg-gray-50 transition-colors"
               >
                 Cancel
               </button>
-              <button 
+              <button
                 onClick={handleCreateWorkOrder}
                 className="h-[40px] px-5 bg-[#00B6E2] text-white text-[14px] font-medium rounded-[6px] hover:bg-[#0092b5] transition-colors"
               >

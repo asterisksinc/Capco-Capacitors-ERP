@@ -2,8 +2,8 @@
 
 import { Search, QrCode } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
-import { useStore } from "@/hooks/useStore";
+import { useState, useEffect } from "react";
+import { productOrderService } from "@/src/services/productOrderService";
 import type { TableConfig } from "@/hooks/useTableControls";
 import { useTableControls } from "@/hooks/useTableControls";
 import { SortableHeader } from "@/components/table/SortableHeader";
@@ -64,11 +64,34 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export default function PersonAProductOrdersPage() {
-  const { store, mounted } = useStore();
+  const [productOrders, setProductOrders] = useState<ProductOrderRow[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [qrData, setQrData] = useState<QRModalData | null>(null);
 
-  const productOrders = store.productOrders as ProductOrderRow[];
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const data = await productOrderService.list();
+        setProductOrders(data.map((po: any) => ({
+          id: po.product_order_no || po.id,
+          originalId: po.id,
+          code: po.product_code || "-",
+          type: po.capacitor_type || "-",
+          grade: po.grade || "-",
+          batchSize: po.batch_size ? String(po.batch_size) : "-",
+          status: po.status || "Yet to Start",
+          stage: po.stage || "Raw Material",
+          timestamp: new Date(po.created_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
+        })));
+      } catch (err) {
+        console.error("Failed to load product orders", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
 
   const {
     processedData,
@@ -110,7 +133,7 @@ export default function PersonAProductOrdersPage() {
     return true;
   });
 
-  if (!mounted) return null;
+  if (loading) return <div className="p-6 text-center text-[#5C5C5C]">Loading product orders...</div>;
 
   return (
     <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-white flex flex-col overflow-x-hidden">

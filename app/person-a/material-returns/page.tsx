@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { Search } from "lucide-react";
-import { useStore } from "@/hooks/useStore";
+import { materialReturnService } from "@/src/services/materialReturnService";
 import type { TableConfig } from "@/hooks/useTableControls";
 import { useTableControls } from "@/hooks/useTableControls";
 import { SortableHeader } from "@/components/table/SortableHeader";
@@ -50,12 +50,34 @@ function getDateString() {
 }
 
 export default function PersonAMaterialReturnsPage() {
-  const { store, mounted, acceptMaterialReturn, rejectMaterialReturn, addInventoryItem } = useStore();
-
+  const [data, setData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const data = useMemo(() => store.materialReturns, [store.materialReturns]);
-  const pendingCount = useMemo(() => store.materialReturns.filter((r) => r.status === "Pending").length, [store.materialReturns]);
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const rows = await materialReturnService.list();
+      setData(rows.map((row: any) => ({
+        id: row.return_no || row.id,
+        originalId: row.id,
+        materialId: row.stock?.stock_no || "-",
+        weight: row.stock?.weight_kg ? String(row.stock.weight_kg) : "-",
+        usedWeight: row.used_quantity ? String(row.used_quantity) : "-",
+        reason: row.reason || "-",
+        status: row.status || "Pending",
+        createdAt: new Date(row.created_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
+      })));
+    } catch (err) {
+      console.error("Failed to load material returns", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
 
   const {
     processedData,
@@ -74,25 +96,25 @@ export default function PersonAMaterialReturnsPage() {
     return true;
   });
 
-  const handleAccept = (ret: any) => {
-    acceptMaterialReturn(ret.id);
-    const specs = getMaterialSpecs(store, ret.materialId);
-    const origWt = parseFloat(String(ret.weight).replace(/[^0-9.]/g, '')) || 0;
-    const usedWt = parseFloat(String(ret.usedWeight).replace(/[^0-9.]/g, '')) || 0;
-    const remaining = Math.max(0, origWt - usedWt);
-    addInventoryItem({
-      rawMaterialId: `${ret.materialId}-RET`,
-      rollId: `RL-${ret.materialId}`,
-      micron: specs.micron,
-      width: specs.width,
-      weight: `${remaining}kgs`,
-      supplier: "Returned Material",
-      date: getDateString(),
-      status: "In Inventory",
-    });
+  const handleAccept = async (ret: any) => {
+    try {
+      await materialReturnService.accept(ret.originalId, "Person A");
+      loadData();
+    } catch (err) {
+      console.error("Failed to accept material return", err);
+    }
   };
 
-  if (!mounted) return null;
+  const rejectMaterialReturn = async (id: string) => {
+    try {
+      await materialReturnService.reject(id, "Person A");
+      loadData();
+    } catch (err) {
+      console.error("Failed to reject material return", err);
+    }
+  };
+
+  if (loading) return <div className="p-6 text-center text-[#5C5C5C]">Loading material returns...</div>;
 
   return (
     <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-white flex flex-col overflow-x-hidden">
@@ -145,7 +167,7 @@ export default function PersonAMaterialReturnsPage() {
                         {row.status === "Pending" && (
                           <>
                             <button onClick={() => handleAccept(row)} className="text-[11px] bg-[#1CB061] text-white px-2 py-1 rounded-[4px] hover:bg-[#18994e]">Accept & Add to Stock</button>
-                            <button onClick={() => rejectMaterialReturn(row.id)} className="text-[11px] bg-[#FB3748] text-white px-2 py-1 rounded-[4px] hover:bg-[#d92d20]">Reject</button>
+                            <button onClick={() => rejectMaterialReturn(row.originalId)} className="text-[11px] bg-[#FB3748] text-white px-2 py-1 rounded-[4px] hover:bg-[#d92d20]">Reject</button>
                           </>
                         )}
                         {row.status !== "Pending" && <span className="text-[12px] text-[#A1A1AA]">-</span>}

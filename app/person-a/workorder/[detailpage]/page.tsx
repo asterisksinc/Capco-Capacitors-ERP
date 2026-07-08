@@ -1,16 +1,18 @@
 "use client";
 
-import { use, useState, useMemo } from "react";
+import { WO_STATUS_OPTIONS, WO_STAGE_OPTIONS } from "@/lib/constants";
+import { StatusBadge } from "@/components/StatusBadge";
+import { use, useState, useEffect, useMemo } from "react";
 import { Plus, X, ChevronRight, Check, QrCode } from "lucide-react";
-import { FileText, Ruler, Maximize2, Package } from "lucide-react";
-import { useStore } from "@/hooks/useStore";
+import { FileText, Ruler, Maximize2, Package, Loader2 } from "lucide-react";
 import { ScannerInput } from "@/components/ScannerInput";
-import { computeWorkflowProgress } from "../../../../lib/data";
+import { workOrderService } from "@/src/services/workOrderService";
+import { productionStageService } from "@/src/services/productionStageService";
+import { authService } from "@/src/services/authService";
 import type { TableConfig } from "@/hooks/useTableControls";
 import { useTableControls } from "@/hooks/useTableControls";
 import { SortableHeader } from "@/components/table/SortableHeader";
 import { TableToolbar } from "@/components/table/TableToolbar";
-import { OptionsDropdown } from "@/components/table/OptionsDropdown";
 import { MobileHeader } from "@/components/MobileHeader";
 import { QRCodeModal, type QRModalData } from "@/components/QRCodeModal";
 import { exportToExcel } from "@/lib/exportExcel";
@@ -59,7 +61,7 @@ const rawMaterialConfig: TableConfig<any> = {
     { key: "wastageWeight", label: "Wastage/Left Weight", type: "text", sortable: true },
     { key: "supplier", label: "Company/Supplier", type: "text", sortable: true },
     { key: "stage", label: "Stage", type: "enum", sortable: false, filter: "dropdown", options: ["Raw Material", "METALLISATION"] },
-    { key: "status", label: "Status", type: "enum", sortable: false, filter: "dropdown", options: ["Yet to Start", "In-progress", "Completed"] },
+    { key: "status", label: "Status", type: "enum", sortable: false, filter: "dropdown", options: WO_STATUS_OPTIONS },
     { key: "qr", label: "QR", type: "text", sortable: false },
     { key: "options", label: "Action", type: "text", sortable: false },
   ],
@@ -75,7 +77,7 @@ const metallisationConfig: TableConfig<any> = {
     { key: "resistance", label: "Resistance", type: "text", sortable: true },
     { key: "timestamp", label: "Timestamp", type: "date", sortable: true },
     { key: "nextStage", label: "Next Stage", type: "text", sortable: false },
-    { key: "status", label: "Status", type: "enum", sortable: false, filter: "dropdown", options: ["Yet to Start", "In-progress", "Completed"] },
+    { key: "status", label: "Status", type: "enum", sortable: false, filter: "dropdown", options: WO_STATUS_OPTIONS },
     { key: "qr", label: "QR", type: "text", sortable: false },
     { key: "options", label: "Action", type: "text", sortable: false },
   ],
@@ -90,7 +92,7 @@ const slittingConfig: TableConfig<any> = {
     { key: "grade", label: "Grade", type: "text", sortable: true },
     { key: "timestampAdded", label: "Timestamp Added", type: "date", sortable: true },
     { key: "stage", label: "Stage", type: "enum", sortable: false, filter: "dropdown", options: ["Slitting", "Ready for Winding", "Completed"] },
-    { key: "status", label: "Status", type: "enum", sortable: false, filter: "dropdown", options: ["Yet to Start", "In-progress", "Completed"] },
+    { key: "status", label: "Status", type: "enum", sortable: false, filter: "dropdown", options: WO_STATUS_OPTIONS },
     { key: "qr", label: "QR", type: "text", sortable: false },
     { key: "options", label: "Action", type: "text", sortable: false },
   ],
@@ -116,33 +118,7 @@ const defaultSlittingForm: SlittingForm = {
   remarks: "",
 };
 
-function StatusBadge({ status }: { status: string }) {
-  if (status === "Yet to Start") {
-    return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#FFF0F1] text-[#FB3748] text-[12px] font-medium leading-tight shrink-0">Yet to Start</span>;
-  }
-  if (status === "In-progress") {
-    return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#FFF4ED] text-[#E19242] text-[12px] font-medium leading-tight shrink-0">In-progress</span>;
-  }
-  if (status === "Completed") {
-    return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#E8F8F0] text-[#1CB061] text-[12px] font-medium leading-tight shrink-0">Completed</span>;
-  }
-  return null;
-}
 
-function getDateString() {
-  const today = new Date();
-  return `${String(today.getDate()).padStart(2, "0")}/${String(today.getMonth() + 1).padStart(2, "0")}/${today.getFullYear()}`;
-}
-
-function getDateTimeString() {
-  const now = new Date();
-  const day = String(now.getDate()).padStart(2, "0");
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const year = now.getFullYear();
-  const hour = String(now.getHours()).padStart(2, "0");
-  const minute = String(now.getMinutes()).padStart(2, "0");
-  return `${day}/${month}/${year} ${hour}:${minute}`;
-}
 
 function generateId(prefix: string) {
   return `${prefix}-${Math.floor(Math.random() * 10000).toString().padStart(4, "0")}`;
@@ -153,27 +129,14 @@ function hasPositiveNumber(value: string) {
   return Number.isFinite(parsed) && parsed > 0;
 }
 
-function createMetallisationRow(defaultRmId: string): MetallisationForm {
-  return {
-    ...defaultMetallisationForm,
-    coilNo: generateId("MC"),
-    rmId: defaultRmId,
-  };
-}
-
-function createSlittingRow(defaultRmId: string): SlittingForm {
-  return {
-    ...defaultSlittingForm,
-    productNo: `PM-${Date.now()}-${Math.floor(Math.random() * 900 + 100)}`,
-    associatedRmId: defaultRmId,
-  };
-}
-
 export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps) {
   const { detailpage } = use(params);
   const orderId = detailpage.toUpperCase();
-  const { store, mounted, addFlowRow } = useStore();
-  const workOrderFlowData = store.flowDataMap[orderId];
+
+  // ── State (ALL hooks before any conditional return) ───────────────────────
+  const [woData, setWoData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
 
   const [activeTab, setActiveTab] = useState<TabType>("Raw Material");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -181,31 +144,160 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
   const [showValidationHint, setShowValidationHint] = useState(false);
   const [slittingReviewRemarks, setSlittingReviewRemarks] = useState("");
   const [modalImage, setModalImage] = useState<string | null>(null);
-  const workflowProgress = computeWorkflowProgress(workOrderFlowData);
+  const [qrData, setQrData] = useState<QRModalData | null>(null);
 
-  const availableRollIds = Array.from(new Set(workOrderFlowData?.rawMaterialRows
-    .map((row) => row.rollNo) ?? []));
+  const [metallisationRowsInput, setMetallisationRowsInput] = useState<MetallisationForm[]>([{ ...defaultMetallisationForm, coilNo: generateId("MC") }]);
+  const [slittingRowsInput, setSlittingRowsInput] = useState<SlittingForm[]>([{ ...defaultSlittingForm, productNo: `PM-${Date.now()}-${Math.floor(Math.random() * 900 + 100)}` }]);
+
+  // ── Data fetch ────────────────────────────────────────────────────────────
+  const refreshWoData = async () => {
+    try {
+      const data: any = await workOrderService.getByWorkOrderNo(orderId);
+      if (data) {
+        setWoData(data);
+      }
+    } catch (err) {
+      console.error("Failed to load work order:", err);
+    }
+  };
+
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      await refreshWoData();
+      setLoading(false);
+    })();
+  }, [orderId]);
+
+  // ── Derived table data ────────────────────────────────────────────────────
+  const rawMaterialRows = useMemo(() => {
+    return ((woData?.work_order_materials as any[]) || []).map((wom) => {
+      const inv = wom.inventory || {};
+      const actual = wom.quantity_kg ?? 0;
+      return {
+        rollNo: inv.roll_no || "-",
+        netWeight: inv.net_weight_kg != null ? `${inv.net_weight_kg}kgs` : "-",
+        grossWeight: inv.gross_weight_kg != null ? `${inv.gross_weight_kg}kgs` : "-",
+        thickness: inv.micron || "-",
+        width: inv.width_m || "-",
+        temperature: inv.temperature_c != null ? `${inv.temperature_c}°C` : "-",
+        actualWeight: actual ? `${actual}kgs` : "-",
+        damagedWeight: "-",
+        usedWeight: actual ? `${actual}kgs` : "-",
+        wastageWeight: "-",
+        supplier: inv.supplier || "-",
+        stage: inv.stage || "-",
+        status: inv.status || "-",
+      };
+    });
+  }, [woData]);
+
+  const metallisationRows = useMemo(() => {
+    return ((woData?.metallisation as any[]) || []).map((m) => ({
+      coilNo: m.metallisation_no || "-",
+      rmId: m.inventory?.roll_no || "-",
+      machineNo: m.machine_no || "-",
+      weight: m.weight_kg != null ? `${m.weight_kg}kgs` : "-",
+      opticalDensity: m.optical_density || "-",
+      resistance: m.resistance_ohms != null ? `${m.resistance_ohms} Ohms` : "-",
+      timestamp: m.created_at
+        ? new Date(m.created_at).toLocaleString("en-GB", {
+            day: "2-digit", month: "short", year: "numeric",
+            hour: "2-digit", minute: "2-digit",
+          })
+        : "-",
+      nextStage: m.next_stage || "Slitting",
+      status: m.status || "-",
+    }));
+  }, [woData]);
+
+  const slittingRows = useMemo(() => {
+    return ((woData?.slitting as any[]) || []).map((s) => ({
+      productNo: s.product_no || "-",
+      rmId: s.metallisation?.metallisation_no || "-",
+      weight: s.weight_kg != null ? `${s.weight_kg}kgs` : "-",
+      thickness: s.thickness_micron || "-",
+      grade: s.grade || "-",
+      timestampAdded: s.created_at
+        ? new Date(s.created_at).toLocaleDateString("en-GB")
+        : "-",
+      stage: s.stage || "-",
+      status: s.status || "-",
+    }));
+  }, [woData]);
+
+  // ── Lookup maps (for modal dropdowns + auto-fill) ─────────────────────────
+  // rollNo → inventory UUID
+  const rmIdByRollNo = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const wom of (woData?.work_order_materials as any[]) || []) {
+      if (wom.inventory?.roll_no && wom.inventory?.id) {
+        map.set(wom.inventory.roll_no, wom.inventory.id);
+      }
+    }
+    return map;
+  }, [woData]);
+
+  // rollNo → { weight, thickness, supplier }
   const rmLookup = useMemo(() => {
     const map = new Map<string, { weight: string; thickness: string; supplier: string }>();
-    for (const row of workOrderFlowData?.rawMaterialRows ?? []) {
-      map.set(row.rollNo, { weight: row.weight, thickness: row.thickness, supplier: row.supplier });
+    for (const wom of (woData?.work_order_materials as any[]) || []) {
+      if (wom.inventory?.roll_no) {
+        map.set(wom.inventory.roll_no, {
+          weight: wom.inventory.current_weight_kg?.toString() ?? "",
+          thickness: wom.inventory.micron?.toString() ?? "",
+          supplier: wom.inventory.supplier ?? "",
+        });
+      }
     }
     return map;
-  }, [workOrderFlowData]);
+  }, [woData]);
 
-  const availableCoilIds = Array.from(new Set(workOrderFlowData?.metallisationRows
-    .map((row) => row.coilNo) ?? []));
+  // metallisation_no → metallisation UUID
+  const metallisationIdByNo = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const m of (woData?.metallisation as any[]) || []) {
+      if (m.metallisation_no && m.id) {
+        map.set(m.metallisation_no, m.id);
+      }
+    }
+    return map;
+  }, [woData]);
+
+  // metallisation_no → { weight, opticalDensity, resistance }
   const coilLookup = useMemo(() => {
     const map = new Map<string, { weight: string; opticalDensity: string; resistance: string }>();
-    for (const row of workOrderFlowData?.metallisationRows ?? []) {
-      map.set(row.coilNo, { weight: row.weight, opticalDensity: row.opticalDensity, resistance: row.resistance });
+    for (const m of (woData?.metallisation as any[]) || []) {
+      if (m.metallisation_no) {
+        map.set(m.metallisation_no, {
+          weight: m.weight_kg?.toString() ?? "",
+          opticalDensity: m.optical_density?.toString() ?? "",
+          resistance: m.resistance_ohms?.toString() ?? "",
+        });
+      }
     }
     return map;
-  }, [workOrderFlowData]);
+  }, [woData]);
 
-  const [metallisationRowsInput, setMetallisationRowsInput] = useState<MetallisationForm[]>([createMetallisationRow("")]);
-  const [slittingRowsInput, setSlittingRowsInput] = useState<SlittingForm[]>([createSlittingRow("")]);
-  const [qrData, setQrData] = useState<QRModalData | null>(null);
+  const availableRollIds = useMemo(
+    () => Array.from(rmIdByRollNo.keys()),
+    [rmIdByRollNo]
+  );
+
+  const availableCoilIds = useMemo(
+    () => Array.from(metallisationIdByNo.keys()),
+    [metallisationIdByNo]
+  );
+
+  // ── Current tab data + table controls ────────────────────────────────────
+  const currentData = useMemo(() => {
+    switch (activeTab) {
+      case "Raw Material": return rawMaterialRows;
+      case "Metallisation": return metallisationRows;
+      case "Slitting": return slittingRows;
+      default: return rawMaterialRows;
+    }
+  }, [activeTab, rawMaterialRows, metallisationRows, slittingRows]);
 
   const currentConfig = useMemo(() => {
     switch (activeTab) {
@@ -215,16 +307,6 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
       default: return rawMaterialConfig;
     }
   }, [activeTab]);
-
-  const currentData = useMemo(() => {
-    if (!workOrderFlowData) return [];
-    switch (activeTab) {
-      case "Raw Material": return workOrderFlowData.rawMaterialRows;
-      case "Metallisation": return workOrderFlowData.metallisationRows;
-      case "Slitting": return workOrderFlowData.slittingRows;
-      default: return [];
-    }
-  }, [workOrderFlowData, activeTab]);
 
   const {
     processedData,
@@ -236,54 +318,42 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
     setDateRange,
   } = useTableControls({ data: currentData, config: currentConfig });
 
-  if (!mounted || !workOrderFlowData) return null;
+  // ── Guard: loading / not found ────────────────────────────────────────────
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-72px)] bg-white">
+        <Loader2 className="w-8 h-8 animate-spin text-[#00B6E2]" />
+      </div>
+    );
+  }
 
+  if (!woData) {
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-72px)] bg-white">
+        <p className="text-[#5C5C5C]">Work order not found.</p>
+      </div>
+    );
+  }
+
+  // ── Modal helpers ─────────────────────────────────────────────────────────
   const resetModalState = () => {
     setModalStep(1);
     setShowValidationHint(false);
     setModalImage(null);
     setSlittingReviewRemarks("");
-    setMetallisationRowsInput([createMetallisationRow(availableRollIds[0] ?? "")]);
-    setSlittingRowsInput([createSlittingRow(availableCoilIds[0] ?? "")]);
+    setMetallisationRowsInput([{ ...defaultMetallisationForm, coilNo: generateId("MC"), rmId: availableRollIds[0] ?? "" }]);
+    setSlittingRowsInput([{ ...defaultSlittingForm, productNo: `PM-${Date.now()}-${Math.floor(Math.random() * 900 + 100)}`, associatedRmId: availableCoilIds[0] ?? "" }]);
   };
 
-  const openModal = () => {
-    resetModalState();
-    setIsModalOpen(true);
-  };
+  const openModal = () => { resetModalState(); setIsModalOpen(true); };
+  const closeModal = () => { setIsModalOpen(false); resetModalState(); };
 
-  const closeModal = () => {
-    setIsModalOpen(false);
-    resetModalState();
-  };
+  // ── Validation ────────────────────────────────────────────────────────────
+  const isMetallisationRowValid = (row: MetallisationForm) =>
+    Boolean(row.coilNo.trim() && row.rmId.trim() && row.machineNo.trim() && hasPositiveNumber(row.weight) && row.opticalDensity.trim() && row.resistance.trim() && row.nextStage.trim());
 
-  const getCurrentDraftCount = () => {
-    if (activeTab === "Metallisation") return metallisationRowsInput.length;
-    return slittingRowsInput.length;
-  };
-
-  const isMetallisationRowValid = (row: MetallisationForm) => {
-    return Boolean(
-      row.coilNo.trim() &&
-      row.rmId.trim() &&
-      row.machineNo.trim() &&
-      hasPositiveNumber(row.weight) &&
-      row.opticalDensity.trim() &&
-      row.resistance.trim() &&
-      row.nextStage.trim(),
-    );
-  };
-
-  const isSlittingRowValid = (row: SlittingForm) => {
-    return Boolean(
-      row.productNo.trim() &&
-      row.associatedRmId.trim() &&
-      micronOptions.includes(row.micron.trim()) &&
-      row.width.trim() &&
-      hasPositiveNumber(row.weight) &&
-      row.grade.trim(),
-    );
-  };
+  const isSlittingRowValid = (row: SlittingForm) =>
+    Boolean(row.productNo.trim() && row.associatedRmId.trim() && micronOptions.includes(row.micron.trim()) && row.width.trim() && hasPositiveNumber(row.weight) && row.grade.trim());
 
   const isCurrentStepOneValid =
     activeTab === "Metallisation"
@@ -292,17 +362,17 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
 
   const isStepTwoValid = activeTab === "Slitting" ? Boolean(slittingReviewRemarks.trim()) : true;
 
-  const addCurrentItemToDraft = () => {
-    if (!isCurrentStepOneValid) {
-      setShowValidationHint(true);
-      return;
-    }
+  const getCurrentDraftCount = () =>
+    activeTab === "Metallisation" ? metallisationRowsInput.length : slittingRowsInput.length;
 
+  // ── Row edit helpers ──────────────────────────────────────────────────────
+  const addCurrentItemToDraft = () => {
+    if (!isCurrentStepOneValid) { setShowValidationHint(true); return; }
     if (activeTab === "Metallisation") {
-      setMetallisationRowsInput((prev) => [...prev, createMetallisationRow(availableRollIds[0] ?? "")]);
+      setMetallisationRowsInput((prev) => [...prev, { ...defaultMetallisationForm, coilNo: generateId("MC"), rmId: availableRollIds[0] ?? "" }]);
       return;
     }
-    setSlittingRowsInput((prev) => [...prev, createSlittingRow(availableCoilIds[0] ?? "")]);
+    setSlittingRowsInput((prev) => [...prev, { ...defaultSlittingForm, productNo: `PM-${Date.now()}-${Math.floor(Math.random() * 900 + 100)}`, associatedRmId: availableCoilIds[0] ?? "" }]);
   };
 
   const updateMetallisationRow = (index: number, patch: Partial<MetallisationForm>) => {
@@ -323,75 +393,84 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
     setSlittingRowsInput((prev) => prev.filter((_, idx) => idx !== index));
   };
 
-  const submitCurrentStage = () => {
-    if (!isCurrentStepOneValid || !isStepTwoValid) {
-      setShowValidationHint(true);
-      return;
+  // ── Submit ────────────────────────────────────────────────────────────────
+  const submitCurrentStage = async () => {
+    if (!isCurrentStepOneValid || !isStepTwoValid) { setShowValidationHint(true); return; }
+    setSubmitting(true);
+    try {
+      const user = await authService.getCurrentProfile();
+
+      if (activeTab === "Metallisation") {
+        for (const item of metallisationRowsInput) {
+          const rawMaterialId = rmIdByRollNo.get(item.rmId) ?? "";
+          await productionStageService.addMetallisation({
+            metallisation_no: item.coilNo || generateId("MC"),
+            work_order_id: woData.id,
+            raw_material_id: rawMaterialId,
+            operator_id: user?.id,
+            coil_no: item.coilNo,
+            machine_no: item.machineNo || undefined,
+            weight_kg: parseFloat(item.weight) || 0,
+            optical_density: parseFloat(item.opticalDensity) || undefined,
+            resistance_ohms: parseFloat(item.resistance) || undefined,
+          });
+        }
+      }
+
+      if (activeTab === "Slitting") {
+        for (const item of slittingRowsInput) {
+          const metallisationId = metallisationIdByNo.get(item.associatedRmId) ?? undefined;
+          await productionStageService.addSlitting({
+            slitting_no: generateId("SL"),
+            work_order_id: woData.id,
+            metallisation_id: metallisationId,
+            raw_material_id: metallisationId ? undefined : "",
+            operator_id: user?.id,
+            product_no: item.productNo || generateId("PM"),
+            weight_kg: parseFloat(item.weight) || 0,
+            thickness_micron: parseFloat(item.micron) || 0,
+            width_m: parseFloat(item.width) || undefined,
+            grade: item.grade,
+            remarks: slittingReviewRemarks || undefined,
+          });
+        }
+      }
+
+      setModalStep(3);
+      await refreshWoData();
+    } catch (err) {
+      console.error("Submit failed:", err);
+      alert("Failed to submit. Please try again.");
+    } finally {
+      setSubmitting(false);
     }
-
-    const date = getDateString();
-    const dateTime = getDateTimeString();
-
-    if (activeTab === "Metallisation") {
-      const payload = metallisationRowsInput;
-      payload.forEach((item) => {
-        addFlowRow(orderId, "Metallisation", {
-          coilNo: item.coilNo || generateId("MC"),
-          rmId: item.rmId || "-",
-          machineNo: item.machineNo || "M-01",
-          weight: `${item.weight || "0"}kgs`,
-          opticalDensity: item.opticalDensity,
-          resistance: `${item.resistance} Ohms`,
-          timestamp: dateTime,
-          nextStage: item.nextStage || "SLITTING",
-          status: "In-progress",
-        });
-      });
-    }
-
-    if (activeTab === "Slitting") {
-      const payload = slittingRowsInput;
-      payload.forEach((item) => {
-        addFlowRow(orderId, "Slitting", {
-          productNo: item.productNo || generateId("PM"),
-          rmId: item.associatedRmId || "-",
-          weight: `${item.weight || "0"}kgs`,
-          thickness: item.micron,
-          grade: item.grade,
-          remarks: slittingReviewRemarks,
-          timestampAdded: date,
-          stage: "Ready for Winding",
-          status: "Completed",
-        });
-      });
-    }
-
-    setModalStep(3);
   };
 
+  // ── Overview fields ───────────────────────────────────────────────────────
   const overviewFields = [
-    { label: "Word Count", value: workOrderFlowData.overview.wordCount },
-    { label: "Micron", value: workOrderFlowData.overview.micron },
-    { label: "Width", value: workOrderFlowData.overview.width },
-    { label: "Quantity", value: workOrderFlowData.overview.quantity },
-    { label: "Stage", value: workflowProgress.stage },
-    { label: "Date", value: workOrderFlowData.overview.date },
-    { label: "Status", value: <StatusBadge status={workflowProgress.status} /> },
+    { label: "Work Order", value: woData.work_order_no },
+    { label: "Micron", value: `${woData.micron}μ` },
+    { label: "Width", value: `${woData.width_m}m` },
+    { label: "Quantity", value: String(woData.quantity) },
+    { label: "Stage", value: woData.stage },
+    { label: "Date", value: new Date(woData.created_at).toLocaleDateString("en-GB") },
+    { label: "Status", value: <StatusBadge status={woData.status} /> },
   ];
 
   const detailKpiStats = [
-    { label: "Word Count", value: workOrderFlowData.overview.wordCount, icon: FileText, valClass: "text-[#171717]" },
-    { label: "Micron", value: workOrderFlowData.overview.micron, icon: Ruler, valClass: "text-[#171717]" },
-    { label: "Width", value: workOrderFlowData.overview.width, icon: Maximize2, valClass: "text-[#171717]" },
-    { label: "Quantity", value: workOrderFlowData.overview.quantity, icon: Package, valClass: "text-[#171717]" },
+    { label: "Work Order", value: woData.work_order_no, icon: FileText, valClass: "text-[#171717]" },
+    { label: "Micron", value: `${woData.micron}μ`, icon: Ruler, valClass: "text-[#171717]" },
+    { label: "Width", value: `${woData.width_m}m`, icon: Maximize2, valClass: "text-[#171717]" },
+    { label: "Quantity", value: String(woData.quantity), icon: Package, valClass: "text-[#171717]" },
   ];
 
   const detailChips = [
-    { label: "Stage", value: workflowProgress.stage },
-    { label: "Date", value: workOrderFlowData.overview.date },
-    { label: "Status", value: <StatusBadge status={workflowProgress.status} /> },
+    { label: "Stage", value: woData.stage },
+    { label: "Date", value: new Date(woData.created_at).toLocaleDateString("en-GB") },
+    { label: "Status", value: <StatusBadge status={woData.status} /> },
   ];
 
+  // ── Modal render helpers ──────────────────────────────────────────────────
   const renderStepHeader = () => {
     const labels = ["Input Details", "Review Overview", "Submit Details"];
     return (
@@ -444,22 +523,16 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
                 </div>
                 <div className="flex flex-col gap-2">
                   <label className="text-[13px] font-medium text-[#171717]">RM ID</label>
-                  <ScannerInput 
-                    value={row.rmId} 
+                  <ScannerInput
+                    value={row.rmId}
                     onChange={(e) => {
                       const id = e.target.value;
                       const rm = rmLookup.get(id);
-                      updateMetallisationRow(idx, {
-                        rmId: id,
-                        weight: rm?.weight ?? row.weight,
-                      });
-                    }} 
+                      updateMetallisationRow(idx, { rmId: id, weight: rm?.weight ?? row.weight });
+                    }}
                     onScanData={(data) => {
                       const rm = rmLookup.get(data);
-                      updateMetallisationRow(idx, {
-                        rmId: data,
-                        weight: rm?.weight ?? row.weight,
-                      });
+                      updateMetallisationRow(idx, { rmId: data, weight: rm?.weight ?? row.weight });
                     }}
                     list={`rm-list-${idx}`}
                     placeholder="Scan RM ID..."
@@ -476,7 +549,7 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
                   <input value={row.machineNo} onChange={(e) => updateMetallisationRow(idx, { machineNo: e.target.value })} placeholder="Machine number" className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]" />
                 </div>
                 <div className="flex flex-col gap-2">
-                  <label className="text-[13px] font-medium text-[#171717]">Weight</label>
+                  <label className="text-[13px] font-medium text-[#171717]">Weight (kgs)</label>
                   <input value={row.weight} onChange={(e) => updateMetallisationRow(idx, { weight: e.target.value })} placeholder="Enter weight" className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]" />
                 </div>
                 <div className="flex flex-col gap-2">
@@ -524,22 +597,16 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
               </div>
               <div className="flex flex-col gap-2">
                 <label className="text-[13px] font-medium text-[#171717]">Coil ID (from Metallisation)</label>
-                <ScannerInput 
-                  value={row.associatedRmId} 
+                <ScannerInput
+                  value={row.associatedRmId}
                   onChange={(e) => {
                     const id = e.target.value;
                     const coil = coilLookup.get(id);
-                    updateSlittingRow(idx, {
-                      associatedRmId: id,
-                      weight: coil?.weight ?? row.weight,
-                    });
+                    updateSlittingRow(idx, { associatedRmId: id, weight: coil?.weight ?? row.weight });
                   }}
                   onScanData={(data) => {
                     const coil = coilLookup.get(data);
-                    updateSlittingRow(idx, {
-                      associatedRmId: data,
-                      weight: coil?.weight ?? row.weight,
-                    });
+                    updateSlittingRow(idx, { associatedRmId: data, weight: coil?.weight ?? row.weight });
                   }}
                   list={`coil-list-${idx}`}
                   placeholder="Scan Coil ID..."
@@ -561,10 +628,10 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
               </div>
               <div className="flex flex-col gap-2">
                 <label className="text-[13px] font-medium text-[#171717]">Width</label>
-                  <input type="number" step="0.1" value={row.width} onChange={(e) => updateSlittingRow(idx, { width: e.target.value })} placeholder="Enter width" className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]" />
+                <input type="number" step="0.1" value={row.width} onChange={(e) => updateSlittingRow(idx, { width: e.target.value })} placeholder="Enter width" className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]" />
               </div>
               <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-medium text-[#171717]">Weight</label>
+                <label className="text-[13px] font-medium text-[#171717]">Weight (kgs)</label>
                 <input value={row.weight} onChange={(e) => updateSlittingRow(idx, { weight: e.target.value })} placeholder="Enter weight" className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]" />
               </div>
               <div className="flex flex-col gap-2">
@@ -584,8 +651,7 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
 
   const renderReviewCards = () => {
     if (activeTab === "Metallisation") {
-      const rows = metallisationRowsInput;
-      return rows.map((item, idx) => (
+      return metallisationRowsInput.map((item, idx) => (
         <div key={`met-${idx}`} className="rounded-[12px] border border-[#78CFFA] bg-[#F4FBFF] p-4 grid grid-cols-1 md:grid-cols-2 gap-y-2 gap-x-6 text-[14px] text-[#49526A]">
           <p>Coil No: {item.coilNo || "Auto"}</p>
           <p>RM ID: {item.rmId || "-"}</p>
@@ -598,8 +664,7 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
       ));
     }
 
-    const rows = slittingRowsInput;
-    return rows.map((item, idx) => (
+    return slittingRowsInput.map((item, idx) => (
       <div key={`slit-${idx}`} className="rounded-[12px] border border-[#78CFFA] bg-[#F4FBFF] p-4 grid grid-cols-1 md:grid-cols-2 gap-y-2 gap-x-6 text-[14px] text-[#49526A]">
         <p>Product No: {item.productNo || "Auto"}</p>
         <p>Coil ID: {item.associatedRmId || "-"}</p>
@@ -683,17 +748,19 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
     );
   };
 
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-white flex flex-col relative pb-12 overflow-x-hidden">
-      <MobileHeader title={orderId} />
+      <MobileHeader title={woData.work_order_no} />
 
+      {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#171717]/40 backdrop-blur-sm px-4">
           <div className="bg-white rounded-[16px] w-full max-w-[860px] shadow-lg flex flex-col overflow-hidden">
             <div className="flex items-start justify-between px-6 py-5 border-b border-[#EBEBEB]">
               <div className="flex flex-col gap-1">
                 <h2 className="text-[28px] leading-tight font-semibold text-[#171717]">Add {activeTab} Details</h2>
-                <p className="text-[15px] text-[#5C5C5C]">Capture the stage details for work order {orderId}</p>
+                <p className="text-[15px] text-[#5C5C5C]">Capture the stage details for work order {woData.work_order_no}</p>
               </div>
               <button onClick={closeModal} className="text-[#5C5C5C] hover:text-[#171717] transition-colors p-1">
                 <X className="w-5 h-5" />
@@ -709,10 +776,7 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
                   <button onClick={closeModal} className="h-[40px] px-4 bg-white border border-[#EBEBEB] text-[#171717] text-[14px] font-medium rounded-[6px] hover:bg-gray-50 transition-colors">Cancel</button>
                   <button
                     onClick={() => {
-                      if (!isCurrentStepOneValid) {
-                        setShowValidationHint(true);
-                        return;
-                      }
+                      if (!isCurrentStepOneValid) { setShowValidationHint(true); return; }
                       setShowValidationHint(false);
                       setModalStep(2);
                     }}
@@ -722,19 +786,19 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
                   </button>
                 </>
               )}
-
               {modalStep === 2 && (
                 <>
                   <button onClick={() => setModalStep(1)} className="h-[40px] px-4 bg-white border border-[#EBEBEB] text-[#171717] text-[14px] font-medium rounded-[6px] hover:bg-gray-50 transition-colors">Back</button>
                   <button
                     onClick={submitCurrentStage}
-                    className={`h-[40px] px-5 text-[14px] font-medium rounded-[6px] transition-colors ${(isCurrentStepOneValid && isStepTwoValid) ? "bg-[#00B6E2] text-white hover:bg-[#0092b5]" : "bg-[#A7DDEB] text-white cursor-not-allowed"}`}
+                    disabled={submitting}
+                    className={`h-[40px] px-5 text-[14px] font-medium rounded-[6px] transition-colors flex items-center gap-2 ${(isCurrentStepOneValid && isStepTwoValid) ? "bg-[#00B6E2] text-white hover:bg-[#0092b5]" : "bg-[#A7DDEB] text-white cursor-not-allowed"}`}
                   >
+                    {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
                     Submit Details
                   </button>
                 </>
               )}
-
               {modalStep === 3 && (
                 <>
                   <button onClick={closeModal} className="h-[40px] px-4 bg-white border border-[#EBEBEB] text-[#171717] text-[14px] font-medium rounded-[6px] hover:bg-gray-50 transition-colors">Go to Dashboard</button>
@@ -750,7 +814,7 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
       <div className="hidden md:flex items-center gap-2 px-4 md:px-6 pt-6 mb-2">
         <span className="text-[14px] font-medium text-[#5C5C5C] leading-tight">Work Orders</span>
         <ChevronRight className="w-4 h-4 text-[#A1A1AA]" />
-        <span className="text-[14px] font-medium text-[#00B6E2] leading-tight">{orderId}</span>
+        <span className="text-[14px] font-medium text-[#00B6E2] leading-tight">{woData.work_order_no}</span>
       </div>
 
       {/* Mobile KPI 2x2 */}
@@ -758,7 +822,7 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
         {detailKpiStats.map((stat, i) => {
           const Icon = stat.icon;
           return (
-            <div key={i} className={`p-3 ${i % 2 === 0 ? 'border-r border-b border-[#EBEBEB]' : 'border-b border-[#EBEBEB]'} ${i >= 2 ? 'border-b-0' : ''}`}>
+            <div key={i} className={`p-3 ${i % 2 === 0 ? "border-r border-b border-[#EBEBEB]" : "border-b border-[#EBEBEB]"} ${i >= 2 ? "border-b-0" : ""}`}>
               <div className="flex items-start gap-2">
                 <div className="w-8 h-8 rounded-full bg-[#E6F8FD] flex items-center justify-center shrink-0">
                   <Icon className="w-4 h-4 text-[#00B6E2]" />
@@ -773,7 +837,7 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
         })}
       </section>
 
-      {/* Mobile detail chips */}
+      {/* Mobile chips */}
       <section className="md:hidden mx-4 mt-4 flex flex-wrap items-center gap-x-6 gap-y-3">
         {detailChips.map((chip, i) => (
           <div key={i} className="flex items-center gap-2">
@@ -797,6 +861,7 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
         </div>
       </section>
 
+      {/* Tabs + Table */}
       <section className="w-full px-4 md:px-6 py-6 flex flex-col gap-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <TableToolbar
@@ -804,55 +869,33 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
             onDateRangeChange={setDateRange}
             onExport={() => {
               const exportData = currentData.map((row: any) => ({
-                ...(activeTab === "Raw Material" ? {
-                  "Roll No": row.rollNo ?? "",
-                  "Net Weight": row.netWeight ?? row.weight ?? "",
-                  "Gross Weight": row.grossWeight ?? "",
-                  "Micron": row.thickness ?? "",
-                  "Width (m)": row.width ?? "",
-                  "Temperature": row.temperature ?? "",
-                  "Supplier": row.supplier ?? "",
-                  "Stage": row.stage ?? "",
-                  "Status": row.status ?? "",
-                } : activeTab === "Metallisation" ? {
-                  "Coil No": row.coilNo ?? "",
-                  "RM ID": row.rmId ?? "",
-                  "Machine No": row.machineNo ?? "",
-                  "Weight": row.weight ?? "",
-                  "Optical Density": row.opticalDensity ?? "",
-                  "Resistance": row.resistance ?? "",
-                  "Timestamp": row.timestamp ?? "",
-                  "Next Stage": row.nextStage ?? "",
-                  "Status": row.status ?? "",
-                } : {
-                  "Product No": row.productNo ?? "",
-                  "RM ID": row.rmId ?? "",
-                  "Weight": row.weight ?? "",
-                  "Thickness": row.thickness ?? "",
-                  "Grade": row.grade ?? "",
-                  "Timestamp": row.timestampAdded ?? "",
-                  "Stage": row.stage ?? "",
-                  "Status": row.status ?? "",
-                })
+                ...(activeTab === "Raw Material"
+                  ? { "Roll No": row.rollNo ?? "", "Net Weight": row.netWeight ?? "", "Gross Weight": row.grossWeight ?? "", "Micron": row.thickness ?? "", "Width (m)": row.width ?? "", "Temperature": row.temperature ?? "", "Supplier": row.supplier ?? "", "Stage": row.stage ?? "", "Status": row.status ?? "" }
+                  : activeTab === "Metallisation"
+                  ? { "Coil No": row.coilNo ?? "", "RM ID": row.rmId ?? "", "Machine No": row.machineNo ?? "", "Weight": row.weight ?? "", "Optical Density": row.opticalDensity ?? "", "Resistance": row.resistance ?? "", "Timestamp": row.timestamp ?? "", "Next Stage": row.nextStage ?? "", "Status": row.status ?? "" }
+                  : { "Product No": row.productNo ?? "", "RM ID": row.rmId ?? "", "Weight": row.weight ?? "", "Thickness": row.thickness ?? "", "Grade": row.grade ?? "", "Timestamp": row.timestampAdded ?? "", "Stage": row.stage ?? "", "Status": row.status ?? "" }),
               }));
               exportToExcel(exportData, `workorder-detail-${activeTab.toLowerCase().replace(/\s+/g, "-")}`, activeTab);
             }}
           />
-
-          {/* Add button removed to make view-only */}
+          {/* Add button — only for Metallisation & Slitting */}
+          {(activeTab === "Metallisation" || activeTab === "Slitting") && (
+            <button onClick={openModal} className="flex items-center gap-2 bg-[#00B6E2] text-white text-[14px] font-medium rounded-[6px] h-[40px] px-4 hover:bg-[#0092b5] transition-colors shrink-0 whitespace-nowrap">
+              <Plus className="w-4 h-4" strokeWidth={2.5} />
+              Add {activeTab}
+            </button>
+          )}
         </div>
 
-        {/* Scrollable tab bar on mobile */}
+        {/* Scrollable tab bar */}
         <div className="overflow-x-auto -mx-4 md:mx-0 px-4 md:px-0">
           <div className="flex items-center gap-2 border-b border-[#EBEBEB] pb-4 min-w-max">
-            {["Raw Material", "Metallisation", "Slitting"].map((tab) => (
+            {(["Raw Material", "Metallisation", "Slitting"] as TabType[]).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab as TabType)}
                 className={`px-4 py-2 text-[14px] font-medium rounded-[8px] transition-colors whitespace-nowrap ${
-                  activeTab === tab
-                    ? "bg-[#00B6E2] text-white"
-                    : "bg-white text-[#5C5C5C] hover:bg-[#F5F7FA]"
+                  activeTab === tab ? "bg-[#00B6E2] text-white" : "bg-white text-[#5C5C5C] hover:bg-[#F5F7FA]"
                 }`}
               >
                 {tab}
@@ -868,13 +911,7 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
                 <tr className="bg-[#F5F7FA] border-b border-[#EBEBEB]">
                   {currentConfig.columns.map((col) => (
                     <th key={String(col.key)} className="px-4 py-[11px]">
-                      <SortableHeader
-                        column={col}
-                        sortConfig={sortConfig}
-                        onSort={handleSort}
-                        filters={filters}
-                        onFilterChange={handleFilterChange}
-                      />
+                      <SortableHeader column={col} sortConfig={sortConfig} onSort={handleSort} filters={filters} onFilterChange={handleFilterChange} />
                     </th>
                   ))}
                 </tr>
@@ -883,18 +920,19 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
                 {processedData.map((row, idx) => (
                   <tr key={idx} className="hover:bg-gray-50/50 transition-colors group">
                     {currentConfig.columns.map((col) => {
-                      if (String(col.key) === "qr") {
+                      const key = String(col.key);
+                      if (key === "qr" || key === "options") {
                         const isRM = activeTab === "Raw Material";
                         const isMC = activeTab === "Metallisation";
                         const rowId = isRM ? (row as any).rollNo : isMC ? (row as any).coilNo : (row as any).productNo;
                         const qrType = isRM ? "RM" : isMC ? "MC" : "PM";
                         const qrDetails: Record<string, string> = isRM
-                          ? { "Roll No": (row as any).rollNo ?? "", "Net Weight": (row as any).netWeight ?? (row as any).weight ?? "", "Gross Weight": (row as any).grossWeight ?? "-", "Micron": (row as any).thickness ?? "", "Width (m)": (row as any).width ?? "", "Temperature": (row as any).temperature ?? "-", "Supplier": (row as any).supplier ?? "", "Status": (row as any).status ?? "" }
+                          ? { "Roll No": (row as any).rollNo ?? "", "Net Weight": (row as any).netWeight ?? "", "Micron": (row as any).thickness ?? "", "Supplier": (row as any).supplier ?? "", "Status": (row as any).status ?? "" }
                           : isMC
                           ? { "Coil No": (row as any).coilNo ?? "", "RM ID": (row as any).rmId ?? "", "Machine No": (row as any).machineNo ?? "", "Weight": (row as any).weight ?? "", "Status": (row as any).status ?? "" }
                           : { "Product No": (row as any).productNo ?? "", "RM ID": (row as any).rmId ?? "", "Weight": (row as any).weight ?? "", "Grade": (row as any).grade ?? "", "Status": (row as any).status ?? "" };
                         return (
-                          <td key={String(col.key)} className="px-4 py-3 whitespace-nowrap">
+                          <td key={key} className="px-4 py-3 whitespace-nowrap">
                             <button
                               onClick={() => setQrData({ id: rowId, type: qrType, details: qrDetails })}
                               className="inline-flex items-center justify-center w-8 h-8 rounded-full hover:bg-[#F5F7FA] transition-colors text-[#5C5C5C] hover:text-[#00B6E2]"
@@ -905,54 +943,34 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
                           </td>
                         );
                       }
-                      if (String(col.key) === "options") {
-                        const isRM = activeTab === "Raw Material";
-                        const isMC = activeTab === "Metallisation";
-                        const rowId = isRM ? (row as any).rollNo : isMC ? (row as any).coilNo : (row as any).productNo;
-                        const qrType = isRM ? "RM" : isMC ? "MC" : "PM";
-                        const qrDetails: Record<string, string> = isRM
-                          ? { "Roll No": (row as any).rollNo ?? "", "Net Weight": (row as any).netWeight ?? (row as any).weight ?? "", "Gross Weight": (row as any).grossWeight ?? "-", "Micron": (row as any).thickness ?? "", "Width (m)": (row as any).width ?? "", "Temperature": (row as any).temperature ?? "-", "Supplier": (row as any).supplier ?? "", "Status": (row as any).status ?? "" }
-                          : isMC
-                          ? { "Coil No": (row as any).coilNo ?? "", "RM ID": (row as any).rmId ?? "", "Machine No": (row as any).machineNo ?? "", "Weight": (row as any).weight ?? "", "Status": (row as any).status ?? "" }
-                          : { "Product No": (row as any).productNo ?? "", "RM ID": (row as any).rmId ?? "", "Weight": (row as any).weight ?? "", "Grade": (row as any).grade ?? "", "Status": (row as any).status ?? "" };
+                      if (key === "status") {
                         return (
-                          <td key={String(col.key)} className="px-4 py-3 whitespace-nowrap">
-                            <button onClick={() => setQrData({ id: rowId, type: qrType, details: qrDetails })} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors p-1" title="Show QR Code">
-                              <QrCode className="w-4 h-4" />
-                            </button>
+                          <td key={key} className="px-4 py-4 whitespace-nowrap">
+                            <StatusBadge status={(row as any)[key]} />
                           </td>
                         );
                       }
-                      if (String(col.key) === "status") {
-                        return (
-                          <td key={String(col.key)} className="px-4 py-4 whitespace-nowrap">
-                            <StatusBadge status={row[col.key]} />
-                          </td>
-                        );
-                      }
-                      const val = row[col.key];
-                      let displayVal = val;
-                      if (activeTab === "Raw Material" && !val) {
-                        const fallbackWeight = (row as any).netWeight ?? (row as any).weight ?? "-";
-                        if (col.key === "actualWeight") displayVal = fallbackWeight;
-                        else if (col.key === "usedWeight") displayVal = fallbackWeight;
-                        else if (col.key === "damagedWeight") displayVal = "0.0kgs";
-                        else if (col.key === "wastageWeight") displayVal = "0.0kgs";
-                      }
-
                       return (
-                        <td key={String(col.key)} className={`px-4 py-4 text-[14px] ${['rollNo', 'coilNo', 'productNo'].includes(String(col.key)) ? 'text-[#00B6E2] font-semibold' : 'text-[#5C5C5C]'} whitespace-nowrap`}>
-                          {displayVal}
+                        <td key={key} className={`px-4 py-4 text-[14px] ${["rollNo", "coilNo", "productNo"].includes(key) ? "text-[#00B6E2] font-semibold" : "text-[#5C5C5C]"} whitespace-nowrap`}>
+                          {(row as any)[key] ?? "-"}
                         </td>
                       );
                     })}
                   </tr>
                 ))}
+                {processedData.length === 0 && (
+                  <tr>
+                    <td colSpan={currentConfig.columns.length} className="px-4 py-10 text-center text-[14px] text-[#5C5C5C]">
+                      No {activeTab} records yet.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
         </div>
       </section>
+
       {qrData && <QRCodeModal id={qrData.id} type={qrData.type} details={qrData.details} onClose={() => setQrData(null)} />}
     </div>
   );

@@ -55,6 +55,7 @@ function SupervisorShellContent({ children }: { children: ReactNode }) {
                 { name: "Overview", href: "/productionhead/overview" },
                 { name: "Work Orders", href: "/productionhead/workorder" },
                 { name: "Product Orders", href: "/productionhead/productorders" },
+                { name: "Inventory", href: "/productionhead/inventory" },
                 { name: "Stock", href: "/productionhead/stock" },
                 { name: "Pipeline", href: "/productionhead/pipeline" },
               ].map((item) => (
