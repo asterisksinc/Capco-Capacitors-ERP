@@ -1,7 +1,7 @@
-import { WO_STATUS_OPTIONS, WO_STAGE_OPTIONS } from "@/lib/constants";
-import { StatusBadge } from "@/components/StatusBadge";
 "use client";
 
+import { WO_STATUS_OPTIONS, WO_STAGE_OPTIONS } from "@/lib/constants";
+import { StatusBadge } from "@/components/StatusBadge";
 import { Search, QrCode, Scan, X, Layers, Clock, Activity, CheckCircle } from "lucide-react";
 import Link from "next/link";
 import { useState, useRef, useEffect, useCallback } from "react";

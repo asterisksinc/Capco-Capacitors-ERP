@@ -1,7 +1,7 @@
-import { WO_STATUS_OPTIONS, WO_STAGE_OPTIONS } from "@/lib/constants";
-import { StatusBadge } from "@/components/StatusBadge";
 "use client";
 
+import { WO_STATUS_OPTIONS, WO_STAGE_OPTIONS } from "@/lib/constants";
+import { StatusBadge } from "@/components/StatusBadge";
 import { use, useState, useMemo } from "react";
 import { Plus, X, ChevronRight, Check, QrCode } from "lucide-react";
 import { FileText, Ruler, Maximize2, Package } from "lucide-react";
