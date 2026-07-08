@@ -9,6 +9,7 @@ This project contains the Capco supervisor dashboard UI built with Next.js App R
 - `/supervisor/overview`: operations overview dashboard.
 - `/supervisor/stock`: inventory snapshot dashboard.
 - `/supervisor/pipeline`: production pipeline and bottleneck tracking.
+- 
 
 The root route (`/`) redirects to `/supervisor/workorder`.
 
