@@ -3,7 +3,7 @@
 This project contains the Capco supervisor dashboard UI built with Next.js App Router and Tailwind CSS.
 
 ## Routes
-
+e
 - `/supervisor/workorder`: work order overview list with summary cards and status table.
 - `/supervisor/workorder/[detailpage]`: work order detail view with stage tabs and material table.
 - `/supervisor/overview`: operations overview dashboard.
