@@ -230,6 +230,10 @@ create table if not exists public.metallisation (
   updated_at timestamptz not null default now()
 );
 
+comment on column public.metallisation.factory_wastage_image_url is 'Public Supabase Storage URL for the factory wastage image.';
+comment on column public.metallisation.photo_url is 'Public Supabase Storage URL for metallisation photos such as weight-scale or QC images.';
+comment on column public.metallisation.qc_details is 'JSON payload for QC data. Can include image URLs, remarks, and pass/fail metadata.';
+
 create table if not exists public.slitting (
   id uuid primary key default gen_random_uuid(),
   slitting_no text not null unique,
@@ -517,3 +521,26 @@ create index if not exists idx_product_materials_po on public.product_order_mate
 create index if not exists idx_winding_po on public.winding(product_order_id);
 create index if not exists idx_spray_po on public.spray(product_order_id);
 create index if not exists idx_pipeline_entity on public.pipeline_tracking(entity_type, entity_id);
+
+insert into storage.buckets (id, name, public)
+values ('metallisation', 'metallisation', true)
+on conflict (id) do nothing;
+
+drop policy if exists "metallisation_bucket_read" on storage.objects;
+create policy "metallisation_bucket_read"
+on storage.objects for select
+to authenticated
+using (bucket_id = 'metallisation');
+
+drop policy if exists "metallisation_bucket_insert" on storage.objects;
+create policy "metallisation_bucket_insert"
+on storage.objects for insert
+to authenticated
+with check (bucket_id = 'metallisation');
+
+drop policy if exists "metallisation_bucket_update" on storage.objects;
+create policy "metallisation_bucket_update"
+on storage.objects for update
+to authenticated
+using (bucket_id = 'metallisation')
+with check (bucket_id = 'metallisation');

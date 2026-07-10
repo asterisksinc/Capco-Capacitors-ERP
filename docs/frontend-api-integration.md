@@ -24,6 +24,35 @@ Keep this server-only value out of browser code:
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 ```
 
+## Metallisation Image Storage
+
+Metallisation images should be uploaded to the public Supabase Storage bucket named `metallisation`.
+
+Recommended object path pattern:
+
+```text
+metallisation/<work_order_no>/<metallisation_no>/<filename>
+```
+
+Recommended column mapping after upload:
+
+- `factory_wastage_image_url`: factory wastage photo URL
+- `photo_url`: primary metallisation photo URL such as the weight-after-metallisation image
+- `qc_details`: JSON object for QC remarks and optional extra image URLs
+
+Example `qc_details` payload:
+
+```json
+{
+  "qc": "pass",
+  "remarks": "OD and resistance within limits",
+  "images": {
+    "weight_after_metallisation": "https://YOUR-PROJECT-REF.supabase.co/storage/v1/object/public/metallisation/metallisation/WO-2026-001/MC-2001/weight.jpg",
+    "qc": "https://YOUR-PROJECT-REF.supabase.co/storage/v1/object/public/metallisation/metallisation/WO-2026-001/MC-2001/qc.jpg"
+  }
+}
+```
+
 ## Auth Flow
 
 OTP login:
@@ -276,6 +305,13 @@ Raw material flow:
 6. Operator 2 adds slitting with `productionStageService.addSlitting`.
 7. Slitting output is added to `stock`.
 
+Metallisation with images:
+
+1. Upload the image file to the `metallisation` storage bucket.
+2. Copy the resulting public URL.
+3. Insert the metallisation row into `public.metallisation`.
+4. Store extra QC image URLs inside `qc_details.images` if more than one image is needed.
+
 Product order flow:
 
 1. Production Head creates product order with `productOrderService.create`.
@@ -293,6 +329,8 @@ Product order flow:
 4. Create matching Auth users for seeded phones/emails if password login is needed.
 5. Set each Auth user ID into `profiles.auth_user_id`.
 6. Run `supabase/rls-policies.sql`.
+
+`supabase/schema.sql` also creates the public `metallisation` storage bucket and authenticated read/insert/update policies for `storage.objects`.
 
 If a previous schema attempt partially created enum types and later fails with
 `unsafe use of new value`, run `supabase/enum-fix.sql` by itself, wait for it to

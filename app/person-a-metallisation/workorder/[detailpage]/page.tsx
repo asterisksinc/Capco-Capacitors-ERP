@@ -92,11 +92,6 @@ function StatusBadge({ status }: { status: string }) {
   return null;
 }
 
-function getDateString() {
-  const today = new Date();
-  return `${String(today.getDate()).padStart(2, "0")}/${String(today.getMonth() + 1).padStart(2, "0")}/${today.getFullYear()}`;
-}
-
 function getDateTimeString() {
   const now = new Date();
   const day = String(now.getDate()).padStart(2, "0");

@@ -46,6 +46,16 @@ as $$
   limit 1
 $$;
 
+create or replace function public.current_manager_profile_id()
+returns uuid
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select reports_to from public.profiles where auth_user_id = auth.uid() limit 1
+$$;
+
 create or replace function public.has_any_role(role_codes text[])
 returns boolean
 language sql
@@ -75,7 +85,7 @@ using (
   public.is_admin_role()
   or id = public.current_profile_id()
   or reports_to = public.current_profile_id()
-  or id in (select reports_to from public.profiles where id = public.current_profile_id())
+  or id = public.current_manager_profile_id()
 );
 
 drop policy if exists "profiles_admin_write" on public.profiles;

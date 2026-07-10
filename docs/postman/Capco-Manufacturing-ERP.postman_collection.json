@@ -8,6 +8,11 @@
     { "key": "supabaseUrl", "value": "https://YOUR-PROJECT-REF.supabase.co" },
     { "key": "anonKey", "value": "your_supabase_anon_key" },
     { "key": "accessToken", "value": "" },
+    { "key": "metallisationBucket", "value": "metallisation" },
+    { "key": "metallisationObjectPath", "value": "metallisation/WO-2026-001/MC-2001/factory-wastage.jpg" },
+    { "key": "factoryWastageImageUrl", "value": "https://YOUR-PROJECT-REF.supabase.co/storage/v1/object/public/metallisation/metallisation/WO-2026-001/MC-2001/factory-wastage.jpg" },
+    { "key": "weightPhotoUrl", "value": "https://YOUR-PROJECT-REF.supabase.co/storage/v1/object/public/metallisation/metallisation/WO-2026-001/MC-2001/weight.jpg" },
+    { "key": "qcPhotoUrl", "value": "https://YOUR-PROJECT-REF.supabase.co/storage/v1/object/public/metallisation/metallisation/WO-2026-001/MC-2001/qc.jpg" },
     { "key": "workOrderId", "value": "50000000-0000-0000-0000-000000000001" },
     { "key": "productOrderId", "value": "90000000-0000-0000-0000-000000000001" },
     { "key": "inventoryId", "value": "40000000-0000-0000-0000-000000000003" },
@@ -18,6 +23,26 @@
     "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
   },
   "item": [
+    {
+      "name": "Storage - Upload Metallisation Image",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "apikey", "value": "{{anonKey}}" },
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+          { "key": "x-upsert", "value": "true" },
+          { "key": "Content-Type", "value": "image/jpeg" }
+        ],
+        "url": "{{supabaseUrl}}/storage/v1/object/{{metallisationBucket}}/{{metallisationObjectPath}}",
+        "body": {
+          "mode": "file",
+          "file": {
+            "src": ""
+          }
+        },
+        "description": "Upload the metallisation image first. Then use the public object URL in `factory_wastage_image_url`, `photo_url`, or `qc_details.images` when creating the metallisation record."
+      }
+    },
     {
       "name": "Auth - Request OTP",
       "request": {
@@ -215,7 +240,7 @@
           { "key": "Prefer", "value": "return=representation" }
         ],
         "url": "{{supabaseUrl}}/rest/v1/metallisation",
-        "body": { "mode": "raw", "raw": "{\n  \"metallisation_no\": \"MC-2001\",\n  \"work_order_id\": \"{{workOrderId}}\",\n  \"raw_material_id\": \"{{inventoryId}}\",\n  \"operator_id\": \"20000000-0000-0000-0000-000000000005\",\n  \"machine_no\": \"MET-02\",\n  \"weight_kg\": 55,\n  \"weight_after_metallisation_kg\": 54.3,\n  \"optical_density\": 2.4,\n  \"resistance_ohms\": 1.5,\n  \"factory_wastage_kg\": 0.7,\n  \"qc_details\": { \"qc\": \"pass\" }\n}" },
+        "body": { "mode": "raw", "raw": "{\n  \"metallisation_no\": \"MC-2001\",\n  \"work_order_id\": \"{{workOrderId}}\",\n  \"raw_material_id\": \"{{inventoryId}}\",\n  \"operator_id\": \"20000000-0000-0000-0000-000000000005\",\n  \"coil_no\": \"MC-2001\",\n  \"machine_no\": \"MET-02\",\n  \"weight_kg\": 55,\n  \"weight_after_metallisation_kg\": 54.3,\n  \"optical_density\": 2.4,\n  \"resistance_ohms\": 1.5,\n  \"factory_wastage_kg\": 0.7,\n  \"factory_wastage_image_url\": \"{{factoryWastageImageUrl}}\",\n  \"photo_url\": \"{{weightPhotoUrl}}\",\n  \"qc_details\": {\n    \"qc\": \"pass\",\n    \"remarks\": \"Checked by QC team\",\n    \"images\": {\n      \"qc\": \"{{qcPhotoUrl}}\"\n    }\n  }\n}" },
         "description": "Success response: [{ \"metallisation_no\": \"MC-2001\" }]\nError response: { \"message\": \"duplicate key value violates unique constraint\" }"
       }
     },
