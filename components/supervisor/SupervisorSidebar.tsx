@@ -10,6 +10,7 @@ import {
   Share2,
   PackagePlus,
   LogOut,
+  Warehouse,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -20,6 +21,7 @@ export function SupervisorSidebar() {
     { name: "Overview", href: "/productionhead/overview", icon: LayoutDashboard },
     { name: "Work Orders", href: "/productionhead/workorder", icon: Calendar },
     { name: "Product Orders", href: "/productionhead/productorders", icon: PackagePlus },
+    { name: "Inventory", href: "/productionhead/inventory", icon: Warehouse },
     { name: "Stock", href: "/productionhead/stock", icon: BarChart2 },
     { name: "Pipeline", href: "/productionhead/pipeline", icon: Share2 },
   ];

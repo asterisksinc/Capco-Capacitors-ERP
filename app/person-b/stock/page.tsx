@@ -2,9 +2,9 @@
 
 import { Plus, Search, QrCode } from "lucide-react";
 import Link from "next/link";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Package, ArrowRight, Scissors, CheckCircle } from "lucide-react";
-import { useStore } from "@/hooks/useStore";
+import { stockService } from "@/src/services/stockService";
 import type { TableConfig } from "@/hooks/useTableControls";
 import { useTableControls } from "@/hooks/useTableControls";
 import { SortableHeader } from "@/components/table/SortableHeader";
@@ -61,32 +61,32 @@ const stockConfig: TableConfig<StockRow> = {
   ],
 };
 
-function useDerivedStock() {
-  const { store, mounted } = useStore();
+export default function PersonBStockPage() {
+  const [data, setData] = useState<StockRow[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  return useMemo(() => {
-    if (!mounted) return [];
-    const rows: StockRow[] = [];
-    for (const [woId, flow] of Object.entries(store.flowDataMap)) {
-      for (const slitRow of flow.slittingRows) {
-        rows.push({
-          stockId: slitRow.productNo,
-          linkedWoId: woId,
-          weight: slitRow.weight,
-          width: flow.overview.width,
-          micron: slitRow.thickness,
-          grade: slitRow.grade,
-          stage: slitRow.stage,
-          timestamp: slitRow.timestampAdded,
-        });
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const rows = await stockService.list();
+        setData(rows.map((row: any) => ({
+          stockId: row.stock_no || row.id,
+          linkedWoId: row.work_orders?.work_order_no || "-",
+          weight: row.weight_kg ? String(row.weight_kg) : "-",
+          width: row.width_m ? String(row.width_m) : "-",
+          micron: row.micron ? String(row.micron) : "-",
+          grade: row.grade || "-",
+          stage: row.stage === "Stock" ? "Ready for Winding" : (row.stage || "Ready for Winding"),
+          timestamp: new Date(row.created_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
+        })));
+      } catch (err) {
+        console.error("Failed to load stock data", err);
+      } finally {
+        setLoading(false);
       }
     }
-    return rows;
-  }, [store.flowDataMap, mounted]);
-}
-
-export default function PersonBStockPage() {
-  const data = useDerivedStock();
+    loadData();
+  }, []);
 
   const {
     processedData,

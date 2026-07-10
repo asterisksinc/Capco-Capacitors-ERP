@@ -1,10 +1,11 @@
 "use client";
 
-import { useStore } from "@/hooks/useStore";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useMemo } from "react";
 import { Layers, Zap, Scissors, Package } from "lucide-react";
 import { MobileHeader } from "@/components/MobileHeader";
+import { dashboardService } from "@/src/services/dashboardService";
+import { workOrderService } from "@/src/services/workOrderService";
 
 function StatusBadge({ status }: { status: string }) {
   if (status === "Yet to Start") {
@@ -20,32 +21,42 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export default function OperatorOverviewPage() {
-  const { store, mounted, workOrders } = useStore();
+  const [stats, setStats] = useState({
+    activeWorkOrders: 0,
+    metallisationStage: 0,
+    slittingStage: 0,
+    stockGenerated: 0,
+  });
+  const [activeWOs, setActiveWOs] = useState<any[]>([]);
+  const [woCompleted, setWoCompleted] = useState(0);
+  const [loading, setLoading] = useState(true);
 
-  const stockCount = useMemo(() => {
-    if (!mounted) return 0;
-    let count = 0;
-    for (const flow of Object.values(store.flowDataMap)) {
-      count += flow.slittingRows.length;
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const [dashStats, wos] = await Promise.all([
+          dashboardService.personA(),
+          workOrderService.list(),
+        ]);
+        setStats(dashStats);
+        setActiveWOs(wos.filter((w: any) => w.status !== "Completed").slice(0, 5));
+        setWoCompleted(wos.filter((w: any) => w.status === "Completed").length);
+      } catch (err) {
+        console.error("Failed to load dashboard data", err);
+      } finally {
+        setLoading(false);
+      }
     }
-    return count;
-  }, [store.flowDataMap, mounted]);
+    loadData();
+  }, []);
 
-  if (!mounted) return null;
-
-  const totalWO = workOrders.length;
-  const woInProgress = workOrders.filter((w) => w.status === "In-progress").length;
-  const woCompleted = workOrders.filter((w) => w.status === "Completed").length;
-  const metCount = workOrders.filter((w) => w.stage === "Metallisation").length;
-  const slitCount = workOrders.filter((w) => w.stage === "Slitting").length;
-
-  const activeWOs = workOrders.filter((w) => w.status !== "Completed").slice(0, 5);
+  if (loading) return <div className="p-6 text-center text-[#5C5C5C]">Loading overview...</div>;
 
   const kpiStats = [
-    { label: "Active Work Orders", value: String(totalWO), icon: Layers, valClass: "text-[#171717]", subtext: `${woInProgress} in-progress` },
-    { label: "Metallisation Stage", value: String(metCount), icon: Zap, valClass: "text-[#00B6E2]", subtext: "Work orders in metallisation" },
-    { label: "Slitting Stage", value: String(slitCount), icon: Scissors, valClass: "text-[#E19242]", subtext: "Work orders in slitting" },
-    { label: "Stock Generated", value: String(stockCount), icon: Package, valClass: "text-[#1CB061]", subtext: "Product lots from slitting" },
+    { label: "Active Work Orders", value: String(stats.activeWorkOrders), icon: Layers, valClass: "text-[#171717]", subtext: "in-progress" },
+    { label: "Metallisation Stage", value: String(stats.metallisationStage), icon: Zap, valClass: "text-[#00B6E2]", subtext: "Work orders in metallisation" },
+    { label: "Slitting Stage", value: String(stats.slittingStage), icon: Scissors, valClass: "text-[#E19242]", subtext: "Work orders in slitting" },
+    { label: "Stock Generated", value: String(stats.stockGenerated), icon: Package, valClass: "text-[#1CB061]", subtext: "Product lots from slitting" },
   ];
 
   return (
@@ -118,7 +129,7 @@ export default function OperatorOverviewPage() {
                 {activeWOs.map((wo) => (
                   <tr key={wo.id}>
                     <td className="py-2.5 text-[13px] text-[#00B6E2] font-medium">
-                      <Link href={`/person-a/workorder/${wo.id}`} className="hover:underline">{wo.id}</Link>
+                      <Link href={`/person-a/workorder/${wo.id}`} className="hover:underline">{wo.work_order_no || wo.id}</Link>
                     </td>
                     <td className="py-2.5 text-[13px] text-[#5C5C5C]">{wo.stage}</td>
                     <td className="py-2.5"><StatusBadge status={wo.status} /></td>

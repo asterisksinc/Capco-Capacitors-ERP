@@ -2,10 +2,14 @@
 
 import { use, useState, useMemo } from "react";
 import { Plus, X, ChevronRight, Trash2, Download } from "lucide-react";
-import { useStore } from "@/hooks/useStore";
-import Link from "next/link";
 import { MobileHeader } from "@/components/MobileHeader";
 import { exportToExcel } from "@/lib/exportExcel";
+import Link from "next/link";
+import { productOrderService } from "@/src/services/productOrderService";
+import { stockService } from "@/src/services/stockService";
+import { authService } from "@/src/services/authService";
+import { supabaseRest } from "@/src/services/supabaseClient";
+import { useEffect } from "react";
 
 type DetailPageProps = {
   params: Promise<{ detailpage: string }>;
@@ -26,62 +30,121 @@ function getDateTimeString() {
 export default function PersonAProductOrderDetail({ params }: DetailPageProps) {
   const { detailpage } = use(params);
   const displayId = (detailpage || "").toUpperCase();
-  const { store, mounted, assignStockToProductOrder, removeAssignedStock, getAssignedStocks } = useStore();
 
-  const productOrder = store.productOrders.find((po) => po.id.replace("#", "").toUpperCase() === displayId);
-  const poId = productOrder?.id ?? displayId;
-
-  const assignedStocks = useMemo(() => getAssignedStocks(poId), [store.assignments, poId, mounted]);
-  const assignedIds = useMemo(() => new Set(assignedStocks.map((s) => s.stockId)), [assignedStocks]);
-
+  const [loading, setLoading] = useState(true);
+  const [poData, setPoData] = useState<any>(null);
+  const [assignedStocks, setAssignedStocks] = useState<any[]>([]);
+  const [matchingStock, setMatchingStock] = useState<any[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  const matchingStock = useMemo(() => {
-    if (!mounted || !productOrder) return [];
-    const grade = productOrder.grade;
-    const rows: { stockId: string; linkedWoId: string; weight: string; width: string; micron: string; grade: string; stage: string }[] = [];
-    for (const [woId, flow] of Object.entries(store.flowDataMap)) {
-      for (const slitRow of flow.slittingRows) {
-        if (slitRow.grade === grade && !assignedIds.has(slitRow.productNo)) {
-          rows.push({
-            stockId: slitRow.productNo,
-            linkedWoId: woId,
-            weight: slitRow.weight,
-            width: flow.overview.width,
-            micron: slitRow.thickness,
-            grade: slitRow.grade,
-            stage: slitRow.stage,
-          });
-        }
+  const fetchDetails = async () => {
+    try {
+      setLoading(true);
+      const allPos = await productOrderService.list();
+      const originalPo = allPos.find((p: any) => p.product_order_no === displayId || p.id === displayId);
+      if (!originalPo) {
+        setLoading(false);
+        return;
       }
-    }
-    return rows;
-  }, [store.flowDataMap, mounted, productOrder, assignedIds]);
 
-  const toggleSelect = (stockId: string) => {
+      const data: any = await productOrderService.getById((originalPo as any).id);
+      setPoData(data);
+
+      const materials = data.product_order_materials || [];
+      const assigned = materials.map((m: any) => ({
+        id: m.id,
+        stockId: m.stock?.stock_no || m.stock_id,
+        linkedWoId: m.linked_work_order_id || "-",
+        weight: m.weight_kg ? `${m.weight_kg}kgs` : "-",
+        width: m.width_m ? `${m.width_m}m` : "-",
+        micron: m.micron || "-",
+        grade: m.grade || "-",
+        stage: "Assigned",
+        assignedAt: new Date(m.created_at).toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }),
+      }));
+      setAssignedStocks(assigned);
+
+      const assignedStockIds = new Set(materials.map((m: any) => m.stock_id));
+      const allStocks = await stockService.list();
+      const matching = allStocks.filter((s: any) => s.grade === data.grade && !assignedStockIds.has(s.id));
+      
+      const rows = matching.map((s: any) => ({
+        id: s.id, 
+        stockId: s.stock_no,
+        linkedWoId: s.work_orders?.work_order_no || "-",
+        weight: s.weight_kg ? `${s.weight_kg}kgs` : "-",
+        width: s.width_m ? `${s.width_m}m` : "-",
+        micron: s.micron || "-",
+        grade: s.grade || "-",
+        stage: s.stage || "Stock",
+        rawWeightKg: s.weight_kg,
+        rawWidthM: s.width_m,
+        rawMicron: s.micron,
+      }));
+      setMatchingStock(rows);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDetails();
+  }, [displayId]);
+
+  const toggleSelect = (id: string) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
-      if (next.has(stockId)) next.delete(stockId);
-      else next.add(stockId);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   };
 
-  const submitAssign = () => {
-    const now = getDateTimeString();
-    for (const stock of matchingStock) {
-      if (selectedIds.has(stock.stockId)) {
-        assignStockToProductOrder(poId, { ...stock, assignedAt: now });
+  const submitAssign = async () => {
+    try {
+      const user = await authService.getCurrentProfile();
+      for (const stock of matchingStock) {
+        if (selectedIds.has(stock.id)) {
+          await productOrderService.assignStock({
+            product_order_id: poData.id,
+            stock_id: stock.id,
+            linked_work_order_id: stock.linkedWoId !== "-" ? stock.linkedWoId : undefined,
+            assigned_by: user?.id || "",
+            assigned_to: poData.assigned_to || user?.id,
+            weight_kg: stock.rawWeightKg || 0,
+            width_m: stock.rawWidthM,
+            micron: stock.rawMicron,
+            grade: stock.grade,
+          });
+        }
       }
+      setSelectedIds(new Set());
+      setIsModalOpen(false);
+      fetchDetails();
+    } catch (error) {
+      console.error(error);
+      alert("Failed to assign stock");
     }
-    setSelectedIds(new Set());
-    setIsModalOpen(false);
   };
 
-  if (!mounted) return null;
+  const removeAssignedStock = async (id: string) => {
+    try {
+      await supabaseRest.remove("product_order_materials", id);
+      fetchDetails();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to remove stock");
+    }
+  };
 
-  if (!productOrder) {
+  if (loading) {
+    return <div className="p-6 text-center text-[#5C5C5C]">Loading...</div>;
+  }
+
+  if (!poData) {
     return (
       <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-white flex items-center justify-center">
         <p className="text-[#5C5C5C]">Product order not found.</p>
@@ -91,7 +154,7 @@ export default function PersonAProductOrderDetail({ params }: DetailPageProps) {
 
   return (
     <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-[#FAFAFA] flex flex-col pb-10 overflow-x-hidden">
-      <MobileHeader title={productOrder.code} />
+      <MobileHeader title={poData.product_order_no || poData.product_code} />
 
       {/* Assign Stock Modal */}
       {isModalOpen && (
@@ -99,8 +162,8 @@ export default function PersonAProductOrderDetail({ params }: DetailPageProps) {
           <div className="bg-white rounded-[16px] w-full max-w-[800px] shadow-lg flex flex-col overflow-hidden max-h-[85vh]">
             <div className="flex items-start justify-between px-6 py-5 border-b border-[#EBEBEB]">
               <div>
-                <h2 className="text-[24px] leading-tight font-semibold text-[#171717]">Assign Stock to {productOrder.id}</h2>
-                <p className="text-[14px] text-[#5C5C5C] mt-1">Grade {productOrder.grade} stock items available for assignment</p>
+                <h2 className="text-[24px] leading-tight font-semibold text-[#171717]">Assign Stock to {poData.product_order_no}</h2>
+                <p className="text-[14px] text-[#5C5C5C] mt-1">Grade {poData.grade} stock items available for assignment</p>
               </div>
               <button onClick={() => setIsModalOpen(false)} className="text-[#5C5C5C] hover:text-[#171717] p-1"><X className="w-5 h-5" /></button>
             </div>
@@ -111,7 +174,7 @@ export default function PersonAProductOrderDetail({ params }: DetailPageProps) {
                     <th className="px-5 py-3 text-[13px] font-medium w-10">
                       <input type="checkbox" checked={selectedIds.size === matchingStock.length && matchingStock.length > 0} onChange={() => {
                         if (selectedIds.size === matchingStock.length) setSelectedIds(new Set());
-                        else setSelectedIds(new Set(matchingStock.map((s) => s.stockId)));
+                        else setSelectedIds(new Set(matchingStock.map((s) => s.id)));
                       }} className="w-4 h-4 accent-[#00B6E2]" />
                     </th>
                     <th className="px-5 py-3 text-[13px] font-medium text-left">Stock ID</th>
@@ -125,8 +188,8 @@ export default function PersonAProductOrderDetail({ params }: DetailPageProps) {
                 </thead>
                 <tbody className="divide-y divide-[#EBEBEB]">
                   {matchingStock.map((row) => (
-                    <tr key={row.stockId} onClick={() => toggleSelect(row.stockId)} className={`cursor-pointer transition-colors hover:bg-gray-50 ${selectedIds.has(row.stockId) ? "bg-[#F0FDF4]" : ""}`}>
-                      <td className="px-5 py-4"><input type="checkbox" checked={selectedIds.has(row.stockId)} onChange={() => toggleSelect(row.stockId)} className="w-4 h-4 accent-[#00B6E2]" /></td>
+                    <tr key={row.id} onClick={() => toggleSelect(row.id)} className={`cursor-pointer transition-colors hover:bg-gray-50 ${selectedIds.has(row.id) ? "bg-[#F0FDF4]" : ""}`}>
+                      <td className="px-5 py-4"><input type="checkbox" checked={selectedIds.has(row.id)} onChange={() => toggleSelect(row.id)} className="w-4 h-4 accent-[#00B6E2]" /></td>
                       <td className="px-5 py-4 text-[14px] font-medium text-[#00B6E2]">{row.stockId}</td>
                       <td className="px-5 py-4 text-[14px] text-[#5C5C5C]">{row.linkedWoId}</td>
                       <td className="px-5 py-4 text-[14px] text-[#5C5C5C]">{row.weight}</td>
@@ -137,7 +200,7 @@ export default function PersonAProductOrderDetail({ params }: DetailPageProps) {
                     </tr>
                   ))}
                   {matchingStock.length === 0 && (
-                    <tr><td colSpan={8} className="px-5 py-8 text-center text-[#5C5C5C] text-[14px]">No unassigned stock items with grade {productOrder.grade}.</td></tr>
+                    <tr><td colSpan={8} className="px-5 py-8 text-center text-[#5C5C5C] text-[14px]">No unassigned stock items with grade {poData.grade}.</td></tr>
                   )}
                 </tbody>
               </table>
@@ -158,14 +221,14 @@ export default function PersonAProductOrderDetail({ params }: DetailPageProps) {
           <div className="hidden md:flex items-center gap-2 mb-2">
             <Link href="/person-a/product-orders" className="text-[14px] text-[#5C5C5C] hover:text-[#171717]">Product Orders</Link>
             <ChevronRight className="w-4 h-4 text-[#A1A1AA]" />
-            <span className="text-[14px] font-medium text-[#00B6E2]">{productOrder.id}</span>
+            <span className="text-[14px] font-medium text-[#00B6E2]">{poData.product_order_no}</span>
           </div>
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-[20px] font-semibold text-[#171717]">{productOrder.code}</h1>
+              <h1 className="text-[20px] font-semibold text-[#171717]">{poData.product_code}</h1>
               <p className="text-[14px] text-[#5C5C5C] mt-1">Assign stock to Person B for this product order</p>
             </div>
-            <span className="bg-[#E6F8FD] text-[#00B6E2] text-[12px] font-medium px-3 py-[6px] rounded-[24px] whitespace-nowrap">{productOrder.grade} Grade</span>
+            <span className="bg-[#E6F8FD] text-[#00B6E2] text-[12px] font-medium px-3 py-[6px] rounded-[24px] whitespace-nowrap">{poData.grade} Grade</span>
           </div>
         </div>
       </section>
@@ -173,10 +236,10 @@ export default function PersonAProductOrderDetail({ params }: DetailPageProps) {
       {/* Product Order Info */}
       <section className="bg-white mx-4 md:mx-6 mt-6 border border-[#EBEBEB] rounded-[12px] p-5">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div><p className="text-[12px] text-[#5C5C5C]">Capacitor Type</p><p className="text-[14px] font-medium text-[#171717]">{productOrder.type}</p></div>
-          <div><p className="text-[12px] text-[#5C5C5C]">Grade</p><p className="text-[14px] font-medium text-[#171717]">{productOrder.grade}</p></div>
-          <div><p className="text-[12px] text-[#5C5C5C]">Batch Size</p><p className="text-[14px] font-medium text-[#171717]">{productOrder.batchSize}</p></div>
-          <div><p className="text-[12px] text-[#5C5C5C]">Status</p><StatusBadge status={productOrder.status} /></div>
+          <div><p className="text-[12px] text-[#5C5C5C]">Capacitor Type</p><p className="text-[14px] font-medium text-[#171717]">{poData.capacitor_type}</p></div>
+          <div><p className="text-[12px] text-[#5C5C5C]">Grade</p><p className="text-[14px] font-medium text-[#171717]">{poData.grade}</p></div>
+          <div><p className="text-[12px] text-[#5C5C5C]">Batch Size</p><p className="text-[14px] font-medium text-[#171717]">{poData.batch_size}</p></div>
+          <div><p className="text-[12px] text-[#5C5C5C]">Status</p><StatusBadge status={poData.status || "Pending"} /></div>
         </div>
       </section>
 
@@ -231,7 +294,7 @@ export default function PersonAProductOrderDetail({ params }: DetailPageProps) {
             </thead>
             <tbody className="divide-y divide-[#EBEBEB]">
               {assignedStocks.map((row) => (
-                <tr key={row.stockId} className="hover:bg-gray-50 transition-colors">
+                <tr key={row.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-5 py-4 text-[14px] font-medium text-[#00B6E2]">{row.stockId}</td>
                   <td className="px-5 py-4 text-[14px] text-[#5C5C5C]">{row.linkedWoId}</td>
                   <td className="px-5 py-4 text-[14px] text-[#5C5C5C]">{row.weight}</td>
@@ -241,7 +304,7 @@ export default function PersonAProductOrderDetail({ params }: DetailPageProps) {
                   <td className="px-5 py-4"><span className="bg-gray-100 text-gray-700 px-2 py-1 rounded-[6px] text-xs font-medium">{row.stage}</span></td>
                   <td className="px-5 py-4 text-[14px] text-[#5C5C5C]">{row.assignedAt}</td>
                   <td className="px-5 py-4">
-                    <button onClick={() => removeAssignedStock(poId, row.stockId)} className="text-[#FB3748] hover:bg-[#FFF0F1] p-1.5 rounded-[6px] transition-colors" title="Remove">
+                    <button onClick={() => removeAssignedStock(row.id)} className="text-[#FB3748] hover:bg-[#FFF0F1] p-1.5 rounded-[6px] transition-colors" title="Remove">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </td>

@@ -1,6 +1,7 @@
 "use client";
 
-import { use } from "react";
+import { use, useState, useEffect } from "react";
+import { productOrderService } from "@/src/services/productOrderService";
 import { 
   ChevronRight, 
   CheckCircle2, 
@@ -39,6 +40,28 @@ function StatusBadge({ status }: { status: string }) {
 
 export default function ProductOrderDetail({ params }: DetailPageProps) {
   const { detailpage } = use(params);
+  const displayId = (detailpage || "").toUpperCase();
+
+  const [loading, setLoading] = useState(true);
+  const [poData, setPoData] = useState<any>(null);
+
+  useEffect(() => {
+    async function fetchPO() {
+      try {
+        const all = await productOrderService.list();
+        const originalPo = all.find((p: any) => p.product_order_no === displayId || p.id === displayId);
+        if (originalPo) {
+          const data = await productOrderService.getById((originalPo as any).id);
+          setPoData(data);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchPO();
+  }, [displayId]);
 
   const kpiStats = [
     { label: "Stages done", value: "4 / 6", icon: Layers, valClass: "text-[#171717]" },
@@ -111,44 +134,24 @@ export default function ProductOrderDetail({ params }: DetailPageProps) {
               <div className="flex flex-col gap-3">
                 <div className="flex justify-between items-center py-1">
                   <span className="text-sm text-[#5C5C5C]">Capacitor Type</span>
-                  <span className="text-sm font-medium text-[#171717]">Film (MKT Series)</span>
-                </div>
-                <div className="flex justify-between items-center py-1">
-                  <span className="text-sm text-[#5C5C5C]">Capacitance</span>
-                  <span className="text-sm font-medium text-[#171717]">10μF</span>
-                </div>
-                <div className="flex justify-between items-center py-1">
-                  <span className="text-sm text-[#5C5C5C]">Voltage rating</span>
-                  <span className="text-sm font-medium text-[#171717]">63V DC</span>
+                  <span className="text-sm font-medium text-[#171717]">{poData?.capacitor_type || "Film (MKT Series)"}</span>
                 </div>
                 <div className="flex justify-between items-center py-1">
                   <span className="text-sm text-[#5C5C5C]">Grade</span>
-                  <span className="text-sm font-medium text-[#171717]">A — Premium</span>
-                </div>
-                <div className="flex justify-between items-center py-1">
-                  <span className="text-sm text-[#5C5C5C]">Tolerance</span>
-                  <span className="text-sm font-medium text-[#171717]">±5%</span>
+                  <span className="text-sm font-medium text-[#171717]">{poData?.grade || "A — Premium"}</span>
                 </div>
                 <div className="flex justify-between items-center py-1">
                   <span className="text-sm text-[#5C5C5C]">Batch quantity</span>
-                  <span className="text-sm font-medium text-[#171717]">5,000 Units</span>
-                </div>
-                <div className="flex justify-between items-center py-1">
-                  <span className="text-sm text-[#5C5C5C]">Winding requirement</span>
-                  <span className="text-sm font-medium text-[#171717]">120 turns/layer, 3-layer</span>
-                </div>
-                <div className="flex justify-between items-center py-1">
-                  <span className="text-sm text-[#5C5C5C]">Spray requirement</span>
-                  <span className="text-sm font-medium text-[#171717]">Zinc-spray, Batch ZS-447</span>
+                  <span className="text-sm font-medium text-[#171717]">{poData?.batch_size || "5,000"} Units</span>
                 </div>
                
                 <div className="flex justify-between items-center py-1">
                   <span className="text-sm text-[#5C5C5C]">Delivery commitment</span>
-                  <span className="text-sm font-medium text-[#171717]">31 Jan 2025, 09:00 IST</span>
+                  <span className="text-sm font-medium text-[#171717]">{poData?.delivery_commitment || "31 Jan 2025, 09:00 IST"}</span>
                 </div>
 
                 <div className="mt-2 bg-[#FAFAFA] border border-[#EBEBEB] p-3 rounded-lg flex items-start gap-3">
-                  <p className="text-sm text-[#5C5C5C] font-medium">Priority order — aviation-grade QC</p>
+                  <p className="text-sm text-[#5C5C5C] font-medium">{poData?.instructions || "Priority order — aviation-grade QC"}</p>
                 </div>
               </div>
             </div>
@@ -247,39 +250,21 @@ export default function ProductOrderDetail({ params }: DetailPageProps) {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#EBEBEB]">
-                      <tr className="hover:bg-gray-50 transition-colors">
-                        <td className="px-4 py-3 text-sm font-medium text-[#00B6E2]">PM-001</td>
-                        <td className="px-4 py-3 text-sm text-[#171717]">Polypropylene Film</td>
-                        <td className="px-4 py-3 text-sm text-[#5C5C5C]">40mm</td>
-                        <td className="px-4 py-3 text-sm text-[#5C5C5C]">120</td>
-                        <td className="px-4 py-3 text-sm text-[#5C5C5C]">3</td>
-                        <td className="px-4 py-3 text-sm text-[#5C5C5C]">5050</td>
-                        <td className="px-4 py-3 text-sm text-[#5C5C5C]">WM-04</td>
-                        <td className="px-4 py-3 text-sm font-medium text-[#FB3748]">12</td>
-                        <td className="px-4 py-3 text-sm text-[#5C5C5C]">Minor tension issue</td>
-                      </tr>
-                      <tr className="hover:bg-gray-50 transition-colors">
-                        <td className="px-4 py-3 text-sm font-medium text-[#00B6E2]">PM-002</td>
-                        <td className="px-4 py-3 text-sm text-[#171717]">Aluminum Foil</td>
-                        <td className="px-4 py-3 text-sm text-[#5C5C5C]">38mm</td>
-                        <td className="px-4 py-3 text-sm text-[#5C5C5C]">120</td>
-                        <td className="px-4 py-3 text-sm text-[#5C5C5C]">3</td>
-                        <td className="px-4 py-3 text-sm text-[#5C5C5C]">5045</td>
-                        <td className="px-4 py-3 text-sm text-[#5C5C5C]">WM-04</td>
-                        <td className="px-4 py-3 text-sm font-medium text-[#FB3748]">5</td>
-                        <td className="px-4 py-3 text-sm text-[#5C5C5C]">Within tolerance</td>
-                      </tr>
-                      <tr className="hover:bg-gray-50 transition-colors">
-                        <td className="px-4 py-3 text-sm font-medium text-[#00B6E2]">PM-003</td>
-                        <td className="px-4 py-3 text-sm text-[#171717]">Contact Wire</td>
-                        <td className="px-4 py-3 text-sm text-[#5C5C5C]">2mm</td>
-                        <td className="px-4 py-3 text-sm text-[#5C5C5C]">N/A</td>
-                        <td className="px-4 py-3 text-sm text-[#5C5C5C]">N/A</td>
-                        <td className="px-4 py-3 text-sm text-[#5C5C5C]">10100</td>
-                        <td className="px-4 py-3 text-sm text-[#5C5C5C]">WM-04</td>
-                        <td className="px-4 py-3 text-sm font-medium text-[#1CB061]">0</td>
-                        <td className="px-4 py-3 text-sm text-[#5C5C5C]">Good</td>
-                      </tr>
+                      {(poData?.winding || []).length > 0 ? (poData?.winding || []).map((row: any, idx: number) => (
+                        <tr key={idx} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-4 py-3 text-sm font-medium text-[#00B6E2]">{row.winding_no || `PM-00${idx + 1}`}</td>
+                          <td className="px-4 py-3 text-sm text-[#171717]">{row.product_material_id || "-"}</td>
+                          <td className="px-4 py-3 text-sm text-[#5C5C5C]">{row.film_width || "-"}</td>
+                          <td className="px-4 py-3 text-sm text-[#5C5C5C]">{row.film_turns || "-"}</td>
+                          <td className="px-4 py-3 text-sm text-[#5C5C5C]">{row.turns_count || "-"}</td>
+                          <td className="px-4 py-3 text-sm text-[#5C5C5C]">{row.quantity_wound || "0"}</td>
+                          <td className="px-4 py-3 text-sm text-[#5C5C5C]">-</td>
+                          <td className="px-4 py-3 text-sm font-medium text-[#FB3748]">{row.rejected_quantity || "0"}</td>
+                          <td className="px-4 py-3 text-sm text-[#5C5C5C]">-</td>
+                        </tr>
+                      )) : (
+                        <tr><td colSpan={9} className="px-4 py-4 text-sm text-center text-[#5C5C5C]">No winding records yet.</td></tr>
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -336,39 +321,21 @@ export default function ProductOrderDetail({ params }: DetailPageProps) {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#EBEBEB]">
-                      <tr className="hover:bg-gray-50 transition-colors">
-                        <td className="px-4 py-3 text-sm font-medium text-[#00B6E2]">PM-001</td>
-                        <td className="px-4 py-3 text-sm text-[#171717]">Polypropylene Film</td>
-                        <td className="px-4 py-3 text-sm text-[#5C5C5C]">Zinc-spray</td>
-                        <td className="px-4 py-3 text-sm text-[#5C5C5C]">ZS-447</td>
-                        <td className="px-4 py-3 text-sm text-[#5C5C5C]">12</td>
-                        <td className="px-4 py-3 text-sm text-[#5C5C5C]">5050</td>
-                        <td className="px-4 py-3 text-sm text-[#5C5C5C]">SB-02</td>
-                        <td className="px-4 py-3 text-sm font-medium text-[#1CB061]">8</td>
-                        <td className="px-4 py-3 text-sm text-[#5C5C5C]">Good coverage</td>
-                      </tr>
-                      <tr className="hover:bg-gray-50 transition-colors">
-                        <td className="px-4 py-3 text-sm font-medium text-[#00B6E2]">PM-002</td>
-                        <td className="px-4 py-3 text-sm text-[#171717]">Aluminum Foil</td>
-                        <td className="px-4 py-3 text-sm text-[#5C5C5C]">Zinc-spray</td>
-                        <td className="px-4 py-3 text-sm text-[#5C5C5C]">ZS-447</td>
-                        <td className="px-4 py-3 text-sm text-[#5C5C5C]">11</td>
-                        <td className="px-4 py-3 text-sm text-[#5C5C5C]">5045</td>
-                        <td className="px-4 py-3 text-sm text-[#5C5C5C]">SB-02</td>
-                        <td className="px-4 py-3 text-sm font-medium text-[#1CB061]">3</td>
-                        <td className="px-4 py-3 text-sm text-[#5C5C5C]">Uniform coating</td>
-                      </tr>
-                      <tr className="hover:bg-gray-50 transition-colors">
-                        <td className="px-4 py-3 text-sm font-medium text-[#00B6E2]">PM-003</td>
-                        <td className="px-4 py-3 text-sm text-[#171717]">Contact Wire</td>
-                        <td className="px-4 py-3 text-sm text-[#5C5C5C]">N/A</td>
-                        <td className="px-4 py-3 text-sm text-[#5C5C5C]">N/A</td>
-                        <td className="px-4 py-3 text-sm text-[#5C5C5C]">N/A</td>
-                        <td className="px-4 py-3 text-sm text-[#5C5C5C]">10100</td>
-                        <td className="px-4 py-3 text-sm text-[#5C5C5C]">N/A</td>
-                        <td className="px-4 py-3 text-sm font-medium text-[#1CB061]">0</td>
-                        <td className="px-4 py-3 text-sm text-[#5C5C5C]">No spray required</td>
-                      </tr>
+                      {(poData?.spray || []).length > 0 ? (poData?.spray || []).map((row: any, idx: number) => (
+                        <tr key={idx} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-4 py-3 text-sm font-medium text-[#00B6E2]">{row.spray_no || `PM-00${idx + 1}`}</td>
+                          <td className="px-4 py-3 text-sm text-[#171717]">{row.winding_id || "-"}</td>
+                          <td className="px-4 py-3 text-sm text-[#5C5C5C]">{row.spray_type || "-"}</td>
+                          <td className="px-4 py-3 text-sm text-[#5C5C5C]">-</td>
+                          <td className="px-4 py-3 text-sm text-[#5C5C5C]">{row.thickness_maintained || "-"}</td>
+                          <td className="px-4 py-3 text-sm text-[#5C5C5C]">{row.quantity || "0"}</td>
+                          <td className="px-4 py-3 text-sm text-[#5C5C5C]">-</td>
+                          <td className="px-4 py-3 text-sm font-medium text-[#FB3748]">{row.rejected_quantity || "0"}</td>
+                          <td className="px-4 py-3 text-sm text-[#5C5C5C]">-</td>
+                        </tr>
+                      )) : (
+                        <tr><td colSpan={9} className="px-4 py-4 text-sm text-center text-[#5C5C5C]">No spray records yet.</td></tr>
+                      )}
                     </tbody>
                   </table>
                 </div>

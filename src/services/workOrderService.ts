@@ -34,6 +34,16 @@ export const workOrderService = {
       "*,created_by_profile:profiles!work_orders_created_by_fkey(id,full_name,email,phone,worker_label,team_name),qr_references(qr_payload,qr_url),work_order_materials(*,inventory(*)),metallisation(*,created_by_profile:profiles!metallisation_created_by_fkey(id,full_name,email,phone,worker_label,team_name),operator:profiles!metallisation_operator_id_fkey(id,full_name,email,phone,worker_label,team_name)),slitting(*,created_by_profile:profiles!slitting_created_by_fkey(id,full_name,email,phone,worker_label,team_name),operator:profiles!slitting_operator_id_fkey(id,full_name,email,phone,worker_label,team_name))",
     );
   },
+  getByWorkOrderNo(workOrderNo: string) {
+    return supabaseRest.list(
+      "work_orders",
+      {
+        select: "*,created_by_profile:profiles!work_orders_created_by_fkey(id,full_name,email,phone,worker_label,team_name),qr_references(qr_payload,qr_url),work_order_materials(*,inventory(*)),metallisation(*,created_by_profile:profiles!metallisation_created_by_fkey(id,full_name,email,phone,worker_label,team_name),operator:profiles!metallisation_operator_id_fkey(id,full_name,email,phone,worker_label,team_name)),slitting(*,created_by_profile:profiles!slitting_created_by_fkey(id,full_name,email,phone,worker_label,team_name),operator:profiles!slitting_operator_id_fkey(id,full_name,email,phone,worker_label,team_name))",
+        filters: { work_order_no: workOrderNo },
+        limit: 1
+      }
+    ).then((rows) => (rows as any[])[0] ?? null);
+  },
   counts() {
     return supabaseRest.list<{ status: WorkflowStatus }>("work_orders", { select: "status" }).then((rows) => ({
       totalWorkOrders: rows.length,
@@ -64,8 +74,8 @@ export const workOrderService = {
         supabaseRest.create("work_order_materials", {
           work_order_id: payload.work_order_id,
           inventory_id,
-          assigned_to: payload.assigned_to,
-          assigned_by: payload.assigned_by,
+          ...(payload.assigned_to ? { assigned_to: payload.assigned_to } : {}),
+          ...(payload.assigned_by ? { assigned_by: payload.assigned_by } : {}),
           quantity_kg: payload.quantity_kg_by_inventory_id[inventory_id] ?? 0,
           status: "Issued",
         }),

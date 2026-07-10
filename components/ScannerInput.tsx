@@ -4,12 +4,14 @@ import { useState, useRef, useCallback } from "react";
 import { QrCode, X } from "lucide-react";
 import { Scanner, type IDetectedBarcode, type IScannerError } from "@yudiel/react-qr-scanner";
 
-interface ScannerInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+interface ScannerInputProps extends React.InputHTMLAttributes<HTMLInputElement | HTMLSelectElement> {
   onScanData?: (data: string) => void;
   containerClassName?: string;
+  isSelect?: boolean;
+  scanDisabled?: boolean;
 }
 
-export function ScannerInput({ onScanData, containerClassName = "", className = "", ...props }: ScannerInputProps) {
+export function ScannerInput({ onScanData, containerClassName = "", className = "", isSelect = false, scanDisabled = false, children, ...props }: ScannerInputProps & { children?: React.ReactNode }) {
   const [isScanning, setIsScanning] = useState(false);
   const [scanError, setScanError] = useState<string | null>(null);
   const scanLockRef = useRef(false);
@@ -52,15 +54,25 @@ export function ScannerInput({ onScanData, containerClassName = "", className = 
 
   return (
     <div className={`relative flex items-center ${containerClassName}`}>
-      <input
-        {...props}
-        className={`w-full pr-10 ${className}`}
-      />
+      {isSelect ? (
+        <select
+          {...(props as React.SelectHTMLAttributes<HTMLSelectElement>)}
+          className={`w-full pr-10 appearance-none ${className}`}
+        >
+          {children}
+        </select>
+      ) : (
+        <input
+          {...(props as React.InputHTMLAttributes<HTMLInputElement>)}
+          className={`w-full pr-10 ${className}`}
+        />
+      )}
       <button
         type="button"
-        onClick={() => setIsScanning(true)}
-        className="absolute right-3 text-[#A1A1AA] hover:text-[#00B6E2] transition-colors"
-        title="Scan Barcode"
+        onClick={() => !scanDisabled && setIsScanning(true)}
+        disabled={scanDisabled}
+        className={`absolute right-3 transition-colors ${scanDisabled ? "text-[#DDE1E8] cursor-not-allowed" : "text-[#A1A1AA] hover:text-[#00B6E2]"}`}
+        title={scanDisabled ? "Select an item first" : "Scan Barcode"}
       >
         <QrCode className="w-5 h-5" />
       </button>

@@ -1,5 +1,7 @@
 "use client";
 
+import { WO_STATUS_OPTIONS, WO_STAGE_OPTIONS } from "@/lib/constants";
+import { StatusBadge } from "@/components/StatusBadge";
 import { use, useState, useMemo } from "react";
 import { Plus, X, ChevronRight, Check, QrCode } from "lucide-react";
 import { FileText, Ruler, Maximize2, Package } from "lucide-react";
@@ -83,18 +85,7 @@ const defaultSprayForm: SprayForm = {
   pressureSitting: "",
 };
 
-function StatusBadge({ status }: { status: string }) {
-  if (status === "Yet to Start") {
-    return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#FFF0F1] text-[#FB3748] text-[12px] font-medium leading-tight shrink-0">Yet to Start</span>;
-  }
-  if (status === "In-progress") {
-    return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#FFF4ED] text-[#E19242] text-[12px] font-medium leading-tight shrink-0">In-progress</span>;
-  }
-  if (status === "Completed") {
-    return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#E8F8F0] text-[#1CB061] text-[12px] font-medium leading-tight shrink-0">Completed</span>;
-  }
-  return null;
-}
+
 
 function getDateTimeString() {
   const now = new Date();

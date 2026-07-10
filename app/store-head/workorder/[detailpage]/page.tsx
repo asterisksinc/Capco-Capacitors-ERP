@@ -1,9 +1,9 @@
 "use client";
 
-import { use, useState, useMemo } from "react";
+import { WO_STATUS_OPTIONS, WO_STAGE_OPTIONS } from "@/lib/constants";
+import { StatusBadge } from "@/components/StatusBadge";
+import { use, useState, useMemo, useEffect } from "react";
 import { Plus, X, ChevronRight, Check, Layers, Ruler, Weight, Package, QrCode } from "lucide-react";
-import { useStore } from "@/hooks/useStore";
-import { computeWorkflowProgress } from "../../../../lib/data";
 import type { TableConfig } from "@/hooks/useTableControls";
 import { useTableControls } from "@/hooks/useTableControls";
 import { SortableHeader } from "@/components/table/SortableHeader";
@@ -13,26 +13,17 @@ import { MobileHeader } from "@/components/MobileHeader";
 import { QRCodeModal, type QRModalData } from "@/components/QRCodeModal";
 import { ScannerInput } from "@/components/ScannerInput";
 import { exportToExcel } from "@/lib/exportExcel";
+import { workOrderService } from "@/src/services/workOrderService";
+import { inventoryService } from "@/src/services/inventoryService";
 
 type DetailPageProps = {
   params: Promise<{ detailpage: string }>;
 };
 
+
+
+
 type ModalStep = 1 | 2 | 3;
-
-type RawMaterialForm = {
-  rawMaterialId: string;
-  micron: string;
-  width: string;
-  netWeight: string;
-  temperature: string;
-  supplier: string;
-  damagedWeight: string;
-  usedWeight: string;
-};
-
-const micronOptions = ["2", "2.5", "3", "3.5", "4", "4.5", "4.5HT", "5", "5.5", "6", "6.5", "7", "7.5"];
-const supplierOptions = ["VedaCap Industries", "ElectroForge Capacitors", "NextGen Metallic Pvt Ltd"];
 
 const rawMaterialConfig: TableConfig<RawMaterialRow> = {
   columns: [
@@ -46,72 +37,63 @@ const rawMaterialConfig: TableConfig<RawMaterialRow> = {
     { key: "temperature", label: "Temperature", type: "text", sortable: true },
     { key: "supplier", label: "Company/Supplier", type: "text", sortable: true },
     { key: "stage", label: "Stage", type: "enum", sortable: false, filter: "dropdown", options: ["Raw Material", "METALLISATION"] },
-    { key: "status", label: "Status", type: "enum", sortable: false, filter: "dropdown", options: ["Yet to Start", "In-progress", "Completed"] },
+    { key: "status", label: "Status", type: "enum", sortable: false, filter: "dropdown", options: WO_STATUS_OPTIONS },
     { key: "options", label: "Action", type: "text", sortable: false },
   ],
 };
 
-const defaultRawMaterialForm: RawMaterialForm = {
-  rawMaterialId: "",
-  micron: "4.5",
-  width: "1.0",
-  netWeight: "",
-  temperature: "25°C",
-  supplier: supplierOptions[0],
-  damagedWeight: "0",
-  usedWeight: "",
-};
-
-function StatusBadge({ status }: { status: string }) {
-  if (status === "Yet to Start") {
-    return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#FFF0F1] text-[#FB3748] text-[12px] font-medium leading-tight shrink-0">Yet to Start</span>;
-  }
-  if (status === "In-progress") {
-    return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#FFF4ED] text-[#E19242] text-[12px] font-medium leading-tight shrink-0">In-progress</span>;
-  }
-  if (status === "Completed") {
-    return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#E8F8F0] text-[#1CB061] text-[12px] font-medium leading-tight shrink-0">Completed</span>;
-  }
-  return null;
-}
-
-function getDateString() {
-  const today = new Date();
-  return `${String(today.getDate()).padStart(2, "0")}/${String(today.getMonth() + 1).padStart(2, "0")}/${today.getFullYear()}`;
-}
-
-function generateId(prefix: string) {
-  return `${prefix}-${Math.floor(Math.random() * 10000).toString().padStart(4, "0")}`;
-}
-
-function hasPositiveNumber(value: string) {
-  const parsed = Number.parseFloat(value);
-  return Number.isFinite(parsed) && parsed > 0;
-}
-
-function createRawMaterialRow(): RawMaterialForm {
-  return { ...defaultRawMaterialForm };
-}
-
 export default function StoreHeadWorkOrderDetailPage({ params }: DetailPageProps) {
   const { detailpage } = use(params);
   const orderId = detailpage.toUpperCase();
-  const { store, mounted, addFlowRow, updateInventoryStatus, getAvailableInventory } = useStore();
-  const availableInventory = getAvailableInventory();
-  const workOrderFlowData = store.flowDataMap[orderId];
+
+  const [workOrderFlowData, setWorkOrderFlowData] = useState<any>(null);
+  const [availableInventory, setAvailableInventory] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalStep, setModalStep] = useState<ModalStep>(1);
   const [showValidationHint, setShowValidationHint] = useState(false);
-  const workflowProgress = computeWorkflowProgress(workOrderFlowData);
 
-  const [rawMaterialRowsInput, setRawMaterialRowsInput] = useState<RawMaterialForm[]>([createRawMaterialRow()]);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [selectedInventoryIds, setSelectedInventoryIds] = useState<string[]>([]);
+  type CapturedImage = { url: string; name: string; id: string };
+  const [capturedImage, setCapturedImage] = useState<CapturedImage | null>(null);
   const [qrData, setQrData] = useState<QRModalData | null>(null);
 
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const [wosData, invData] = await Promise.all([
+        workOrderService.getByWorkOrderNo(orderId),
+        inventoryService.list({ filters: { status: "In Inventory" } })
+      ]);
+      setWorkOrderFlowData(wosData);
+      setAvailableInventory(invData);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, [detailpage]);
+
   const currentData = useMemo(() => {
-    if (!workOrderFlowData) return [];
-    return workOrderFlowData.rawMaterialRows;
+    if (!workOrderFlowData || !workOrderFlowData.work_order_materials) return [];
+    return workOrderFlowData.work_order_materials.map((m: any) => ({
+      rollNo: m.inventory?.raw_material_code || "-",
+      netWeight: m.inventory?.net_weight_kg ? `${m.inventory.net_weight_kg}kgs` : "-",
+      damagedWeight: "0.0kgs",
+      usedWeight: m.quantity_kg ? `${m.quantity_kg}kgs` : "-",
+      wastageWeight: "0.0kgs",
+      thickness: m.inventory?.micron || "-",
+      width: m.inventory?.width_m || "-",
+      temperature: m.inventory?.temperature_c || "-",
+      supplier: m.inventory?.supplier || "-",
+      stage: "Raw Material",
+      status: m.status || "Issued"
+    }));
   }, [workOrderFlowData]);
 
   const {
@@ -124,13 +106,30 @@ export default function StoreHeadWorkOrderDetailPage({ params }: DetailPageProps
     setDateRange,
   } = useTableControls({ data: currentData, config: rawMaterialConfig });
 
-  if (!mounted || !workOrderFlowData) return null;
+  const filteredInventory = useMemo(() => {
+    if (!workOrderFlowData) return availableInventory;
+    const woMicron = workOrderFlowData.micron?.toString();
+    const woWidth = workOrderFlowData.width_m?.toString();
+
+    return availableInventory.filter(item => {
+      const itemMicron = item.micron?.toString();
+      const itemWidth = item.width_m?.toString();
+
+      const matchMicron = woMicron ? itemMicron === woMicron : true;
+      const matchWidth = woWidth ? itemWidth === woWidth : true;
+
+      return matchMicron && matchWidth;
+    });
+  }, [availableInventory, workOrderFlowData]);
+
+  if (loading) return <div className="p-6 text-center text-[#5C5C5C]">Loading details...</div>;
+  if (!workOrderFlowData) return <div className="p-6 text-center text-[#5C5C5C]">Work order not found</div>;
 
   const resetModalState = () => {
     setModalStep(1);
     setShowValidationHint(false);
-    setImagePreview(null);
-    setRawMaterialRowsInput([createRawMaterialRow()]);
+    setCapturedImage(null);
+    setSelectedInventoryIds([]);
   };
 
   const openModal = () => {
@@ -143,83 +142,59 @@ export default function StoreHeadWorkOrderDetailPage({ params }: DetailPageProps
     resetModalState();
   };
 
-  const isRawMaterialRowValid = (row: RawMaterialForm) => {
-    const net = parseFloat(row.netWeight) || 0;
-    const damaged = parseFloat(row.damagedWeight) || 0;
-    const used = parseFloat(row.usedWeight) || 0;
-    
-    return Boolean(
-      row.rawMaterialId.trim() &&
-      micronOptions.includes(row.micron.trim()) &&
-      row.width.trim() &&
-      net > 0 &&
-      damaged >= 0 &&
-      used >= 0 &&
-      (damaged + used <= net) &&
-      row.supplier.trim()
+  const isStepOneValid = selectedInventoryIds.length > 0;
+
+  const toggleInventorySelection = (id: string) => {
+    setSelectedInventoryIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
     );
   };
 
-  const isStepOneValid = rawMaterialRowsInput.every(isRawMaterialRowValid);
-
-  const addCurrentItemToDraft = () => {
-    if (!isStepOneValid) {
-      setShowValidationHint(true);
-      return;
-    }
-    setRawMaterialRowsInput((prev) => [...prev, createRawMaterialRow()]);
-  };
-
-  const updateRawMaterialRow = (index: number, patch: Partial<RawMaterialForm>) => {
-    setRawMaterialRowsInput((prev) => prev.map((row, idx) => (idx === index ? { ...row, ...patch } : row)));
-  };
-
-  const removeCurrentRow = (index: number) => {
-    if (rawMaterialRowsInput.length === 1) return;
-    setRawMaterialRowsInput((prev) => prev.filter((_, idx) => idx !== index));
-  };
-
-  const submitCurrentStage = () => {
+  const submitCurrentStage = async () => {
     if (!isStepOneValid) {
       setShowValidationHint(true);
       return;
     }
 
-    const payload = rawMaterialRowsInput;
-    payload.forEach((item) => {
-      const cleanRMId = (item.rawMaterialId || "").trim().toUpperCase();
-      const net = parseFloat(item.netWeight) || 0;
-      const damaged = parseFloat(item.damagedWeight) || 0;
-      const used = parseFloat(item.usedWeight) || 0;
-      const wastage = net - damaged - used;
+    try {
+      const quantity_kg_by_inventory_id = selectedInventoryIds.reduce((acc, id) => {
+        const inv = availableInventory.find((i: any) => i.id === id);
+        acc[id] = inv?.net_weight_kg ?? inv?.weight ?? 0;
+        return acc;
+      }, {} as Record<string, number>);
 
-      addFlowRow(orderId, "Raw Material", {
-        rollNo: cleanRMId || generateId("RM"),
-        weight: `${used || "0"}kgs`,
-        thickness: item.micron,
-        width: item.width || "1.0",
-        netWeight: item.netWeight || "",
-        temperature: item.temperature || "25°C",
-        supplier: item.supplier || "Unknown",
-        stage: "METALLISATION",
-        status: "Yet to Start",
-        damagedWeight: `${damaged.toFixed(1)}kgs`,
-        usedWeight: `${used.toFixed(1)}kgs`,
-        wastageWeight: `${wastage.toFixed(1)}kgs`,
+      await workOrderService.assignRawMaterials({
+        work_order_id: workOrderFlowData.id,
+        inventory_ids: selectedInventoryIds,
+        assigned_to: workOrderFlowData.assigned_to || "",
+        assigned_by: "",
+        quantity_kg_by_inventory_id
       });
-      if (cleanRMId) {
-        updateInventoryStatus(cleanRMId, "Being Used");
-      }
-    });
 
-    setModalStep(3);
+      await workOrderService.update(workOrderFlowData.id, {
+        stage: "Ready for Metallisation",
+        status: "In-progress"
+      });
+
+      await Promise.all(
+        selectedInventoryIds.map(id =>
+          inventoryService.update(id, { status: "Being Used" }).catch(() => { })
+        )
+      );
+
+      await loadData();
+      setModalStep(3);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to assign raw materials.");
+    }
   };
 
   const kpiStats = [
-    { label: "Word Count", value: workOrderFlowData.overview.wordCount, icon: Layers },
-    { label: "Micron", value: workOrderFlowData.overview.micron, icon: Ruler },
-    { label: "Width", value: workOrderFlowData.overview.width, icon: Ruler },
-    { label: "Quantity", value: workOrderFlowData.overview.quantity, icon: Package },
+    { label: "Word Count", value: workOrderFlowData.wordCount || "-", icon: Layers },
+    { label: "Micron", value: workOrderFlowData.micron || "-", icon: Ruler },
+    { label: "Width", value: workOrderFlowData.width_m || "-", icon: Ruler },
+    { label: "Quantity", value: workOrderFlowData.quantity || "-", icon: Package },
   ];
 
   const renderStepHeader = () => {
@@ -251,146 +226,57 @@ export default function StoreHeadWorkOrderDetailPage({ params }: DetailPageProps
 
   const renderStepOneForm = () => {
     return (
-      <div className="flex flex-col gap-4">
-        {rawMaterialRowsInput.map((row, idx) => (
-          <div key={`raw-step1-${idx}`} className="rounded-[12px] border border-[#DDE1E8] p-4 bg-white">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-[13px] font-semibold text-[#344054]">Item {idx + 1}</p>
-              {rawMaterialRowsInput.length > 1 && (
-                <button type="button" onClick={() => removeCurrentRow(idx)} className="text-[12px] text-[#D92D20] hover:underline">Remove</button>
-              )}
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-              <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-medium text-[#171717]">Raw Material ID</label>
-                <ScannerInput
-                  value={row.rawMaterialId}
-                  onChange={(e) => {
-                    const id = e.target.value;
-                    const cleanId = id.trim().toUpperCase();
-                    const inv = store.inventoryItems.find(
-                      (i) => i.rawMaterialId.toUpperCase() === cleanId || i.rollId.toUpperCase() === cleanId
-                    );
-                    updateRawMaterialRow(idx, {
-                      rawMaterialId: inv ? inv.rawMaterialId : id,
-                      micron: inv?.micron ?? row.micron,
-                      width: inv?.width ?? row.width,
-                      netWeight: inv?.netWeight ?? row.netWeight,
-                      temperature: inv?.temperature ?? row.temperature,
-                      supplier: inv?.supplier ?? row.supplier,
-                    });
-                  }}
-                  onScanData={(data) => {
-                    const cleanId = data.trim().toUpperCase();
-                    const inv = store.inventoryItems.find(
-                      (i) => i.rawMaterialId.toUpperCase() === cleanId || i.rollId.toUpperCase() === cleanId
-                    );
-                    if (inv) {
-                      updateRawMaterialRow(idx, {
-                        rawMaterialId: inv.rawMaterialId,
-                        micron: inv.micron,
-                        width: inv.width,
-                        netWeight: inv.netWeight ?? "",
-                        temperature: inv.temperature ?? "25°C",
-                        supplier: inv.supplier,
-                      });
-                    } else {
-                      updateRawMaterialRow(idx, { rawMaterialId: data });
-                    }
-                  }}
-                  list={`inv-list-${idx}`}
-                  placeholder="Scan or select..."
-                  className="h-[42px] rounded-[8px] border border-[#DDE1E8] pl-3 text-[14px]"
-                />
-                <datalist id={`inv-list-${idx}`}>
-                  {availableInventory.map((inv) => (
-                    <option key={inv.rawMaterialId} value={inv.rawMaterialId}>
-                      {inv.rawMaterialId} ({inv.netWeight ?? inv.weight})
-                    </option>
-                  ))}
-                </datalist>
-                {availableInventory.length === 0 && (
-                  <p className="text-[11px] text-[#D92D20]">No inventory items available. Add inventory first.</p>
-                )}
-              </div>
-              <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-medium text-[#171717]">Micron</label>
-                <select value={row.micron} onChange={(e) => updateRawMaterialRow(idx, { micron: e.target.value })} className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]">
-                  {micronOptions.map((option) => (
-                    <option key={option} value={option}>{option}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-medium text-[#171717]">Width (m)</label>
-                <input type="number" step="0.1" value={row.width} onChange={(e) => updateRawMaterialRow(idx, { width: e.target.value })} placeholder="Enter width" className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]" />
-              </div>
-              <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-medium text-[#171717]">Net Weight (Kgs)</label>
-                <div className="relative">
-                  <input type="number" min="0" step="0.1" value={row.netWeight} onChange={(e) => updateRawMaterialRow(idx, { netWeight: e.target.value })} placeholder="Enter net weight" className="h-[42px] w-full rounded-[8px] border border-[#DDE1E8] pl-3 pr-12 text-[14px]" />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[12px] font-medium text-[#5C5C5C]">Kgs</span>
+      <div className="flex flex-col gap-3">
+        {filteredInventory.length === 0 && (
+          <p className="text-[13px] text-[#5C5C5C] text-center py-4">No available inventory items match the Work Order's micron and width.</p>
+        )}
+        {filteredInventory.map((item) => {
+          const isSelected = selectedInventoryIds.includes(item.id);
+          const displayId = item.raw_material_code || item.roll_no || item.id;
+          return (
+            <label
+              key={item.id}
+              onClick={() => toggleInventorySelection(item.id)}
+              className={`flex flex-col gap-3 p-4 rounded-[8px] border transition-colors cursor-pointer ${isSelected
+                ? "border-[#00B6E2] bg-[#F4FBFF]"
+                : "border-[#DDE1E8] bg-white hover:border-[#A7DDEB]"
+                }`}
+            >
+              <div className="flex items-center gap-3">
+                <div className={`w-5 h-5 rounded-[4px] border flex items-center justify-center shrink-0 ${isSelected ? "bg-[#00B6E2] border-[#00B6E2]" : "border-[#DDE1E8] bg-white"}`}>
+                  {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
                 </div>
+                <span className="text-[14px] font-semibold text-[#171717]">{displayId}</span>
               </div>
-              <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-medium text-[#171717]">Temperature</label>
-                <input type="text" value={row.temperature} onChange={(e) => updateRawMaterialRow(idx, { temperature: e.target.value })} placeholder="e.g. 25°C" className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]" />
+              <div className="flex items-center gap-4 text-[13px] text-[#5C5C5C] pl-8">
+                <span>Weight: <span className="font-medium text-[#171717]">{item.net_weight_kg ?? item.weight ?? "-"}kgs</span></span>
+                <span className="w-[1px] h-3 bg-[#DDE1E8]"></span>
+                <span>Width: <span className="font-medium text-[#171717]">{item.width_m ?? "-"}</span></span>
+                <span className="w-[1px] h-3 bg-[#DDE1E8]"></span>
+                <span>Micron: <span className="font-medium text-[#171717]">{item.micron ?? "-"}</span></span>
+                <span className="w-[1px] h-3 bg-[#DDE1E8]"></span>
+                <span>Grade: <span className="font-medium text-[#171717]">{item.grade ?? "A"}</span></span>
               </div>
-              <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-medium text-[#171717]">Damaged Weight (Kgs)</label>
-                <div className="relative">
-                  <input type="number" min="0" step="0.1" value={row.damagedWeight} onChange={(e) => updateRawMaterialRow(idx, { damagedWeight: e.target.value })} placeholder="Enter damaged weight" className="h-[42px] w-full rounded-[8px] border border-[#DDE1E8] pl-3 pr-12 text-[14px]" />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[12px] font-medium text-[#5C5C5C]">Kgs</span>
-                </div>
-              </div>
-              <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-medium text-[#171717]">Used Weight (Kgs)</label>
-                <div className="relative">
-                  <input type="number" min="0" step="0.1" value={row.usedWeight} onChange={(e) => updateRawMaterialRow(idx, { usedWeight: e.target.value })} placeholder="Enter used weight" className="h-[42px] w-full rounded-[8px] border border-[#DDE1E8] pl-3 pr-12 text-[14px]" />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[12px] font-medium text-[#5C5C5C]">Kgs</span>
-                </div>
-              </div>
-              <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-medium text-[#171717]">Wastage/Left Weight (Kgs)</label>
-                <div className="relative">
-                  <input type="text" readOnly value={((parseFloat(row.netWeight) || 0) - (parseFloat(row.damagedWeight) || 0) - (parseFloat(row.usedWeight) || 0)).toFixed(1)} className="h-[42px] w-full rounded-[8px] border border-[#DDE1E8] bg-gray-50 px-3 text-[14px] text-gray-500" />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[12px] font-medium text-[#5C5C5C]">Kgs</span>
-                </div>
-              </div>
-              <div className="flex flex-col gap-2 md:col-span-2">
-                <label className="text-[13px] font-medium text-[#171717]">Supplier</label>
-                <select value={row.supplier} onChange={(e) => updateRawMaterialRow(idx, { supplier: e.target.value })} className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]">
-                  {supplierOptions.map((option) => (
-                    <option key={option} value={option}>{option}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </div>
-        ))}
+            </label>
+          );
+        })}
       </div>
     );
   };
 
   const renderReviewCards = () => {
-    const rows = rawMaterialRowsInput;
-    return rows.map((item, idx) => {
-      const net = parseFloat(item.netWeight) || 0;
-      const damaged = parseFloat(item.damagedWeight) || 0;
-      const used = parseFloat(item.usedWeight) || 0;
-      const wastage = net - damaged - used;
+    const selectedItems = filteredInventory.filter(i => selectedInventoryIds.includes(i.id));
+    return selectedItems.map((item, idx) => {
+      const net = item.net_weight_kg ?? item.weight ?? 0;
+      const displayId = item.raw_material_code || item.roll_no || item.id;
       return (
         <div key={`raw-${idx}`} className="rounded-[12px] border border-[#78CFFA] bg-[#F4FBFF] p-4 grid grid-cols-1 md:grid-cols-2 gap-y-2 gap-x-6 text-[14px] text-[#49526A]">
-          <p>Raw Material ID: {item.rawMaterialId || "Auto"}</p>
+          <p>Raw Material ID: {displayId}</p>
           <p>Supplier: {item.supplier || "Unknown"}</p>
-          <p>Micron: {item.micron}</p>
-          <p>Width: {item.width}</p>
-          <p>Net Weight: {net.toFixed(1)} kgs</p>
-          <p>Temperature: {item.temperature || "25°C"}</p>
-          <p>Damaged Weight: {damaged.toFixed(1)} kgs</p>
-          <p>Used Weight: {used.toFixed(1)} kgs</p>
-          <p>Wastage/Left Weight: {wastage.toFixed(1)} kgs</p>
-          <p>Stage: Metallisation</p>
+          <p>Micron: {item.micron || "-"}</p>
+          <p>Width: {item.width_m || "-"}</p>
+          <p>Net Weight: {Number(net).toFixed(1)} kgs</p>
+          <p>Temperature: {item.temperature_c || "25°C"}</p>
         </div>
       );
     });
@@ -401,13 +287,10 @@ export default function StoreHeadWorkOrderDetailPage({ params }: DetailPageProps
       return (
         <div className="px-6 py-6 flex flex-col gap-5">
           {renderStepOneForm()}
-          <button onClick={addCurrentItemToDraft} className="h-[42px] rounded-[8px] bg-[#00B6E2] text-white text-[15px] font-medium hover:bg-[#0092b5] transition-colors">
-            Add Item
-          </button>
           {showValidationHint && !isStepOneValid && (
-            <p className="text-[12px] text-[#D92D20]">All input fields are mandatory before adding an item or moving to the next step.</p>
+            <p className="text-[12px] text-[#D92D20]">Please select at least one material to proceed.</p>
           )}
-          <p className="text-[12px] text-[#667085]">Items queued for review: {rawMaterialRowsInput.length}</p>
+          <p className="text-[12px] text-[#667085]">Items queued for review: {selectedInventoryIds.length}</p>
         </div>
       );
     }
@@ -420,18 +303,60 @@ export default function StoreHeadWorkOrderDetailPage({ params }: DetailPageProps
             <p className="text-[13px] text-[#6B7280]">Review all values before submitting to the workflow queue.</p>
           </div>
           {renderReviewCards()}
-          <div className="rounded-[12px] border border-[#DDE1E8] bg-white p-4 flex flex-col gap-2">
-            <label className="text-[13px] font-medium text-[#171717]">Attach Image</label>
-            <input type="file" accept="image/*" onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) {
-                const reader = new FileReader();
-                reader.onload = (ev) => setImagePreview(ev.target?.result as string);
-                reader.readAsDataURL(file);
-              }
-            }} className="text-[14px]" />
-            {imagePreview && (
-              <img src={imagePreview} alt="Preview" className="mt-2 max-h-[200px] rounded-[8px] border border-[#DDE1E8]" />
+          <div className="rounded-[12px] border border-[#DDE1E8] bg-white p-2 md:p-4 flex flex-col gap-3">
+            {!capturedImage ? (
+              <div className="flex items-center justify-between">
+                <label className="text-[13px] font-medium text-[#171717]">Attach Image</label>
+                <div className="flex items-center gap-2">
+                  <div className="relative">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      id="cameraInput"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onload = (ev) => {
+                            const ext = file.name.split('.').pop() || 'jpeg';
+                            const randomId = Math.random().toString(36).substring(2, 8).toUpperCase();
+                            setCapturedImage({
+                              url: ev.target?.result as string,
+                              name: `IMG_${Date.now()}.${ext}`,
+                              id: randomId
+                            });
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
+                    <label
+                      htmlFor="cameraInput"
+                      className="flex items-center justify-center gap-2 bg-[#F5F7FA] border border-[#DDE1E8] text-[#5C5C5C] text-[13px] font-medium rounded-[6px] h-[36px] px-3 hover:bg-[#EBEBEB] transition-colors cursor-pointer"
+                    >
+                      Take Photo
+                    </label>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-start md:items-center justify-between gap-4 rounded-[8px] ">
+                <div className="flex gap-2 flex-col md:flex-row">
+                  <img src={capturedImage.url} alt="Preview" className="w-14 h-14 rounded-md border border-[#EBEBEB] object-cover shrink-0" />
+                  <div className="flex flex-col gap-1">
+                    <p className="text-[12px] md:text-[14px] font-semibold text-[#171717]">{capturedImage.name}</p>
+                    <p className="text-[10px] md:text-[12px] text-[#6B7280]">ID: {capturedImage.id}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setCapturedImage(null)}
+                  className="text-[#5C5C5C] hover:text-[#171717] min-h-full transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -441,13 +366,13 @@ export default function StoreHeadWorkOrderDetailPage({ params }: DetailPageProps
     return (
       <div className="px-6 py-8">
         <div className="rounded-[16px] border border-[#D6EEF9] bg-[radial-gradient(circle_at_center,_#ECF8FD_0%,_#F8FCFF_45%,_#FFFFFF_100%)] p-8 md:p-10 flex flex-col items-center text-center gap-4">
-          <div className="w-16 h-16 rounded-full bg-[#E6F7FF] border border-[#9DDBF6] flex items-center justify-center">
-            <div className="w-10 h-10 rounded-full bg-[#00B6E2] flex items-center justify-center">
-              <Check className="w-6 h-6 text-white" />
+          <div className="w-13 md:w-16 h-13 md:h-16 rounded-full bg-[#E6F7FF] border border-[#9DDBF6] flex items-center justify-center">
+            <div className="w-7 md:w-10 h-7 md:h-10 rounded-full bg-[#00B6E2] flex items-center justify-center">
+              <Check className="w-4 md:w-6 h-4 md:h-6 text-white" />
             </div>
           </div>
-          <p className="text-[27px] leading-tight text-[#171717] font-semibold">Your details have been submitted successfully.</p>
-          <p className="text-[15px] text-[#667085] max-w-[460px]">We are reviewing this entry and notifying the next stage once processing is complete.</p>
+          <p className="text-[14px] lg:text-[27px] leading-tight text-[#171717] font-semibold">Your details have been submitted successfully.</p>
+          <p className="text-[10px] lg:text-[15px] text-[#667085] max-w-[460px]">We are reviewing this entry and notifying the next stage once processing is complete.</p>
         </div>
       </div>
     );
@@ -462,8 +387,8 @@ export default function StoreHeadWorkOrderDetailPage({ params }: DetailPageProps
           <div className="bg-white rounded-[16px] w-full max-w-[860px] shadow-lg flex flex-col overflow-hidden">
             <div className="flex items-start justify-between px-6 py-5 border-b border-[#EBEBEB]">
               <div className="flex flex-col gap-1">
-                <h2 className="text-[28px] leading-tight font-semibold text-[#171717]">Add Raw Material Details</h2>
-                <p className="text-[15px] text-[#5C5C5C]">Capture the raw material details for work order {orderId}</p>
+                <h2 className="text-[18px] md:text-[28px] leading-tight font-semibold text-[#171717]">Add Raw Material Details</h2>
+                <p className="text-[11px] md:text-[15px] text-[#5C5C5C]">Capture the raw material details for work order {orderId}</p>
               </div>
               <button onClick={closeModal} className="text-[#5C5C5C] hover:text-[#171717] transition-colors p-1">
                 <X className="w-5 h-5" />
@@ -539,9 +464,9 @@ export default function StoreHeadWorkOrderDetailPage({ params }: DetailPageProps
       {/* Additional detail info - Mobile */}
       <section className="md:hidden mx-4 mt-3 mb-2 flex flex-wrap gap-2">
         {[
-          { label: "Stage", value: workflowProgress.stage },
-          { label: "Date", value: workOrderFlowData.overview.date },
-          { label: "Status", value: workflowProgress.status },
+          { label: "Stage", value: workOrderFlowData.stage || "Raw Material" },
+          { label: "Date", value: workOrderFlowData.created_at ? new Date(workOrderFlowData.created_at).toLocaleDateString("en-GB") : "-" },
+          { label: "Status", value: workOrderFlowData.status || "Yet to Start" },
         ].map((field, idx) => (
           <div key={idx} className="flex items-center gap-1.5 bg-[#F5F7FA] rounded-[8px] px-3 py-1.5">
             <span className="text-[11px] text-[#5C5C5C]">{field.label}:</span>
@@ -583,15 +508,15 @@ export default function StoreHeadWorkOrderDetailPage({ params }: DetailPageProps
       <section className="hidden md:flex items-center gap-6 px-4 md:px-6 py-4 border-b border-[#EBEBEB] mx-4 md:mx-6">
         <div className="flex items-center gap-2">
           <span className="text-[14px] text-[#5C5C5C]">Stage:</span>
-          <span className="text-[14px] font-semibold text-[#171717]">{workflowProgress.stage}</span>
+          <span className="text-[14px] font-semibold text-[#171717]">{workOrderFlowData.stage || "Raw Material"}</span>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-[14px] text-[#5C5C5C]">Date:</span>
-          <span className="text-[14px] font-semibold text-[#171717]">{workOrderFlowData.overview.date}</span>
+          <span className="text-[14px] font-semibold text-[#171717]">{workOrderFlowData.created_at ? new Date(workOrderFlowData.created_at).toLocaleDateString("en-GB") : "-"}</span>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-[14px] text-[#5C5C5C]">Status:</span>
-          <StatusBadge status={workflowProgress.status} />
+          <StatusBadge status={workOrderFlowData.status || "Yet to Start"} />
         </div>
       </section>
 
@@ -665,7 +590,7 @@ export default function StoreHeadWorkOrderDetailPage({ params }: DetailPageProps
                           </td>
                         );
                       }
-                      
+
                       const val = row[col.key as keyof RawMaterialRow];
                       let displayVal = val;
                       if (!val) {

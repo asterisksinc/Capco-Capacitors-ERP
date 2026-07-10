@@ -60,7 +60,7 @@ const defaultForm: InventoryForm = {
   supplier: supplierOptions[0],
 };
 
-export default function StoreHeadInventoryPage() {
+export default function ProductionHeadInventoryPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [qrData, setQrData] = useState<QRModalData | null>(null);
   const [inventoryItems, setInventoryItems] = useState<any[]>([]);

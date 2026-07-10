@@ -1,10 +1,11 @@
 "use client";
 
+import { WO_STATUS_OPTIONS, WO_STAGE_OPTIONS } from "@/lib/constants";
+import { StatusBadge } from "@/components/StatusBadge";
 import { ChevronDown, Search, Layers, Clock, Activity, CheckCircle, QrCode, Download, X } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { QRCodeSVG } from "qrcode.react";
-import { useStore, type ComputedWorkOrderSummary } from "@/hooks/useStore";
 import type { TableConfig } from "@/hooks/useTableControls";
 import { useTableControls } from "@/hooks/useTableControls";
 import { SortableHeader } from "@/components/table/SortableHeader";
@@ -13,9 +14,21 @@ import { OptionsDropdown } from "@/components/table/OptionsDropdown";
 import { FilterPopover, FilterChips, type FilterConfig, type FilterState, type EnumFilter, type TextFilter, type NumberRangeFilter } from "@/components/table/FilterPopover";
 import { exportToExcel } from "@/lib/exportExcel";
 import { MobileHeader } from "@/components/MobileHeader";
+import { workOrderService } from "@/src/services/workOrderService";
 
-const WO_STATUS_OPTIONS = ["Yet to Start", "In-progress", "Completed"];
-const WO_STAGE_OPTIONS = ["Metallisation", "Raw Material", "Slitting"];
+export type WorkOrderRow = {
+  uuid?: string;
+  id: string;
+  micron: string;
+  width: string;
+  qty: string;
+  stage: string;
+  date: string;
+  status: string;
+};
+
+
+
 
 const statusFilter: EnumFilter = { label: "Status", key: "status", options: WO_STATUS_OPTIONS };
 const stageFilter: EnumFilter = { label: "Stage", key: "stage", options: WO_STAGE_OPTIONS };
@@ -34,36 +47,52 @@ const filterConfig: FilterConfig = {
   numberRanges: numberFilters,
 };
 
-const workOrderConfig: TableConfig<ComputedWorkOrderSummary> = {
+const workOrderConfig: TableConfig<WorkOrderRow> = {
   columns: [
     { key: "id", label: "Work Orders ID", type: "text", sortable: true },
     { key: "micron", label: "Micron", type: "text", sortable: true },
     { key: "width", label: "Width", type: "text", sortable: true },
     { key: "qty", label: "Quantity", type: "number", sortable: true },
     { key: "stage", label: "Stage", type: "text", sortable: true },
-    { key: "date", label: "Date", type: "date", sortable: true },
-    { key: "status", label: "Status", type: "enum", sortable: false, filter: "dropdown", options: ["Yet to Start", "In-progress", "Completed"] },
+    { key: "date", label: "Timestamp", type: "date", sortable: true },
+    { key: "status", label: "Status", type: "enum", sortable: false, filter: "dropdown", options: WO_STATUS_OPTIONS },
     { key: "options", label: "Action", type: "text", sortable: false }
   ]
 };
 
-function StatusBadge({ status }: { status: string }) {
-  if (status === "Yet to Start") {
-    return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#FFF0F1] text-[#FB3748] text-[12px] font-medium leading-tight">Yet to Start</span>;
-  }
-  if (status === "In-progress") {
-    return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#FFF4ED] text-[#E19242] text-[12px] font-medium leading-tight">In-progress</span>;
-  }
-  if (status === "Completed") {
-    return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#E8F8F0] text-[#1CB061] text-[12px] font-medium leading-tight">Completed</span>;
-  }
-  return null;
-}
+
 
 export default function StoreHeadWorkOrderPage() {
-  const { workOrders: rows, mounted, deleteWorkOrder } = useStore();
+  const [rows, setRows] = useState<WorkOrderRow[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [qrModalId, setQrModalId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const data = await workOrderService.list();
+      const mapped = data.map((wo: any) => ({
+        uuid: wo.id,
+        id: wo.work_order_no || wo.id,
+        micron: wo.micron?.toString() || "-",
+        width: wo.width_m?.toString() || "-",
+        qty: wo.quantity?.toString() || "-",
+        stage: wo.stage || "Raw Material",
+        date: wo.created_at ? new Date(wo.created_at).toLocaleString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: true }) : "-",
+        status: wo.status || "Yet to Start"
+      }));
+      setRows(mapped);
+    } catch (error) {
+      console.error("Failed to load work orders", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
 
   const {
     processedData,
@@ -159,7 +188,9 @@ export default function StoreHeadWorkOrderPage() {
     },
   ];
 
-  if (!mounted) return null;
+  if (loading) {
+    return <div className="p-6 text-center text-[#5C5C5C]">Loading work orders...</div>;
+  }
 
   return (
     <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-white flex flex-col relative overflow-x-hidden">
@@ -318,9 +349,17 @@ export default function StoreHeadWorkOrderPage() {
                         viewHref={`/store-head/workorder/${row.id}`}
                         status={row.status}
                         onEdit={() => {}}
-                        onDelete={() => {
+                        onDelete={async () => {
                           if (confirm(`Are you sure you want to delete ${row.id}?`)) {
-                            deleteWorkOrder(row.id);
+                            if ((row as any).uuid) {
+                              try {
+                                await workOrderService.remove((row as any).uuid);
+                                await loadData();
+                              } catch (e) {
+                                console.error(e);
+                                alert("Failed to delete work order");
+                              }
+                            }
                           }
                         }}
                       />

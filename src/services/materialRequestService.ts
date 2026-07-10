@@ -39,4 +39,9 @@ export const materialRequestService = {
   remove(id: string) {
     return supabaseRest.remove("material_requests", id);
   },
+  cancel(id: string, cancelledBy: string) {
+    return supabaseRest.update("material_requests", id, {
+      status: "Cancelled" satisfies WorkflowStatus,
+    });
+  },
 };

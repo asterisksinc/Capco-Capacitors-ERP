@@ -2,8 +2,9 @@
 
 import { Plus, Search } from "lucide-react";
 import Link from "next/link";
-import { useStore } from "@/hooks/useStore";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { stockService } from "@/src/services/stockService";
+import { Loader2 } from "lucide-react";
 
 import type { TableConfig } from "@/hooks/useTableControls";
 import { useTableControls } from "@/hooks/useTableControls";
@@ -60,31 +61,35 @@ const stockConfig: TableConfig<StockRow> = {
 };
 
 export default function SupervisorStockPage() {
-  const { store, mounted } = useStore();
+  const [actualRows, setActualRows] = useState<StockRow[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const getStockRows = () => {
-    if (!mounted) return [];
-    const rows: StockRow[] = [];
-    for (const [woId, flow] of Object.entries(store.flowDataMap)) {
-      for (const row of flow.slittingRows) {
-        rows.push({
-          stockId: row.productNo,
-          linkedWoId: woId,
-          weight: row.weight,
-          width: flow.overview.width || "-",
-          micron: row.thickness || flow.overview.micron || "-",
-          grade: row.grade,
-          stage: row.stage || "Ready for Winding",
-          timestamp: row.timestampAdded || flow.overview.date || "-",
-        });
-      }
+  const loadData = async () => {
+    setIsLoading(true);
+    try {
+      const data = await stockService.list();
+      const mapped = data.map((stock: any) => ({
+        stockId: stock.stock_id || stock.id,
+        linkedWoId: stock.work_order_id || "-",
+        weight: stock.weight?.toString() || "-",
+        width: stock.width_m?.toString() || "-",
+        micron: stock.micron?.toString() || "-",
+        grade: stock.grade || "-",
+        stage: stock.stage || "Ready for Winding",
+        timestamp: stock.created_at ? new Date(stock.created_at).toLocaleDateString("en-GB") : "-",
+      }));
+      setActualRows(mapped);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoading(false);
     }
-    // Most recent first (basic reverse, properly they are chronological as pushed)
-    return rows.reverse();
   };
 
-  const actualRows = getStockRows();
+  useEffect(() => {
+    loadData();
+  }, []);
 
   const {
     processedData,
@@ -158,33 +163,41 @@ export default function SupervisorStockPage() {
   const overviewStats = [
     {
       title: "Total Product Lots",
-      value: mounted ? String(totalLots) : "-",
+      value: String(totalLots),
       subtext: `${gradeALots} grade A lots`,
       subtextClass: "text-[#1CB061] font-semibold",
       valClass: "text-[#171717]",
     },
     {
       title: "In Stock / Dispatch",
-      value: mounted ? String(inStockLots) : "-",
+      value: String(inStockLots),
       subtext: "Available for next stage",
       subtextClass: "text-[#5C5C5C] font-normal",
       valClass: "text-[#171717]",
     },
     {
       title: "Quality Check Pending",
-      value: mounted ? String(qualityCheckLots) : "-",
+      value: String(qualityCheckLots),
       subtext: qualityCheckLots > 0 ? "Needs final clearance" : "All cleared",
       subtextClass: qualityCheckLots > 0 ? "text-[#E19242] font-semibold" : "text-[#1CB061] font-semibold",
       valClass: "text-[#171717]",
     },
     {
       title: "Recent Additions",
-      value: mounted ? String(Math.min(totalLots, 5)) : "-",
+      value: String(Math.min(totalLots, 5)),
       subtext: "Last 48 hours",
       subtextClass: "text-[#5C5C5C] font-normal",
       valClass: "text-[#171717]",
     },
   ];
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-72px)] bg-white">
+        <Loader2 className="w-8 h-8 animate-spin text-[#00B6E2]" />
+      </div>
+    );
+  }
 
   return (
     <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-white flex flex-col w-full max-w-full">
@@ -297,7 +310,7 @@ export default function SupervisorStockPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#EAECF0]">
-                {mounted ? filteredData.length > 0 ? (filteredData.map((row, idx) => (
+                {filteredData.length > 0 ? (filteredData.map((row, idx) => (
                   <tr key={idx} className="hover:bg-gray-50/50 transition-colors group">
                     <td className="px-4 py-4 text-[14px] font-medium text-[#00B6E2] whitespace-nowrap">
                       <Link href={`/productionhead/stock/${row.stockId}`} className="hover:underline cursor-pointer">
@@ -327,12 +340,6 @@ export default function SupervisorStockPage() {
                   <tr>
                     <td colSpan={9} className="px-4 py-8 text-center text-[#5C5C5C] text-[14px]">
                       No stock available.
-                    </td>
-                  </tr>
-                ) : (
-                  <tr>
-                    <td colSpan={9} className="px-4 py-8 text-center text-[#5C5C5C] text-[14px]">
-                      Loading stock data...
                     </td>
                   </tr>
                 )}

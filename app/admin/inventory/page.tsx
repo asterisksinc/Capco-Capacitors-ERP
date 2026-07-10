@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { Plus, Search, X, Check, Package, Warehouse, Activity, Archive, QrCode, Download, Trash2, Mail } from "lucide-react";
-import { useStore } from "@/hooks/useStore";
+import { useState, useEffect, useMemo } from "react";
+import { Plus, Search, X, Check, Package, Warehouse, Activity, Archive, QrCode, Download, Trash2, Mail, Loader2 } from "lucide-react";
+import { inventoryService } from "@/src/services/inventoryService";
 import { MobileHeader } from "@/components/MobileHeader";
 import { QRCodeModal, type QRModalData } from "@/components/QRCodeModal";
 import { ScannerInput } from "@/components/ScannerInput";
@@ -13,12 +13,12 @@ const supplierOptions = ["VedaCap Industries", "ElectroForge Capacitors", "NextG
 
 function StatusBadge({ status }: { status: string }) {
   if (status === "In Inventory") {
-    return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#E8F8F0] text-[#1CB061] text-[12px] font-medium leading-tight">In Inventory</span>;
+    return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#E8F8F0] text-[#1CB061] text-[12px] font-medium leading-tight shrink-0">In Inventory</span>;
   }
   if (status === "Being Used") {
-    return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#FFF4ED] text-[#E19242] text-[12px] font-medium leading-tight">Being Used</span>;
+    return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#FFF4ED] text-[#E19242] text-[12px] font-medium leading-tight shrink-0">Being Used</span>;
   }
-  return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#F2F4F7] text-[#667085] text-[12px] font-medium leading-tight">Used Completely</span>;
+  return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#F2F4F7] text-[#667085] text-[12px] font-medium leading-tight shrink-0">Used Completely</span>;
 }
 
 function getDateString() {
@@ -43,7 +43,8 @@ const defaultForm = {
 };
 
 export default function AdminInventoryPage() {
-  const { store, mounted, addInventoryItem, deleteInventoryItem } = useStore();
+  const [loading, setLoading] = useState(true);
+  const [inventoryItems, setInventoryItems] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   
   // Modals state
@@ -56,6 +57,7 @@ export default function AdminInventoryPage() {
   const [addStep, setAddStep] = useState<1 | 2 | 3>(1);
   const [form, setForm] = useState({ ...defaultForm });
   const [showAddHint, setShowAddHint] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Export states
   const [exportFormat, setExportFormat] = useState<"xlsx" | "csv">("xlsx");
@@ -63,18 +65,47 @@ export default function AdminInventoryPage() {
   const [recipientEmail, setRecipientEmail] = useState("vmknexgentemp@gmail.com");
   const [isExporting, setIsExporting] = useState(false);
 
-  const inventoryItems = store.inventoryItems || [];
+  const fetchInventory = async () => {
+    try {
+      const data = await inventoryService.list();
+      const formatted = (data as any[]).map((item) => ({
+        id: item.id,
+        rawMaterialId: item.raw_material_code || "-",
+        rollId: item.roll_no || "-",
+        micron: item.micron != null ? String(item.micron) : "-",
+        width: item.width_m != null ? String(item.width_m) : "-",
+        weight: item.net_weight_kg != null ? `${item.net_weight_kg}kgs` : "-",
+        netWeight: item.net_weight_kg != null ? `${item.net_weight_kg}kgs` : "-",
+        grossWeight: item.gross_weight_kg != null ? `${item.gross_weight_kg}kgs` : "-",
+        temperature: item.temperature_c != null ? `${item.temperature_c}°C` : "-",
+        supplier: item.supplier || "-",
+        date: item.date_received ? new Date(item.date_received).toLocaleDateString("en-GB") : "-",
+        status: item.status || "In Inventory"
+      }));
+      setInventoryItems(formatted);
+    } catch (err) {
+      console.error("Failed to load inventory:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchInventory();
+  }, []);
 
   // Filtered rows
-  const filteredData = inventoryItems.filter((row) => {
-    if (!searchQuery) return true;
-    const q = searchQuery.toLowerCase();
-    return (
-      row.rawMaterialId.toLowerCase().includes(q) ||
-      row.rollId.toLowerCase().includes(q) ||
-      row.supplier.toLowerCase().includes(q)
-    );
-  });
+  const filteredData = useMemo(() => {
+    return inventoryItems.filter((row) => {
+      if (!searchQuery) return true;
+      const q = searchQuery.toLowerCase();
+      return (
+        row.rawMaterialId.toLowerCase().includes(q) ||
+        row.rollId.toLowerCase().includes(q) ||
+        row.supplier.toLowerCase().includes(q)
+      );
+    });
+  }, [inventoryItems, searchQuery]);
 
   const totalItems = inventoryItems.length;
   const inInventory = inventoryItems.filter((r) => r.status === "In Inventory").length;
@@ -95,8 +126,6 @@ export default function AdminInventoryPage() {
       form.rollId.trim() &&
       micronOptions.includes(form.micron) &&
       form.width.trim() &&
-      form.weight.trim() &&
-      Number(form.weight) > 0 &&
       form.netWeight.trim() &&
       Number(form.netWeight) > 0 &&
       form.grossWeight.trim() &&
@@ -117,25 +146,44 @@ export default function AdminInventoryPage() {
     setIsAddModalOpen(true);
   };
 
-  const handleAddSubmit = () => {
+  const handleAddSubmit = async () => {
     if (!isFormValid()) {
       setShowAddHint(true);
       return;
     }
-    addInventoryItem({
-      rawMaterialId: form.rawMaterialId.trim().toUpperCase(),
-      rollId: form.rollId.trim(),
-      micron: form.micron,
-      width: form.width,
-      weight: `${form.netWeight}kgs`,
-      netWeight: `${form.netWeight}kgs`,
-      grossWeight: `${form.grossWeight}kgs`,
-      temperature: form.temperature,
-      supplier: form.supplier,
-      date: getDateString(),
-      status: "In Inventory",
-    });
-    setAddStep(3);
+    setIsSubmitting(true);
+    try {
+      await inventoryService.create({
+        raw_material_code: form.rawMaterialId.trim().toUpperCase(),
+        roll_no: form.rollId.trim(),
+        micron: Number(form.micron),
+        width_m: Number(form.width),
+        net_weight_kg: Number(form.netWeight),
+        gross_weight_kg: Number(form.grossWeight),
+        temperature_c: parseFloat(form.temperature) || 25,
+        supplier: form.supplier,
+        status: "In Inventory",
+      });
+      await fetchInventory();
+      setAddStep(3);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to add inventory item");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const deleteInventoryItem = async (id: string, rawMaterialCode: string) => {
+    if (confirm(`Are you sure you want to delete ${rawMaterialCode}?`)) {
+      try {
+        await inventoryService.remove(id);
+        await fetchInventory();
+      } catch (err) {
+        console.error("Failed to delete", err);
+        alert("Failed to delete item");
+      }
+    }
   };
 
   // CSV/Excel Import mapper
@@ -148,34 +196,26 @@ export default function AdminInventoryPage() {
 
     const rawMaterialId = normalizedRow["rawmaterialid"] || normalizedRow["materialid"] || normalizedRow["id"];
     const rollId = normalizedRow["rollid"] || normalizedRow["rollno"] || "";
-    const micron = normalizedRow["micron"] || "4.5";
-    const width = normalizedRow["width"] || "1.0";
-    let weight = String(normalizedRow["weight"] || "");
-    let netWeight = String(normalizedRow["netweight"] || "");
-    let grossWeight = String(normalizedRow["grossweight"] || "");
-    const temperature = normalizedRow["temperature"] || "";
+    const micron = parseFloat(normalizedRow["micron"] || "4.5");
+    const width = parseFloat(normalizedRow["width"] || "1.0");
+    let weight = parseFloat(normalizedRow["weight"] || "0");
+    let netWeight = parseFloat(normalizedRow["netweight"] || weight);
+    let grossWeight = parseFloat(normalizedRow["grossweight"] || weight);
+    const temperature = parseFloat(normalizedRow["temperature"] || "25");
     const supplier = normalizedRow["supplier"] || supplierOptions[0];
-    const date = normalizedRow["date"] || normalizedRow["datereceived"] || getDateString();
     let status = normalizedRow["status"] || "In Inventory";
 
     if (!rawMaterialId || !rollId) return null;
 
-    const addKgsSuffix = (v: string) => v && !v.toLowerCase().endsWith("kgs") ? `${v}kgs` : v;
-    weight = addKgsSuffix(weight);
-    netWeight = addKgsSuffix(netWeight || weight);
-    grossWeight = addKgsSuffix(grossWeight || weight);
-
     return {
-      rawMaterialId: String(rawMaterialId).trim().toUpperCase(),
-      rollId: String(rollId).trim(),
-      micron: String(micron).trim(),
-      width: String(width).trim(),
-      weight: String(netWeight).trim(),
-      netWeight: String(netWeight).trim(),
-      grossWeight: String(grossWeight).trim(),
-      temperature: String(temperature).trim(),
+      raw_material_code: String(rawMaterialId).trim().toUpperCase(),
+      roll_no: String(rollId).trim(),
+      micron,
+      width_m: width,
+      net_weight_kg: netWeight,
+      gross_weight_kg: grossWeight,
+      temperature_c: temperature,
       supplier: String(supplier).trim(),
-      date: String(date).trim(),
       status: (status === "Being Used" || status === "Used Completely") ? status : "In Inventory"
     };
   };
@@ -185,7 +225,7 @@ export default function AdminInventoryPage() {
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       try {
         const data = event.target?.result;
         const workbook = XLSX.read(data, { type: "array" });
@@ -193,21 +233,24 @@ export default function AdminInventoryPage() {
         const worksheet = workbook.Sheets[sheetName];
         const json = XLSX.utils.sheet_to_json<any>(worksheet);
 
-        let importedCount = 0;
+        const validItems: any[] = [];
         let skippedCount = 0;
 
         json.forEach((row) => {
           const item = mapRowToInventoryItem(row);
           if (item) {
-            const added = addInventoryItem(item);
-            if (added) importedCount++;
-            else skippedCount++;
+            validItems.push(item);
           } else {
             skippedCount++;
           }
         });
 
-        alert(`Successfully imported ${importedCount} raw material items. ${skippedCount} duplicate or invalid rows skipped.`);
+        if (validItems.length > 0) {
+          await inventoryService.importRows(validItems as any[]);
+          await fetchInventory();
+        }
+
+        alert(`Successfully imported ${validItems.length} raw material items. ${skippedCount} invalid rows skipped.`);
         setIsUploadModalOpen(false);
       } catch (err) {
         console.error(err);
@@ -283,8 +326,6 @@ export default function AdminInventoryPage() {
     setIsExportModalOpen(false);
   };
 
-  if (!mounted) return null;
-
   return (
     <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-white flex flex-col overflow-x-hidden">
       <MobileHeader title="Inventory" />
@@ -343,7 +384,7 @@ export default function AdminInventoryPage() {
                   </div>
                   <div className="flex flex-col gap-0.5">
                     <p className="text-[11px] font-medium text-[#5C5C5C]">{stat.label}</p>
-                    <span className={`text-[16px] font-semibold ${stat.valClass}`}>{stat.value}</span>
+                    <span className={`text-[16px] font-semibold ${stat.valClass}`}>{loading ? "-" : stat.value}</span>
                   </div>
                 </div>
               </div>
@@ -363,7 +404,7 @@ export default function AdminInventoryPage() {
                 <div className="flex flex-col gap-[2px]">
                   <p className="text-[12px] font-medium text-[#5C5C5C] leading-tight">{stat.label}</p>
                   <div className="flex items-baseline gap-2">
-                    <span className={`text-[14px] font-semibold ${stat.valClass}`}>{stat.value}</span>
+                    <span className={`text-[14px] font-semibold ${stat.valClass}`}>{loading ? "-" : stat.value}</span>
                     <span className="text-[12px] text-[#5C5C5C] ml-1">{stat.subtext}</span>
                   </div>
                 </div>
@@ -404,34 +445,40 @@ export default function AdminInventoryPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#EBEBEB]">
-                {filteredData.length > 0 ? filteredData.map((row, idx) => (
-                  <tr key={idx} className="hover:bg-gray-50/50 transition-colors">
-                    <td className="px-4 py-4 text-[14px] text-[#00B6E2] font-semibold whitespace-nowrap">{row.rawMaterialId}</td>
-                    <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.rollId}</td>
-                    <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.micron}</td>
-                    <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.width}</td>
-                    <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.netWeight ?? row.weight}</td>
-                    <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.grossWeight ?? "-"}</td>
-                    <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.temperature ?? "-"}</td>
-                    <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.supplier}</td>
-                    <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.date}</td>
-                    <td className="px-4 py-4 whitespace-nowrap">
-                      <button onClick={() => setQrData({ id: row.rawMaterialId, type: "RM", details: { "Roll ID": row.rollId, "Micron": row.micron, "Width (m)": row.width, "Net Weight": row.netWeight ?? row.weight, "Gross Weight": row.grossWeight ?? "-", "Temperature": row.temperature ?? "-", "Supplier": row.supplier, "Status": row.status } })} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors p-1" title="View QR Code">
-                        <QrCode className="w-4 h-4" />
-                      </button>
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap"><StatusBadge status={row.status} /></td>
-                    <td className="px-4 py-4 whitespace-nowrap">
-                      <button onClick={() => {
-                        if (confirm(`Are you sure you want to delete ${row.rawMaterialId}?`)) {
-                          deleteInventoryItem(row.rawMaterialId);
-                        }
-                      }} className="text-[#5C5C5C] hover:text-[#FB3748] transition-colors p-1" title="Delete Material">
-                        <Trash2 className="w-4.5 h-4.5" />
-                      </button>
+                {loading ? (
+                  <tr>
+                    <td colSpan={12} className="px-4 py-20 text-center">
+                      <div className="flex justify-center items-center h-full">
+                        <Loader2 className="w-8 h-8 animate-spin text-[#00B6E2]" />
+                      </div>
                     </td>
                   </tr>
-                )) : (
+                ) : filteredData.length > 0 ? (
+                  filteredData.map((row, idx) => (
+                    <tr key={idx} className="hover:bg-gray-50/50 transition-colors">
+                      <td className="px-4 py-4 text-[14px] text-[#00B6E2] font-semibold whitespace-nowrap">{row.rawMaterialId}</td>
+                      <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.rollId}</td>
+                      <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.micron}</td>
+                      <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.width}</td>
+                      <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.netWeight ?? row.weight}</td>
+                      <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.grossWeight ?? "-"}</td>
+                      <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.temperature ?? "-"}</td>
+                      <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.supplier}</td>
+                      <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.date}</td>
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        <button onClick={() => setQrData({ id: row.rawMaterialId, type: "RM", details: { "Roll ID": row.rollId, "Micron": row.micron, "Width (m)": row.width, "Net Weight": row.netWeight ?? row.weight, "Gross Weight": row.grossWeight ?? "-", "Temperature": row.temperature ?? "-", "Supplier": row.supplier, "Status": row.status } })} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors p-1" title="View QR Code">
+                          <QrCode className="w-4 h-4" />
+                        </button>
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap"><StatusBadge status={row.status} /></td>
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        <button onClick={() => deleteInventoryItem(row.id, row.rawMaterialId)} className="text-[#5C5C5C] hover:text-[#FB3748] transition-colors p-1" title="Delete Material">
+                          <Trash2 className="w-4.5 h-4.5" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
                   <tr><td colSpan={12} className="px-4 py-12 text-center text-[#5C5C5C] text-[14px]">No inventory raw materials found.</td></tr>
                 )}
               </tbody>
@@ -446,8 +493,8 @@ export default function AdminInventoryPage() {
           <div className="bg-white rounded-[16px] w-full max-w-[660px] shadow-lg flex flex-col overflow-hidden">
             <div className="flex items-start justify-between px-6 py-5 border-b border-[#EBEBEB]">
               <div className="flex flex-col gap-1">
-                <h2 className="text-[24px] leading-tight font-semibold text-[#171717]">Add Inventory Item</h2>
-                <p className="text-[14px] text-[#5C5C5C]">Record a new raw material received from supplier</p>
+                <h2 className="text-[18px] md:text-[24px] leading-tight font-semibold text-[#171717]">Add Inventory Item</h2>
+                <p className="text-[11px] md:text-[14px] text-[#5C5C5C]">Record a new raw material received from supplier</p>
               </div>
               <button onClick={() => setIsAddModalOpen(false)} className="text-[#5C5C5C] hover:text-[#171717] transition-colors p-1"><X className="w-5 h-5" /></button>
             </div>
@@ -527,12 +574,12 @@ export default function AdminInventoryPage() {
               {addStep === 3 && (
                 <div className="px-6 py-8">
                   <div className="rounded-[16px] border border-[#D6EEF9] bg-[radial-gradient(circle_at_center,_#ECF8FD_0%,_#F8FCFF_45%,_#FFFFFF_100%)] p-8 md:p-10 flex flex-col items-center text-center gap-4">
-                    <div className="w-16 h-16 rounded-full bg-[#E6F7FF] border border-[#9DDBF6] flex items-center justify-center">
-                      <div className="w-10 h-10 rounded-full bg-[#00B6E2] flex items-center justify-center">
-                        <Check className="w-6 h-6 text-white" />
+                    <div className="w-13 md:w-16 h-13 md:h-16 rounded-full bg-[#E6F7FF] border border-[#9DDBF6] flex items-center justify-center">
+                      <div className="w-7 md:w-10 h-7 md:h-10 rounded-full bg-[#00B6E2] flex items-center justify-center">
+                        <Check className="w-4 md:w-6 h-4 md:h-6 text-white" />
                       </div>
                     </div>
-                    <p className="text-[24px] leading-tight text-[#171717] font-semibold">Inventory item added successfully.</p>
+                    <p className="text-[14px] lg:text-[27px] leading-tight text-[#171717] font-semibold">Inventory item added successfully.</p>
                   </div>
                 </div>
               )}
@@ -548,13 +595,16 @@ export default function AdminInventoryPage() {
               )}
               {addStep === 2 && (
                 <>
-                  <button onClick={() => setAddStep(1)} className="h-[40px] px-4 bg-white border border-[#EBEBEB] text-[#171717] text-[14px] font-medium rounded-[6px] hover:bg-gray-50">Back</button>
-                  <button onClick={handleAddSubmit}
-                    className="h-[40px] px-5 text-[14px] font-medium rounded-[6px] bg-[#00B6E2] text-white hover:bg-[#0092b5]">Add to Inventory</button>
+                  <button onClick={() => setAddStep(1)} disabled={isSubmitting} className="h-[40px] px-4 bg-white border border-[#EBEBEB] text-[#171717] text-[14px] font-medium rounded-[6px] hover:bg-gray-50">Back</button>
+                  <button onClick={handleAddSubmit} disabled={isSubmitting}
+                    className="h-[40px] px-5 text-[14px] font-medium rounded-[6px] bg-[#00B6E2] text-white hover:bg-[#0092b5] flex items-center gap-2">
+                    {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                    {isSubmitting ? "Adding..." : "Add to Inventory"}
+                  </button>
                 </>
               )}
               {addStep === 3 && (
-                <button onClick={() => setIsAddModalOpen(false)} className="h-[40px] px-5 bg-[#00B6E2] text-white text-[14px] font-medium rounded-[6px] hover:bg-[#0092b5]">Done</button>
+                <button onClick={() => setIsAddModalOpen(false)} className="h-[40px] px-5 bg-[#00B6E2] text-white text-[14px] font-medium rounded-[6px] hover:bg-[#0092b5] ml-auto">Done</button>
               )}
             </div>
           </div>

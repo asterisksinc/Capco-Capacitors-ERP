@@ -16,8 +16,10 @@ import { SortableHeader } from "@/components/table/SortableHeader";
 import { TableToolbar } from "@/components/table/TableToolbar";
 import { FilterPopover, FilterChips, type FilterConfig, type FilterState, type EnumFilter } from "@/components/table/FilterPopover";
 import { MobileHeader, MobileSpacer } from "@/components/MobileHeader";
-import { useStore } from "@/hooks/useStore";
-
+import { useEffect } from "react";
+import { workOrderService } from "@/src/services/workOrderService";
+import { productOrderService } from "@/src/services/productOrderService";
+import { Loader2 } from "lucide-react";
 // Reusing StatusBadge exactly as established in your design system
 function StatusBadge({ status }: { status: string }) {
   if (status === "Yet to Start") {
@@ -142,7 +144,29 @@ const stageOrder = [
 ];
 
 export default function PipelinePage() {
-  const { store, mounted, workOrders } = useStore();
+  const [workOrders, setWorkOrders] = useState<any[]>([]);
+  const [productOrders, setProductOrders] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const loadData = async () => {
+    setIsLoading(true);
+    try {
+      const [woData, poData] = await Promise.all([
+        workOrderService.list(),
+        productOrderService.list()
+      ]);
+      setWorkOrders(woData || []);
+      setProductOrders(poData || []);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [listType, setListType] = useState<ListType>("Work Orders");
   const [searchQuery, setSearchQuery] = useState("");
@@ -191,26 +215,33 @@ export default function PipelinePage() {
     poBatchMax: "",
   });
 
+  const formatCardDate = (dateString?: string) => {
+    if (!dateString) return "-";
+    const d = new Date(dateString);
+    if (isNaN(d.getTime())) return dateString;
+    return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+  };
+
   const pipelineWorkOrders: WorkOrderRow[] = workOrders.map((wo) => ({
-    id: wo.id,
-    micron: wo.micron,
-    width: wo.width,
-    quantity: wo.qty,
-    stage: wo.stage,
-    date: wo.date,
-    status: wo.status,
+    id: wo.work_order_no || wo.id,
+    micron: wo.micron?.toString() || "-",
+    width: wo.width_m?.toString() || "-",
+    quantity: wo.quantity?.toString() || "-",
+    stage: wo.stage || "Raw Material",
+    date: formatCardDate(wo.created_at || wo.date),
+    status: wo.status || "Yet to Start",
     action: "View",
   }));
 
-  const pipelineProductOrders: ProductOrderRow[] = store.productOrders.map((po) => ({
-    id: po.id,
-    code: po.code,
-    type: po.type,
-    grade: po.grade,
-    batchSize: po.batchSize,
-    status: po.status,
-    stage: po.stage,
-    timestamp: po.timestamp,
+  const pipelineProductOrders: ProductOrderRow[] = productOrders.map((po) => ({
+    id: po.product_order_no || po.id,
+    code: po.product_code || "-",
+    type: po.capacitor_type || "-",
+    grade: po.grade || "-",
+    batchSize: po.batch_size?.toString() || "-",
+    status: po.status || "Yet to Start",
+    stage: po.stage || "Raw Material",
+    timestamp: formatCardDate(po.created_at || po.timestamp),
     action: "View",
   }));
 
@@ -296,7 +327,13 @@ export default function PipelinePage() {
     return groups;
   }, [pipelineWorkOrders, pipelineProductOrders]);
 
-  if (!mounted) return null;
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-72px)] bg-white">
+        <Loader2 className="w-8 h-8 animate-spin text-[#00B6E2]" />
+      </div>
+    );
+  }
   return (
     <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-white flex flex-col relative w-full max-w-full">
       <MobileHeader title="Pipeline" />
@@ -317,10 +354,10 @@ export default function PipelinePage() {
         {/* Stats Section - Mobile 2x2 grid */}
         <section className="grid grid-cols-2 gap-0 md:hidden bg-white border border-[#EBEBEB]  rounded-[12px]">
           {[
-            { title: "Total Orders", value: String(workOrders.length + store.productOrders.length), valClass: "text-[#171717]", subtextClass: "text-[#5C5C5C]" },
-            { title: "In Progress", value: String(workOrders.filter((w) => w.status === "In-progress").length + store.productOrders.filter((p) => p.status === "In-progress").length), valClass: "text-[#171717]", subtextClass: "text-[#5C5C5C]" },
-            { title: "Completed", value: String(workOrders.filter((w) => w.status === "Completed").length + store.productOrders.filter((p) => p.status === "Completed").length), valClass: "text-[#171717]", subtextClass: "text-[#5C5C5C]" },
-            { title: "Yet to Start", value: String(workOrders.filter((w) => w.status === "Yet to Start").length + store.productOrders.filter((p) => p.status === "Yet to Start").length), valClass: "text-[#171717]", subtextClass: "text-[#5C5C5C]" },
+            { title: "Total Orders", value: String(workOrders.length + productOrders.length), valClass: "text-[#171717]", subtextClass: "text-[#5C5C5C]" },
+            { title: "In Progress", value: String(workOrders.filter((w) => w.status === "In-progress").length + productOrders.filter((p) => p.status === "In-progress").length), valClass: "text-[#171717]", subtextClass: "text-[#5C5C5C]" },
+            { title: "Completed", value: String(workOrders.filter((w) => w.status === "Completed").length + productOrders.filter((p) => p.status === "Completed").length), valClass: "text-[#171717]", subtextClass: "text-[#5C5C5C]" },
+            { title: "Yet to Start", value: String(workOrders.filter((w) => (w.status || "Yet to Start") === "Yet to Start").length + productOrders.filter((p) => (p.status || "Yet to Start") === "Yet to Start").length), valClass: "text-[#171717]", subtextClass: "text-[#5C5C5C]" },
           ].map((stat, i) => (
             <div key={i} className={`p-3 ${i % 2 === 0 ? 'border-r border-b border-[#EBEBEB]' : 'border-b border-[#EBEBEB]'}`}>
               <div className="flex flex-col gap-1">
@@ -337,9 +374,9 @@ export default function PipelinePage() {
             <div className="flex flex-col gap-[6px]">
               <p className="text-[12px] font-medium text-[#5C5C5C] leading-tight">Total Orders</p>
               <div className="flex items-baseline gap-3">
-                <span className="text-[14px] font-semibold leading-tight text-[#171717]">{workOrders.length + store.productOrders.length}</span>
+                <span className="text-[14px] font-semibold leading-tight text-[#171717]">{workOrders.length + productOrders.length}</span>
                 <span className="text-[12px] leading-tight text-[#5C5C5C]">
-                  {workOrders.length} WO &bull; {store.productOrders.length} PO
+                  {workOrders.length} WO &bull; {productOrders.length} PO
                 </span>
               </div>
             </div>
@@ -350,7 +387,7 @@ export default function PipelinePage() {
             <div className="flex flex-col gap-[6px]">
               <p className="text-[12px] font-medium text-[#5C5C5C] leading-tight">In Progress</p>
               <div className="flex items-baseline gap-3">
-                <span className="text-[14px] font-semibold leading-tight text-[#171717]">{workOrders.filter((w) => w.status === "In-progress").length + store.productOrders.filter((p) => p.status === "In-progress").length}</span>
+                <span className="text-[14px] font-semibold leading-tight text-[#171717]">{workOrders.filter((w) => w.status === "In-progress").length + productOrders.filter((p) => p.status === "In-progress").length}</span>
                 <span className="text-[12px] leading-tight text-[#E19242]">
                   Active orders
                 </span>
@@ -363,7 +400,7 @@ export default function PipelinePage() {
             <div className="flex flex-col gap-[6px]">
               <p className="text-[12px] font-medium text-[#5C5C5C] leading-tight">Completed</p>
               <div className="flex items-baseline gap-3">
-                <span className="text-[14px] font-semibold leading-tight text-[#171717]">{workOrders.filter((w) => w.status === "Completed").length + store.productOrders.filter((p) => p.status === "Completed").length}</span>
+                <span className="text-[14px] font-semibold leading-tight text-[#171717]">{workOrders.filter((w) => w.status === "Completed").length + productOrders.filter((p) => p.status === "Completed").length}</span>
                 <span className="text-[12px] leading-tight text-[#1CB061]">
                   Done
                 </span>
