@@ -3,7 +3,9 @@
 import { WO_STATUS_OPTIONS, WO_STAGE_OPTIONS } from "@/lib/constants";
 import { StatusBadge } from "@/components/StatusBadge";
 import { use, useState, useEffect, useMemo } from "react";
-import { ChevronRight, Layers, Ruler, Package, QrCode, Loader2, FileText } from "lucide-react";
+import { ChevronRight, Layers, Ruler, Package, QrCode, Loader2, FileText, Image as ImageIcon } from "lucide-react";
+import { DocsUploadedModal } from "@/components/DocsUploadedModal";
+import { RowImagesModal } from "@/components/RowImagesModal";
 import { workOrderService } from "@/src/services/workOrderService";
 import { MobileHeader } from "@/components/MobileHeader";
 import type { TableConfig } from "@/hooks/useTableControls";
@@ -77,6 +79,7 @@ export default function AdminWorkOrderDetailPage({ params }: DetailPageProps) {
   const [activeTab, setActiveTab] = useState<TabType>("Raw Material");
   const [qrData, setQrData] = useState<QRModalData | null>(null);
   const [isDocModalOpen, setIsDocModalOpen] = useState(false);
+  const [rowImagesData, setRowImagesData] = useState<any>(null);
 
   useEffect(() => {
     async function fetchWO() {
@@ -132,6 +135,8 @@ export default function AdminWorkOrderDetailPage({ params }: DetailPageProps) {
         : "-",
       nextStage: m.next_stage || "Slitting",
       status: m.status || "-",
+      factory_wastage_image_url: m.factory_wastage_image_url,
+      photo_url: m.photo_url,
     }));
   }, [woData]);
 
@@ -391,9 +396,16 @@ export default function AdminWorkOrderDetailPage({ params }: DetailPageProps) {
                             : { "Product No": (row as any).productNo ?? "", "Coil ID": (row as any).rmId ?? "", "Weight": (row as any).weight ?? "", "Grade": (row as any).grade ?? "", "Status": (row as any).status ?? "" };
                         return (
                           <td key={key} className="px-4 py-3 whitespace-nowrap">
-                            <button onClick={() => setQrData({ id: rowId, type: qrType, details: qrDetails })} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors p-1" title="Show QR Code">
-                              <QrCode className="w-4 h-4" />
-                            </button>
+                            <div className="flex items-center gap-2">
+                              <button onClick={() => setQrData({ id: rowId, type: qrType, details: qrDetails })} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors p-1" title="Show QR Code">
+                                <QrCode className="w-4 h-4" />
+                              </button>
+                              {isMC && (
+                                <button onClick={() => setRowImagesData(row)} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors p-1" title="View Coil Images">
+                                  <ImageIcon className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
                           </td>
                         );
                       }
@@ -427,53 +439,18 @@ export default function AdminWorkOrderDetailPage({ params }: DetailPageProps) {
 
       {qrData && <QRCodeModal id={qrData.id} type={qrData.type} details={qrData.details} onClose={() => setQrData(null)} />}
 
-      {isDocModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#171717]/40 backdrop-blur-sm px-4">
-          <div className="bg-white rounded-[16px] w-full max-w-[600px] shadow-lg flex flex-col overflow-hidden">
-            <div className="flex items-start justify-between px-6 py-5 border-b border-[#EBEBEB]">
-              <div className="flex flex-col gap-1">
-                <h2 className="text-[18px] md:text-[22px] leading-tight font-semibold text-[#171717]">Uploaded Document</h2>
-                <p className="text-[11px] md:text-[14px] text-[#5C5C5C]">View the document uploaded for {activeTab} stage.</p>
-              </div>
-            </div>
-            <div className="p-6 flex flex-col items-center justify-center bg-[#FAFCFF] min-h-[300px]">
-              {activeTab === "Raw Material" ? (
-                <div className="flex flex-col items-center gap-3">
-                  <img src="https://via.placeholder.com/400x300.png?text=Raw+Material+Doc" alt="Raw Material Document" className="rounded-[8px] border border-[#EBEBEB] shadow-sm max-w-full" />
-                  <p className="text-[13px] text-[#5C5C5C]">IMG_RAW_MAT_1.jpeg</p>
-                </div>
-              ) : activeTab === "Metallisation" ? (
-                <div className="flex flex-col items-center gap-3">
-                  <img src="https://via.placeholder.com/400x300.png?text=Metallisation+Doc" alt="Metallisation Document" className="rounded-[8px] border border-[#EBEBEB] shadow-sm max-w-full" />
-                  <p className="text-[13px] text-[#5C5C5C]">IMG_MET_1.jpeg</p>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center gap-4 text-center">
-                  <div className="w-16 h-16 rounded-full bg-[#F5F7FA] border border-[#EBEBEB] flex items-center justify-center">
-                    <span className="text-[#A1A1AA] text-[13px]">No image</span>
-                  </div>
-                  <p className="text-[14px] font-medium text-[#171717]">No document uploaded for this stage</p>
-                </div>
-              )}
-            </div>
-            <div className="flex items-center justify-end gap-3 px-6 py-5 bg-[#FAFAFA] border-t border-[#EBEBEB]">
-              <button
-                onClick={() => setIsDocModalOpen(false)}
-                className="px-4 py-2 text-[14px] font-medium text-[#171717] bg-white border border-[#DDE1E8] rounded-[8px] hover:bg-[#F5F7FA] transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => setIsDocModalOpen(false)}
-                disabled={activeTab === "Slitting"}
-                className="px-4 py-2 text-[14px] font-medium text-white bg-[#00B6E2] rounded-[8px] hover:bg-[#009BCC] transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Close & Download
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <DocsUploadedModal 
+        isOpen={isDocModalOpen} 
+        onClose={() => setIsDocModalOpen(false)} 
+        activeTab={activeTab} 
+        woData={woData} 
+      />
+
+      <RowImagesModal
+        isOpen={!!rowImagesData}
+        onClose={() => setRowImagesData(null)}
+        rowData={rowImagesData}
+      />
     </div>
   );
 }

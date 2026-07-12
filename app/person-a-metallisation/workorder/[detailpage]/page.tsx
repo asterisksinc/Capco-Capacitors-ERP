@@ -5,7 +5,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { use, useState, useMemo } from "react";
 import Link from "next/link";
 import { Plus, X, ChevronRight, Check, QrCode } from "lucide-react";
-import { FileText, Ruler, Maximize2, Package } from "lucide-react";
+import { FileText, Ruler, Maximize2, Package, Loader2 } from "lucide-react";
 import { useStore } from "@/hooks/useStore";
 import { ScannerInput } from "@/components/ScannerInput";
 import { computeWorkflowProgress } from "@/lib/data";
@@ -20,6 +20,7 @@ import { exportToExcel } from "@/lib/exportExcel";
 import { workOrderService } from "@/src/services/workOrderService";
 import { productionStageService } from "@/src/services/productionStageService";
 import { authService } from "@/src/services/authService";
+import { getAccessToken, supabaseConfig } from "@/src/services/supabaseClient";
 import { useEffect } from "react";
 
 type DetailPageProps = {
@@ -29,15 +30,16 @@ type DetailPageProps = {
 type TabType = "Raw Material" | "Metallisation";
 type ModalStep = 1 | 2 | 3;
 
+type CapturedImage = { url: string; name: string; id: string; file?: File };
+
 type MetallisationForm = {
   coilNo: string;
   rmId: string;
-  machineNo: string;
-  weight: string;
-  opticalDensity: string;
-  resistance: string;
-  nextStage: string;
-  isVerified?: boolean;
+  factoryWastageWeight: string;
+  factoryWastageImage: CapturedImage | null;
+  weightAfterMetallisation: string;
+  photoOfWeight: CapturedImage | null;
+  qcImage: CapturedImage | null;
 };
 
 const rawMaterialConfig: TableConfig<any> = {
@@ -79,11 +81,11 @@ const metallisationConfig: TableConfig<any> = {
 const defaultMetallisationForm: MetallisationForm = {
   coilNo: "",
   rmId: "",
-  machineNo: "M-01",
-  weight: "",
-  opticalDensity: "2.4",
-  resistance: "1.5",
-  nextStage: "Slitting",
+  factoryWastageWeight: "",
+  factoryWastageImage: null,
+  weightAfterMetallisation: "",
+  photoOfWeight: null,
+  qcImage: null,
 };
 
 
@@ -107,12 +109,47 @@ function hasPositiveNumber(value: string) {
   return Number.isFinite(parsed) && parsed > 0;
 }
 
+// EDIT: parses a weight string like "1000kgs" or "1000" into a plain number, defaulting to 0
+function parseWeightValue(value?: string) {
+  if (!value) return 0;
+  const parsed = Number.parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+// EDIT: Weight After Metallisation = RM Weight - Factory Wastage Weight, floored at 0
+function computeWeightAfterMetallisation(rmWeightRaw: string | undefined, factoryWastageWeight: string) {
+  const rmWeight = parseWeightValue(rmWeightRaw);
+  const wastage = parseWeightValue(factoryWastageWeight);
+  const result = rmWeight - wastage;
+  return result > 0 ? String(result) : "0";
+}
+
 function createMetallisationRow(defaultRmId: string): MetallisationForm {
   return {
     ...defaultMetallisationForm,
     coilNo: generateId("MC"),
     rmId: defaultRmId,
   };
+}
+
+async function uploadImage(workOrderNo: string, metallisationNo: string, file: File): Promise<string> {
+  const token = getAccessToken();
+  const path = `${workOrderNo}/${metallisationNo}/${file.name}`;
+  const res = await fetch(`${supabaseConfig.url}/storage/v1/object/metallisation/${path}`, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${token ?? supabaseConfig.anonKey}`,
+      "apikey": supabaseConfig.anonKey,
+      "Content-Type": file.type,
+      "x-upsert": "true"
+    },
+    body: file
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ message: res.statusText }));
+    throw new Error(err.message || "Failed to upload image");
+  }
+  return `${supabaseConfig.url}/storage/v1/object/public/metallisation/${path}`;
 }
 
 export default function OperatorMetallisationDetailPage({ params }: DetailPageProps) {
@@ -204,9 +241,8 @@ export default function OperatorMetallisationDetailPage({ params }: DetailPagePr
   }, [workOrderFlowData]);
 
   const [metallisationRowsInput, setMetallisationRowsInput] = useState<MetallisationForm[]>([createMetallisationRow("")]);
-  type CapturedImage = { url: string; name: string; id: string };
-  const [capturedImage, setCapturedImage] = useState<CapturedImage | null>(null);
   const [qrData, setQrData] = useState<QRModalData | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const currentConfig = useMemo(() => {
     switch (activeTab) {
@@ -243,8 +279,11 @@ export default function OperatorMetallisationDetailPage({ params }: DetailPagePr
   const resetModalState = () => {
     setModalStep(1);
     setShowValidationHint(false);
-    setCapturedImage(null);
-    setMetallisationRowsInput([createMetallisationRow(availableRollIds[0] ?? "")]);
+    // EDIT: pre-fill Weight After Metallisation for the default row so it shows RM Weight - 0 right away
+    const defaultRmId = availableRollIds[0] ?? "";
+    const defaultRow = createMetallisationRow(defaultRmId);
+    defaultRow.weightAfterMetallisation = computeWeightAfterMetallisation(rmLookup.get(defaultRmId)?.weight, defaultRow.factoryWastageWeight);
+    setMetallisationRowsInput([defaultRow]);
   };
 
   const openModal = () => {
@@ -253,6 +292,7 @@ export default function OperatorMetallisationDetailPage({ params }: DetailPagePr
   };
 
   const closeModal = () => {
+    if (isSubmitting) return;
     setIsModalOpen(false);
     resetModalState();
   };
@@ -261,22 +301,26 @@ export default function OperatorMetallisationDetailPage({ params }: DetailPagePr
     return Boolean(
       row.coilNo.trim() &&
       row.rmId.trim() &&
-      row.machineNo.trim() &&
-      hasPositiveNumber(row.weight) &&
-      row.opticalDensity.trim() &&
-      row.resistance.trim() &&
-      row.nextStage.trim(),
+      hasPositiveNumber(row.factoryWastageWeight) &&
+      row.factoryWastageImage &&
+      hasPositiveNumber(row.weightAfterMetallisation) &&
+      row.photoOfWeight
     );
   };
 
   const isCurrentStepOneValid = metallisationRowsInput.every(isMetallisationRowValid);
+  const isCurrentStepTwoValid = metallisationRowsInput.every(row => row.qcImage);
 
   const addCurrentItemToDraft = () => {
     if (!isCurrentStepOneValid) {
       setShowValidationHint(true);
       return;
     }
-    setMetallisationRowsInput((prev) => [...prev, createMetallisationRow(availableRollIds[0] ?? "")]);
+    // EDIT: same pre-fill behavior for additional rows added via "Add More Items"
+    const defaultRmId = availableRollIds[0] ?? "";
+    const newRow = createMetallisationRow(defaultRmId);
+    newRow.weightAfterMetallisation = computeWeightAfterMetallisation(rmLookup.get(defaultRmId)?.weight, newRow.factoryWastageWeight);
+    setMetallisationRowsInput((prev) => [...prev, newRow]);
   };
 
   const updateMetallisationRow = (index: number, patch: Partial<MetallisationForm>) => {
@@ -289,27 +333,42 @@ export default function OperatorMetallisationDetailPage({ params }: DetailPagePr
   };
 
   const submitCurrentStage = async () => {
-    if (!isCurrentStepOneValid) {
-      setShowValidationHint(true);
+    if (!isCurrentStepTwoValid) {
+      alert("Please upload the required QC images for all items.");
       return;
     }
 
+    setIsSubmitting(true);
     try {
       const user = await authService.getCurrentProfile();
       const payload = metallisationRowsInput;
 
       for (const item of payload) {
-        // Find raw_material_id from the rmLookup
         const rmData = rmLookup.get(item.rmId);
+        
+        // Upload images
+        const [factoryWastageUrl, photoUrl, qcUrl] = await Promise.all([
+          uploadImage(woData.work_order_no, item.coilNo, item.factoryWastageImage!.file!),
+          uploadImage(woData.work_order_no, item.coilNo, item.photoOfWeight!.file!),
+          uploadImage(woData.work_order_no, item.coilNo, item.qcImage!.file!)
+        ]);
 
         await productionStageService.addMetallisation({
           metallisation_no: item.coilNo,
           work_order_id: woData.id,
           raw_material_id: rmData?.raw_material_id || "",
-          machine_no: item.machineNo,
-          weight_kg: parseFloat(item.weight) || 0,
-          optical_density: parseFloat(item.opticalDensity) || 0,
-          resistance_ohms: parseFloat(item.resistance) || 0,
+          weight_kg: parseFloat(item.weightAfterMetallisation) || 0,
+          factory_wastage_kg: parseFloat(item.factoryWastageWeight) || 0,
+          factory_wastage_image_url: factoryWastageUrl,
+          photo_url: photoUrl,
+          qc_details: {
+            qc: "pass",
+            remarks: "",
+            images: {
+              weight_after_metallisation: photoUrl,
+              qc: qcUrl
+            }
+          },
           operator_id: user?.id,
         });
       }
@@ -320,10 +379,12 @@ export default function OperatorMetallisationDetailPage({ params }: DetailPagePr
       });
 
       setModalStep(3);
-      fetchWorkOrder(); // Refresh data from backend
-    } catch (err) {
+      fetchWorkOrder();
+    } catch (err: any) {
       console.error(err);
-      alert("Failed to save data");
+      alert(`Failed to save data: ${err.message}`);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -384,84 +445,105 @@ export default function OperatorMetallisationDetailPage({ params }: DetailPagePr
           <div key={`met-step1-${idx}`} className="rounded-[12px] border border-[#DDE1E8] p-4 bg-white">
             <div className="flex items-center justify-between mb-3">
               <p className="text-[13px] font-semibold text-[#344054]">Item {idx + 1}</p>
-              {metallisationRowsInput.length > 1 && (
-                <button type="button" onClick={() => removeCurrentRow(idx)} className="text-[12px] text-[#D92D20] hover:underline">Remove</button>
-              )}
+              {/* EDIT: shows the selected Raw Material's weight at the top right of the item card */}
+              <div className="flex items-center gap-3">
+                {row.rmId && rmLookup.get(row.rmId) && (
+                  <span className="text-[12px] font-medium text-[#00B6E2] bg-[#F0FDFF] border border-[#B7EFFB] rounded-full px-3 py-1 whitespace-nowrap">
+                    RM Weight: {rmLookup.get(row.rmId)?.weight}
+                  </span>
+                )}
+                {metallisationRowsInput.length > 1 && (
+                  <button type="button" onClick={() => removeCurrentRow(idx)} className="text-[12px] text-[#D92D20] hover:underline">Remove</button>
+                )}
+              </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
               <div className="flex flex-col gap-2">
                 <label className="text-[13px] font-medium text-[#171717]">Coil No.</label>
-                <ScannerInput
-                  value={row.coilNo}
-                  onChange={(e) => updateMetallisationRow(idx, { coilNo: e.target.value })}
-                  onScanData={(data) => updateMetallisationRow(idx, { coilNo: data })}
-                  placeholder="Scan or enter coil no"
-                  className="h-[42px] rounded-[8px] border border-[#DDE1E8] pl-[36px] px-3 text-[14px]"
-                />
+                <input value={row.coilNo} readOnly className="h-[42px] rounded-[8px] border border-[#DDE1E8] bg-gray-50 px-3 text-[14px] text-gray-500 cursor-not-allowed" />
               </div>
               <div className="flex flex-col gap-2">
                 <label className="text-[13px] font-medium text-[#171717]">RM ID</label>
-                <div className="relative flex flex-col gap-1">
-                  <ScannerInput
-                    isSelect
-                    scanDisabled={!row.rmId}
-                    value={row.rmId}
-                    onChange={(e) => {
-                      const id = e.target.value;
-                      const rm = rmLookup.get(id);
-                      updateMetallisationRow(idx, {
-                        rmId: id,
-                        weight: rm?.weight ?? row.weight,
-                        isVerified: true, // Marked as verified for prototyping purposes;
-                      });
-                    }}
-                    onScanData={(data) => {
-                      const cleanData = data.trim();
-                      if (cleanData === row.rmId) {
-                        updateMetallisationRow(idx, { isVerified: true });
-                      } else {
-                        alert(`Scanned barcode (${cleanData}) does not match selected RM ID (${row.rmId})`);
-                      }
-                    }}
-                    className={`h-[42px] rounded-[8px] border pl-3 text-[14px] ${row.isVerified ? "border-[#12B76A] bg-[#ECFDF3]" : "border-[#DDE1E8]"}`}
-                  >
-                    <option value="" disabled>Select RM ID...</option>
-                    {availableRollIds.map((rollId: string) => (
-                      <option key={rollId} value={rollId}>{rollId}</option>
-                    ))}
-                  </ScannerInput>
-                  {row.rmId && !row.isVerified && (
-                    <span className="text-[11px] text-[#F79009]">Scan barcode to verify</span>
-                  )}
-                  {row.isVerified && (
-                    <span className="text-[11px] text-[#12B76A] font-medium flex items-center gap-1">
-                      <Check className="w-3 h-3" /> Verified
-                    </span>
-                  )}
+                <ScannerInput
+                  isSelect
+                  value={row.rmId}
+                  onChange={(e) => {
+                    // EDIT: switching RM ID changes the RM weight, so recompute the derived field too
+                    const newRmId = e.target.value;
+                    const recalculated = computeWeightAfterMetallisation(rmLookup.get(newRmId)?.weight, row.factoryWastageWeight);
+                    updateMetallisationRow(idx, { rmId: newRmId, weightAfterMetallisation: recalculated });
+                  }}
+                  onScanData={(data) => {
+                    const cleanData = data.trim();
+                    if (availableRollIds.includes(cleanData)) {
+                      // EDIT: same recalculation when RM ID is set via barcode scan
+                      const recalculated = computeWeightAfterMetallisation(rmLookup.get(cleanData)?.weight, row.factoryWastageWeight);
+                      updateMetallisationRow(idx, { rmId: cleanData, weightAfterMetallisation: recalculated });
+                    } else {
+                      alert(`Scanned barcode (${cleanData}) is not available in RM pool.`);
+                    }
+                  }}
+                  className="h-[42px] rounded-[8px] border border-[#DDE1E8] pl-3 text-[14px]"
+                >
+                  <option value="" disabled>Select RM ID...</option>
+                  {availableRollIds.map((rollId: string) => (
+                    <option key={rollId} value={rollId}>{rollId}</option>
+                  ))}
+                </ScannerInput>
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="text-[13px] font-medium text-[#171717]">Factory Wastage: Weight (Kgs)</label>
+                <input
+                  type="number"
+                  value={row.factoryWastageWeight}
+                  onChange={(e) => {
+                    // EDIT: typing a wastage weight recalculates Weight After Metallisation live
+                    const newWastage = e.target.value;
+                    const recalculated = computeWeightAfterMetallisation(rmLookup.get(row.rmId)?.weight, newWastage);
+                    updateMetallisationRow(idx, { factoryWastageWeight: newWastage, weightAfterMetallisation: recalculated });
+                  }}
+                  placeholder="Enter weight in kg"
+                  className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]"
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="text-[13px] font-medium text-[#171717]">Upload Factory Wastage Image</label>
+                <div className="flex items-center gap-3">
+                  <input type="file" accept="image/*" capture="environment" id={`factoryImg-${idx}`} className="hidden" onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const url = URL.createObjectURL(file);
+                      updateMetallisationRow(idx, { factoryWastageImage: { url, name: file.name, id: Math.random().toString(36).substring(2, 8).toUpperCase(), file } });
+                    }
+                  }} />
+                  <label htmlFor={`factoryImg-${idx}`} className="flex items-center justify-center bg-[#F5F7FA] border border-[#DDE1E8] text-[#5C5C5C] text-[13px] font-medium rounded-[6px] h-[36px] px-4 cursor-pointer hover:bg-[#EBEBEB]">{row.factoryWastageImage ? "Change Image" : "Take Photo"}</label>
+                  {row.factoryWastageImage && <img src={row.factoryWastageImage.url} alt="Wastage" className="w-10 h-10 rounded-md object-cover border border-[#EBEBEB]" />}
                 </div>
               </div>
               <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-medium text-[#171717]">Machine No.</label>
-                <input value={row.machineNo} onChange={(e) => updateMetallisationRow(idx, { machineNo: e.target.value })} placeholder="Machine number" className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]" />
+                <label className="text-[13px] font-medium text-[#171717]">Weight after Metallisation (Kgs)</label>
+                {/* EDIT: this field is now auto-calculated (RM Weight - Factory Wastage Weight), so it's read-only */}
+                <input
+                  type="number"
+                  value={row.weightAfterMetallisation}
+                  readOnly
+                  placeholder="Auto-calculated"
+                  className="h-[42px] rounded-[8px] border border-[#DDE1E8] bg-gray-50 px-3 text-[14px] text-gray-500 cursor-not-allowed"
+                />
               </div>
               <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-medium text-[#171717]">Weight</label>
-                <input value={row.weight} onChange={(e) => updateMetallisationRow(idx, { weight: e.target.value })} placeholder="Enter weight" className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]" />
-              </div>
-              <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-medium text-[#171717]">Optical Density</label>
-                <input value={row.opticalDensity} onChange={(e) => updateMetallisationRow(idx, { opticalDensity: e.target.value })} placeholder="Enter optical density" className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]" />
-              </div>
-              <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-medium text-[#171717]">Resistance</label>
-                <input value={row.resistance} onChange={(e) => updateMetallisationRow(idx, { resistance: e.target.value })} placeholder="Enter resistance" className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]" />
-              </div>
-              <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-medium text-[#171717]">Next Stage</label>
-                <select value={row.nextStage} onChange={(e) => updateMetallisationRow(idx, { nextStage: e.target.value })} className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]">
-                  <option value="Slitting">Slitting</option>
-                  <option value="Quality Check">Quality Check</option>
-                </select>
+                <label className="text-[13px] font-medium text-[#171717]">Upload Photo of Weight</label>
+                <div className="flex items-center gap-3">
+                  <input type="file" accept="image/*" capture="environment" id={`weightImg-${idx}`} className="hidden" onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const url = URL.createObjectURL(file);
+                      updateMetallisationRow(idx, { photoOfWeight: { url, name: file.name, id: Math.random().toString(36).substring(2, 8).toUpperCase(), file } });
+                    }
+                  }} />
+                  <label htmlFor={`weightImg-${idx}`} className="flex items-center justify-center bg-[#F5F7FA] border border-[#DDE1E8] text-[#5C5C5C] text-[13px] font-medium rounded-[6px] h-[36px] px-4 cursor-pointer hover:bg-[#EBEBEB]">{row.photoOfWeight ? "Change Image" : "Take Photo"}</label>
+                  {row.photoOfWeight && <img src={row.photoOfWeight.url} alt="Weight" className="w-10 h-10 rounded-md object-cover border border-[#EBEBEB]" />}
+                </div>
               </div>
             </div>
           </div>
@@ -473,14 +555,50 @@ export default function OperatorMetallisationDetailPage({ params }: DetailPagePr
   const renderReviewCards = () => {
     const rows = metallisationRowsInput;
     return rows.map((item, idx) => (
-      <div key={`met-${idx}`} className="rounded-[12px] border border-[#78CFFA] bg-[#F4FBFF] p-4 grid grid-cols-1 md:grid-cols-2 gap-y-2 gap-x-6 text-[14px] text-[#49526A]">
-        <p>Coil No: {item.coilNo || "Auto"}</p>
-        <p>RM ID: {item.rmId || "-"}</p>
-        <p>Machine: {item.machineNo}</p>
-        <p>Weight: {item.weight || "0"} kgs</p>
-        <p>Optical Density: {item.opticalDensity}</p>
-        <p>Resistance: {item.resistance}</p>
-        <p>Next Stage: {item.nextStage}</p>
+      <div key={`met-${idx}`} className="rounded-[12px] border border-[#78CFFA] bg-[#F4FBFF] p-4 flex flex-col gap-4 text-[14px] text-[#49526A]">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-y-2 gap-x-6">
+          <p>Coil No: {item.coilNo || "Auto"}</p>
+          <p>RM ID: {item.rmId || "-"}</p>
+          <p>Factory Wastage: {item.factoryWastageWeight || "0"} kgs</p>
+          <p>Weight After Metallisation: {item.weightAfterMetallisation || "0"} kgs</p>
+        </div>
+        <div className="flex flex-col gap-2 border-t border-[#D6EEF9] pt-3">
+          <p className="font-semibold text-[13px] text-[#171717]">Images</p>
+          <div className="flex gap-4">
+            {item.factoryWastageImage && (
+              <div className="flex items-center gap-2">
+                <img src={item.factoryWastageImage.url} alt="Wastage" className="w-12 h-12 rounded border border-[#EBEBEB] object-cover" />
+                <div className="flex flex-col">
+                  <span className="text-[12px] font-medium text-[#171717]">Factory Wastage</span>
+                  <span className="text-[11px] text-[#6B7280]">ID: {item.factoryWastageImage.id}</span>
+                </div>
+              </div>
+            )}
+            {item.photoOfWeight && (
+              <div className="flex items-center gap-2">
+                <img src={item.photoOfWeight.url} alt="Weight" className="w-12 h-12 rounded border border-[#EBEBEB] object-cover" />
+                <div className="flex flex-col">
+                  <span className="text-[12px] font-medium text-[#171717]">Weight Photo</span>
+                  <span className="text-[11px] text-[#6B7280]">ID: {item.photoOfWeight.id}</span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="flex flex-col gap-2 border-t border-[#D6EEF9] pt-3">
+          <p className="font-semibold text-[13px] text-[#171717]">QC Image</p>
+          <div className="flex items-center gap-3">
+            <input type="file" accept="image/*" capture="environment" id={`qcImg-${idx}`} className="hidden" onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                const url = URL.createObjectURL(file);
+                updateMetallisationRow(idx, { qcImage: { url, name: file.name, id: Math.random().toString(36).substring(2, 8).toUpperCase(), file } });
+              }
+            }} />
+            <label htmlFor={`qcImg-${idx}`} className="flex items-center justify-center bg-white border border-[#DDE1E8] text-[#5C5C5C] text-[13px] font-medium rounded-[6px] h-[36px] px-4 cursor-pointer hover:bg-[#EBEBEB]">{item.qcImage ? "Change QC Image" : "Take QC Photo"}</label>
+            {item.qcImage && <img src={item.qcImage.url} alt="QC" className="w-10 h-10 rounded-md object-cover border border-[#EBEBEB]" />}
+          </div>
+        </div>
       </div>
     ));
   };
@@ -503,62 +621,6 @@ export default function OperatorMetallisationDetailPage({ params }: DetailPagePr
                     <p className="text-[13px] text-[#6B7280]">Review details before saving to logs.</p>
                   </div>
                   {renderReviewCards()}
-                  <div className="rounded-[12px] border border-[#DDE1E8] bg-white p-4 flex flex-col gap-3">
-                    {!capturedImage ? (
-                      <div className="flex items-center justify-between">
-                        <label className="text-[13px] font-medium text-[#171717]">Attach Image</label>
-                        <div className="flex items-center gap-2">
-                          <div className="relative">
-                            <input
-                              type="file"
-                              accept="image/*"
-                              capture="environment"
-                              id="cameraInput"
-                              className="hidden"
-                              onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                if (file) {
-                                  const reader = new FileReader();
-                                  reader.onload = (ev) => {
-                                    const ext = file.name.split('.').pop() || 'jpeg';
-                                    const randomId = Math.random().toString(36).substring(2, 8).toUpperCase();
-                                    setCapturedImage({
-                                      url: ev.target?.result as string,
-                                      name: `IMG_${Date.now()}.${ext}`,
-                                      id: randomId
-                                    });
-                                  };
-                                  reader.readAsDataURL(file);
-                                }
-                              }}
-                            />
-                            <label
-                              htmlFor="cameraInput"
-                              className="flex items-center justify-center gap-2 bg-[#F5F7FA] border border-[#DDE1E8] text-[#5C5C5C] text-[13px] font-medium rounded-[6px] h-[36px] px-3 hover:bg-[#EBEBEB] transition-colors cursor-pointer"
-                            >
-                              Take Photo
-                            </label>
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex items-start md:items-center justify-between gap-4 rounded-[8px]">
-                        <div className="flex gap-2 flex-col md:flex-row">
-                          <img src={capturedImage.url} alt="Preview" className="w-14 h-14 rounded-md border border-[#EBEBEB] object-cover shrink-0" />
-                          <div className="flex flex-col gap-1">
-                            <p className="text-[12px] md:text-[14px] font-semibold text-[#171717]">{capturedImage.name}</p>
-                            <p className="text-[10px] md:text-[12px] text-[#6B7280]">ID: {capturedImage.id}</p>
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => setCapturedImage(null)}
-                          className="text-[#5C5C5C] hover:text-[#171717] transition-colors"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                    )}
-                  </div>
                 </div>
               )}
               {modalStep === 3 && (
@@ -585,8 +647,11 @@ export default function OperatorMetallisationDetailPage({ params }: DetailPagePr
               )}
               {modalStep === 2 && (
                 <>
-                  <button onClick={() => setModalStep(1)} className="h-[40px] px-2 md:px-4 bg-white border border-[#EBEBEB] text-[#171717] text-[10px] md:text-[14px] font-medium rounded-[6px] hover:bg-gray-50">Back</button>
-                  <button onClick={submitCurrentStage} className="h-[40px] px-2 md:px-5 bg-[#00B6E2] text-white text-[10px] md:text-[14px] font-medium rounded-[6px] hover:bg-[#0092b5]">Submit Logs</button>
+                  <button onClick={() => setModalStep(1)} disabled={isSubmitting} className="h-[40px] px-2 md:px-4 bg-white border border-[#EBEBEB] text-[#171717] text-[10px] md:text-[14px] font-medium rounded-[6px] hover:bg-gray-50">Back</button>
+                  <button onClick={submitCurrentStage} disabled={isSubmitting || !isCurrentStepTwoValid} className={`h-[40px] px-2 md:px-5 text-white text-[10px] md:text-[14px] font-medium rounded-[6px] flex items-center justify-center gap-2 ${isCurrentStepTwoValid && !isSubmitting ? "bg-[#00B6E2] hover:bg-[#0092b5]" : "bg-[#A7DDEB] cursor-not-allowed"}`}>
+                    {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                    {isSubmitting ? "Submitting..." : "Submit Logs"}
+                  </button>
                 </>
               )}
               {modalStep === 3 && (

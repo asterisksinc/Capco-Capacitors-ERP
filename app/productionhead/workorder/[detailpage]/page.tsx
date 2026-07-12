@@ -2,7 +2,9 @@
 
 import { WO_STATUS_OPTIONS, WO_STAGE_OPTIONS } from "@/lib/constants";
 import { StatusBadge } from "@/components/StatusBadge";
-import { Search, ChevronRight, Layers, Ruler, Package, QrCode } from "lucide-react";
+import { Search, ChevronRight, Layers, Ruler, Package, QrCode, FileText, Image as ImageIcon } from "lucide-react";
+import { DocsUploadedModal } from "@/components/DocsUploadedModal";
+import { RowImagesModal } from "@/components/RowImagesModal";
 import { MobileHeader } from "@/components/MobileHeader";
 import { use, useState, useEffect, useMemo } from "react";
 import { workOrderService } from "@/src/services/workOrderService";
@@ -78,6 +80,8 @@ export default function SupervisorWorkOrderDetailPage({ params }: DetailPageProp
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabType>("Raw Material");
   const [qrData, setQrData] = useState<QRModalData | null>(null);
+  const [isDocModalOpen, setIsDocModalOpen] = useState(false);
+  const [rowImagesData, setRowImagesData] = useState<any>(null);
 
   // ── Fetch ─────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -135,6 +139,8 @@ export default function SupervisorWorkOrderDetailPage({ params }: DetailPageProp
         : "-",
       nextStage: m.next_stage || "Slitting",
       status: m.status || "-",
+      factory_wastage_image_url: m.factory_wastage_image_url,
+      photo_url: m.photo_url,
     }));
   }, [woData]);
 
@@ -356,9 +362,18 @@ export default function SupervisorWorkOrderDetailPage({ params }: DetailPageProp
 
         {/* Toolbar */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-          <div className="relative w-full sm:max-w-[291px] h-[40px] flex items-center border border-[#EBEBEB] rounded-[6px] px-[10px] gap-2 bg-white">
-            <Search className="w-5 h-5 shrink-0 text-[#525866]" />
-            <input type="text" placeholder="Search" className="w-full min-w-0 bg-transparent text-[14px] text-[#171717] placeholder:text-[#525866] focus:outline-none" />
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+            <button
+              onClick={() => setIsDocModalOpen(true)}
+              className="flex items-center justify-center gap-2 bg-white border border-[#DDE1E8] text-[#171717] text-[13px] font-medium rounded-[8px] h-[36px] px-4 hover:bg-[#F5F7FA] transition-colors self-start sm:self-auto shadow-sm whitespace-nowrap"
+            >
+              <FileText className="w-4 h-4 text-gray-600" />
+              Docs Uploaded
+            </button>
+            <div className="relative w-full sm:max-w-[291px] h-[40px] flex items-center border border-[#EBEBEB] rounded-[6px] px-[10px] gap-2 bg-white">
+              <Search className="w-5 h-5 shrink-0 text-[#525866]" />
+              <input type="text" placeholder="Search" className="w-full min-w-0 bg-transparent text-[14px] text-[#171717] placeholder:text-[#525866] focus:outline-none" />
+            </div>
           </div>
           <TableToolbar dateRange={dateRange} onDateRangeChange={setDateRange} onExport={exportCurrentTab} />
         </div>
@@ -393,9 +408,16 @@ export default function SupervisorWorkOrderDetailPage({ params }: DetailPageProp
                           : { "Product No": (row as any).productNo ?? "", "Coil ID": (row as any).rmId ?? "", "Weight": (row as any).weight ?? "", "Grade": (row as any).grade ?? "", "Status": (row as any).status ?? "" };
                         return (
                           <td key={key} className="px-4 py-3 whitespace-nowrap">
-                            <button onClick={() => setQrData({ id: rowId, type: qrType, details: qrDetails })} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors">
-                              <QrCode className="w-4 h-4" />
-                            </button>
+                            <div className="flex items-center gap-2">
+                              <button onClick={() => setQrData({ id: rowId, type: qrType, details: qrDetails })} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors p-1" title="Show QR Code">
+                                <QrCode className="w-4 h-4" />
+                              </button>
+                              {isMC && (
+                                <button onClick={() => setRowImagesData(row)} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors p-1" title="View Coil Images">
+                                  <ImageIcon className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
                           </td>
                         );
                       }
@@ -427,7 +449,22 @@ export default function SupervisorWorkOrderDetailPage({ params }: DetailPageProp
         </div>
       </section>
 
-      {qrData && <QRCodeModal id={qrData.id} type={qrData.type} details={qrData.details} onClose={() => setQrData(null)} />}
+      {qrData && (
+        <QRCodeModal id={qrData.id} type={qrData.type} details={qrData.details} onClose={() => setQrData(null)} />
+      )}
+
+      <DocsUploadedModal 
+        isOpen={isDocModalOpen} 
+        onClose={() => setIsDocModalOpen(false)} 
+        activeTab={activeTab} 
+        woData={woData} 
+      />
+
+      <RowImagesModal
+        isOpen={!!rowImagesData}
+        onClose={() => setRowImagesData(null)}
+        rowData={rowImagesData}
+      />
     </div>
   );
 }

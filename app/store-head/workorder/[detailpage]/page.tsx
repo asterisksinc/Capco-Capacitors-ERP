@@ -3,7 +3,7 @@
 import { WO_STATUS_OPTIONS, WO_STAGE_OPTIONS } from "@/lib/constants";
 import { StatusBadge } from "@/components/StatusBadge";
 import { use, useState, useMemo, useEffect } from "react";
-import { Plus, X, ChevronRight, Check, Layers, Ruler, Weight, Package, QrCode } from "lucide-react";
+import { Plus, X, ChevronRight, Check, Layers, Ruler, Weight, Package, QrCode, Loader2 } from "lucide-react";
 import type { TableConfig } from "@/hooks/useTableControls";
 import { useTableControls } from "@/hooks/useTableControls";
 import { SortableHeader } from "@/components/table/SortableHeader";
@@ -15,6 +15,7 @@ import { ScannerInput } from "@/components/ScannerInput";
 import { exportToExcel } from "@/lib/exportExcel";
 import { workOrderService } from "@/src/services/workOrderService";
 import { inventoryService } from "@/src/services/inventoryService";
+import { supabaseStorage } from "@/src/services/supabaseClient";
 
 type DetailPageProps = {
   params: Promise<{ detailpage: string }>;
@@ -55,9 +56,10 @@ export default function StoreHeadWorkOrderDetailPage({ params }: DetailPageProps
   const [showValidationHint, setShowValidationHint] = useState(false);
 
   const [selectedInventoryIds, setSelectedInventoryIds] = useState<string[]>([]);
-  type CapturedImage = { url: string; name: string; id: string };
+  type CapturedImage = { url: string; name: string; id: string; file: File };
   const [capturedImage, setCapturedImage] = useState<CapturedImage | null>(null);
   const [qrData, setQrData] = useState<QRModalData | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const loadData = async () => {
     setLoading(true);
@@ -157,6 +159,7 @@ export default function StoreHeadWorkOrderDetailPage({ params }: DetailPageProps
     }
 
     try {
+      setIsSubmitting(true);
       const quantity_kg_by_inventory_id = selectedInventoryIds.reduce((acc, id) => {
         const inv = availableInventory.find((i: any) => i.id === id);
         acc[id] = inv?.net_weight_kg ?? inv?.weight ?? 0;
@@ -177,16 +180,33 @@ export default function StoreHeadWorkOrderDetailPage({ params }: DetailPageProps
       });
 
       await Promise.all(
-        selectedInventoryIds.map(id =>
-          inventoryService.update(id, { status: "Being Used" }).catch(() => { })
-        )
+        selectedInventoryIds.map(async (id) => {
+          let imageUrl;
+          if (capturedImage?.file) {
+            const inv = availableInventory.find((i: any) => i.id === id);
+            const code = inv?.raw_material_code || inv?.roll_no || id;
+            try {
+              const uploadRes = await inventoryService.uploadRawMaterialImage(code, capturedImage.file);
+              imageUrl = supabaseStorage.publicUrl(uploadRes.path);
+            } catch (err) {
+              console.error(`Failed to upload image for ${code}`, err);
+              throw err;
+            }
+          }
+          await inventoryService.update(id, { 
+            status: "Being Used",
+            ...(imageUrl ? { raw_material_image_url: imageUrl } : {})
+          }).catch(() => { });
+        })
       );
 
       await loadData();
+      setIsSubmitting(false);
       setModalStep(3);
-    } catch (err) {
+    } catch (err: any) {
+      setIsSubmitting(false);
       console.error(err);
-      alert("Failed to assign raw materials.");
+      alert(`Failed to assign raw materials: ${err.message || "Unknown error"}`);
     }
   };
 
@@ -325,7 +345,8 @@ export default function StoreHeadWorkOrderDetailPage({ params }: DetailPageProps
                             setCapturedImage({
                               url: ev.target?.result as string,
                               name: `IMG_${Date.now()}.${ext}`,
-                              id: randomId
+                              id: randomId,
+                              file
                             });
                           };
                           reader.readAsDataURL(file);
@@ -420,12 +441,14 @@ export default function StoreHeadWorkOrderDetailPage({ params }: DetailPageProps
 
               {modalStep === 2 && (
                 <>
-                  <button onClick={() => setModalStep(1)} className="h-[40px] px-4 bg-white border border-[#EBEBEB] text-[#171717] text-[14px] font-medium rounded-[6px] hover:bg-gray-50 transition-colors">Back</button>
+                  <button onClick={() => setModalStep(1)} disabled={isSubmitting} className="h-[40px] px-4 bg-white border border-[#EBEBEB] text-[#171717] text-[14px] font-medium rounded-[6px] hover:bg-gray-50 transition-colors">Back</button>
                   <button
                     onClick={submitCurrentStage}
-                    className={`h-[40px] px-5 text-[14px] font-medium rounded-[6px] transition-colors ${isStepOneValid ? "bg-[#00B6E2] text-white hover:bg-[#0092b5]" : "bg-[#A7DDEB] text-white cursor-not-allowed"}`}
+                    disabled={isSubmitting || !isStepOneValid}
+                    className={`h-[40px] px-5 text-[14px] font-medium rounded-[6px] transition-colors flex items-center justify-center gap-2 ${isStepOneValid && !isSubmitting ? "bg-[#00B6E2] text-white hover:bg-[#0092b5]" : "bg-[#A7DDEB] text-white cursor-not-allowed"}`}
                   >
-                    Submit Details
+                    {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                    {isSubmitting ? "Submitting..." : "Submit Details"}
                   </button>
                 </>
               )}

@@ -4,7 +4,7 @@ import { WO_STATUS_OPTIONS, WO_STAGE_OPTIONS } from "@/lib/constants";
 import { StatusBadge } from "@/components/StatusBadge";
 import { use, useState, useMemo } from "react";
 import Link from "next/link";
-import { Plus, X, ChevronRight, Check, QrCode } from "lucide-react";
+import { Plus, X, ChevronRight, Check, QrCode, Loader2 } from "lucide-react";
 import { FileText, Ruler, Maximize2, Package } from "lucide-react";
 import { useStore } from "@/hooks/useStore";
 import { ScannerInput } from "@/components/ScannerInput";
@@ -21,6 +21,7 @@ import { workOrderService } from "@/src/services/workOrderService";
 import { productionStageService } from "@/src/services/productionStageService";
 import { authService } from "@/src/services/authService";
 import { stockService } from "@/src/services/stockService";
+import { supabaseStorage } from "@/src/services/supabaseClient";
 import { useEffect } from "react";
 
 type DetailPageProps = {
@@ -40,15 +41,19 @@ type MetallisationForm = {
   nextStage: string;
 };
 
-type SlittingForm = {
+type BagData = {
+  id: string;
   productNo: string;
-  associatedRmId: string;
-  micron: string;
-  width: string;
-  weight: string;
   grade: string;
+  weight: string;
+};
+
+type SlittingForm = {
+  coilId: string;
+  noOfBags: number;
+  bags: BagData[];
+  qcImage: { url: string; name: string; id: string; file: File } | null;
   remarks: string;
-  isVerified?: boolean;
 };
 
 const micronOptions = ["2", "2.5", "3", "3.5", "4", "4.5", "4.5HT", "5", "5.5", "6", "6.5", "7", "7.5"];
@@ -116,12 +121,10 @@ const defaultMetallisationForm: MetallisationForm = {
 };
 
 const defaultSlittingForm: SlittingForm = {
-  productNo: "",
-  associatedRmId: "",
-  micron: "4.5",
-  width: "1.0",
-  weight: "",
-  grade: "AA",
+  coilId: "",
+  noOfBags: 1,
+  bags: [{ id: "temp", productNo: "", grade: "AA", weight: "" }],
+  qcImage: null,
   remarks: "",
 };
 
@@ -159,11 +162,11 @@ function createMetallisationRow(defaultRmId: string): MetallisationForm {
   };
 }
 
-function createSlittingRow(defaultRmId: string): SlittingForm {
+function createSlittingRow(defaultCoilId: string): SlittingForm {
   return {
     ...defaultSlittingForm,
-    productNo: `PM-${Date.now()}-${Math.floor(Math.random() * 900 + 100)}`,
-    associatedRmId: defaultRmId,
+    coilId: defaultCoilId,
+    bags: [{ id: generateId("BAG"), productNo: generateId("PM"), grade: "AA", weight: "" }],
   };
 }
 
@@ -278,10 +281,11 @@ export default function OperatorSlittingDetailPage({ params }: DetailPageProps) 
   }, [workOrderFlowData]);
 
   const [metallisationRowsInput, setMetallisationRowsInput] = useState<MetallisationForm[]>([createMetallisationRow("")]);
-  const [slittingRowsInput, setSlittingRowsInput] = useState<SlittingForm[]>([createSlittingRow("")]);
-  type CapturedImage = { url: string; name: string; id: string };
+  const [slittingRowsInput, setSlittingRowsInput] = useState<SlittingForm[]>([createSlittingRow(availableCoilIds[0] ?? "")]);
+  type CapturedImage = { url: string; name: string; id: string; file: File };
   const [capturedImage, setCapturedImage] = useState<CapturedImage | null>(null);
   const [qrData, setQrData] = useState<QRModalData | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const currentConfig = useMemo(() => {
     switch (activeTab) {
@@ -349,14 +353,11 @@ export default function OperatorSlittingDetailPage({ params }: DetailPageProps) 
   };
 
   const isSlittingRowValid = (row: SlittingForm) => {
-    return Boolean(
-      row.productNo.trim() &&
-      row.associatedRmId.trim() &&
-      micronOptions.includes(row.micron.trim()) &&
-      row.width.trim() &&
-      hasPositiveNumber(row.weight) &&
-      row.grade.trim(),
-    );
+    if (!row.coilId.trim() || row.noOfBags < 1) return false;
+    for (const bag of row.bags) {
+      if (!bag.productNo.trim() || !bag.grade.trim() || !hasPositiveNumber(bag.weight)) return false;
+    }
+    return true;
   };
 
   const isCurrentStepOneValid =
@@ -383,7 +384,33 @@ export default function OperatorSlittingDetailPage({ params }: DetailPageProps) 
   };
 
   const updateSlittingRow = (index: number, patch: Partial<SlittingForm>) => {
-    setSlittingRowsInput((prev) => prev.map((row, idx) => (idx === index ? { ...row, ...patch } : row)));
+    setSlittingRowsInput((prev) => prev.map((row, idx) => {
+      if (idx === index) {
+        const newRow = { ...row, ...patch };
+        if (patch.noOfBags !== undefined) {
+          const bagsCount = Math.max(1, Math.min(10, patch.noOfBags));
+          const currentBags = [...newRow.bags];
+          if (bagsCount > currentBags.length) {
+            for (let i = currentBags.length; i < bagsCount; i++) {
+              currentBags.push({ id: generateId("BAG"), productNo: generateId("PM"), grade: "AA", weight: "" });
+            }
+          } else if (bagsCount < currentBags.length) {
+            currentBags.length = bagsCount;
+          }
+          newRow.bags = currentBags;
+        }
+        return newRow;
+      }
+      return row;
+    }));
+  };
+
+  const updateBagField = (rowIndex: number, bagId: string, field: keyof BagData, value: string) => {
+    setSlittingRowsInput((prev) => prev.map((row, idx) => {
+      if (idx !== rowIndex) return row;
+      const newBags = row.bags.map(bag => bag.id === bagId ? { ...bag, [field]: value } : bag);
+      return { ...row, bags: newBags };
+    }));
   };
 
   const removeCurrentRow = (index: number) => {
@@ -403,6 +430,7 @@ export default function OperatorSlittingDetailPage({ params }: DetailPageProps) 
     }
 
     try {
+      setIsSubmitting(true);
       const user = await authService.getCurrentProfile();
       
       if (activeTab === "Metallisation") {
@@ -428,31 +456,53 @@ export default function OperatorSlittingDetailPage({ params }: DetailPageProps) 
 
       if (activeTab === "Slitting") {
         const payload = slittingRowsInput;
-        for (const item of payload) {
-          const coilData = coilLookup.get(item.associatedRmId);
-          const slittingRecord = await productionStageService.addSlitting({
-            slitting_no: generateId("SLIT"),
-            work_order_id: woData.id,
-            metallisation_id: coilData?.metallisation_id || undefined,
-            product_no: item.productNo,
-            weight_kg: parseFloat(item.weight) || 0,
-            thickness_micron: parseFloat(item.micron) || 0,
-            width_m: parseFloat(item.width) || 0,
-            grade: item.grade,
-            remarks: slittingReviewRemarks,
-            operator_id: user?.id,
-          });
+        
+        let slittingImageUrl = undefined;
+        if (capturedImage?.file) {
+          const firstItem = payload[0];
+          try {
+            const uploadRes = await productionStageService.uploadSlittingImage(woData.work_order_no, capturedImage.file);
+            slittingImageUrl = supabaseStorage.publicUrl(uploadRes.path);
+          } catch (err) {
+             console.error("Failed to upload slitting QC image", err);
+             throw err;
+          }
+        }
 
-          await stockService.create({
-            stock_no: generateId("STK"),
-            slitting_id: (slittingRecord as any).id,
-            work_order_id: woData.id,
-            weight_kg: parseFloat(item.weight) || 0,
-            width_m: parseFloat(item.width) || 0,
-            micron: parseFloat(item.micron) || 0,
-            grade: item.grade,
-            stage: "Ready for Winding"
-          });
+        let isFirstBag = true;
+        for (const item of payload) {
+          const coilData = coilLookup.get(item.coilId);
+          
+          for (const bag of item.bags) {
+            const slittingRecord = await productionStageService.addSlitting({
+              slitting_no: bag.productNo,
+              work_order_id: woData.id,
+              metallisation_id: coilData?.metallisation_id || undefined,
+              product_no: bag.productNo,
+              weight_kg: parseFloat(bag.weight) || 0,
+              thickness_micron: parseFloat(woData.micron) || 0,
+              width_m: parseFloat(woData.width_m || woData.width) || 0,
+              number_of_bags: 1, // one row per bag
+              grade: bag.grade,
+              grade_each_bag: [bag.grade], // technically single element
+              weight_each_bag: [parseFloat(bag.weight) || 0],
+              remarks: slittingReviewRemarks,
+              operator_id: user?.id,
+              slitting_review_image_url: isFirstBag ? slittingImageUrl : undefined,
+            });
+            isFirstBag = false;
+
+            await stockService.create({
+              stock_no: generateId("STK"),
+              slitting_id: (slittingRecord as any).id,
+              work_order_id: woData.id,
+              weight_kg: parseFloat(bag.weight) || 0,
+              width_m: parseFloat(woData.width_m || woData.width) || 0,
+              micron: parseFloat(woData.micron) || 0,
+              grade: bag.grade,
+              stage: "Ready for Winding"
+            });
+          }
         }
         await workOrderService.update(woData.id, {
           stage: "Ready for Winding",
@@ -461,10 +511,12 @@ export default function OperatorSlittingDetailPage({ params }: DetailPageProps) 
       }
 
       setModalStep(3);
+      setIsSubmitting(false);
       fetchWorkOrder();
-    } catch (err) {
+    } catch (err: any) {
+      setIsSubmitting(false);
       console.error(err);
-      alert("Failed to save data");
+      alert(`Failed to save data: ${err.message || "Unknown error"}`);
     }
   };
 
@@ -602,93 +654,90 @@ export default function OperatorSlittingDetailPage({ params }: DetailPageProps) 
 
     return (
       <div className="flex flex-col gap-4">
-        {slittingRowsInput.map((row, idx) => (
-          <div key={`slit-step1-${idx}`} className="rounded-[12px] border border-[#DDE1E8] p-4 bg-white">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-[13px] font-semibold text-[#344054]">Item {idx + 1}</p>
-              {slittingRowsInput.length > 1 && (
-                <button type="button" onClick={() => removeCurrentRow(idx)} className="text-[12px] text-[#D92D20] hover:underline">Remove</button>
+        {slittingRowsInput.map((row, idx) => {
+          const coilData = coilLookup.get(row.coilId);
+          return (
+            <div key={`slit-step1-${idx}`} className="rounded-[12px] border border-[#DDE1E8] p-4 bg-white relative">
+              {coilData && (
+                <div className="absolute top-4 right-4 text-[13px] text-[#5C5C5C] font-medium bg-[#F4FBFF] border border-[#78CFFA] px-3 py-1 rounded-[6px]">
+                  Weight after Metallisation: <span className="font-semibold text-[#171717]">{coilData.weight || "0"} kgs</span>
+                </div>
               )}
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-              <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-medium text-[#171717]">Product Material ID</label>
-                <ScannerInput
-                  value={row.productNo}
-                  onChange={(e) => updateSlittingRow(idx, { productNo: e.target.value })}
-                  onScanData={(data) => updateSlittingRow(idx, { productNo: data })}
-                  placeholder="Scan or enter product no"
-                  className="h-[42px] rounded-[8px] border border-[#DDE1E8] pl-[36px] px-3 text-[14px]"
-                />
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-[14px] font-semibold text-[#171717]">Slitting Item {idx + 1}</p>
+                {slittingRowsInput.length > 1 && (
+                  <button type="button" onClick={() => removeCurrentRow(idx)} className="text-[12px] text-[#D92D20] hover:underline mt-8">Remove</button>
+                )}
               </div>
-              <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-medium text-[#171717]">Coil ID (from Metallisation)</label>
-                <div className="relative flex flex-col gap-1">
-                  <ScannerInput 
-                    isSelect
-                    scanDisabled={!row.associatedRmId}
-                    value={row.associatedRmId} 
-                    onChange={(e) => {
-                      const id = e.target.value;
-                      const coil = coilLookup.get(id);
-                      updateSlittingRow(idx, {
-                        associatedRmId: id,
-                        weight: coil?.weight ?? row.weight,
-                        isVerified: true, // Marked as true for prototyping purpose;
-                      });
-                    }}
-                    onScanData={(data) => {
-                      const cleanData = data.trim();
-                      if (cleanData === row.associatedRmId) {
-                        updateSlittingRow(idx, { isVerified: true });
-                      } else {
-                        alert(`Scanned barcode (${cleanData}) does not match selected Coil ID (${row.associatedRmId})`);
-                      }
-                    }}
-                    className={`h-[42px] rounded-[8px] border pl-3 text-[14px] ${row.isVerified ? "border-[#12B76A] bg-[#ECFDF3]" : "border-[#DDE1E8]"}`}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div className="flex flex-col gap-2">
+                  <label className="text-[13px] font-medium text-[#171717]">Coil ID (from Metallisation)</label>
+                  <div className="relative flex flex-col gap-1">
+                    <ScannerInput 
+                      isSelect
+                      value={row.coilId} 
+                      onChange={(e) => updateSlittingRow(idx, { coilId: e.target.value })}
+                      onScanData={(data) => updateSlittingRow(idx, { coilId: data })}
+                      className="h-[42px] rounded-[8px] border border-[#DDE1E8] pl-3 text-[14px]"
+                    >
+                      <option value="" disabled>Select Coil ID...</option>
+                      {availableCoilIds.map((coilId: string) => (
+                        <option key={coilId} value={coilId}>{coilId}</option>
+                      ))}
+                    </ScannerInput>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className="text-[13px] font-medium text-[#171717]">No. of Bags</label>
+                  <select 
+                    value={row.noOfBags} 
+                    onChange={(e) => updateSlittingRow(idx, { noOfBags: parseInt(e.target.value) })}
+                    className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]"
                   >
-                    <option value="" disabled>Select Coil ID...</option>
-                    {availableCoilIds.map((coilId: string) => (
-                      <option key={coilId} value={coilId}>{coilId}</option>
+                    {[...Array(10)].map((_, i) => (
+                      <option key={i + 1} value={i + 1}>{i + 1}</option>
                     ))}
-                  </ScannerInput>
-                  {row.associatedRmId && !row.isVerified && (
-                    <span className="text-[11px] text-[#F79009]">Scan barcode to verify</span>
-                  )}
-                  {row.isVerified && (
-                    <span className="text-[11px] text-[#12B76A] font-medium flex items-center gap-1">
-                      <Check className="w-3 h-3" /> Verified
-                    </span>
-                  )}
+                  </select>
                 </div>
               </div>
-              <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-medium text-[#171717]">Micron</label>
-                <select value={row.micron} onChange={(e) => updateSlittingRow(idx, { micron: e.target.value })} className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]">
-                  {micronOptions.map((option) => (
-                    <option key={option} value={option}>{option}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-medium text-[#171717]">Width</label>
-                <input type="number" step="0.1" value={row.width} onChange={(e) => updateSlittingRow(idx, { width: e.target.value })} placeholder="Enter width" className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]" />
-              </div>
-              <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-medium text-[#171717]">Weight</label>
-                <input value={row.weight} onChange={(e) => updateSlittingRow(idx, { weight: e.target.value })} placeholder="Enter weight" className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]" />
-              </div>
-              <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-medium text-[#171717]">Grade</label>
-                <select value={row.grade} onChange={(e) => updateSlittingRow(idx, { grade: e.target.value })} className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]">
-                  {gradeOptions.map((option) => (
-                    <option key={option} value={option}>{option}</option>
-                  ))}
-                </select>
+              <div className="bg-[#FAFAFA] border border-[#EBEBEB] rounded-[8px] p-4 flex flex-col gap-3 mt-2">
+                <p className="text-[13px] font-semibold text-[#171717] mb-1">Bag Details</p>
+                {row.bags.map((bag, bagIdx) => (
+                  <div key={bag.id} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center bg-white p-3 border border-[#EBEBEB] rounded-[6px]">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[12px] font-medium text-[#5C5C5C]">Bag {bagIdx + 1} - Product ID</label>
+                      <input 
+                        value={bag.productNo} 
+                        disabled 
+                        className="h-[38px] rounded-[6px] border border-[#DDE1E8] bg-gray-50 px-3 text-[13px] text-[#8B8BA2]"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[12px] font-medium text-[#5C5C5C]">Grade</label>
+                      <select 
+                        value={bag.grade} 
+                        onChange={(e) => updateBagField(idx, bag.id, 'grade', e.target.value)}
+                        className="h-[38px] rounded-[6px] border border-[#DDE1E8] px-3 text-[13px]"
+                      >
+                        {gradeOptions.map(g => <option key={g} value={g}>{g}</option>)}
+                      </select>
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[12px] font-medium text-[#5C5C5C]">Bag {bagIdx + 1} - Weight (kg)</label>
+                      <input 
+                        type="number" step="0.1"
+                        value={bag.weight} 
+                        onChange={(e) => updateBagField(idx, bag.id, 'weight', e.target.value)}
+                        placeholder="e.g. 50"
+                        className="h-[38px] rounded-[6px] border border-[#DDE1E8] px-3 text-[13px]"
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     );
   };
@@ -711,13 +760,25 @@ export default function OperatorSlittingDetailPage({ params }: DetailPageProps) 
 
     const rows = slittingRowsInput;
     return rows.map((item, idx) => (
-      <div key={`slit-${idx}`} className="rounded-[12px] border border-[#78CFFA] bg-[#F4FBFF] p-4 grid grid-cols-1 md:grid-cols-2 gap-y-2 gap-x-6 text-[14px] text-[#49526A]">
-        <p>Product No: {item.productNo || "Auto"}</p>
-        <p>Coil ID: {item.associatedRmId || "-"}</p>
-        <p>Micron: {item.micron}</p>
-        <p>Width: {item.width}</p>
-        <p>Weight: {item.weight || "0"} kgs</p>
-        <p>Grade: {item.grade}</p>
+      <div key={`slit-${idx}`} className="flex flex-col gap-3 rounded-[12px] border border-[#78CFFA] bg-[#F4FBFF] p-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-y-2 gap-x-6 text-[14px] text-[#49526A]">
+          <p>Coil ID: {item.coilId || "-"}</p>
+          <p>No. of Bags: {item.noOfBags}</p>
+          <p>Total Weight: {item.bags.reduce((acc, bag) => acc + (parseFloat(bag.weight) || 0), 0)} kgs</p>
+        </div>
+        <div className="bg-white rounded-[8px] border border-[#78CFFA]/40 p-3 mt-1">
+          <p className="text-[13px] font-semibold text-[#171717] mb-2">Bags Details</p>
+          <div className="flex flex-col gap-2">
+            {item.bags.map((bag, bagIdx) => (
+              <div key={bag.id} className="text-[13px] bg-[#F4FBFF] border border-[#78CFFA]/60 rounded-[6px] px-3 py-2 text-[#49526A] flex flex-wrap gap-4 items-center">
+                <span className="font-medium text-[#00B6E2]">Bag {bagIdx + 1}</span>
+                <span><span className="text-[#8B8BA2]">ID:</span> {bag.productNo}</span>
+                <span><span className="text-[#8B8BA2]">Weight:</span> {bag.weight || "0"}kgs</span>
+                <span><span className="text-[#8B8BA2]">Grade:</span> {bag.grade}</span>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     ));
   };
@@ -768,7 +829,8 @@ export default function OperatorSlittingDetailPage({ params }: DetailPageProps) 
                                     setCapturedImage({
                                       url: ev.target?.result as string,
                                       name: `IMG_${Date.now()}.${ext}`,
-                                      id: randomId
+                                      id: randomId,
+                                      file
                                     });
                                   };
                                   reader.readAsDataURL(file);
@@ -828,8 +890,11 @@ export default function OperatorSlittingDetailPage({ params }: DetailPageProps) 
               )}
               {modalStep === 2 && (
                 <>
-                  <button onClick={() => setModalStep(1)} className="h-[40px] px-2 md:px-4 bg-white border border-[#EBEBEB] text-[#171717] text-[10px] md:text-[14px] font-medium rounded-[6px] hover:bg-gray-50">Back</button>
-                  <button onClick={submitCurrentStage} className={`h-[40px] px-2 md:px-5 text-[10px] md:text-[14px] font-medium rounded-[6px] ${isStepTwoValid ? "bg-[#00B6E2] text-white hover:bg-[#0092b5]" : "bg-[#A7DDEB] text-white cursor-not-allowed"}`}>Submit Logs</button>
+                  <button onClick={() => setModalStep(1)} disabled={isSubmitting} className="h-[40px] px-2 md:px-4 bg-white border border-[#EBEBEB] text-[#171717] text-[10px] md:text-[14px] font-medium rounded-[6px] hover:bg-gray-50">Back</button>
+                  <button onClick={submitCurrentStage} disabled={isSubmitting || !isStepTwoValid} className={`h-[40px] px-2 md:px-5 text-[10px] md:text-[14px] font-medium rounded-[6px] flex items-center justify-center gap-2 ${isStepTwoValid && !isSubmitting ? "bg-[#00B6E2] text-white hover:bg-[#0092b5]" : "bg-[#A7DDEB] text-white cursor-not-allowed"}`}>
+                    {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                    {isSubmitting ? "Submitting..." : "Submit Logs"}
+                  </button>
                 </>
               )}
               {modalStep === 3 && (

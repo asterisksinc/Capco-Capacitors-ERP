@@ -521,6 +521,7 @@ export interface LineageNode {
   label: string;
   details: { label: string; value: string }[];
   status: string;
+  rawRecord?: any;
 }
 
 export function getLineageChain(store: StoreSnapshot, rawId: string): LineageNode[] {
