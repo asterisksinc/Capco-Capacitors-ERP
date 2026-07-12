@@ -1,4 +1,4 @@
-import { supabaseRest, type Json, type ListParams, type WorkflowStatus } from "./supabaseClient";
+import { supabaseRest, supabaseStorage, type Json, type ListParams, type WorkflowStatus } from "./supabaseClient";
 
 export type MetallisationPayload = {
   metallisation_no: string;
@@ -14,6 +14,8 @@ export type MetallisationPayload = {
   factory_wastage_kg?: number;
   factory_wastage_image_url?: string;
   photo_url?: string;
+  metallisation_image_url?: string;
+  metallisation_review_image_url?: string;
   qc_details?: Json;
 };
 
@@ -32,6 +34,8 @@ export type SlittingPayload = {
   grade_each_bag?: Json;
   weight_each_bag?: Json;
   remarks?: string;
+  slitting_image_url?: string;
+  slitting_review_image_url?: string;
 };
 
 export type WindingPayload = {
@@ -112,12 +116,34 @@ export const productionStageService = {
       status: "Completed" satisfies WorkflowStatus,
     });
   },
+  updateMetallisation(id: string, payload: Partial<MetallisationPayload>) {
+    return supabaseRest.update("metallisation", id, payload);
+  },
+  uploadMetallisationImage(metallisationNo: string, file: Blob & { name?: string }, label = "metallisation") {
+    return supabaseStorage.uploadProductionImage({
+      stage: "metallisation",
+      ownerCode: metallisationNo,
+      file,
+      label,
+    });
+  },
   addSlitting(payload: SlittingPayload) {
     return supabaseRest.create("slitting", {
       ...payload,
       number_of_bags: payload.number_of_bags ?? 0,
       stage: "Stock",
       status: "Completed" satisfies WorkflowStatus,
+    });
+  },
+  updateSlitting(id: string, payload: Partial<SlittingPayload>) {
+    return supabaseRest.update("slitting", id, payload);
+  },
+  uploadSlittingImage(slittingNo: string, file: Blob & { name?: string }, label = "slitting") {
+    return supabaseStorage.uploadProductionImage({
+      stage: "slitting",
+      ownerCode: slittingNo,
+      file,
+      label,
     });
   },
   addWinding(payload: WindingPayload) {

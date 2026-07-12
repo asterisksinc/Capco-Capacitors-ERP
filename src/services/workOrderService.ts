@@ -35,14 +35,14 @@ export const workOrderService = {
     );
   },
   getByWorkOrderNo(workOrderNo: string) {
-    return supabaseRest.list(
+    return supabaseRest.list<Record<string, unknown>>(
       "work_orders",
       {
         select: "*,created_by_profile:profiles!work_orders_created_by_fkey(id,full_name,email,phone,worker_label,team_name),qr_references(qr_payload,qr_url),work_order_materials(*,inventory(*)),metallisation(*,created_by_profile:profiles!metallisation_created_by_fkey(id,full_name,email,phone,worker_label,team_name),operator:profiles!metallisation_operator_id_fkey(id,full_name,email,phone,worker_label,team_name)),slitting(*,created_by_profile:profiles!slitting_created_by_fkey(id,full_name,email,phone,worker_label,team_name),operator:profiles!slitting_operator_id_fkey(id,full_name,email,phone,worker_label,team_name))",
         filters: { work_order_no: workOrderNo },
         limit: 1
       }
-    ).then((rows) => (rows as any[])[0] ?? null);
+    ).then((rows) => rows[0] ?? null);
   },
   counts() {
     return supabaseRest.list<{ status: WorkflowStatus }>("work_orders", { select: "status" }).then((rows) => ({
@@ -68,6 +68,7 @@ export const workOrderService = {
     assigned_to: string;
     assigned_by: string;
     quantity_kg_by_inventory_id: Record<string, number>;
+    store_head_review_image_url_by_inventory_id?: Record<string, string>;
   }) {
     return Promise.all(
       payload.inventory_ids.map((inventory_id) =>
@@ -77,6 +78,9 @@ export const workOrderService = {
           ...(payload.assigned_to ? { assigned_to: payload.assigned_to } : {}),
           ...(payload.assigned_by ? { assigned_by: payload.assigned_by } : {}),
           quantity_kg: payload.quantity_kg_by_inventory_id[inventory_id] ?? 0,
+          ...(payload.store_head_review_image_url_by_inventory_id?.[inventory_id]
+            ? { store_head_review_image_url: payload.store_head_review_image_url_by_inventory_id[inventory_id] }
+            : {}),
           status: "Issued",
         }),
       ),

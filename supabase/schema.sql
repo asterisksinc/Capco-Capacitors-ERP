@@ -155,6 +155,7 @@ create table if not exists public.inventory (
   wet_weight_kg numeric(12,3),
   supplier text not null,
   temperature_c numeric(8,2),
+  raw_material_image_url text,
   date_received date not null default current_date,
   status public.workflow_status not null default 'Pending',
   stage public.workflow_stage not null default 'Inventory',
@@ -199,6 +200,7 @@ create table if not exists public.work_order_materials (
   handover_by uuid references public.profiles(id),
   handover_at timestamptz,
   quantity_kg numeric(12,3) not null,
+  store_head_review_image_url text,
   status public.workflow_status not null default 'Pending',
   notes text,
   created_at timestamptz not null default now(),
@@ -220,6 +222,8 @@ create table if not exists public.metallisation (
   factory_wastage_kg numeric(12,3) not null default 0,
   factory_wastage_image_url text,
   photo_url text,
+  metallisation_image_url text,
+  metallisation_review_image_url text,
   qc_details jsonb not null default '{}'::jsonb,
   next_stage public.workflow_stage not null default 'Slitting',
   stage public.workflow_stage not null default 'Metallisation',
@@ -230,8 +234,16 @@ create table if not exists public.metallisation (
   updated_at timestamptz not null default now()
 );
 
+alter table public.metallisation
+  add column if not exists factory_wastage_image_url text,
+  add column if not exists photo_url text,
+  add column if not exists metallisation_image_url text,
+  add column if not exists metallisation_review_image_url text;
+
 comment on column public.metallisation.factory_wastage_image_url is 'Public Supabase Storage URL for the factory wastage image.';
 comment on column public.metallisation.photo_url is 'Public Supabase Storage URL for metallisation photos such as weight-scale or QC images.';
+comment on column public.metallisation.metallisation_image_url is 'Public Supabase Storage URL for the primary metallisation stage image.';
+comment on column public.metallisation.metallisation_review_image_url is 'Public Supabase Storage URL for the metallisation review image.';
 comment on column public.metallisation.qc_details is 'JSON payload for QC data. Can include image URLs, remarks, and pass/fail metadata.';
 
 create table if not exists public.slitting (
@@ -250,6 +262,8 @@ create table if not exists public.slitting (
   grade_each_bag jsonb not null default '[]'::jsonb,
   weight_each_bag jsonb not null default '[]'::jsonb,
   remarks text,
+  slitting_image_url text,
+  slitting_review_image_url text,
   stage public.workflow_stage not null default 'Stock',
   status public.workflow_status not null default 'Completed',
   qr_reference_id uuid references public.qr_references(id),
@@ -257,6 +271,45 @@ create table if not exists public.slitting (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.inventory
+  add column if not exists raw_material_image_url text;
+
+alter table public.work_order_materials
+  add column if not exists store_head_review_image_url text;
+
+alter table public.slitting
+  add column if not exists slitting_image_url text,
+  add column if not exists slitting_review_image_url text;
+
+comment on column public.inventory.raw_material_image_url is 'Public Supabase Storage URL for the raw material image.';
+comment on column public.work_order_materials.store_head_review_image_url is 'Public Supabase Storage URL for the Store Head review image during raw material assignment or handover.';
+comment on column public.slitting.slitting_image_url is 'Public Supabase Storage URL for the primary slitting stage image.';
+comment on column public.slitting.slitting_review_image_url is 'Public Supabase Storage URL for the slitting review image.';
+
+alter table public.inventory
+  drop constraint if exists inventory_raw_material_image_url_format,
+  add constraint inventory_raw_material_image_url_format check (raw_material_image_url is null or raw_material_image_url ~* '^https?://');
+
+alter table public.work_order_materials
+  drop constraint if exists work_order_materials_store_head_review_image_url_format,
+  add constraint work_order_materials_store_head_review_image_url_format check (store_head_review_image_url is null or store_head_review_image_url ~* '^https?://');
+
+alter table public.metallisation
+  drop constraint if exists metallisation_factory_wastage_image_url_format,
+  add constraint metallisation_factory_wastage_image_url_format check (factory_wastage_image_url is null or factory_wastage_image_url ~* '^https?://'),
+  drop constraint if exists metallisation_photo_url_format,
+  add constraint metallisation_photo_url_format check (photo_url is null or photo_url ~* '^https?://'),
+  drop constraint if exists metallisation_image_url_format,
+  add constraint metallisation_image_url_format check (metallisation_image_url is null or metallisation_image_url ~* '^https?://'),
+  drop constraint if exists metallisation_review_image_url_format,
+  add constraint metallisation_review_image_url_format check (metallisation_review_image_url is null or metallisation_review_image_url ~* '^https?://');
+
+alter table public.slitting
+  drop constraint if exists slitting_image_url_format,
+  add constraint slitting_image_url_format check (slitting_image_url is null or slitting_image_url ~* '^https?://'),
+  drop constraint if exists slitting_review_image_url_format,
+  add constraint slitting_review_image_url_format check (slitting_review_image_url is null or slitting_review_image_url ~* '^https?://');
 
 create table if not exists public.stock (
   id uuid primary key default gen_random_uuid(),
@@ -523,24 +576,30 @@ create index if not exists idx_spray_po on public.spray(product_order_id);
 create index if not exists idx_pipeline_entity on public.pipeline_tracking(entity_type, entity_id);
 
 insert into storage.buckets (id, name, public)
-values ('metallisation', 'metallisation', true)
+values ('production-stage-images', 'production-stage-images', true)
 on conflict (id) do nothing;
 
-drop policy if exists "metallisation_bucket_read" on storage.objects;
-create policy "metallisation_bucket_read"
+drop policy if exists "production_stage_images_read" on storage.objects;
+create policy "production_stage_images_read"
 on storage.objects for select
 to authenticated
-using (bucket_id = 'metallisation');
+using (bucket_id = 'production-stage-images');
 
-drop policy if exists "metallisation_bucket_insert" on storage.objects;
-create policy "metallisation_bucket_insert"
+drop policy if exists "production_stage_images_insert" on storage.objects;
+create policy "production_stage_images_insert"
 on storage.objects for insert
 to authenticated
-with check (bucket_id = 'metallisation');
+with check (
+  bucket_id = 'production-stage-images'
+);
 
-drop policy if exists "metallisation_bucket_update" on storage.objects;
-create policy "metallisation_bucket_update"
+drop policy if exists "production_stage_images_update" on storage.objects;
+create policy "production_stage_images_update"
 on storage.objects for update
 to authenticated
-using (bucket_id = 'metallisation')
-with check (bucket_id = 'metallisation');
+using (
+  bucket_id = 'production-stage-images'
+)
+with check (
+  bucket_id = 'production-stage-images'
+);

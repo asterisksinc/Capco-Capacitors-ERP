@@ -64,6 +64,14 @@ export type SupabaseSession = {
   user?: unknown;
 };
 
+export type ProductionImageStage = "raw-material" | "metallisation" | "slitting";
+
+export type StorageUploadResult = {
+  bucket: string;
+  path: string;
+  publicUrl: string;
+};
+
 export class SupabaseApiError extends Error {
   status: number;
   details: unknown;
@@ -192,6 +200,85 @@ export const supabaseRest = {
       method: "POST",
       body: JSON.stringify(payload),
     });
+  },
+};
+
+const productionImagesBucket = "production-stage-images";
+
+function sanitizeStorageSegment(value: string) {
+  return value.trim().replace(/[^a-zA-Z0-9._-]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+}
+
+function encodeStoragePath(path: string) {
+  return path
+    .split("/")
+    .filter(Boolean)
+    .map((segment) => encodeURIComponent(segment))
+    .join("/");
+}
+
+function getFileExtension(file: Blob & { name?: string }) {
+  const fromName = file.name?.split(".").pop();
+  if (fromName && fromName !== file.name) return fromName.toLowerCase();
+  return file.type.split("/")[1]?.toLowerCase() || "jpg";
+}
+
+export const supabaseStorage = {
+  bucket: productionImagesBucket,
+  buildProductionImagePath(stage: ProductionImageStage, ownerCode: string, file: Blob & { name?: string }, label = "image") {
+    const timestamp = Date.now();
+    const extension = getFileExtension(file);
+    return [
+      stage,
+      sanitizeStorageSegment(ownerCode),
+      `${sanitizeStorageSegment(label)}-${timestamp}.${sanitizeStorageSegment(extension)}`,
+    ].join("/");
+  },
+  publicUrl(path: string, bucket = productionImagesBucket) {
+    return `${supabaseConfig.url}/storage/v1/object/public/${bucket}/${encodeStoragePath(path)}`;
+  },
+  async uploadProductionImage(params: {
+    stage: ProductionImageStage;
+    ownerCode: string;
+    file: Blob & { name?: string };
+    label?: string;
+    bucket?: string;
+    upsert?: boolean;
+  }): Promise<StorageUploadResult> {
+    if (!params.file.type.startsWith("image/")) {
+      throw new SupabaseApiError("Only image uploads are allowed", 400);
+    }
+
+    const bucket = params.bucket ?? productionImagesBucket;
+    const path = this.buildProductionImagePath(params.stage, params.ownerCode, params.file, params.label);
+    const token = getAccessToken();
+    const response = await fetch(`${supabaseConfig.url}/storage/v1/object/${bucket}/${encodeStoragePath(path)}`, {
+      method: "POST",
+      headers: {
+        apikey: supabaseConfig.anonKey,
+        Authorization: `Bearer ${token ?? supabaseConfig.anonKey}`,
+        "Content-Type": params.file.type,
+        "x-upsert": String(params.upsert ?? true),
+      },
+      body: params.file,
+    });
+
+    if (!response.ok) {
+      let details: unknown;
+      try {
+        details = await response.json();
+      } catch {
+        details = await response.text();
+      }
+      const message = typeof details === "object" && details && "message" in details ? String(details.message) : response.statusText;
+      throw new SupabaseApiError(message, response.status, details);
+    }
+
+    return {
+      bucket,
+      path,
+      publicUrl: this.publicUrl(path, bucket),
+    };
   },
 };
 

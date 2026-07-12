@@ -8,11 +8,17 @@
     { "key": "supabaseUrl", "value": "https://YOUR-PROJECT-REF.supabase.co" },
     { "key": "anonKey", "value": "your_supabase_anon_key" },
     { "key": "accessToken", "value": "" },
-    { "key": "metallisationBucket", "value": "metallisation" },
-    { "key": "metallisationObjectPath", "value": "metallisation/WO-2026-001/MC-2001/factory-wastage.jpg" },
-    { "key": "factoryWastageImageUrl", "value": "https://YOUR-PROJECT-REF.supabase.co/storage/v1/object/public/metallisation/metallisation/WO-2026-001/MC-2001/factory-wastage.jpg" },
-    { "key": "weightPhotoUrl", "value": "https://YOUR-PROJECT-REF.supabase.co/storage/v1/object/public/metallisation/metallisation/WO-2026-001/MC-2001/weight.jpg" },
-    { "key": "qcPhotoUrl", "value": "https://YOUR-PROJECT-REF.supabase.co/storage/v1/object/public/metallisation/metallisation/WO-2026-001/MC-2001/qc.jpg" },
+    { "key": "productionImageBucket", "value": "production-stage-images" },
+    { "key": "productionImageObjectPath", "value": "raw-material/RM-9001/raw-material.jpg" },
+    { "key": "rawMaterialImageUrl", "value": "https://YOUR-PROJECT-REF.supabase.co/storage/v1/object/public/production-stage-images/raw-material/RM-9001/raw-material.jpg" },
+    { "key": "storeHeadReviewImageUrl", "value": "https://YOUR-PROJECT-REF.supabase.co/storage/v1/object/public/production-stage-images/raw-material/WO-2026-001/store-head-review.jpg" },
+    { "key": "metallisationImageUrl", "value": "https://YOUR-PROJECT-REF.supabase.co/storage/v1/object/public/production-stage-images/metallisation/MC-2001/metallisation.jpg" },
+    { "key": "metallisationReviewImageUrl", "value": "https://YOUR-PROJECT-REF.supabase.co/storage/v1/object/public/production-stage-images/metallisation/MC-2001/review.jpg" },
+    { "key": "factoryWastageImageUrl", "value": "https://YOUR-PROJECT-REF.supabase.co/storage/v1/object/public/production-stage-images/metallisation/MC-2001/factory-wastage.jpg" },
+    { "key": "weightPhotoUrl", "value": "https://YOUR-PROJECT-REF.supabase.co/storage/v1/object/public/production-stage-images/metallisation/MC-2001/weight.jpg" },
+    { "key": "qcPhotoUrl", "value": "https://YOUR-PROJECT-REF.supabase.co/storage/v1/object/public/production-stage-images/metallisation/MC-2001/qc.jpg" },
+    { "key": "slittingImageUrl", "value": "https://YOUR-PROJECT-REF.supabase.co/storage/v1/object/public/production-stage-images/slitting/SL-2001/slitting.jpg" },
+    { "key": "slittingReviewImageUrl", "value": "https://YOUR-PROJECT-REF.supabase.co/storage/v1/object/public/production-stage-images/slitting/SL-2001/review.jpg" },
     { "key": "workOrderId", "value": "50000000-0000-0000-0000-000000000001" },
     { "key": "productOrderId", "value": "90000000-0000-0000-0000-000000000001" },
     { "key": "inventoryId", "value": "40000000-0000-0000-0000-000000000003" },
@@ -24,7 +30,7 @@
   },
   "item": [
     {
-      "name": "Storage - Upload Metallisation Image",
+      "name": "Storage - Upload Production Stage Image",
       "request": {
         "method": "POST",
         "header": [
@@ -33,14 +39,14 @@
           { "key": "x-upsert", "value": "true" },
           { "key": "Content-Type", "value": "image/jpeg" }
         ],
-        "url": "{{supabaseUrl}}/storage/v1/object/{{metallisationBucket}}/{{metallisationObjectPath}}",
+        "url": "{{supabaseUrl}}/storage/v1/object/{{productionImageBucket}}/{{productionImageObjectPath}}",
         "body": {
           "mode": "file",
           "file": {
             "src": ""
           }
         },
-        "description": "Upload the metallisation image first. Then use the public object URL in `factory_wastage_image_url`, `photo_url`, or `qc_details.images` when creating the metallisation record."
+        "description": "Upload raw material, metallisation, or slitting images first. Use paths like raw-material/RM-9001/raw-material.jpg, metallisation/MC-2001/review.jpg, or slitting/SL-2001/review.jpg. Then store the public URL on the relevant API record."
       }
     },
     {
@@ -117,8 +123,23 @@
           { "key": "Prefer", "value": "return=representation" }
         ],
         "url": "{{supabaseUrl}}/rest/v1/inventory",
-        "body": { "mode": "raw", "raw": "{\n  \"raw_material_code\": \"RM-9001\",\n  \"raw_material_name\": \"BOPP Capacitor Film\",\n  \"roll_no\": \"RL-2607-001\",\n  \"micron\": 4.5,\n  \"width_m\": 1.0,\n  \"net_weight_kg\": 58.5,\n  \"gross_weight_kg\": 60.0,\n  \"current_weight_kg\": 58.5,\n  \"supplier\": \"VedaCap Industries\",\n  \"temperature_c\": 25,\n  \"status\": \"In Inventory\",\n  \"stage\": \"Inventory\"\n}" },
+        "body": { "mode": "raw", "raw": "{\n  \"raw_material_code\": \"RM-9001\",\n  \"raw_material_name\": \"BOPP Capacitor Film\",\n  \"roll_no\": \"RL-2607-001\",\n  \"micron\": 4.5,\n  \"width_m\": 1.0,\n  \"net_weight_kg\": 58.5,\n  \"gross_weight_kg\": 60.0,\n  \"current_weight_kg\": 58.5,\n  \"supplier\": \"VedaCap Industries\",\n  \"temperature_c\": 25,\n  \"raw_material_image_url\": \"{{rawMaterialImageUrl}}\",\n  \"status\": \"In Inventory\",\n  \"stage\": \"Inventory\"\n}" },
         "description": "Success response: [{ \"id\": \"...\", \"raw_material_code\": \"RM-9001\" }]\nError response: { \"message\": \"duplicate key value violates unique constraint\" }"
+      }
+    },
+    {
+      "name": "Inventory - Update Raw Material Image",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          { "key": "apikey", "value": "{{anonKey}}" },
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Prefer", "value": "return=representation" }
+        ],
+        "url": "{{supabaseUrl}}/rest/v1/inventory?id=eq.{{inventoryId}}",
+        "body": { "mode": "raw", "raw": "{\n  \"raw_material_image_url\": \"{{rawMaterialImageUrl}}\"\n}" },
+        "description": "Success response: [{ \"id\": \"...\", \"raw_material_image_url\": \"...\" }]\nError response: { \"message\": \"new row violates row-level security policy\" }"
       }
     },
     {
@@ -171,8 +192,23 @@
           { "key": "Prefer", "value": "return=representation" }
         ],
         "url": "{{supabaseUrl}}/rest/v1/work_order_materials",
-        "body": { "mode": "raw", "raw": "{\n  \"work_order_id\": \"{{workOrderId}}\",\n  \"inventory_id\": \"{{inventoryId}}\",\n  \"assigned_to\": \"20000000-0000-0000-0000-000000000004\",\n  \"assigned_by\": \"20000000-0000-0000-0000-000000000003\",\n  \"quantity_kg\": 20,\n  \"status\": \"Issued\"\n}" },
+        "body": { "mode": "raw", "raw": "{\n  \"work_order_id\": \"{{workOrderId}}\",\n  \"inventory_id\": \"{{inventoryId}}\",\n  \"assigned_to\": \"20000000-0000-0000-0000-000000000004\",\n  \"assigned_by\": \"20000000-0000-0000-0000-000000000003\",\n  \"quantity_kg\": 20,\n  \"store_head_review_image_url\": \"{{storeHeadReviewImageUrl}}\",\n  \"status\": \"Issued\"\n}" },
         "description": "Success response: [{ \"status\": \"Issued\" }]\nError response: { \"message\": \"duplicate key value violates unique constraint\" }"
+      }
+    },
+    {
+      "name": "Work Orders - Update Store Head Review Image",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          { "key": "apikey", "value": "{{anonKey}}" },
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Prefer", "value": "return=representation" }
+        ],
+        "url": "{{supabaseUrl}}/rest/v1/work_order_materials?work_order_id=eq.{{workOrderId}}&inventory_id=eq.{{inventoryId}}",
+        "body": { "mode": "raw", "raw": "{\n  \"store_head_review_image_url\": \"{{storeHeadReviewImageUrl}}\"\n}" },
+        "description": "Success response: [{ \"store_head_review_image_url\": \"...\" }]\nError response: { \"message\": \"new row violates row-level security policy\" }"
       }
     },
     {
@@ -240,8 +276,23 @@
           { "key": "Prefer", "value": "return=representation" }
         ],
         "url": "{{supabaseUrl}}/rest/v1/metallisation",
-        "body": { "mode": "raw", "raw": "{\n  \"metallisation_no\": \"MC-2001\",\n  \"work_order_id\": \"{{workOrderId}}\",\n  \"raw_material_id\": \"{{inventoryId}}\",\n  \"operator_id\": \"20000000-0000-0000-0000-000000000005\",\n  \"coil_no\": \"MC-2001\",\n  \"machine_no\": \"MET-02\",\n  \"weight_kg\": 55,\n  \"weight_after_metallisation_kg\": 54.3,\n  \"optical_density\": 2.4,\n  \"resistance_ohms\": 1.5,\n  \"factory_wastage_kg\": 0.7,\n  \"factory_wastage_image_url\": \"{{factoryWastageImageUrl}}\",\n  \"photo_url\": \"{{weightPhotoUrl}}\",\n  \"qc_details\": {\n    \"qc\": \"pass\",\n    \"remarks\": \"Checked by QC team\",\n    \"images\": {\n      \"qc\": \"{{qcPhotoUrl}}\"\n    }\n  }\n}" },
+        "body": { "mode": "raw", "raw": "{\n  \"metallisation_no\": \"MC-2001\",\n  \"work_order_id\": \"{{workOrderId}}\",\n  \"raw_material_id\": \"{{inventoryId}}\",\n  \"operator_id\": \"20000000-0000-0000-0000-000000000005\",\n  \"coil_no\": \"MC-2001\",\n  \"machine_no\": \"MET-02\",\n  \"weight_kg\": 55,\n  \"weight_after_metallisation_kg\": 54.3,\n  \"optical_density\": 2.4,\n  \"resistance_ohms\": 1.5,\n  \"factory_wastage_kg\": 0.7,\n  \"factory_wastage_image_url\": \"{{factoryWastageImageUrl}}\",\n  \"photo_url\": \"{{weightPhotoUrl}}\",\n  \"metallisation_image_url\": \"{{metallisationImageUrl}}\",\n  \"metallisation_review_image_url\": \"{{metallisationReviewImageUrl}}\",\n  \"qc_details\": {\n    \"qc\": \"pass\",\n    \"remarks\": \"Checked by QC team\",\n    \"images\": {\n      \"qc\": \"{{qcPhotoUrl}}\"\n    }\n  }\n}" },
         "description": "Success response: [{ \"metallisation_no\": \"MC-2001\" }]\nError response: { \"message\": \"duplicate key value violates unique constraint\" }"
+      }
+    },
+    {
+      "name": "Stages - Update Metallisation Review Image",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          { "key": "apikey", "value": "{{anonKey}}" },
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Prefer", "value": "return=representation" }
+        ],
+        "url": "{{supabaseUrl}}/rest/v1/metallisation?metallisation_no=eq.MC-2001",
+        "body": { "mode": "raw", "raw": "{\n  \"metallisation_review_image_url\": \"{{metallisationReviewImageUrl}}\"\n}" },
+        "description": "Success response: [{ \"metallisation_review_image_url\": \"...\" }]\nError response: { \"message\": \"new row violates row-level security policy\" }"
       }
     },
     {
@@ -255,8 +306,23 @@
           { "key": "Prefer", "value": "return=representation" }
         ],
         "url": "{{supabaseUrl}}/rest/v1/slitting",
-        "body": { "mode": "raw", "raw": "{\n  \"slitting_no\": \"SL-2001\",\n  \"work_order_id\": \"{{workOrderId}}\",\n  \"operator_id\": \"20000000-0000-0000-0000-000000000006\",\n  \"product_no\": \"PM-2001\",\n  \"weight_kg\": 28.5,\n  \"thickness_micron\": 4.5,\n  \"number_of_bags\": 3,\n  \"grade\": \"AA\",\n  \"grade_each_bag\": [\"AA\", \"AA\", \"A\"],\n  \"weight_each_bag\": [9.5, 9.4, 9.6]\n}" },
+        "body": { "mode": "raw", "raw": "{\n  \"slitting_no\": \"SL-2001\",\n  \"work_order_id\": \"{{workOrderId}}\",\n  \"operator_id\": \"20000000-0000-0000-0000-000000000006\",\n  \"product_no\": \"PM-2001\",\n  \"weight_kg\": 28.5,\n  \"thickness_micron\": 4.5,\n  \"number_of_bags\": 3,\n  \"grade\": \"AA\",\n  \"grade_each_bag\": [\"AA\", \"AA\", \"A\"],\n  \"weight_each_bag\": [9.5, 9.4, 9.6],\n  \"slitting_image_url\": \"{{slittingImageUrl}}\",\n  \"slitting_review_image_url\": \"{{slittingReviewImageUrl}}\"\n}" },
         "description": "Success response: [{ \"slitting_no\": \"SL-2001\" }]\nError response: { \"message\": \"new row violates row-level security policy\" }"
+      }
+    },
+    {
+      "name": "Stages - Update Slitting Review Image",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          { "key": "apikey", "value": "{{anonKey}}" },
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Prefer", "value": "return=representation" }
+        ],
+        "url": "{{supabaseUrl}}/rest/v1/slitting?slitting_no=eq.SL-2001",
+        "body": { "mode": "raw", "raw": "{\n  \"slitting_review_image_url\": \"{{slittingReviewImageUrl}}\"\n}" },
+        "description": "Success response: [{ \"slitting_review_image_url\": \"...\" }]\nError response: { \"message\": \"new row violates row-level security policy\" }"
       }
     },
     {

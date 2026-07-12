@@ -1,4 +1,4 @@
-import { buildQrPayload, supabaseRest, toCsv, type ListParams, type WorkflowStage, type WorkflowStatus } from "./supabaseClient";
+import { buildQrPayload, supabaseRest, supabaseStorage, toCsv, type ListParams, type WorkflowStage, type WorkflowStatus } from "./supabaseClient";
 
 export type InventoryPayload = {
   raw_material_code: string;
@@ -11,6 +11,7 @@ export type InventoryPayload = {
   current_weight_kg?: number;
   supplier: string;
   temperature_c?: number;
+  raw_material_image_url?: string;
   date_received?: string;
   status?: WorkflowStatus;
   stage?: WorkflowStage;
@@ -48,6 +49,14 @@ export const inventoryService = {
   },
   update(id: string, payload: Partial<InventoryPayload>) {
     return supabaseRest.update("inventory", id, payload);
+  },
+  uploadRawMaterialImage(rawMaterialCode: string, file: Blob & { name?: string }) {
+    return supabaseStorage.uploadProductionImage({
+      stage: "raw-material",
+      ownerCode: rawMaterialCode,
+      file,
+      label: "raw-material",
+    });
   },
   remove(id: string) {
     return supabaseRest.remove("inventory", id);
