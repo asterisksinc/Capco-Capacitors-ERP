@@ -71,7 +71,7 @@ const metallisationConfig: TableConfig<any> = {
   columns: [
     { key: "coilNo", label: "MC-ID", type: "text", sortable: true },
     { key: "rmId", label: "RM ID", type: "text", sortable: true },
-    { key: "machineNo", label: "Machine No.", type: "text", sortable: true },
+    // { key: "machineNo", label: "Machine No.", type: "text", sortable: true },
     { key: "weight", label: "Weight", type: "text", sortable: true },
     { key: "opticalDensity", label: "Optical Density", type: "text", sortable: true },
     { key: "resistance", label: "Resistance", type: "text", sortable: true },

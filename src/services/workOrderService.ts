@@ -31,14 +31,14 @@ export const workOrderService = {
     return supabaseRest.getById(
       "work_orders",
       id,
-      "*,created_by_profile:profiles!work_orders_created_by_fkey(id,full_name,email,phone,worker_label,team_name),qr_references(qr_payload,qr_url),work_order_materials(*,inventory(*)),metallisation(*,created_by_profile:profiles!metallisation_created_by_fkey(id,full_name,email,phone,worker_label,team_name),operator:profiles!metallisation_operator_id_fkey(id,full_name,email,phone,worker_label,team_name)),slitting(*,created_by_profile:profiles!slitting_created_by_fkey(id,full_name,email,phone,worker_label,team_name),operator:profiles!slitting_operator_id_fkey(id,full_name,email,phone,worker_label,team_name))",
+      "*,created_by_profile:profiles!work_orders_created_by_fkey(id,full_name,email,phone,worker_label,team_name),qr_references(qr_payload,qr_url),work_order_materials(*,inventory(*)),metallisation(*,inventory(*),created_by_profile:profiles!metallisation_created_by_fkey(id,full_name,email,phone,worker_label,team_name),operator:profiles!metallisation_operator_id_fkey(id,full_name,email,phone,worker_label,team_name)),slitting(*,metallisation(*),created_by_profile:profiles!slitting_created_by_fkey(id,full_name,email,phone,worker_label,team_name),operator:profiles!slitting_operator_id_fkey(id,full_name,email,phone,worker_label,team_name))",
     );
   },
   getByWorkOrderNo(workOrderNo: string) {
     return supabaseRest.list<Record<string, unknown>>(
       "work_orders",
       {
-        select: "*,created_by_profile:profiles!work_orders_created_by_fkey(id,full_name,email,phone,worker_label,team_name),qr_references(qr_payload,qr_url),work_order_materials(*,inventory(*)),metallisation(*,created_by_profile:profiles!metallisation_created_by_fkey(id,full_name,email,phone,worker_label,team_name),operator:profiles!metallisation_operator_id_fkey(id,full_name,email,phone,worker_label,team_name)),slitting(*,created_by_profile:profiles!slitting_created_by_fkey(id,full_name,email,phone,worker_label,team_name),operator:profiles!slitting_operator_id_fkey(id,full_name,email,phone,worker_label,team_name))",
+        select: "*,created_by_profile:profiles!work_orders_created_by_fkey(id,full_name,email,phone,worker_label,team_name),qr_references(qr_payload,qr_url),work_order_materials(*,inventory(*)),metallisation(*,inventory(*),created_by_profile:profiles!metallisation_created_by_fkey(id,full_name,email,phone,worker_label,team_name),operator:profiles!metallisation_operator_id_fkey(id,full_name,email,phone,worker_label,team_name)),slitting(*,metallisation(*),created_by_profile:profiles!slitting_created_by_fkey(id,full_name,email,phone,worker_label,team_name),operator:profiles!slitting_operator_id_fkey(id,full_name,email,phone,worker_label,team_name))",
         filters: { work_order_no: workOrderNo },
         limit: 1
       }

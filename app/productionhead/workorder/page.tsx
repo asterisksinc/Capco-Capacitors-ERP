@@ -267,13 +267,19 @@ export default function SupervisorWorkOrderPage() {
                     className="w-full h-[44px] bg-white border border-[#EBEBEB] rounded-[8px] px-3 text-[14px] text-[#171717] appearance-none focus:outline-none focus:border-[#00B6E2] transition-colors"
                   >
                     <option value="" disabled hidden>Select micron...</option>
+                    <option value="3.5">3.5 Micron</option>
+                    <option value="4">4 Micron</option>
                     <option value="4.5">4.5 Micron</option>
                     <option value="5">5 Micron</option>
                     <option value="5.5">5.5 Micron</option>
+                    <option value="6">6 Micron</option>
+                    <option value="6.5">6.5 Micron</option>
                     <option value="7">7 Micron</option>
+                    <option value="7.5">7.5 Micron</option>
                     <option value="8">8 Micron</option>
+                    <option value="9">9 Micron</option>
+                    <option value="10">10 Micron</option>
                     <option value="12">12 Micron</option>
-                    <option value="15">15 Micron</option>
                   </select>
                   <ChevronDown className="w-4 h-4 text-[#525866] absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                 </div>
@@ -289,10 +295,13 @@ export default function SupervisorWorkOrderPage() {
                     className="w-full h-[44px] bg-white border border-[#EBEBEB] rounded-[8px] px-3 text-[14px] text-[#171717] appearance-none focus:outline-none focus:border-[#00B6E2] transition-colors"
                   >
                     <option value="" disabled hidden>Select width...</option>
-                    <option value="0.5">0.5 Width</option>
-                    <option value="1">1 Width</option>
-                    <option value="1.5">1.5 Width</option>
-                    <option value="2">2 Width</option>
+                    <option value="30">30 Width</option>
+                    <option value="37.5">37.5 Width</option>
+                    <option value="45">45 Width</option>
+                    <option value="50">50 Width</option>
+                    <option value="60">60 Width</option>
+                    <option value="75">75 Width</option>
+                    <option value="100">100 Width</option>
                   </select>
                   <ChevronDown className="w-4 h-4 text-[#525866] absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                 </div>

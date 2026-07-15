@@ -154,6 +154,7 @@ export async function supabaseRequest<T>(path: string, init: RequestInit = {}): 
   });
 
   if (!response.ok) {
+    console.log(response);
     let details: unknown;
     try {
       details = await response.json();

@@ -8,6 +8,8 @@ import {
   Calendar,
   Warehouse,
   LogOut,
+  ArrowDownToLine,
+  ArrowUpFromLine,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -18,6 +20,8 @@ export function StoreHeadSidebar() {
     { name: "Overview", href: "/store-head/overview", icon: LayoutDashboard },
     { name: "Work Orders", href: "/store-head/workorder", icon: Calendar },
     { name: "Inventory", href: "/store-head/inventory", icon: Warehouse },
+    { name: "Material Requests", href: "/store-head/material-requests", icon: ArrowDownToLine },
+    { name: "Material Returns", href: "/store-head/material-returns", icon: ArrowUpFromLine },
   ];
 
   return (

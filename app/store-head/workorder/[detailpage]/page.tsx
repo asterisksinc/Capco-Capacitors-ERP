@@ -83,19 +83,27 @@ export default function StoreHeadWorkOrderDetailPage({ params }: DetailPageProps
 
   const currentData = useMemo(() => {
     if (!workOrderFlowData || !workOrderFlowData.work_order_materials) return [];
-    return workOrderFlowData.work_order_materials.map((m: any) => ({
-      rollNo: m.inventory?.raw_material_code || "-",
-      netWeight: m.inventory?.net_weight_kg ? `${m.inventory.net_weight_kg}kgs` : "-",
-      damagedWeight: "0.0kgs",
-      usedWeight: m.quantity_kg ? `${m.quantity_kg}kgs` : "-",
-      wastageWeight: "0.0kgs",
-      thickness: m.inventory?.micron || "-",
-      width: m.inventory?.width_m || "-",
-      temperature: m.inventory?.temperature_c || "-",
-      supplier: m.inventory?.supplier || "-",
-      stage: "Raw Material",
-      status: m.status || "Issued"
-    }));
+    return workOrderFlowData.work_order_materials.map((m: any) => {
+      const inv = m.inventory || {};
+      
+      const wastage = (workOrderFlowData?.metallisation as any[])
+        ?.filter(met => met.raw_material_id === inv.id)
+        .reduce((sum, met) => sum + (met.factory_wastage_kg || 0), 0) || 0;
+        
+      return {
+        rollNo: inv.raw_material_code || inv.roll_no || "-",
+        netWeight: inv.net_weight_kg ? `${inv.net_weight_kg}kgs` : "-",
+        damagedWeight: "-",
+        usedWeight: m.quantity_kg ? `${m.quantity_kg}kgs` : "-",
+        wastageWeight: wastage ? `${wastage}kgs` : "0kgs",
+        thickness: inv.micron || "-",
+        width: inv.width_m || "-",
+        temperature: inv.temperature_c || "-",
+        supplier: inv.supplier || "-",
+        stage: "Raw Material",
+        status: m.status || "Issued"
+      };
+    });
   }, [workOrderFlowData]);
 
   const {

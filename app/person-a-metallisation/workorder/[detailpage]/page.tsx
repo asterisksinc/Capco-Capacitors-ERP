@@ -66,10 +66,11 @@ const metallisationConfig: TableConfig<any> = {
   columns: [
     { key: "coilNo", label: "Coil No.", type: "text", sortable: true },
     { key: "rmId", label: "RM ID", type: "text", sortable: true },
-    { key: "machineNo", label: "Machine No.", type: "text", sortable: true },
+    // { key: "machineNo", label: "Machine No.", type: "text", sortable: true },
     { key: "weight", label: "Weight", type: "text", sortable: true },
-    { key: "opticalDensity", label: "Optical Density (OD)", type: "text", sortable: true },
-    { key: "resistance", label: "Resistance", type: "text", sortable: true },
+    { key: "factoryWastageWeight", label: "Factory Wastage Weight", type: "number", sortable: true },
+    // { key: "opticalDensity", label: "Optical Density (OD)", type: "text", sortable: true },
+    // { key: "resistance", label: "Resistance", type: "text", sortable: true },
     { key: "timestamp", label: "Timestamp", type: "date", sortable: true },
     { key: "nextStage", label: "Next Stage", type: "text", sortable: false },
     { key: "status", label: "Status", type: "enum", sortable: false, filter: "dropdown", options: WO_STATUS_OPTIONS },
@@ -189,6 +190,11 @@ export default function OperatorMetallisationDetailPage({ params }: DetailPagePr
       rawMaterialRows: (woData.work_order_materials || []).map((rm: any) => {
         const inv = rm.inventory || {};
         const actual = rm.quantity_kg ?? 0;
+        
+        const wastage = (woData?.metallisation as any[])
+          ?.filter(m => m.raw_material_id === inv.id)
+          .reduce((sum, m) => sum + (m.factory_wastage_kg || 0), 0) || 0;
+          
         return {
           rollNo: inv.raw_material_code || inv.roll_no || "-",
           raw_material_id: inv.id || rm.raw_material_id, // we need this for submission
@@ -198,9 +204,9 @@ export default function OperatorMetallisationDetailPage({ params }: DetailPagePr
           width: inv.width_m || "-",
           temperature: inv.temperature_c != null ? `${inv.temperature_c}°C` : "-",
           actualWeight: actual ? `${actual}kgs` : "-",
-          damagedWeight: "0",
+          damagedWeight: "-",
           usedWeight: actual ? `${actual}kgs` : "-",
-          wastageWeight: "0",
+          wastageWeight: wastage ? `${wastage}kgs` : "0kgs",
           supplier: inv.supplier || "-",
           stage: "Raw Material",
           status: rm.status || "Completed",
@@ -208,11 +214,12 @@ export default function OperatorMetallisationDetailPage({ params }: DetailPagePr
       }),
       metallisationRows: (woData.metallisation || []).map((met: any) => ({
         coilNo: met.metallisation_no || met.id,
-        rmId: met.raw_material_id || "-",
-        machineNo: met.machine_no || "-",
+        rmId: met.inventory?.raw_material_code || met.inventory?.roll_no || "-",
+        // machineNo: met.machine_no || "-",
         weight: met.weight_kg || "0",
-        opticalDensity: met.optical_density || "0",
-        resistance: met.resistance_ohms || "0",
+        factoryWastageWeight: met.factory_wastage_kg || "0",
+        // opticalDensity: met.optical_density || "0",
+        // resistance: met.resistance_ohms || "0",
         timestamp: new Date(met.created_at).toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }),
         nextStage: "Slitting",
         status: met.status || "Completed",

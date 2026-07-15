@@ -56,7 +56,7 @@ const metallisationConfig: TableConfig<any> = {
   columns: [
     { key: "coilNo", label: "MC-ID", type: "text", sortable: true },
     { key: "rmId", label: "RM ID", type: "text", sortable: true },
-    { key: "machineNo", label: "Machine No.", type: "text", sortable: true },
+    // { key: "machineNo", label: "Machine No.", type: "text", sortable: true },
     { key: "weight", label: "Weight", type: "text", sortable: true },
     { key: "opticalDensity", label: "Optical Density", type: "text", sortable: true },
     { key: "resistance", label: "Resistance", type: "text", sortable: true },
@@ -157,10 +157,11 @@ export default function AdminProductOrderDetailPage({ params }: DetailPageProps)
         rows.push({
           coilNo: m.metallisation_no || "-",
           rmId: m.inventory?.roll_no || "-",
-          machineNo: m.machine_no || "-",
+          // machineNo: m.machine_no || "-",
           weight: m.weight_kg != null ? `${m.weight_kg}kgs` : "-",
-          opticalDensity: m.optical_density || "-",
-          resistance: m.resistance_ohms != null ? `${m.resistance_ohms} Ohms` : "-",
+          factoryWastageWeight: m.factory_wastage_kg != null ? `${m.factory_wastage_kg}kgs` : "-",
+          // opticalDensity: m.optical_density || "-",
+          // resistance: m.resistance_ohms != null ? `${m.resistance_ohms} Ohms` : "-",
           timestamp: m.created_at ? new Date(m.created_at).toLocaleDateString("en-GB") : "-",
           nextStage: m.next_stage || "Slitting",
           status: m.status || "-",

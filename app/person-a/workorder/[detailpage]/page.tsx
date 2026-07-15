@@ -71,10 +71,11 @@ const metallisationConfig: TableConfig<any> = {
   columns: [
     { key: "coilNo", label: "Coil No.", type: "text", sortable: true },
     { key: "rmId", label: "RM ID", type: "text", sortable: true },
-    { key: "machineNo", label: "Machine No.", type: "text", sortable: true },
+    // { key: "machineNo", label: "Machine No.", type: "text", sortable: true },
     { key: "weight", label: "Weight", type: "text", sortable: true },
-    { key: "opticalDensity", label: "Optical Density (OD)", type: "text", sortable: true },
-    { key: "resistance", label: "Resistance", type: "text", sortable: true },
+    { key: "factoryWastageWeight", label: "Factory Wastage Weight", type: "number", sortable: true },
+    // { key: "opticalDensity", label: "Optical Density (OD)", type: "text", sortable: true },
+    // { key: "resistance", label: "Resistance", type: "text", sortable: true },
     { key: "timestamp", label: "Timestamp", type: "date", sortable: true },
     { key: "nextStage", label: "Next Stage", type: "text", sortable: false },
     { key: "status", label: "Status", type: "enum", sortable: false, filter: "dropdown", options: WO_STATUS_OPTIONS },
@@ -171,11 +172,17 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
 
   // ── Derived table data ────────────────────────────────────────────────────
   const rawMaterialRows = useMemo(() => {
-    return ((woData?.work_order_materials as any[]) || []).map((wom) => {
-      const inv = wom.inventory || {};
-      const actual = wom.quantity_kg ?? 0;
+    return (woData?.work_order_materials || []).map((rm: any) => {
+      const inv = rm.inventory || {};
+      const actual = rm.quantity_kg ?? 0;
+      
+      const wastage = (woData?.metallisation as any[])
+        ?.filter(m => m.raw_material_id === inv.id)
+        .reduce((sum, m) => sum + (m.factory_wastage_kg || 0), 0) || 0;
+        
       return {
-        rollNo: inv.roll_no || "-",
+        rollNo: inv.raw_material_code || inv.roll_no || "-",
+        raw_material_id: inv.id || rm.raw_material_id, // we need this for submission
         netWeight: inv.net_weight_kg != null ? `${inv.net_weight_kg}kgs` : "-",
         grossWeight: inv.gross_weight_kg != null ? `${inv.gross_weight_kg}kgs` : "-",
         thickness: inv.micron || "-",
@@ -184,10 +191,10 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
         actualWeight: actual ? `${actual}kgs` : "-",
         damagedWeight: "-",
         usedWeight: actual ? `${actual}kgs` : "-",
-        wastageWeight: "-",
+        wastageWeight: wastage ? `${wastage}kgs` : "0kgs",
         supplier: inv.supplier || "-",
-        stage: inv.stage || "-",
-        status: inv.status || "-",
+        stage: "Raw Material",
+        status: rm.status || "Completed",
       };
     });
   }, [woData]);
@@ -195,11 +202,12 @@ export default function OperatorWorkOrderDetailPage({ params }: DetailPageProps)
   const metallisationRows = useMemo(() => {
     return ((woData?.metallisation as any[]) || []).map((m) => ({
       coilNo: m.metallisation_no || "-",
-      rmId: m.inventory?.roll_no || "-",
-      machineNo: m.machine_no || "-",
+      rmId: m.inventory?.raw_material_code || m.inventory?.roll_no || "-",
+      // machineNo: m.machine_no || "-",
       weight: m.weight_kg != null ? `${m.weight_kg}kgs` : "-",
-      opticalDensity: m.optical_density || "-",
-      resistance: m.resistance_ohms != null ? `${m.resistance_ohms} Ohms` : "-",
+      factoryWastageWeight: m.factory_wastage_kg != null ? `${m.factory_wastage_kg}kgs` : "-",
+      // opticalDensity: m.optical_density || "-",
+      // resistance: m.resistance_ohms != null ? `${m.resistance_ohms} Ohms` : "-",
       timestamp: m.created_at
         ? new Date(m.created_at).toLocaleString("en-GB", {
             day: "2-digit", month: "short", year: "numeric",

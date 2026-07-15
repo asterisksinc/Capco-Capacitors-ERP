@@ -6,6 +6,7 @@ import { MobileHeader } from "@/components/MobileHeader";
 import { QRCodeModal, type QRModalData } from "@/components/QRCodeModal";
 import { exportToExcel } from "@/lib/exportExcel";
 import { inventoryService } from "@/src/services/inventoryService";
+import { productionStageService } from "@/src/services/productionStageService";
 
 type ModalStep = 1 | 2 | 3;
 
@@ -17,6 +18,8 @@ type InventoryForm = {
   weight: string;
   netWeight: string;
   grossWeight: string;
+  wastageWeight: string;
+  damagedWeight: string;
   temperature: string;
   supplier: string;
 };
@@ -26,12 +29,12 @@ const supplierOptions = ["VedaCap Industries", "ElectroForge Capacitors", "NextG
 
 function StatusBadge({ status }: { status: string }) {
   if (status === "In Inventory") {
-    return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#E8F8F0] text-[#1CB061] text-[12px] font-medium leading-tight">In Inventory</span>;
+    return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#E8F8F0] text-[#1CB061] text-[12px] font-medium leading-tight shrink-0">In Inventory</span>;
   }
   if (status === "Being Used") {
-    return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#FFF4ED] text-[#E19242] text-[12px] font-medium leading-tight">Being Used</span>;
+    return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#FFF4ED] text-[#E19242] text-[12px] font-medium leading-tight shrink-0">Being Used</span>;
   }
-  return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#F2F4F7] text-[#667085] text-[12px] font-medium leading-tight">Used Completely</span>;
+  return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#F2F4F7] text-[#667085] text-[12px] font-medium leading-tight shrink-0">Used Completely</span>;
 }
 
 function getDateString() {
@@ -56,6 +59,8 @@ const defaultForm: InventoryForm = {
   weight: "",
   netWeight: "",
   grossWeight: "",
+  wastageWeight: "",
+  damagedWeight: "",
   temperature: "25°C",
   supplier: supplierOptions[0],
 };
@@ -69,8 +74,26 @@ export default function ProductionHeadInventoryPage() {
   useEffect(() => {
     async function loadData() {
       try {
-        const rows = await inventoryService.list();
-        setInventoryItems(rows);
+        const [rows, metallisationRows] = await Promise.all([
+          inventoryService.list(),
+          productionStageService.listMetallisation()
+        ]);
+        
+        const wastageMap = new Map();
+        (metallisationRows as any[]).forEach(m => {
+          if (m.raw_material_id) {
+            const current = wastageMap.get(m.raw_material_id) || 0;
+            wastageMap.set(m.raw_material_id, current + (m.factory_wastage_kg || 0));
+          }
+        });
+
+        const formatted = (rows as any[]).map(row => ({
+          ...row,
+          wastage_weight_kg: wastageMap.has(row.id) ? wastageMap.get(row.id) : null,
+          damaged_weight_kg: null,
+        }));
+        
+        setInventoryItems(formatted);;
       } catch (err) {
         console.error("Failed to load inventory", err);
       } finally {
@@ -202,6 +225,8 @@ export default function ProductionHeadInventoryPage() {
                   <th className="px-4 py-[11px] text-[13px] font-semibold text-[#667085]">Width (m)</th>
                   <th className="px-4 py-[11px] text-[13px] font-semibold text-[#667085]">Net Weight</th>
                   <th className="px-4 py-[11px] text-[13px] font-semibold text-[#667085]">Gross Weight</th>
+                  <th className="px-4 py-[11px] text-[13px] font-semibold text-[#667085]">Wastage/Left Weight</th>
+                  <th className="px-4 py-[11px] text-[13px] font-semibold text-[#667085]">Damaged Weight</th>
                   <th className="px-4 py-[11px] text-[13px] font-semibold text-[#667085]">Temperature</th>
                   <th className="px-4 py-[11px] text-[13px] font-semibold text-[#667085]">Supplier</th>
                   <th className="px-4 py-[11px] text-[13px] font-semibold text-[#667085]">Date</th>
@@ -216,8 +241,10 @@ export default function ProductionHeadInventoryPage() {
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.roll_no}</td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.micron}</td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.width_m}</td>
-                    <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.net_weight_kg}</td>
-                    <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.gross_weight_kg ?? "-"}</td>
+                    <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.net_weight_kg != null ? `${row.net_weight_kg}kgs` : "-"}</td>
+                    <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.gross_weight_kg != null ? `${row.gross_weight_kg}kgs` : "-"}</td>
+                    <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.wastage_weight_kg != null ? `${row.wastage_weight_kg}kgs` : "-"}</td>
+                    <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.damaged_weight_kg != null ? `${row.damaged_weight_kg}kgs` : "-"}</td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.temperature_c ?? "-"}</td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.supplier}</td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.date_received ?? "-"}</td>

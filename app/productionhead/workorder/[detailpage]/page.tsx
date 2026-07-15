@@ -46,10 +46,11 @@ const metallisationConfig: TableConfig<any> = {
   columns: [
     { key: "coilNo", label: "Coil No.", type: "text", sortable: true },
     { key: "rmId", label: "RM ID", type: "text", sortable: true },
-    { key: "machineNo", label: "Machine No.", type: "text", sortable: true },
+    // { key: "machineNo", label: "Machine No.", type: "text", sortable: true },
     { key: "weight", label: "Weight", type: "number", sortable: true },
-    { key: "opticalDensity", label: "Optical Density (OD)", type: "text", sortable: true },
-    { key: "resistance", label: "Resistance", type: "text", sortable: true },
+    { key: "factoryWastageWeight", label: "Factory Wastage Weight", type: "number", sortable: true },
+    // { key: "opticalDensity", label: "Optical Density (OD)", type: "text", sortable: true },
+    // { key: "resistance", label: "Resistance", type: "text", sortable: true },
     { key: "timestamp", label: "Timestamp", type: "date", sortable: true },
     { key: "nextStage", label: "Next Stage", type: "text", sortable: false },
     { key: "status", label: "Status", type: "enum", sortable: false, filter: "dropdown", options: WO_STATUS_OPTIONS },
@@ -62,7 +63,7 @@ const slittingConfig: TableConfig<any> = {
     { key: "productNo", label: "Product No", type: "text", sortable: true },
     { key: "rmId", label: "Coil ID", type: "text", sortable: true },
     { key: "weight", label: "Weight", type: "number", sortable: true },
-    { key: "thickness", label: "Thickness (μ)", type: "number", sortable: true },
+    // { key: "thickness", label: "Thickness (μ)", type: "number", sortable: true },
     { key: "grade", label: "Grade", type: "text", sortable: true },
     { key: "timestampAdded", label: "Timestamp Added", type: "date", sortable: true },
     { key: "stage", label: "Stage", type: "enum", sortable: false, filter: "dropdown", options: ["Slitting", "Completed"] },
@@ -105,6 +106,11 @@ export default function SupervisorWorkOrderDetailPage({ params }: DetailPageProp
     return ((woData?.work_order_materials as any[]) || []).map((wom) => {
       const inv = wom.inventory || {};
       const actual = wom.quantity_kg ?? 0;
+      
+      const wastage = (woData?.metallisation as any[])
+        ?.filter(m => m.raw_material_id === inv.id)
+        .reduce((sum, m) => sum + (m.factory_wastage_kg || 0), 0) || 0;
+        
       return {
         rollNo: inv.roll_no || "-",
         netWeight: inv.net_weight_kg != null ? `${inv.net_weight_kg}kgs` : "-",
@@ -115,7 +121,7 @@ export default function SupervisorWorkOrderDetailPage({ params }: DetailPageProp
         actualWeight: actual ? `${actual}kgs` : "-",
         damagedWeight: "-",
         usedWeight: actual ? `${actual}kgs` : "-",
-        wastageWeight: "-",
+        wastageWeight: wastage ? `${wastage}kgs` : "0kgs",
         supplier: inv.supplier || "-",
         stage: inv.stage || "-",
         status: inv.status || "-",
@@ -126,11 +132,12 @@ export default function SupervisorWorkOrderDetailPage({ params }: DetailPageProp
   const metallisationRows = useMemo(() => {
     return ((woData?.metallisation as any[]) || []).map((m) => ({
       coilNo: m.metallisation_no || "-",
-      rmId: m.inventory?.roll_no || "-",
+      rmId: m.inventory?.raw_material_code || m.inventory?.roll_no || "-",
       machineNo: m.machine_no || "-",
       weight: m.weight_kg != null ? `${m.weight_kg}kgs` : "-",
-      opticalDensity: m.optical_density || "-",
-      resistance: m.resistance_ohms != null ? `${m.resistance_ohms} Ohms` : "-",
+      factoryWastageWeight: m.factory_wastage_kg != null ? `${m.factory_wastage_kg}kgs` : "-",
+      // opticalDensity: m.optical_density || "-",
+      // resistance: m.resistance_ohms != null ? `${m.resistance_ohms} Ohms` : "-",
       timestamp: m.created_at
         ? new Date(m.created_at).toLocaleString("en-GB", {
             day: "2-digit", month: "short", year: "numeric",
@@ -149,7 +156,7 @@ export default function SupervisorWorkOrderDetailPage({ params }: DetailPageProp
       productNo: s.product_no || "-",
       rmId: s.metallisation?.metallisation_no || "-",
       weight: s.weight_kg != null ? `${s.weight_kg}kgs` : "-",
-      thickness: s.thickness_micron || "-",
+      // thickness: s.thickness_micron || "-",
       grade: s.grade || "-",
       timestampAdded: s.created_at
         ? new Date(s.created_at).toLocaleDateString("en-GB")

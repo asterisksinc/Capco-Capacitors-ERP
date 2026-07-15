@@ -9,7 +9,7 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Capco",
+  title: "Capco Capacitors ERP",
   description: "Supervisor work order management dashboard for Capco.",
 };
 

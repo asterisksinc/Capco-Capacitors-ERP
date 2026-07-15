@@ -45,10 +45,11 @@ const metallisationConfig: TableConfig<any> = {
   columns: [
     { key: "coilNo", label: "Coil No.", type: "text", sortable: true },
     { key: "rmId", label: "RM ID", type: "text", sortable: true },
-    { key: "machineNo", label: "Machine No.", type: "text", sortable: true },
+    // { key: "machineNo", label: "Machine No.", type: "text", sortable: true },
     { key: "weight", label: "Weight", type: "number", sortable: true },
-    { key: "opticalDensity", label: "Optical Density (OD)", type: "text", sortable: true },
-    { key: "resistance", label: "Resistance", type: "text", sortable: true },
+    { key: "factoryWastageWeight", label: "Factory Wastage Weight", type: "number", sortable: true },
+    // { key: "opticalDensity", label: "Optical Density (OD)", type: "text", sortable: true },
+    // { key: "resistance", label: "Resistance", type: "text", sortable: true },
     { key: "timestamp", label: "Timestamp", type: "date", sortable: true },
     { key: "nextStage", label: "Next Stage", type: "text", sortable: false },
     { key: "status", label: "Status", type: "enum", sortable: false, filter: "dropdown", options: WO_STATUS_OPTIONS },
@@ -61,7 +62,7 @@ const slittingConfig: TableConfig<any> = {
     { key: "productNo", label: "Product No", type: "text", sortable: true },
     { key: "rmId", label: "Coil ID", type: "text", sortable: true },
     { key: "weight", label: "Weight", type: "number", sortable: true },
-    { key: "thickness", label: "Thickness (μ)", type: "number", sortable: true },
+    // { key: "thickness", label: "Thickness (μ)", type: "number", sortable: true },
     { key: "grade", label: "Grade", type: "text", sortable: true },
     { key: "timestampAdded", label: "Timestamp Added", type: "date", sortable: true },
     { key: "stage", label: "Stage", type: "enum", sortable: false, filter: "dropdown", options: ["Slitting", "Completed"] },
@@ -99,8 +100,14 @@ export default function AdminWorkOrderDetailPage({ params }: DetailPageProps) {
 
   const rawMaterialRows = useMemo(() => {
     return ((woData?.work_order_materials as any[]) || []).map((wom) => {
+          console.log(wom);
       const inv = wom.inventory || {};
       const actual = wom.quantity_kg ?? 0;
+      
+      const wastage = (woData?.metallisation as any[])
+        ?.filter(m => m.raw_material_id === inv.id)
+        .reduce((sum, m) => sum + (m.factory_wastage_kg || 0), 0) || 0;
+        
       return {
         rollNo: inv.roll_no || "-",
         netWeight: inv.net_weight_kg != null ? `${inv.net_weight_kg}kgs` : "-",
@@ -111,7 +118,7 @@ export default function AdminWorkOrderDetailPage({ params }: DetailPageProps) {
         actualWeight: actual ? `${actual}kgs` : "-",
         damagedWeight: "-",
         usedWeight: actual ? `${actual}kgs` : "-",
-        wastageWeight: "-",
+        wastageWeight: wastage ? `${wastage}kgs` : "0kgs",
         supplier: inv.supplier || "-",
         stage: inv.stage || "-",
         status: inv.status || "-",
@@ -122,11 +129,12 @@ export default function AdminWorkOrderDetailPage({ params }: DetailPageProps) {
   const metallisationRows = useMemo(() => {
     return ((woData?.metallisation as any[]) || []).map((m) => ({
       coilNo: m.metallisation_no || "-",
-      rmId: m.inventory?.roll_no || "-",
-      machineNo: m.machine_no || "-",
+      rmId: m.inventory?.raw_material_code || m.inventory?.roll_no || "-",
+      // machineNo: m.machine_no || "-",
       weight: m.weight_kg != null ? `${m.weight_kg}kgs` : "-",
-      opticalDensity: m.optical_density || "-",
-      resistance: m.resistance_ohms != null ? `${m.resistance_ohms} Ohms` : "-",
+      factoryWastageWeight: m.factory_wastage_kg != null ? `${m.factory_wastage_kg}kgs` : "-",
+      // opticalDensity: m.optical_density || "-",
+      // resistance: m.resistance_ohms != null ? `${m.resistance_ohms} Ohms` : "-",
       timestamp: m.created_at
         ? new Date(m.created_at).toLocaleString("en-GB", {
           day: "2-digit", month: "short", year: "numeric",
@@ -345,8 +353,8 @@ export default function AdminWorkOrderDetailPage({ params }: DetailPageProps) {
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`px-3 md:px-4 py-2 text-[13px] md:text-[14px] font-medium rounded-[8px] transition-colors whitespace-nowrap shrink-0 ${activeTab === tab
-                  ? "bg-[#00B6E2] text-white"
-                  : "bg-white text-[#5C5C5C] hover:bg-[#F5F7FA]"
+                ? "bg-[#00B6E2] text-white"
+                : "bg-white text-[#5C5C5C] hover:bg-[#F5F7FA]"
                 }`}
             >
               {tab}
@@ -439,11 +447,11 @@ export default function AdminWorkOrderDetailPage({ params }: DetailPageProps) {
 
       {qrData && <QRCodeModal id={qrData.id} type={qrData.type} details={qrData.details} onClose={() => setQrData(null)} />}
 
-      <DocsUploadedModal 
-        isOpen={isDocModalOpen} 
-        onClose={() => setIsDocModalOpen(false)} 
-        activeTab={activeTab} 
-        woData={woData} 
+      <DocsUploadedModal
+        isOpen={isDocModalOpen}
+        onClose={() => setIsDocModalOpen(false)}
+        activeTab={activeTab}
+        woData={woData}
       />
 
       <RowImagesModal

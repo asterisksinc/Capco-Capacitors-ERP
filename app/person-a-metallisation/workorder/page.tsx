@@ -19,9 +19,6 @@ import { MobileHeader } from "@/components/MobileHeader";
 import { QRCodeModal, type QRModalData } from "@/components/QRCodeModal";
 import { workOrderService } from "@/src/services/workOrderService";
 
-
-
-
 const statusFilter: EnumFilter = { label: "Status", key: "status", options: WO_STATUS_OPTIONS };
 const stageFilter: EnumFilter = { label: "Stage", key: "stage", options: WO_STAGE_OPTIONS };
 const textFilters: TextFilter[] = [

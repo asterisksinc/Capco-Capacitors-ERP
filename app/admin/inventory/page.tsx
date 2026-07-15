@@ -8,6 +8,8 @@ import { QRCodeModal, type QRModalData } from "@/components/QRCodeModal";
 import { ScannerInput } from "@/components/ScannerInput";
 import * as XLSX from "xlsx";
 
+import { productionStageService } from "@/src/services/productionStageService";
+
 const micronOptions = ["2", "2.5", "3", "3.5", "4", "4.5", "4.5HT", "5", "5.5", "6", "6.5", "7", "7.5"];
 const supplierOptions = ["VedaCap Industries", "ElectroForge Capacitors", "NextGen Metallic Pvt Ltd"];
 
@@ -38,6 +40,8 @@ const defaultForm = {
   weight: "",
   netWeight: "",
   grossWeight: "",
+  wastageWeight: "",
+  damagedWeight: "",
   temperature: "25°C",
   supplier: supplierOptions[0],
 };
@@ -67,7 +71,19 @@ export default function AdminInventoryPage() {
 
   const fetchInventory = async () => {
     try {
-      const data = await inventoryService.list();
+      const [data, metallisationData] = await Promise.all([
+        inventoryService.list(),
+        productionStageService.listMetallisation()
+      ]);
+
+      const wastageMap = new Map();
+      (metallisationData as any[]).forEach((m) => {
+        if (m.raw_material_id) {
+          const current = wastageMap.get(m.raw_material_id) || 0;
+          wastageMap.set(m.raw_material_id, current + (m.factory_wastage_kg || 0));
+        }
+      });
+
       const formatted = (data as any[]).map((item) => ({
         id: item.id,
         rawMaterialId: item.raw_material_code || "-",
@@ -77,6 +93,8 @@ export default function AdminInventoryPage() {
         weight: item.net_weight_kg != null ? `${item.net_weight_kg}kgs` : "-",
         netWeight: item.net_weight_kg != null ? `${item.net_weight_kg}kgs` : "-",
         grossWeight: item.gross_weight_kg != null ? `${item.gross_weight_kg}kgs` : "-",
+        wastageWeight: wastageMap.has(item.id) ? `${wastageMap.get(item.id)}kgs` : "-",
+        damagedWeight: "-",
         temperature: item.temperature_c != null ? `${item.temperature_c}°C` : "-",
         supplier: item.supplier || "-",
         date: item.date_received ? new Date(item.date_received).toLocaleDateString("en-GB") : "-",
@@ -130,6 +148,10 @@ export default function AdminInventoryPage() {
       Number(form.netWeight) > 0 &&
       form.grossWeight.trim() &&
       Number(form.grossWeight) > 0 &&
+      form.wastageWeight.trim() &&
+      Number(form.wastageWeight) >= 0 &&
+      form.damagedWeight.trim() &&
+      Number(form.damagedWeight) >= 0 &&
       form.temperature.trim() &&
       form.supplier.trim()
     );
@@ -201,6 +223,8 @@ export default function AdminInventoryPage() {
     let weight = parseFloat(normalizedRow["weight"] || "0");
     let netWeight = parseFloat(normalizedRow["netweight"] || weight);
     let grossWeight = parseFloat(normalizedRow["grossweight"] || weight);
+    let wastageWeight = parseFloat(normalizedRow["wastageweight"] || "0");
+    let damagedWeight = parseFloat(normalizedRow["damagedweight"] || "0");
     const temperature = parseFloat(normalizedRow["temperature"] || "25");
     const supplier = normalizedRow["supplier"] || supplierOptions[0];
     let status = normalizedRow["status"] || "In Inventory";
@@ -214,6 +238,8 @@ export default function AdminInventoryPage() {
       width_m: width,
       net_weight_kg: netWeight,
       gross_weight_kg: grossWeight,
+      wastage_weight_kg: wastageWeight,
+      damaged_weight_kg: damagedWeight,
       temperature_c: temperature,
       supplier: String(supplier).trim(),
       status: (status === "Being Used" || status === "Used Completely") ? status : "In Inventory"
@@ -276,6 +302,8 @@ export default function AdminInventoryPage() {
       "Width (m)": item.width,
       "Net Weight": item.netWeight ?? item.weight,
       "Gross Weight": item.grossWeight ?? "",
+      "Wastage Weight": item.wastageWeight ?? "",
+      "Damaged Weight": item.damagedWeight ?? "",
       "Temperature": item.temperature ?? "",
       "Supplier": item.supplier,
       "Date": item.date,
@@ -436,6 +464,8 @@ export default function AdminInventoryPage() {
                   <th className="px-4 py-[12px] text-[13px] font-semibold text-[#667085]">Width (m)</th>
                   <th className="px-4 py-[12px] text-[13px] font-semibold text-[#667085]">Net Weight</th>
                   <th className="px-4 py-[12px] text-[13px] font-semibold text-[#667085]">Gross Weight</th>
+                  <th className="px-4 py-[12px] text-[13px] font-semibold text-[#667085]">Wastage/Left Weight</th>
+                  <th className="px-4 py-[12px] text-[13px] font-semibold text-[#667085]">Damaged Weight</th>
                   <th className="px-4 py-[12px] text-[13px] font-semibold text-[#667085]">Temperature</th>
                   <th className="px-4 py-[12px] text-[13px] font-semibold text-[#667085]">Supplier</th>
                   <th className="px-4 py-[12px] text-[13px] font-semibold text-[#667085]">Date Received</th>
@@ -462,6 +492,8 @@ export default function AdminInventoryPage() {
                       <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.width}</td>
                       <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.netWeight ?? row.weight}</td>
                       <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.grossWeight ?? "-"}</td>
+                      <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.wastageWeight ?? "-"}</td>
+                      <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.damagedWeight ?? "-"}</td>
                       <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.temperature ?? "-"}</td>
                       <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.supplier}</td>
                       <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.date}</td>

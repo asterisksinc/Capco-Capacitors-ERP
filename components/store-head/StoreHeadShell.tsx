@@ -6,12 +6,14 @@ import { X } from "lucide-react";
 import { StoreHeadSidebar } from "./StoreHeadSidebar";
 import { StoreHeadTopbar } from "./StoreHeadTopbar";
 import { MobileMenuProvider, useMobileMenu } from "@/components/MobileMenuContext";
-import { LayoutDashboard, Calendar, Warehouse } from "lucide-react";
+import { LayoutDashboard, Calendar, Warehouse, ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
 
 const mobileNavItems = [
   { name: "Overview", href: "/store-head/overview", icon: LayoutDashboard },
   { name: "Work Orders", href: "/store-head/workorder", icon: Calendar },
   { name: "Inventory", href: "/store-head/inventory", icon: Warehouse },
+  { name: "Material Requests", href: "/store-head/material-requests", icon: ArrowDownToLine },
+  { name: "Material Returns", href: "/store-head/material-returns", icon: ArrowUpFromLine },
 ];
 
 function StoreHeadShellContent({ children }: { children: ReactNode }) {
