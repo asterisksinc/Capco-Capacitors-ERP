@@ -10,7 +10,7 @@ export function StatusBadge({ status }: StatusBadgeProps) {
     return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#FFF0F1] text-[#FB3748] text-[12px] font-medium leading-tight whitespace-nowrap">{status}</span>;
   }
   // Orange
-  if (["In-progress", "Pending", "Partially Issued", "Partial Payment", "Being Used", "Quality Check Pending"].includes(status)) {
+  if (["In-progress", "Pending", "Returned", "Partially Issued", "Partial Payment", "Being Used", "Quality Check Pending"].includes(status)) {
     return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#FFF4ED] text-[#E19242] text-[12px] font-medium leading-tight whitespace-nowrap">{status}</span>;
   }
   // Green

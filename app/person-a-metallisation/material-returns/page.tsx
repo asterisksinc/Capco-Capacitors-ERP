@@ -19,7 +19,7 @@ const tableConfig: TableConfig<any> = {
     { key: "weight", label: "Weight", type: "text", sortable: true },
     { key: "usedWeight", label: "Used Weight", type: "text", sortable: true },
     { key: "reason", label: "Reason", type: "text", sortable: false },
-    { key: "status", label: "Status", type: "enum", sortable: false, filter: "dropdown", options: ["Pending", "Accepted", "Rejected"] },
+    { key: "status", label: "Status", type: "enum", sortable: false, filter: "dropdown", options: ["Pending", "Returned", "Accepted", "Rejected"] },
     { key: "createdAt", label: "Created At", type: "date", sortable: true },
     { key: "options", label: "Action", type: "text", sortable: false },
   ],
@@ -27,6 +27,7 @@ const tableConfig: TableConfig<any> = {
 
 function StatusBadge({ status }: { status: string }) {
   if (status === "Pending") return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#FFF4ED] text-[#E19242] text-[12px] font-medium">Pending</span>;
+  if (status === "Returned") return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#FFF4ED] text-[#E19242] text-[12px] font-medium">Returned</span>;
   if (status === "Accepted") return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#E8F8F0] text-[#1CB061] text-[12px] font-medium">Accepted</span>;
   if (status === "Rejected") return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#FFF0F1] text-[#FB3748] text-[12px] font-medium">Rejected</span>;
   return null;
@@ -84,7 +85,7 @@ export default function PersonAMetallisationMaterialReturnsPage() {
         weight: row.weight_kg ? String(row.weight_kg) : "-",
         usedWeight: row.used_quantity ? String(row.used_quantity) : "-",
         reason: row.reason || "-",
-        status: row.status || "Pending",
+        status: row.status || "Returned",
         returnedBy: profileMap.get(row.returned_by) || row.returned_by,
         createdAt: new Date(row.created_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
       })));
@@ -225,13 +226,13 @@ export default function PersonAMetallisationMaterialReturnsPage() {
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C]">{row.createdAt}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1">
-                        {row.reason?.includes("[Slitting]") && row.status === "Pending" && (
+                        {row.reason?.includes("[Slitting]") && (row.status === "Pending" || row.status === "Returned") && (
                           <>
                             <button onClick={() => handleAccept(row)} className="text-[11px] bg-[#1CB061] text-white px-2 py-1 rounded-[4px] hover:bg-[#18994e]">Accept</button>
                             <button onClick={() => rejectMaterialReturn(row.originalId)} className="text-[11px] bg-[#FB3748] text-white px-2 py-1 rounded-[4px] hover:bg-[#d92d20]">Reject</button>
                           </>
                         )}
-                        {row.status !== "Pending" && <span className="text-[12px] text-[#A1A1AA]">-</span>}
+                        {row.status !== "Pending" && row.status !== "Returned" && <span className="text-[12px] text-[#A1A1AA]">-</span>}
                       </div>
                     </td>
                   </tr>

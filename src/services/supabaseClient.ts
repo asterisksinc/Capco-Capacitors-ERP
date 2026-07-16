@@ -19,6 +19,7 @@ export type WorkflowStatus =
   | "Completed"
   | "Cancelled"
   | "Pending"
+  | "Returned"
   | "Issued"
   | "Accepted"
   | "Rejected"

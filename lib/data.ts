@@ -144,7 +144,7 @@ export type MaterialReturn = {
   weight: string;
   usedWeight: string;
   reason: string;
-  status: "Pending" | "Accepted" | "Rejected";
+  status: "Pending" | "Returned" | "Accepted" | "Rejected";
   createdAt: string;
 };
 

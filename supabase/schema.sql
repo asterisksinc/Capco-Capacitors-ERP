@@ -11,7 +11,7 @@ end $$;
 
 do $$
 begin
-  create type public.workflow_status as enum ('Yet to Start', 'In-progress', 'Completed', 'Cancelled', 'Pending', 'Issued', 'Accepted', 'Rejected', 'Partially Issued', 'Paid', 'Partial Payment', 'Due', 'In Inventory', 'Being Used', 'Used Completely', 'Quality Check Pending', 'Dispatch Ready');
+  create type public.workflow_status as enum ('Yet to Start', 'In-progress', 'Completed', 'Cancelled', 'Pending', 'Returned', 'Issued', 'Accepted', 'Rejected', 'Partially Issued', 'Paid', 'Partial Payment', 'Due', 'In Inventory', 'Being Used', 'Used Completely', 'Quality Check Pending', 'Dispatch Ready');
 exception when duplicate_object then null;
 end $$;
 
@@ -25,6 +25,7 @@ begin
     'Completed',
     'Cancelled',
     'Pending',
+    'Returned',
     'Issued',
     'Accepted',
     'Rejected',

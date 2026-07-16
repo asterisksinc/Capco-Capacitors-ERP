@@ -4,6 +4,7 @@ export const WO_STATUS_OPTIONS = [
   "Completed",
   "Cancelled",
   "Pending",
+  "Returned",
   "Issued",
   "Accepted",
   "Rejected",

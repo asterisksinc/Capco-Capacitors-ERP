@@ -30,7 +30,7 @@ export const materialReturnService = {
     return supabaseRest.create("material_returns", {
       ...payload,
       used_weight_kg: payload.used_weight_kg ?? 0,
-      status: "Pending" satisfies WorkflowStatus,
+      status: "Returned" satisfies WorkflowStatus,
     });
   },
   accept(id: string, acceptedBy: string) {
