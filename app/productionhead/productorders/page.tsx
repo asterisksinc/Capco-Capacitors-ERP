@@ -7,6 +7,7 @@ import { productOrderService } from "@/src/services/productOrderService";
 import { dashboardService } from "@/src/services/dashboardService";
 import { Loader2 } from "lucide-react";
 import type { TableConfig } from "@/hooks/useTableControls";
+import { TablePagination } from "@/components/table/TablePagination";
 import { useTableControls } from "@/hooks/useTableControls";
 import { SortableHeader } from "@/components/table/SortableHeader";
 import { TableToolbar } from "@/components/table/TableToolbar";
@@ -153,7 +154,9 @@ export default function SupervisorProductOrdersPage() {
     filters,
     handleFilterChange,
     dateRange,
-    setDateRange
+    setDateRange,
+    getPaginatedData,
+    setCurrentPage,
   } = useTableControls({ data: productOrders, config: productOrderConfig });
 
   const [tableFilters, setTableFilters] = useState<FilterState>(() => {
@@ -297,6 +300,8 @@ export default function SupervisorProductOrdersPage() {
   const searchedData = filteredData.filter((row) =>
     row.id.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const { paginatedData, totalPages, validPage: currentPage } = getPaginatedData(filteredData);
 
   return (
     <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-white flex flex-col relative w-full max-w-full">
@@ -643,7 +648,7 @@ export default function SupervisorProductOrdersPage() {
             <input 
               type="text" 
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
               placeholder="Search by Product Order ID..." 
               className="h-[40px] w-full pl-9 pr-3 bg-white border border-[#EBEBEB] rounded-[8px] text-[14px] text-[#171717] placeholder:text-[#A1A1AA] focus:outline-none focus:border-[#00B6E2] " 
             />
@@ -749,6 +754,7 @@ export default function SupervisorProductOrdersPage() {
               </tbody>
             </table>
           </div>
+          <TablePagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
           
           {/* Pagination Footer */}
           <div className="flex items-center justify-between border-t border-[#EAECF0] pt-4 mt-2">

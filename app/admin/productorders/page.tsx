@@ -7,6 +7,7 @@ import Link from "next/link";
 import { productOrderService } from "@/src/services/productOrderService";
 import { MobileHeader } from "@/components/MobileHeader";
 import type { TableConfig } from "@/hooks/useTableControls";
+import { TablePagination } from "@/components/table/TablePagination";
 import { useTableControls } from "@/hooks/useTableControls";
 import { SortableHeader } from "@/components/table/SortableHeader";
 import { TableToolbar } from "@/components/table/TableToolbar";
@@ -75,7 +76,9 @@ export default function ProductOrdersPage() {
     filters,
     handleFilterChange,
     dateRange,
-    setDateRange
+    setDateRange,
+    getPaginatedData,
+    setCurrentPage,
   } = useTableControls({ data: rows, config: productOrderConfig });
 
   const filteredData = useMemo(() => {
@@ -89,6 +92,8 @@ export default function ProductOrdersPage() {
   const completedCount = rows.filter((row) => row.status === "Completed").length;
   const inProgressCount = rows.filter((row) => row.status === "In-progress").length;
   const yetToStartCount = rows.filter((row) => row.status === "Yet to Start").length;
+
+  const { paginatedData, totalPages, validPage: currentPage } = getPaginatedData(filteredData);
 
   const kpiStats = [
     { label: "Total Product Orders", value: String(totalProductOrders), subtext: "All orders in store", subColor: "text-[#00B6E2]" },
@@ -150,13 +155,13 @@ export default function ProductOrdersPage() {
             <input
               placeholder="Search by Product Order ID or Code..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
               className="h-[44px] w-full pl-10 pr-4 bg-white border border-[#EBEBEB] rounded-[8px] text-[14px] focus:outline-none focus:border-[#00B6E2]"
             />
           </div>
 
           <TableToolbar dateRange={dateRange} onDateRangeChange={setDateRange} onExport={() => {
-            const exportData = filteredData.map((row: any) => ({
+            const exportData = paginatedData.map((row: any) => ({
               "Order ID": row.id ?? "",
               "Product Code": row.code ?? "",
               "Capacitor Type": row.type ?? "",
@@ -205,7 +210,7 @@ export default function ProductOrdersPage() {
                     </td>
                   </tr>
                 ) : (
-                  filteredData.map((row, idx) => (
+                  paginatedData.map((row, idx) => (
                     <tr key={idx} className="hover:bg-[#F9FAFB] transition-colors">
                       {productOrderConfig.columns.map((col) => {
                         if (String(col.key) === "id") {
@@ -272,6 +277,7 @@ export default function ProductOrdersPage() {
               </tbody>
             </table>
           </div>
+          <TablePagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
         </div>
       </section>
       {qrData && <QRCodeModal id={qrData.id} type={qrData.type} details={qrData.details} onClose={() => setQrData(null)} />}

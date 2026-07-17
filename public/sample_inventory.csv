@@ -1,5 +1,5 @@
 Raw Material ID,Roll ID,Micron,Width,Weight,Supplier,Date,Status
-RM-9001,RL-2405-001,4.5,1.0,55.5,VedaCap Industries,28/06/2026,In Inventory
-RM-9002,RL-2405-002,5.0,1.2,48.2,ElectroForge Capacitors,28/06/2026,In Inventory
-RM-9003,RL-2405-003,3.5,0.8,60.1,NextGen Metallic Pvt Ltd,28/06/2026,In Inventory
-RM-9004,RL-2405-004,6.0,1.1,50.0,VedaCap Industries,28/06/2026,In Inventory
+RM-9101,RL-2406-001,4.5,30,55.5,VedaCap Industries,28/06/2026,In Inventory
+RM-9102,RL-2406-002,5.0,45,48.2,ElectroForge Capacitors,28/06/2026,In Inventory
+RM-9103,RL-2406-003,3.5,37.5,60.1,NextGen Metallic Pvt Ltd,28/06/2026,In Inventory
+RM-9104,RL-2406-004,6.0,50,50.0,VedaCap Industries,28/06/2026,In Inventory

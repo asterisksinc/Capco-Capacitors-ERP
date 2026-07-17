@@ -1,5 +1,6 @@
 "use client";
 
+import { TablePagination } from "@/components/table/TablePagination";
 import { Plus, Search, X, Check, Package, Warehouse, Activity, Archive, QrCode, Scan, Download } from "lucide-react";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { MobileHeader } from "@/components/MobileHeader";
@@ -18,6 +19,7 @@ type InventoryForm = {
   weight: string;
   netWeight: string;
   grossWeight: string;
+  usedWeight: string;
   wastageWeight: string;
   damagedWeight: string;
   temperature: string;
@@ -34,7 +36,13 @@ function StatusBadge({ status }: { status: string }) {
   if (status === "Being Used") {
     return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#FFF4ED] text-[#E19242] text-[12px] font-medium leading-tight shrink-0">Being Used</span>;
   }
-  return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#F2F4F7] text-[#667085] text-[12px] font-medium leading-tight shrink-0">Used Completely</span>;
+  if (status === "Returned") {
+    return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#E6F7FF] text-[#00B6E2] text-[12px] font-medium leading-tight shrink-0">Returned</span>;
+  }
+  if (status === "Used Completely") {
+    return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#F2F4F7] text-[#667085] text-[12px] font-medium leading-tight shrink-0">Used Completely</span>;
+  }
+  return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#F2F4F7] text-[#667085] text-[12px] font-medium leading-tight shrink-0">{status || "Unknown"}</span>;
 }
 
 function getDateString() {
@@ -59,6 +67,7 @@ const defaultForm: InventoryForm = {
   weight: "",
   netWeight: "",
   grossWeight: "",
+  usedWeight: "",
   wastageWeight: "",
   damagedWeight: "",
   temperature: "25°C",
@@ -74,26 +83,40 @@ export default function ProductionHeadInventoryPage() {
   useEffect(() => {
     async function loadData() {
       try {
-        const [rows, metallisationRows] = await Promise.all([
+        const [data, metallisationData] = await Promise.all([
           inventoryService.list(),
           productionStageService.listMetallisation()
         ]);
         
         const wastageMap = new Map();
-        (metallisationRows as any[]).forEach(m => {
+        const usedWeightMap = new Map();
+        (metallisationData as any[]).forEach((m) => {
           if (m.raw_material_id) {
-            const current = wastageMap.get(m.raw_material_id) || 0;
-            wastageMap.set(m.raw_material_id, current + (m.factory_wastage_kg || 0));
+            const currentW = wastageMap.get(m.raw_material_id) || 0;
+            wastageMap.set(m.raw_material_id, currentW + (m.factory_wastage_kg || 0));
+            const currentU = usedWeightMap.get(m.raw_material_id) || 0;
+            usedWeightMap.set(m.raw_material_id, currentU + (m.weight_kg || 0));
           }
         });
 
-        const formatted = (rows as any[]).map(row => ({
-          ...row,
-          wastage_weight_kg: wastageMap.has(row.id) ? wastageMap.get(row.id) : null,
+        const formatted = (data as any[]).map((item) => ({
+          ...item,
+          raw_material_code: item.raw_material_code,
+          roll_no: item.roll_no,
+          micron: item.micron,
+          width_m: item.width_m,
+          net_weight_kg: item.net_weight_kg,
+          gross_weight_kg: item.gross_weight_kg,
+          used_weight_kg: usedWeightMap.has(item.id) ? usedWeightMap.get(item.id) : null,
+          wastage_weight_kg: wastageMap.has(item.id) ? wastageMap.get(item.id) : null,
           damaged_weight_kg: null,
+          temperature_c: item.temperature_c,
+          supplier: item.supplier,
+          date_received: item.date_received,
+          status: item.status
         }));
         
-        setInventoryItems(formatted);;
+        setInventoryItems(formatted);
       } catch (err) {
         console.error("Failed to load inventory", err);
       } finally {
@@ -112,6 +135,13 @@ export default function ProductionHeadInventoryPage() {
       row.supplier?.toLowerCase().includes(q)
     );
   });
+
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
+  const totalPages = Math.ceil(filteredData.length / pageSize) || 1;
+  const validPage = Math.min(currentPage, totalPages);
+  const paginatedData = filteredData.slice((validPage - 1) * pageSize, validPage * pageSize);
 
   const totalItems = inventoryItems.length;
   const inInventory = inventoryItems.filter((r) => r.status === "In Inventory").length;
@@ -189,7 +219,7 @@ export default function ProductionHeadInventoryPage() {
         <section className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="relative w-full sm:max-w-[400px]">
             <Search className="w-4 h-4 text-[#A1A1AA] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-            <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search by RM ID, Roll ID, or Supplier..." className="h-[40px] w-full pl-9 pr-3 bg-white border border-[#EBEBEB] rounded-[8px] text-[14px] text-[#171717] placeholder:text-[#A1A1AA] focus:outline-none focus:border-[#00B6E2]" />
+            <input type="text" value={searchQuery} onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }} placeholder="Search by RM ID, Roll ID, or Supplier..." className="h-[40px] w-full pl-9 pr-3 bg-white border border-[#EBEBEB] rounded-[8px] text-[14px] text-[#171717] placeholder:text-[#A1A1AA] focus:outline-none focus:border-[#00B6E2]" />
           </div>
           <button
             onClick={() => {
@@ -200,6 +230,7 @@ export default function ProductionHeadInventoryPage() {
                 "Width (m)": row.width_m ?? "",
                 "Net Weight": row.net_weight_kg ?? "",
                 "Gross Weight": row.gross_weight_kg ?? "",
+                "Used Weight": row.used_weight_kg ?? "",
                 "Temperature": row.temperature_c ?? "",
                 "Supplier": row.supplier ?? "",
                 "Date": row.date_received ?? "",
@@ -225,6 +256,7 @@ export default function ProductionHeadInventoryPage() {
                   <th className="px-4 py-[11px] text-[13px] font-semibold text-[#667085]">Width (m)</th>
                   <th className="px-4 py-[11px] text-[13px] font-semibold text-[#667085]">Net Weight</th>
                   <th className="px-4 py-[11px] text-[13px] font-semibold text-[#667085]">Gross Weight</th>
+                  <th className="px-4 py-[11px] text-[13px] font-semibold text-[#667085]">Used Weight</th>
                   <th className="px-4 py-[11px] text-[13px] font-semibold text-[#667085]">Wastage/Left Weight</th>
                   <th className="px-4 py-[11px] text-[13px] font-semibold text-[#667085]">Damaged Weight</th>
                   <th className="px-4 py-[11px] text-[13px] font-semibold text-[#667085]">Temperature</th>
@@ -235,7 +267,7 @@ export default function ProductionHeadInventoryPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#EAECF0]">
-                {filteredData.length > 0 ? filteredData.map((row, idx) => (
+                {paginatedData.length > 0 ? paginatedData.map((row, idx) => (
                   <tr key={idx} className="hover:bg-gray-50/50 transition-colors">
                     <td className="px-4 py-4 text-[14px] text-[#00B6E2] font-semibold whitespace-nowrap">{row.raw_material_code}</td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.roll_no}</td>
@@ -243,6 +275,7 @@ export default function ProductionHeadInventoryPage() {
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.width_m}</td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.net_weight_kg != null ? `${row.net_weight_kg}kgs` : "-"}</td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.gross_weight_kg != null ? `${row.gross_weight_kg}kgs` : "-"}</td>
+                    <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.used_weight_kg != null ? `${row.used_weight_kg}kgs` : "-"}</td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.wastage_weight_kg != null ? `${row.wastage_weight_kg}kgs` : "-"}</td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.damaged_weight_kg != null ? `${row.damaged_weight_kg}kgs` : "-"}</td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.temperature_c ?? "-"}</td>
@@ -260,6 +293,7 @@ export default function ProductionHeadInventoryPage() {
                 )}
               </tbody>
             </table>
+            <TablePagination currentPage={validPage} totalPages={totalPages} onPageChange={setCurrentPage} />
           </div>
         </section>
       </div>

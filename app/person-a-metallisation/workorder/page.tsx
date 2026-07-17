@@ -8,6 +8,7 @@ import { useState } from "react";
 import { Layers, Zap, Scissors, CheckCircle } from "lucide-react";
 import { useStore } from "@/hooks/useStore";
 import type { TableConfig } from "@/hooks/useTableControls";
+import { TablePagination } from "@/components/table/TablePagination";
 import { useTableControls } from "@/hooks/useTableControls";
 import { useEffect, useMemo } from "react";
 import { SortableHeader } from "@/components/table/SortableHeader";
@@ -92,7 +93,9 @@ export default function OperatorWorkOrderPage() {
     filters,
     handleFilterChange,
     dateRange,
-    setDateRange
+    setDateRange,
+    getPaginatedData,
+    setCurrentPage,
   } = useTableControls({ data, config: workOrderConfig });
 
   const handleSort = handleSortRaw as (key: string | number | symbol) => void;
@@ -148,6 +151,8 @@ export default function OperatorWorkOrderPage() {
   const completedCount = workOrders.filter((row) => row.status === "Completed").length;
   const inProgressCount = workOrders.filter((row) => row.status === "In-progress").length;
   const yetToStartCount = workOrders.filter((row) => row.status === "Yet to Start").length;
+
+  const { paginatedData, totalPages, validPage: currentPage } = getPaginatedData(filteredData);
 
   const kpiStats = [
     { label: "Total Work Orders", value: String(totalWorkOrders), icon: Layers, valClass: "text-[#171717]", subtext: `Yet ${yetToStartCount} | In-progress ${inProgressCount} | Completed ${completedCount}` },
@@ -216,7 +221,7 @@ export default function OperatorWorkOrderPage() {
             <input 
               type="text" 
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
               placeholder="Search by Work Order ID..." 
               className="h-[40px] w-full pl-9 pr-3 bg-white border border-[#EBEBEB] rounded-[8px] text-[14px] text-[#171717] placeholder:text-[#A1A1AA] focus:outline-none focus:border-[#00B6E2]" 
             />
@@ -225,7 +230,7 @@ export default function OperatorWorkOrderPage() {
             dateRange={dateRange}
             onDateRangeChange={setDateRange}
             onExport={() => {
-              const exportData = filteredData.map(row => ({
+              const exportData = paginatedData.map(row => ({
                 "Work Order ID": row.id,
                 "Micron": row.micron,
                 "Width": row.width,
@@ -263,7 +268,7 @@ export default function OperatorWorkOrderPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#EAECF0]">
-                {filteredData.length > 0 ? filteredData.map((row, idx) => (
+                {paginatedData.length > 0 ? paginatedData.map((row, idx) => (
                   <tr key={idx} className="hover:bg-gray-50/50 transition-colors group">
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C] font-medium whitespace-nowrap">
                       <Link href={`/person-a-metallisation/workorder/${row.id}`} className="hover:text-[#00B6E2] hover:underline cursor-pointer">
@@ -311,6 +316,7 @@ export default function OperatorWorkOrderPage() {
               </tbody>
             </table>
           </div>
+          <TablePagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
         </section>
       </div>
       {qrData && <QRCodeModal id={qrData.id} type={qrData.type} details={qrData.details} onClose={() => setQrData(null)} />}

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Search } from "lucide-react";
 import { materialReturnService } from "@/src/services/materialReturnService";
 import type { TableConfig } from "@/hooks/useTableControls";
+import { TablePagination } from "@/components/table/TablePagination";
 import { useTableControls } from "@/hooks/useTableControls";
 import { SortableHeader } from "@/components/table/SortableHeader";
 import { TableToolbar } from "@/components/table/TableToolbar";
@@ -39,22 +40,13 @@ export default function StoreHeadMaterialReturnsPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [rows, profiles] = await Promise.all([
-        materialReturnService.list(),
-        import("@/src/services/supabaseClient").then((m) => m.supabaseRest.list<any>("profiles", { select: "id,roles(name)" })),
+      const [rows] = await Promise.all([
+        materialReturnService.list()
       ]);
-
-      const profileMap = new Map();
-      for (const p of profiles) {
-        profileMap.set(p.id, p.roles?.name);
-      }
 
       // Show returns created by Metallisation
       const relevantRows = rows.filter((row: any) => {
-        const roleName = profileMap.get(row.returned_by);
-        const isLegacyMatch = roleName === "Metallisation" || row.returned_by === "Metallisation";
-        const isTagged = row.reason?.includes("[Metallisation]");
-        return isLegacyMatch || isTagged;
+        return row.reason?.includes("[Metallisation]");
       });
 
       setData(relevantRows.map((row: any) => ({
@@ -62,10 +54,10 @@ export default function StoreHeadMaterialReturnsPage() {
         originalId: row.id,
         materialId: row.inventory?.raw_material_code || row.stock?.stock_no || row.material_id || "-",
         weight: row.weight_kg ? String(row.weight_kg) : "-",
-        usedWeight: row.used_quantity ? String(row.used_quantity) : "-",
+        usedWeight: row.used_weight_kg ? String(row.used_weight_kg) : "-",
         reason: row.reason || "-",
         status: row.status || "Returned",
-        returnedBy: profileMap.get(row.returned_by) || row.returned_by,
+        returnedBy: row.returned_by || "-",
         createdAt: new Date(row.created_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
       })));
     } catch (err) {
@@ -87,6 +79,8 @@ export default function StoreHeadMaterialReturnsPage() {
     handleFilterChange,
     dateRange,
     setDateRange,
+    getPaginatedData,
+    setCurrentPage,
   } = useTableControls({ data, config: tableConfig });
 
   const handleSort = handleSortRaw as (key: string | number | symbol) => void;
@@ -96,23 +90,58 @@ export default function StoreHeadMaterialReturnsPage() {
     return true;
   });
 
-  const handleAccept = async (row: any) => {
+    const handleAccept = async (row: any) => {
     try {
-      await materialReturnService.accept(row.originalId, "Store Head");
+      const { authService } = await import("@/src/services/authService");
+      const user = await authService.getCurrentProfile();
+      await materialReturnService.accept(row.originalId, user?.id || "");
+
+      const { supabaseRest } = await import("@/src/services/supabaseClient");
+      const returnRecord = await supabaseRest.getById("material_returns", row.originalId, "inventory_id,material_id,weight_kg");
+      
+      const targetInvId = (returnRecord as any)?.inventory_id || (returnRecord as any)?.material_id;
+      
+      if (targetInvId) {
+        const { inventoryService } = await import("@/src/services/inventoryService");
+        const { productionStageService } = await import("@/src/services/productionStageService");
+        
+        const inventoryRecord = await inventoryService.getById(targetInvId);
+        
+        const prevUsedWeight = (inventoryRecord as any).used_weight_kg || 0;
+        const returnedWeight = (returnRecord as any).weight_kg || 0;
+        const newUsedWeight = Math.max(0, prevUsedWeight - returnedWeight);
+        
+        const netWeight = (inventoryRecord as any).net_weight_kg || 0;
+        const wastage = (inventoryRecord as any).wastage_weight_kg || 0;
+        const newGrossWeight = netWeight - newUsedWeight - wastage;
+        
+        await inventoryService.update(targetInvId, {
+          used_weight_kg: newUsedWeight,
+          gross_weight_kg: newGrossWeight,
+          status: "Returned" as any
+        } as any);
+      }
+
       loadData();
     } catch (err) {
       console.error("Failed to accept material return", err);
+      alert("Return accepted, but inventory update failed — please refresh and verify");
     }
   };
 
   const rejectMaterialReturn = async (id: string) => {
     try {
-      await materialReturnService.reject(id, "Store Head");
+      
+      const { authService } = await import("@/src/services/authService");
+      const user = await authService.getCurrentProfile();
+      await materialReturnService.reject(id, user?.id || "");
       loadData();
     } catch (err) {
       console.error("Failed to reject material return", err);
     }
   };
+
+  const { paginatedData, totalPages, validPage: currentPage } = getPaginatedData(filteredData);
 
   if (loading) return <div className="p-6 text-center text-[#5C5C5C]">Loading material returns...</div>;
 
@@ -124,11 +153,11 @@ export default function StoreHeadMaterialReturnsPage() {
         <section className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="relative max-w-[400px] w-full">
             <Search className="w-4 h-4 text-[#A1A1AA] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-            <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search by Return ID..." className="h-[40px] w-full pl-9 pr-3 bg-white border border-[#EBEBEB] rounded-[8px] text-[14px] placeholder:text-[#A1A1AA] focus:outline-none focus:border-[#00B6E2]" />
+            <input type="text" value={searchQuery} onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }} placeholder="Search by Return ID..." className="h-[40px] w-full pl-9 pr-3 bg-white border border-[#EBEBEB] rounded-[8px] text-[14px] placeholder:text-[#A1A1AA] focus:outline-none focus:border-[#00B6E2]" />
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
             <TableToolbar dateRange={dateRange} onDateRangeChange={setDateRange} onExport={() => {
-              const exportData = filteredData.map((row: any) => ({
+              const exportData = paginatedData.map((row: any) => ({
                 "Return ID": row.id ?? "",
                 "Material ID": row.materialId ?? "",
                 "Weight": row.weight ?? "",
@@ -155,7 +184,7 @@ export default function StoreHeadMaterialReturnsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#EAECF0]">
-                {filteredData.map((row, idx) => (
+                {paginatedData.map((row, idx) => (
                   <tr key={idx} className="hover:bg-gray-50/50 transition-colors group">
                     <td className="px-4 py-4 text-[14px] font-medium text-[#00B6E2]">{row.id}</td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C]">{row.materialId}</td>
@@ -177,12 +206,13 @@ export default function StoreHeadMaterialReturnsPage() {
                     </td>
                   </tr>
                 ))}
-                {filteredData.length === 0 && (
+                {paginatedData.length === 0 && (
                   <tr><td colSpan={8} className="px-4 py-8 text-center text-[#5C5C5C] text-[14px]">No material returns found.</td></tr>
                 )}
               </tbody>
             </table>
           </div>
+          <TablePagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
         </section>
       </div>
     </div>

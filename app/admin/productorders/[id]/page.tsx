@@ -6,6 +6,7 @@ import { productOrderService } from "@/src/services/productOrderService";
 import { workOrderService } from "@/src/services/workOrderService";
 import { MobileHeader } from "@/components/MobileHeader";
 import type { TableConfig } from "@/hooks/useTableControls";
+import { TablePagination } from "@/components/table/TablePagination";
 import { useTableControls } from "@/hooks/useTableControls";
 import { SortableHeader } from "@/components/table/SortableHeader";
 import { TableToolbar } from "@/components/table/TableToolbar";
@@ -244,8 +245,12 @@ export default function AdminProductOrderDetailPage({ params }: DetailPageProps)
     filters,
     handleFilterChange,
     dateRange,
-    setDateRange
+    setDateRange,
+    getPaginatedData,
+    setCurrentPage,
   } = useTableControls({ data: currentData, config: currentConfig });
+
+  const { paginatedData, totalPages, validPage: currentPage } = getPaginatedData(processedData);
 
   if (loading) {
     return (
@@ -354,7 +359,7 @@ export default function AdminProductOrderDetailPage({ params }: DetailPageProps)
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#EBEBEB]">
-                {processedData.map((row, i) => (
+                {paginatedData.map((row, i) => (
                   <tr key={i} className="hover:bg-gray-50 transition-colors">
                     {currentConfig.columns.map((col) => {
                       if (String(col.key) === "options") {
@@ -386,7 +391,7 @@ export default function AdminProductOrderDetailPage({ params }: DetailPageProps)
                     })}
                   </tr>
                 ))}
-                {processedData.length === 0 && (
+                {paginatedData.length === 0 && (
                   <tr>
                     <td colSpan={currentConfig.columns.length} className="px-5 py-8 text-center text-[#5C5C5C]">
                       No records found
@@ -396,6 +401,7 @@ export default function AdminProductOrderDetailPage({ params }: DetailPageProps)
               </tbody>
             </table>
           </div>
+          <TablePagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
         </div>
       </section>
       {qrData && <QRCodeModal {...qrData} onClose={() => setQrData(null)} />}

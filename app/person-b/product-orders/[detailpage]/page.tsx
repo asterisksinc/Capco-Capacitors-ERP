@@ -6,6 +6,7 @@ import { useStore } from "@/hooks/useStore";
 import { ScannerInput } from "@/components/ScannerInput";
 import { MobileHeader } from "@/components/MobileHeader";
 import type { TableConfig } from "@/hooks/useTableControls";
+import { TablePagination } from "@/components/table/TablePagination";
 import { useTableControls } from "@/hooks/useTableControls";
 import { SortableHeader } from "@/components/table/SortableHeader";
 import { TableToolbar } from "@/components/table/TableToolbar";
@@ -284,7 +285,9 @@ export default function PersonBProductOrderDetail({ params }: DetailPageProps) {
     filters,
     handleFilterChange,
     dateRange,
-    setDateRange
+    setDateRange,
+    getPaginatedData,
+    setCurrentPage,
   } = useTableControls({ data: currentData, config: currentConfig });
 
   const openWindingModal = () => {
@@ -369,6 +372,8 @@ export default function PersonBProductOrderDetail({ params }: DetailPageProps) {
   };
 
   if (!mounted) return null;
+
+  const { paginatedData, totalPages, validPage: currentPage } = getPaginatedData(processedData);
 
   return (
     <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-[#FAFAFA] flex flex-col relative pb-10 overflow-x-hidden">
@@ -669,7 +674,7 @@ export default function PersonBProductOrderDetail({ params }: DetailPageProps) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#EBEBEB]">
-                {processedData.map((row, i) => (
+                {paginatedData.map((row, i) => (
                   <tr key={i} className="hover:bg-gray-50 transition-colors">
                     {currentConfig.columns.map((col) => {
                       if (String(col.key) === "qr") {
@@ -712,7 +717,7 @@ export default function PersonBProductOrderDetail({ params }: DetailPageProps) {
                     })}
                   </tr>
                 ))}
-                {processedData.length === 0 && (
+                {paginatedData.length === 0 && (
                   <tr>
                     <td colSpan={currentConfig.columns.length} className="px-5 py-8 text-center text-[#5C5C5C]">
                       {activeTab === "Product Material"
@@ -724,6 +729,7 @@ export default function PersonBProductOrderDetail({ params }: DetailPageProps) {
               </tbody>
             </table>
           </div>
+          <TablePagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
         </div>
       </section>
       {qrData && <QRCodeModal {...qrData} onClose={() => setQrData(null)} />}

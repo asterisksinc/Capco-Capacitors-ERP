@@ -9,6 +9,7 @@ import { useStore } from "@/hooks/useStore";
 import { ScannerInput } from "@/components/ScannerInput";
 import { computeWorkflowProgress } from "../../../../lib/data";
 import type { TableConfig } from "@/hooks/useTableControls";
+import { TablePagination } from "@/components/table/TablePagination";
 import { useTableControls } from "@/hooks/useTableControls";
 import { SortableHeader } from "@/components/table/SortableHeader";
 import { TableToolbar } from "@/components/table/TableToolbar";
@@ -193,7 +194,9 @@ export default function PersonBWorkOrderDetailPage({ params }: DetailPageProps) 
     filters,
     handleFilterChange,
     dateRange,
-    setDateRange
+    setDateRange,
+    getPaginatedData,
+    setCurrentPage,
   } = useTableControls({ data: currentData, config: currentConfig });
 
   if (!mounted || !workOrderFlowData) return null;
@@ -572,6 +575,8 @@ export default function PersonBWorkOrderDetailPage({ params }: DetailPageProps) 
     );
   };
 
+  const { paginatedData, totalPages, validPage: currentPage } = getPaginatedData(processedData);
+
   return (
     <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-white flex flex-col relative pb-12 overflow-x-hidden">
       <MobileHeader title={orderId} />
@@ -765,7 +770,7 @@ export default function PersonBWorkOrderDetailPage({ params }: DetailPageProps) 
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#EAECF0]">
-                {processedData.map((row, idx) => (
+                {paginatedData.map((row, idx) => (
                   <tr key={idx} className="hover:bg-gray-50/50 transition-colors group">
                     {currentConfig.columns.map((col) => {
                       if (String(col.key) === "options") {
@@ -800,7 +805,7 @@ export default function PersonBWorkOrderDetailPage({ params }: DetailPageProps) 
                     })}
                   </tr>
                 ))}
-                {processedData.length === 0 && (
+                {paginatedData.length === 0 && (
                   <tr>
                     <td colSpan={currentConfig.columns.length} className="px-4 py-8 text-center text-[#5C5C5C] text-[14px]">
                       No {activeTab.toLowerCase()} records found. Add records using the button above.
@@ -810,6 +815,7 @@ export default function PersonBWorkOrderDetailPage({ params }: DetailPageProps) 
               </tbody>
             </table>
           </div>
+          <TablePagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
         </div>
       </section>
       {qrData && <QRCodeModal id={qrData.id} type={qrData.type} details={qrData.details} onClose={() => setQrData(null)} />}

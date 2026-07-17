@@ -5,6 +5,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { use, useState, useMemo, useEffect } from "react";
 import { Plus, X, ChevronRight, Check, Layers, Ruler, Weight, Package, QrCode, Loader2 } from "lucide-react";
 import type { TableConfig } from "@/hooks/useTableControls";
+import { TablePagination } from "@/components/table/TablePagination";
 import { useTableControls } from "@/hooks/useTableControls";
 import { SortableHeader } from "@/components/table/SortableHeader";
 import { TableToolbar } from "@/components/table/TableToolbar";
@@ -114,6 +115,8 @@ export default function StoreHeadWorkOrderDetailPage({ params }: DetailPageProps
     handleFilterChange,
     dateRange,
     setDateRange,
+    getPaginatedData,
+    setCurrentPage,
   } = useTableControls({ data: currentData, config: rawMaterialConfig });
 
   const filteredInventory = useMemo(() => {
@@ -129,6 +132,14 @@ export default function StoreHeadWorkOrderDetailPage({ params }: DetailPageProps
       const matchWidth = woWidth ? itemWidth === woWidth : true;
 
       return matchMicron && matchWidth;
+    }).sort((a: any, b: any) => {
+      const aReturned = a.status === "Returned" ? 1 : 0;
+      const bReturned = b.status === "Returned" ? 1 : 0;
+      if (aReturned !== bReturned) {
+        return bReturned - aReturned; // Returned goes to top
+      }
+      // FIFO order (oldest first)
+      return new Date(a.date_received || a.created_at).getTime() - new Date(b.date_received || b.created_at).getTime();
     });
   }, [availableInventory, workOrderFlowData]);
 
@@ -217,6 +228,8 @@ export default function StoreHeadWorkOrderDetailPage({ params }: DetailPageProps
       alert(`Failed to assign raw materials: ${err.message || "Unknown error"}`);
     }
   };
+
+  const { paginatedData, totalPages, validPage: currentPage } = getPaginatedData(processedData);
 
   const kpiStats = [
     { label: "Word Count", value: workOrderFlowData.wordCount || "-", icon: Layers },
@@ -602,7 +615,7 @@ export default function StoreHeadWorkOrderDetailPage({ params }: DetailPageProps
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#EAECF0]">
-                {processedData.map((row, idx) => (
+                {paginatedData.map((row, idx) => (
                   <tr key={idx} className="hover:bg-gray-50/50 transition-colors group">
                     {rawMaterialConfig.columns.map((col) => {
                       if (String(col.key) === "options") {
@@ -641,6 +654,7 @@ export default function StoreHeadWorkOrderDetailPage({ params }: DetailPageProps
               </tbody>
             </table>
           </div>
+          <TablePagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
         </div>
       </section>
       {qrData && <QRCodeModal id={qrData.id} type={qrData.type} details={qrData.details} onClose={() => setQrData(null)} />}

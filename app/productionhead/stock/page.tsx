@@ -1,5 +1,6 @@
 "use client";
 
+import { TablePagination } from "@/components/table/TablePagination";
 import { Plus, Search } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -98,7 +99,9 @@ export default function SupervisorStockPage() {
     filters,
     handleFilterChange,
     dateRange,
-    setDateRange
+    setDateRange,
+    getPaginatedData,
+    setCurrentPage,
   } = useTableControls({ data: actualRows, config: stockConfig });
 
   const [tableFilters, setTableFilters] = useState<FilterState>(() => {
@@ -153,6 +156,8 @@ export default function SupervisorStockPage() {
     if (f.micronMax && parseFloat(row.micron) > parseFloat(f.micronMax as string)) return false;
     return true;
   });
+
+  const { paginatedData, totalPages, validPage: currentPage } = getPaginatedData(filteredData);
 
   const totalLots = actualRows.length;
   // Basic metrics from the slitting output rules
@@ -260,7 +265,7 @@ export default function SupervisorStockPage() {
             <input 
               type="text" 
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
               placeholder="Search by Stock ID..." 
               className="h-[40px] w-full pl-9 pr-3 bg-white border border-[#EBEBEB] rounded-[8px] text-[14px] text-[#171717] placeholder:text-[#A1A1AA] focus:outline-none focus:border-[#00B6E2] " 
             />
@@ -310,7 +315,8 @@ export default function SupervisorStockPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#EAECF0]">
-                {filteredData.length > 0 ? (filteredData.map((row, idx) => (
+                {paginatedData.length > 0 ? (
+                  paginatedData.map((row, idx) => (
                   <tr key={idx} className="hover:bg-gray-50/50 transition-colors group">
                     <td className="px-4 py-4 text-[14px] font-medium text-[#00B6E2] whitespace-nowrap">
                       <Link href={`/productionhead/stock/${row.stockId}`} className="hover:underline cursor-pointer">
@@ -345,6 +351,7 @@ export default function SupervisorStockPage() {
                 )}
               </tbody>
             </table>
+            <TablePagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
           </div>
         </section>
       </div>

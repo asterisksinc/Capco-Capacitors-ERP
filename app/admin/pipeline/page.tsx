@@ -1,5 +1,6 @@
 "use client";
 
+import { TablePagination } from "@/components/table/TablePagination";
 import { useState, useEffect, useMemo } from "react";
 import { Search, Download, Filter, ChevronDown, Calendar, Loader2 } from "lucide-react";
 import Link from "next/link";
@@ -164,6 +165,19 @@ export default function PipelinePage() {
     });
   }, [productOrders, searchQuery]);
 
+
+  const [workOrdersPage, setWorkOrdersPage] = useState(1);
+  const [productOrdersPage, setProductOrdersPage] = useState(1);
+  const pageSize = 10;
+  
+  const totalWorkOrdersPages = Math.max(1, Math.ceil(workOrdersList.length / pageSize));
+  const validWorkOrdersPage = Math.min(workOrdersPage, totalWorkOrdersPages);
+  const paginatedWorkOrdersList = workOrdersList.slice((validWorkOrdersPage - 1) * pageSize, validWorkOrdersPage * pageSize);
+
+  const totalProductOrdersPages = Math.max(1, Math.ceil(productOrdersList.length / pageSize));
+  const validProductOrdersPage = Math.min(productOrdersPage, totalProductOrdersPages);
+  const paginatedProductOrdersList = productOrdersList.slice((validProductOrdersPage - 1) * pageSize, validProductOrdersPage * pageSize);
+
   const totalWos = workOrders.length;
   const totalPos = productOrders.length;
   const inProgressCount = useMemo(() => {
@@ -249,7 +263,7 @@ export default function PipelinePage() {
               <input
                 placeholder={listType === "work" ? "Search by Work Order ID..." : "Search by PO ID or Code..."}
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => { setSearchQuery(e.target.value); setWorkOrdersPage(1); setProductOrdersPage(1); }}
                 className="h-[44px] w-full pl-10 pr-4 bg-white border border-[#EBEBEB] rounded-[8px] text-[14px] focus:outline-none focus:border-[#00B6E2]"
               />
             </div>
@@ -414,7 +428,7 @@ export default function PipelinePage() {
                 </thead>
                 <tbody className="divide-y divide-[#EBEBEB]">
                   {listType === "product" ? (
-                    productOrdersList.map((row, idx) => (
+                    paginatedProductOrdersList.map((row, idx) => (
                       <tr key={idx} className="hover:bg-[#F9FAFB] transition-colors">
                         <td className="px-6 py-4 text-[14px] text-[#5C5C5C] font-semibold">{row.id}</td>
                         <td className="px-6 py-4 text-[14px] text-[#5C5C5C]">{row.code}</td>
@@ -455,7 +469,7 @@ export default function PipelinePage() {
                       </tr>
                     ))
                   ) : (
-                    workOrdersList.map((row, idx) => (
+                    paginatedWorkOrdersList.map((row, idx) => (
                       <tr key={idx} className="hover:bg-[#F9FAFB] transition-colors">
                         <td className="px-6 py-4 text-[14px] text-[#5C5C5C] font-semibold">{row.id}</td>
                         <td className="px-6 py-4 text-[14px] text-[#5C5C5C]">{row.micron}</td>
@@ -493,6 +507,11 @@ export default function PipelinePage() {
                 </tbody>
               </table>
             </div>
+            {listType === "product" ? (
+              <TablePagination currentPage={validProductOrdersPage} totalPages={totalProductOrdersPages} onPageChange={setProductOrdersPage} />
+            ) : (
+              <TablePagination currentPage={validWorkOrdersPage} totalPages={totalWorkOrdersPages} onPageChange={setWorkOrdersPage} />
+            )}
           </div>
         )}
       </section>

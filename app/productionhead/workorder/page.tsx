@@ -9,6 +9,7 @@ import { type ComputedWorkOrderSummary } from "@/hooks/useStore";
 import { workOrderService } from "@/src/services/workOrderService";
 import { Loader2 } from "lucide-react";
 import type { TableConfig } from "@/hooks/useTableControls";
+import { TablePagination } from "@/components/table/TablePagination";
 import { useTableControls } from "@/hooks/useTableControls";
 import { SortableHeader } from "@/components/table/SortableHeader";
 import { TableToolbar } from "@/components/table/TableToolbar";
@@ -94,7 +95,9 @@ export default function SupervisorWorkOrderPage() {
     filters,
     handleFilterChange,
     dateRange,
-    setDateRange
+    setDateRange,
+    getPaginatedData,
+    setCurrentPage,
   } = useTableControls({ data: rows, config: workOrderConfig });
 
   const [tableFilters, setTableFilters] = useState<FilterState>(() => {
@@ -232,6 +235,8 @@ export default function SupervisorWorkOrderPage() {
       valClass: "text-[#171717]",
     },
   ];
+
+  const { paginatedData, totalPages, validPage: currentPage } = getPaginatedData(filteredData);
 
   return (
     <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-white flex flex-col relative w-full max-w-full">
@@ -398,7 +403,7 @@ export default function SupervisorWorkOrderPage() {
             <input 
               type="text" 
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
               placeholder="Search..." 
               className="h-10 md:h-[40px] w-full pl-9 pr-3 bg-white border border-[#EBEBEB] rounded-lg md:rounded-[8px] text-[14px] text-[#171717] placeholder:text-[#A1A1AA] focus:outline-none focus:border-[#00B6E2]" 
             />
@@ -411,7 +416,7 @@ export default function SupervisorWorkOrderPage() {
             />
             <button 
               onClick={() => {
-                const exportData = filteredData.map(row => ({
+                const exportData = paginatedData.map(row => ({
                   "Work Order ID": row.id,
                   "Micron": row.micron,
                   "Width": row.width,
@@ -434,7 +439,7 @@ export default function SupervisorWorkOrderPage() {
 
         {/* Data Table - Mobile Card View */}
         <section className="md:hidden flex flex-col gap-3">
-          {filteredData.map((row, idx) => (
+          {paginatedData.map((row, idx) => (
             <div key={idx} className="bg-white border border-[#EBEBEB] rounded-lg p-4 flex flex-col gap-3">
               <div className="flex items-center justify-between">
                 <span className="text-[14px] font-medium text-[#00B6E2]">{row.id}</span>
@@ -457,7 +462,7 @@ export default function SupervisorWorkOrderPage() {
               </Link>
             </div>
           ))}
-          {filteredData.length === 0 && (
+          {paginatedData.length === 0 && (
             <div className="text-center py-8 text-[14px] text-[#5C5C5C]">No work orders found.</div>
           )}
         </section>
@@ -485,7 +490,7 @@ export default function SupervisorWorkOrderPage() {
                 </tr>
               </thead>
 <tbody className="divide-y divide-[#EAECF0]">
-                {filteredData.map((row, idx) => (
+                {paginatedData.map((row, idx) => (
                   <tr key={idx} className="hover:bg-gray-50/50 transition-colors group">
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C] font-medium whitespace-nowrap">
                       <Link href={`/productionhead/workorder/${row.id}`} className="hover:text-[#00B6E2] hover:underline cursor-pointer">
@@ -527,7 +532,7 @@ export default function SupervisorWorkOrderPage() {
                     </td>
                   </tr>
                 ))}
-                {filteredData.length === 0 && (
+                {paginatedData.length === 0 && (
                   <tr>
                     <td colSpan={9} className="px-4 py-8 text-center text-[14px] text-[#5C5C5C]">
                       No work orders found.
@@ -537,6 +542,7 @@ export default function SupervisorWorkOrderPage() {
               </tbody>
             </table>
           </div>
+          <TablePagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
         </section>
       </div>
 

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Plus, Search } from "lucide-react";
 import { materialRequestService } from "@/src/services/materialRequestService";
 import type { TableConfig } from "@/hooks/useTableControls";
+import { TablePagination } from "@/components/table/TablePagination";
 import { useTableControls } from "@/hooks/useTableControls";
 import { SortableHeader } from "@/components/table/SortableHeader";
 import { TableToolbar } from "@/components/table/TableToolbar";
@@ -64,10 +65,9 @@ export default function PersonASlittingMaterialRequestsPage() {
       );
       setWorkOrders(sortedWorkOrders);
 
-      // Only show requests created by Slitting
+      // Exclude requests created by Slitting (Change 4: Slitting does not see its own requests)
       const relevantRows = rows.filter((row: any) => {
-        const roleName = profileMap.get(row.requested_by);
-        return roleName === "Slitting" || row.requested_by === "Slitting";
+        return false; // Since they only create requests and never receive them from a downstream stage
       });
       
       setData(relevantRows.map((row: any) => ({
@@ -100,6 +100,8 @@ export default function PersonASlittingMaterialRequestsPage() {
     handleFilterChange,
     dateRange,
     setDateRange,
+    getPaginatedData,
+    setCurrentPage,
   } = useTableControls({ data, config: tableConfig });
 
   const handleSort = handleSortRaw as (key: string | number | symbol) => void;
@@ -118,10 +120,10 @@ export default function PersonASlittingMaterialRequestsPage() {
           request_no: generateId("MR"),
           material_type: "stock" as const,
           work_order_id: item.productNo,
-          requested_quantity: Number(item.weight),
+          requested_quantity: Number(item.requestedQty),
           requested_by: user?.id,
           status: "Pending",
-          notes: `[Slitting] Weight: ${item.weight}`,
+          notes: `[Slitting] [Material Request] Qty: ${item.requestedQty}`,
         };
         console.log("Submitting payload:", payload);
         await materialRequestService.create(payload as any);
@@ -141,6 +143,8 @@ export default function PersonASlittingMaterialRequestsPage() {
       console.error("Failed to cancel material", err);
     }
   };
+
+  const { paginatedData, totalPages, validPage: currentPage } = getPaginatedData(filteredData);
 
   if (loading) return <div className="p-6 text-center text-[#5C5C5C]">Loading material requests...</div>;
 
@@ -163,11 +167,11 @@ export default function PersonASlittingMaterialRequestsPage() {
         <section className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="relative max-w-[400px] w-full">
             <Search className="w-4 h-4 text-[#A1A1AA] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-            <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search by Request ID..." className="h-[40px] w-full pl-9 pr-3 bg-white border border-[#EBEBEB] rounded-[8px] text-[14px] placeholder:text-[#A1A1AA] focus:outline-none focus:border-[#00B6E2]" />
+            <input type="text" value={searchQuery} onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }} placeholder="Search by Request ID..." className="h-[40px] w-full pl-9 pr-3 bg-white border border-[#EBEBEB] rounded-[8px] text-[14px] placeholder:text-[#A1A1AA] focus:outline-none focus:border-[#00B6E2]" />
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
             <TableToolbar dateRange={dateRange} onDateRangeChange={setDateRange} onExport={() => {
-              const exportData = filteredData.map((row: any) => ({
+              const exportData = paginatedData.map((row: any) => ({
                 "Request ID": row.id ?? "",
                 "Weight": row.weightInfo ?? "",
                 "Grade": row.grade ?? "",
@@ -199,7 +203,7 @@ export default function PersonASlittingMaterialRequestsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#EAECF0]">
-                {filteredData.map((row, idx) => (
+                {paginatedData.map((row, idx) => (
                   <tr key={idx} className="hover:bg-gray-50/50 transition-colors group">
                     <td className="px-4 py-4 text-[14px] font-medium text-[#00B6E2]">{row.id}</td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C]">{row.weightInfo}</td>
@@ -218,12 +222,13 @@ export default function PersonASlittingMaterialRequestsPage() {
                     </td>
                   </tr>
                 ))}
-                {filteredData.length === 0 && (
+                {paginatedData.length === 0 && (
                   <tr><td colSpan={8} className="px-4 py-8 text-center text-[#5C5C5C] text-[14px]">No material requests found.</td></tr>
                 )}
               </tbody>
             </table>
           </div>
+          <TablePagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
         </section>
       </div>
     </div>

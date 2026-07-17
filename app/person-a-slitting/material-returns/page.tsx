@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Plus, Search } from "lucide-react";
 import { materialReturnService } from "@/src/services/materialReturnService";
 import type { TableConfig } from "@/hooks/useTableControls";
+import { TablePagination } from "@/components/table/TablePagination";
 import { useTableControls } from "@/hooks/useTableControls";
 import { SortableHeader } from "@/components/table/SortableHeader";
 import { TableToolbar } from "@/components/table/TableToolbar";
@@ -47,69 +48,42 @@ export default function PersonASlittingMaterialReturnsPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [rows, woRows, profiles] = await Promise.all([
+      const [rows, woRows, profiles, metallisationDataRaw] = await Promise.all([
         materialReturnService.list(),
         import("@/src/services/workOrderService").then((m) => m.workOrderService.list({ select: "*,metallisation(*)" })),
         import("@/src/services/supabaseClient").then((m) => m.supabaseRest.list<any>("profiles", { select: "id,roles(name)" })),
+        import("@/src/services/productionStageService").then((m) => m.productionStageService.listMetallisation())
       ]);
+      const metallisationData = Array.isArray(metallisationDataRaw) ? metallisationDataRaw : [];
 
       const profileMap = new Map();
       for (const p of profiles) {
         profileMap.set(p.id, p.roles?.name);
       }
-
+      
       const options: { id: string; label: string; weight: string }[] = [];
-      for (const wo of woRows as any[]) {
-        if (wo.metallisation && Array.isArray(wo.metallisation)) {
-          for (const met of wo.metallisation) {
-            if (met.coil_no) {
-              options.push({
-                id: met.id,
-                label: met.coil_no,
-                weight: String(met.weight_kg || 0)
-              });
-            }
+      if (Array.isArray((typeof metallisationData !== "undefined" ? metallisationData : []))) {
+        (typeof metallisationData !== "undefined" ? metallisationData : []).forEach((m: any) => {
+          console.log(m);
+          if (m.metallisation_no) {
+            options.push({
+              id: m.id,
+              label: m.metallisation_no,
+              weight: String(m.weight_kg || 0)
+            });
           }
-        }
-      }
-
-      if (typeof window !== "undefined") {
-        try {
-          const raw = localStorage.getItem("capcoDataStore");
-          if (raw) {
-            const storeData = JSON.parse(raw);
-            if (storeData.flowDataMap) {
-              for (const flow of Object.values(storeData.flowDataMap)) {
-                if ((flow as any).metallisationRows) {
-                  for (const row of (flow as any).metallisationRows) {
-                    if (row.coilNo && !options.some(o => o.label === row.coilNo)) {
-                      options.push({
-                        id: row.coilNo,
-                        label: row.coilNo,
-                        weight: String(row.weight || 0)
-                      });
-                    }
-                  }
-                }
-              }
-            }
-          }
-        } catch (e) {
-          console.error("Failed to parse capcoDataStore", e);
-        }
+        });
       }
       setMaterialOptions(options);
 
-      // Show returns created by Slitting
       const relevantRows = rows.filter((row: any) => {
-        const roleName = profileMap.get(row.returned_by);
-        return roleName === "Slitting" || row.returned_by === "Slitting";
+        return false; // Since they only create returns and never receive them from a downstream stage
       });
 
       setData(relevantRows.map((row: any) => ({
         id: row.return_no || row.id,
         originalId: row.id,
-        materialId: row.inventory?.raw_material_code || row.stock?.stock_no || row.material_id || "-",
+        materialId: row.inventory?.raw_material_code || row.stock?.stock_no || (((typeof metallisationData !== "undefined" ? metallisationData : []) as any[])?.find(m => m.id === row.material_id)?.coil_no) || row.material_id || "-",
         weight: row.weight_kg ? String(row.weight_kg) : "-",
         usedWeight: row.used_quantity ? String(row.used_quantity) : "-",
         reason: row.reason || "-",
@@ -136,6 +110,8 @@ export default function PersonASlittingMaterialReturnsPage() {
     handleFilterChange,
     dateRange,
     setDateRange,
+    getPaginatedData,
+    setCurrentPage,
   } = useTableControls({ data, config: tableConfig });
 
   const handleSort = handleSortRaw as (key: string | number | symbol) => void;
@@ -145,22 +121,23 @@ export default function PersonASlittingMaterialReturnsPage() {
     return true;
   });
 
-  const handleCreateReturn = async (formData: { materialId: string; weight: string; usedWeight: string; reason: string }) => {
+    const handleCreateReturn = async (items: any[]) => {
     try {
       const { authService } = await import("@/src/services/authService");
       const user = await authService.getCurrentProfile();
-      const payload = {
-        return_no: generateId("MRT"),
-        material_type: "raw_material" as const,
-        material_id: formData.materialId,
-        returned_by: user?.id,
-        weight_kg: Number(formData.weight),
-        used_weight_kg: Number(formData.usedWeight),
-        quantity_returned: Number(formData.weight) - Number(formData.usedWeight),
-        reason: `[Slitting] ${formData.reason}`,
-      };
-      console.log("Submitting return payload:", payload);
-      await materialReturnService.create(payload as any);
+      for (const item of items) {
+        const payload = {
+          return_no: generateId("MRT"),
+          material_type: "raw_material" as const,
+          material_id: item.materialId,
+          returned_by: user?.id,
+          weight_kg: Number(item.weight),
+          used_weight_kg: Number(item.usedWeight || 0),
+          quantity_returned: Number(item.weight) - Number(item.usedWeight || 0),
+          reason: `[Slitting] ${item.reason}`,
+        };
+        await materialReturnService.create(payload);
+      }
       setIsModalOpen(false);
       loadData();
     } catch (err) {
@@ -178,6 +155,8 @@ export default function PersonASlittingMaterialReturnsPage() {
       console.error("Failed to cancel material return", err);
     }
   };
+
+  const { paginatedData, totalPages, validPage: currentPage } = getPaginatedData(filteredData);
 
   if (loading) return <div className="p-6 text-center text-[#5C5C5C]">Loading material returns...</div>;
 
@@ -200,11 +179,11 @@ export default function PersonASlittingMaterialReturnsPage() {
         <section className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="relative max-w-[400px] w-full">
             <Search className="w-4 h-4 text-[#A1A1AA] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-            <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search by Return ID..." className="h-[40px] w-full pl-9 pr-3 bg-white border border-[#EBEBEB] rounded-[8px] text-[14px] placeholder:text-[#A1A1AA] focus:outline-none focus:border-[#00B6E2]" />
+            <input type="text" value={searchQuery} onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }} placeholder="Search by Return ID..." className="h-[40px] w-full pl-9 pr-3 bg-white border border-[#EBEBEB] rounded-[8px] text-[14px] placeholder:text-[#A1A1AA] focus:outline-none focus:border-[#00B6E2]" />
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
             <TableToolbar dateRange={dateRange} onDateRangeChange={setDateRange} onExport={() => {
-              const exportData = filteredData.map((row: any) => ({
+              const exportData = paginatedData.map((row: any) => ({
                 "Return ID": row.id ?? "",
                 "Material ID": row.materialId ?? "",
                 "Weight": row.weight ?? "",
@@ -236,7 +215,7 @@ export default function PersonASlittingMaterialReturnsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#EAECF0]">
-                {filteredData.map((row, idx) => (
+                {paginatedData.map((row, idx) => (
                   <tr key={idx} className="hover:bg-gray-50/50 transition-colors group">
                     <td className="px-4 py-4 text-[14px] font-medium text-[#00B6E2]">{row.id}</td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C]">{row.materialId}</td>
@@ -253,12 +232,13 @@ export default function PersonASlittingMaterialReturnsPage() {
                     </td>
                   </tr>
                 ))}
-                {filteredData.length === 0 && (
+                {paginatedData.length === 0 && (
                   <tr><td colSpan={8} className="px-4 py-8 text-center text-[#5C5C5C] text-[14px]">No material returns found.</td></tr>
                 )}
               </tbody>
             </table>
           </div>
+          <TablePagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
         </section>
       </div>
     </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { TablePagination } from "@/components/table/TablePagination";
 import { useState, useEffect, useMemo } from "react";
 import { Plus, Search, X, Check, Package, Warehouse, Activity, Archive, QrCode, Download, Trash2, Mail, Loader2 } from "lucide-react";
 import { inventoryService } from "@/src/services/inventoryService";
@@ -20,7 +21,13 @@ function StatusBadge({ status }: { status: string }) {
   if (status === "Being Used") {
     return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#FFF4ED] text-[#E19242] text-[12px] font-medium leading-tight shrink-0">Being Used</span>;
   }
-  return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#F2F4F7] text-[#667085] text-[12px] font-medium leading-tight shrink-0">Used Completely</span>;
+  if (status === "Returned") {
+    return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#E6F7FF] text-[#00B6E2] text-[12px] font-medium leading-tight shrink-0">Returned</span>;
+  }
+  if (status === "Used Completely") {
+    return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#F2F4F7] text-[#667085] text-[12px] font-medium leading-tight shrink-0">Used Completely</span>;
+  }
+  return <span className="inline-flex items-center px-2 py-0.5 rounded-[12px] bg-[#F2F4F7] text-[#667085] text-[12px] font-medium leading-tight shrink-0">{status || "Unknown"}</span>;
 }
 
 function getDateString() {
@@ -40,6 +47,7 @@ const defaultForm = {
   weight: "",
   netWeight: "",
   grossWeight: "",
+  usedWeight: "",
   wastageWeight: "",
   damagedWeight: "",
   temperature: "25°C",
@@ -77,10 +85,13 @@ export default function AdminInventoryPage() {
       ]);
 
       const wastageMap = new Map();
+      const usedWeightMap = new Map();
       (metallisationData as any[]).forEach((m) => {
         if (m.raw_material_id) {
-          const current = wastageMap.get(m.raw_material_id) || 0;
-          wastageMap.set(m.raw_material_id, current + (m.factory_wastage_kg || 0));
+          const currentW = wastageMap.get(m.raw_material_id) || 0;
+          wastageMap.set(m.raw_material_id, currentW + (m.factory_wastage_kg || 0));
+          const currentU = usedWeightMap.get(m.raw_material_id) || 0;
+          usedWeightMap.set(m.raw_material_id, currentU + (m.weight_kg || 0));
         }
       });
 
@@ -93,6 +104,7 @@ export default function AdminInventoryPage() {
         weight: item.net_weight_kg != null ? `${item.net_weight_kg}kgs` : "-",
         netWeight: item.net_weight_kg != null ? `${item.net_weight_kg}kgs` : "-",
         grossWeight: item.gross_weight_kg != null ? `${item.gross_weight_kg}kgs` : "-",
+        usedWeight: usedWeightMap.has(item.id) ? `${usedWeightMap.get(item.id)}kgs` : "-",
         wastageWeight: wastageMap.has(item.id) ? `${wastageMap.get(item.id)}kgs` : "-",
         damagedWeight: "-",
         temperature: item.temperature_c != null ? `${item.temperature_c}°C` : "-",
@@ -125,6 +137,13 @@ export default function AdminInventoryPage() {
     });
   }, [inventoryItems, searchQuery]);
 
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
+  const totalPages = Math.ceil(filteredData.length / pageSize) || 1;
+  const validPage = Math.min(currentPage, totalPages);
+  const paginatedData = filteredData.slice((validPage - 1) * pageSize, validPage * pageSize);
+  
   const totalItems = inventoryItems.length;
   const inInventory = inventoryItems.filter((r) => r.status === "In Inventory").length;
   const beingUsed = inventoryItems.filter((r) => r.status === "Being Used").length;
@@ -148,10 +167,6 @@ export default function AdminInventoryPage() {
       Number(form.netWeight) > 0 &&
       form.grossWeight.trim() &&
       Number(form.grossWeight) > 0 &&
-      form.wastageWeight.trim() &&
-      Number(form.wastageWeight) >= 0 &&
-      form.damagedWeight.trim() &&
-      Number(form.damagedWeight) >= 0 &&
       form.temperature.trim() &&
       form.supplier.trim()
     );
@@ -223,6 +238,7 @@ export default function AdminInventoryPage() {
     let weight = parseFloat(normalizedRow["weight"] || "0");
     let netWeight = parseFloat(normalizedRow["netweight"] || weight);
     let grossWeight = parseFloat(normalizedRow["grossweight"] || weight);
+    let usedWeight = parseFloat(normalizedRow["usedweight"] || "0");
     let wastageWeight = parseFloat(normalizedRow["wastageweight"] || "0");
     let damagedWeight = parseFloat(normalizedRow["damagedweight"] || "0");
     const temperature = parseFloat(normalizedRow["temperature"] || "25");
@@ -238,6 +254,7 @@ export default function AdminInventoryPage() {
       width_m: width,
       net_weight_kg: netWeight,
       gross_weight_kg: grossWeight,
+      used_weight_kg: usedWeight,
       wastage_weight_kg: wastageWeight,
       damaged_weight_kg: damagedWeight,
       temperature_c: temperature,
@@ -302,6 +319,7 @@ export default function AdminInventoryPage() {
       "Width (m)": item.width,
       "Net Weight": item.netWeight ?? item.weight,
       "Gross Weight": item.grossWeight ?? "",
+      "Used Weight": item.usedWeight ?? "",
       "Wastage Weight": item.wastageWeight ?? "",
       "Damaged Weight": item.damagedWeight ?? "",
       "Temperature": item.temperature ?? "",
@@ -448,7 +466,7 @@ export default function AdminInventoryPage() {
         <section className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="relative w-full sm:max-w-[400px]">
             <Search className="w-4 h-4 text-[#A1A1AA] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-            <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search by RM ID, Roll ID, or Supplier..." className="h-[40px] w-full pl-9 pr-3 bg-white border border-[#EBEBEB] rounded-[8px] text-[14px] text-[#171717] placeholder:text-[#A1A1AA] focus:outline-none focus:border-[#00B6E2]" />
+            <input type="text" value={searchQuery} onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }} placeholder="Search by RM ID, Roll ID, or Supplier..." className="h-[40px] w-full pl-9 pr-3 bg-white border border-[#EBEBEB] rounded-[8px] text-[14px] text-[#171717] placeholder:text-[#A1A1AA] focus:outline-none focus:border-[#00B6E2]" />
           </div>
         </section>
 
@@ -464,6 +482,7 @@ export default function AdminInventoryPage() {
                   <th className="px-4 py-[12px] text-[13px] font-semibold text-[#667085]">Width (m)</th>
                   <th className="px-4 py-[12px] text-[13px] font-semibold text-[#667085]">Net Weight</th>
                   <th className="px-4 py-[12px] text-[13px] font-semibold text-[#667085]">Gross Weight</th>
+                  <th className="px-4 py-[12px] text-[13px] font-semibold text-[#667085]">Used Weight</th>
                   <th className="px-4 py-[12px] text-[13px] font-semibold text-[#667085]">Wastage/Left Weight</th>
                   <th className="px-4 py-[12px] text-[13px] font-semibold text-[#667085]">Damaged Weight</th>
                   <th className="px-4 py-[12px] text-[13px] font-semibold text-[#667085]">Temperature</th>
@@ -483,8 +502,8 @@ export default function AdminInventoryPage() {
                       </div>
                     </td>
                   </tr>
-                ) : filteredData.length > 0 ? (
-                  filteredData.map((row, idx) => (
+                ) : paginatedData.length > 0 ? (
+                  paginatedData.map((row, idx) => (
                     <tr key={idx} className="hover:bg-gray-50/50 transition-colors">
                       <td className="px-4 py-4 text-[14px] text-[#00B6E2] font-semibold whitespace-nowrap">{row.rawMaterialId}</td>
                       <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.rollId}</td>
@@ -492,6 +511,7 @@ export default function AdminInventoryPage() {
                       <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.width}</td>
                       <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.netWeight ?? row.weight}</td>
                       <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.grossWeight ?? "-"}</td>
+                      <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.usedWeight ?? "-"}</td>
                       <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.wastageWeight ?? "-"}</td>
                       <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.damagedWeight ?? "-"}</td>
                       <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.temperature ?? "-"}</td>
@@ -515,6 +535,7 @@ export default function AdminInventoryPage() {
                 )}
               </tbody>
             </table>
+            <TablePagination currentPage={validPage} totalPages={totalPages} onPageChange={setCurrentPage} />
           </div>
         </section>
       </div>

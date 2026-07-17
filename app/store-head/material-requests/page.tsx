@@ -1,5 +1,6 @@
 "use client";
 
+import { TablePagination } from "@/components/table/TablePagination";
 import { useState, useEffect } from "react";
 import { Search, X } from "lucide-react";
 import { materialRequestService } from "@/src/services/materialRequestService";
@@ -13,8 +14,8 @@ import { exportToExcel } from "@/lib/exportExcel";
 const tableConfig: TableConfig<any> = {
   columns: [
     { key: "id", label: "Request ID", type: "text", sortable: true },
-    { key: "weightInfo", label: "Weight", type: "text", sortable: true },
-    { key: "grade", label: "Grade", type: "text", sortable: true },
+    { key: "micron", label: "Micron", type: "text", sortable: true },
+    { key: "width", label: "Width", type: "text", sortable: true },
     { key: "requestedQty", label: "Req Qty", type: "text", sortable: true },
     { key: "status", label: "Status", type: "enum", sortable: false, filter: "dropdown", options: ["Pending", "Partially Issued", "Issued", "Cancelled"] },
     { key: "createdAt", label: "Created At", type: "date", sortable: true },
@@ -44,32 +45,23 @@ export default function StoreHeadMaterialRequestsPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [rows, profiles] = await Promise.all([
-        materialRequestService.list(),
-        import("@/src/services/supabaseClient").then((m) => m.supabaseRest.list<any>("profiles", { select: "id,roles(name)" })),
+      const [rows] = await Promise.all([
+        materialRequestService.list()
       ]);
-      
-      const profileMap = new Map();
-      for (const p of profiles) {
-        profileMap.set(p.id, p.roles?.name);
-      }
 
       // Show requests created by Metallisation
       const relevantRows = rows.filter((row: any) => {
-        const roleName = profileMap.get(row.requested_by);
-        const isLegacyMatch = roleName === "Metallisation" || row.requested_by === "Metallisation";
-        const isTagged = row.notes?.includes("[Metallisation]");
-        return isLegacyMatch || isTagged;
+        return row.notes?.includes("[Metallisation]");
       });
       
       setData(relevantRows.map((row: any) => ({
         id: row.request_no || row.id,
         originalId: row.id,
-        weightInfo: row.stock?.weight_kg ? String(row.stock.weight_kg) : "-",
-        grade: row.stock?.grade || row.grade || "-",
+        micron: row.work_orders?.micron ? String(row.work_orders.micron) : "-",
+        width: row.work_orders?.width_m ? String(row.work_orders.width_m) : "-",
         requestedQty: row.requested_quantity ? String(row.requested_quantity) : "-",
         status: row.status || "Pending",
-        requestedBy: profileMap.get(row.requested_by) || row.requested_by,
+        requestedBy: row.requested_by || "-",
         createdAt: new Date(row.created_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
         issuedAt: row.updated_at ? new Date(row.updated_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "-",
       })));
@@ -92,6 +84,8 @@ export default function StoreHeadMaterialRequestsPage() {
     handleFilterChange,
     dateRange,
     setDateRange,
+    getPaginatedData,
+    setCurrentPage,
   } = useTableControls({ data, config: tableConfig });
 
   const handleSort = handleSortRaw as (key: string | number | symbol) => void;
@@ -103,7 +97,7 @@ export default function StoreHeadMaterialRequestsPage() {
 
   const openIssueModal = (req: any) => {
     setIssueReqId(req.originalId);
-    setIssueItems([{ weight: req.weightInfo, grade: req.grade, requestedQty: req.requestedQty, issuedQty: req.requestedQty }]);
+    setIssueItems([{ micron: req.micron, width: req.width, requestedQty: req.requestedQty, issuedQty: req.requestedQty }]);
     setIsIssueModalOpen(true);
   };
 
@@ -113,7 +107,9 @@ export default function StoreHeadMaterialRequestsPage() {
 
   const submitIssue = async () => {
     try {
-      await materialRequestService.issue(issueReqId, "Store Head", Number(issueItems[0].issuedQty));
+      const { authService } = await import("@/src/services/authService");
+      const user = await authService.getCurrentProfile();
+      await materialRequestService.issue(issueReqId, user?.id || "", Number(issueItems[0].issuedQty));
       setIsIssueModalOpen(false);
       loadData();
     } catch (err) {
@@ -123,7 +119,10 @@ export default function StoreHeadMaterialRequestsPage() {
 
   const rejectMaterialRequest = async (id: string) => {
     try {
-      await materialRequestService.cancel(id, "Store Head");
+      
+      const { authService } = await import("@/src/services/authService");
+      const user = await authService.getCurrentProfile();
+      await materialRequestService.cancel(id, user?.id || "");
       loadData();
     } catch (err) {
       console.error("Failed to reject material", err);
@@ -131,6 +130,8 @@ export default function StoreHeadMaterialRequestsPage() {
   };
 
   if (loading) return <div className="p-6 text-center text-[#5C5C5C]">Loading material requests...</div>;
+
+  const { paginatedData, totalPages, validPage: currentPage } = getPaginatedData(filteredData);
 
   return (
     <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-white flex flex-col overflow-x-hidden">
@@ -149,7 +150,7 @@ export default function StoreHeadMaterialRequestsPage() {
             <div className="px-6 py-6 flex flex-col gap-4">
               {issueItems.map((item, idx) => (
                 <div key={idx} className="border border-[#DDE1E8] rounded-[12px] p-4">
-                  <p className="text-[13px] font-semibold text-[#344054] mb-2">Item {idx + 1} (Weight: {item.weight}, Grade: {item.grade}, Requested: {item.requestedQty})</p>
+                  <p className="text-[13px] font-semibold text-[#344054] mb-2">Item {idx + 1} (Micron: {item.micron}, Width: {item.width}, Requested: {item.requestedQty})</p>
                   <div className="flex flex-col gap-2">
                     <label className="text-[13px] font-medium">Issued Quantity</label>
                     <input type="number" min="0" value={item.issuedQty} onChange={(e) => updateIssueItem(idx, e.target.value)} className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]" />
@@ -169,14 +170,14 @@ export default function StoreHeadMaterialRequestsPage() {
         <section className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="relative max-w-[400px] w-full">
             <Search className="w-4 h-4 text-[#A1A1AA] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-            <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search by Request ID..." className="h-[40px] w-full pl-9 pr-3 bg-white border border-[#EBEBEB] rounded-[8px] text-[14px] placeholder:text-[#A1A1AA] focus:outline-none focus:border-[#00B6E2]" />
+            <input type="text" value={searchQuery} onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }} placeholder="Search by Request ID..." className="h-[40px] w-full pl-9 pr-3 bg-white border border-[#EBEBEB] rounded-[8px] text-[14px] placeholder:text-[#A1A1AA] focus:outline-none focus:border-[#00B6E2]" />
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
             <TableToolbar dateRange={dateRange} onDateRangeChange={setDateRange} onExport={() => {
               const exportData = filteredData.map((row: any) => ({
                 "Request ID": row.id ?? "",
-                "Weight": row.weightInfo ?? "",
-                "Grade": row.grade ?? "",
+                "Micron": row.micron ?? "",
+                "Width": row.width ?? "",
                 "Req Qty": row.requestedQty ?? "",
                 "Status": row.status ?? "",
                 "Created At": row.createdAt ?? "",
@@ -200,11 +201,11 @@ export default function StoreHeadMaterialRequestsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#EAECF0]">
-                {filteredData.map((row, idx) => (
+                {paginatedData.map((row, idx) => (
                   <tr key={idx} className="hover:bg-gray-50/50 transition-colors group">
                     <td className="px-4 py-4 text-[14px] font-medium text-[#00B6E2]">{row.id}</td>
-                    <td className="px-4 py-4 text-[14px] text-[#5C5C5C]">{row.weightInfo}</td>
-                    <td className="px-4 py-4 text-[14px] text-[#5C5C5C]">{row.grade}</td>
+                    <td className="px-4 py-4 text-[14px] text-[#5C5C5C]">{row.micron}</td>
+                    <td className="px-4 py-4 text-[14px] text-[#5C5C5C]">{row.width}</td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C]">{row.requestedQty}</td>
                     <td className="px-4 py-4"><StatusBadge status={row.status} /></td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C]">{row.createdAt}</td>
@@ -222,11 +223,12 @@ export default function StoreHeadMaterialRequestsPage() {
                     </td>
                   </tr>
                 ))}
-                {filteredData.length === 0 && (
+                {paginatedData.length === 0 && (
                   <tr><td colSpan={8} className="px-4 py-8 text-center text-[#5C5C5C] text-[14px]">No material requests found.</td></tr>
                 )}
               </tbody>
             </table>
+            <TablePagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
           </div>
         </section>
       </div>

@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Plus, Search, X } from "lucide-react";
 import { materialReturnService } from "@/src/services/materialReturnService";
 import type { TableConfig } from "@/hooks/useTableControls";
+import { TablePagination } from "@/components/table/TablePagination";
 import { useTableControls } from "@/hooks/useTableControls";
 import { SortableHeader } from "@/components/table/SortableHeader";
 import { TableToolbar } from "@/components/table/TableToolbar";
@@ -47,17 +48,13 @@ export default function PersonAMetallisationMaterialReturnsPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [rows, invData, profiles] = await Promise.all([
+      const { productionStageService } = await import("@/src/services/productionStageService");
+      const [rows, invData, metallisationData] = await Promise.all([
         materialReturnService.list(),
         import("@/src/services/inventoryService").then((m) => m.inventoryService.list()),
-        import("@/src/services/supabaseClient").then((m) => m.supabaseRest.list<any>("profiles", { select: "id,roles(name)" })),
+        productionStageService.listMetallisation()
       ]);
-
-      const profileMap = new Map();
-      for (const p of profiles) {
-        profileMap.set(p.id, p.roles?.name);
-      }
-
+      
       const options: { id: string; label: string; weight: string }[] = [];
       for (const item of invData as any[]) {
         if (item.raw_material_code) {
@@ -70,23 +67,22 @@ export default function PersonAMetallisationMaterialReturnsPage() {
       }
       setMaterialOptions(options);
 
-      // Show returns created by Metallisation AND returns created by Slitting
+      // Show returns created by Slitting ONLY (Change 4: Metallisation does not see its own returns)
       const relevantRows = rows.filter((row: any) => {
-        const roleName = profileMap.get(row.returned_by);
-        const isLegacyMatch = roleName === "Metallisation" || roleName === "Slitting" || row.returned_by === "Metallisation" || row.returned_by === "Slitting";
-        const isTagged = row.reason?.includes("[Metallisation]") || row.reason?.includes("[Slitting]");
-        return isLegacyMatch || isTagged;
+        return row.reason?.includes("[Slitting]");
       });
+
+      const metallisationById = new Map((metallisationData as any[]).map((m) => [m.id, m]));
 
       setData(relevantRows.map((row: any) => ({
         id: row.return_no || row.id,
         originalId: row.id,
-        materialId: row.inventory?.raw_material_code || row.stock?.stock_no || row.material_id || "-",
+        materialId: row.inventory?.raw_material_code || row.stock?.stock_no || metallisationById.get(row.material_id)?.metallisation_no || row.material_id || "-",
         weight: row.weight_kg ? String(row.weight_kg) : "-",
         usedWeight: row.used_quantity ? String(row.used_quantity) : "-",
         reason: row.reason || "-",
         status: row.status || "Returned",
-        returnedBy: profileMap.get(row.returned_by) || row.returned_by,
+        returnedBy: row.returned_by || "-",
         createdAt: new Date(row.created_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
       })));
     } catch (err) {
@@ -108,6 +104,8 @@ export default function PersonAMetallisationMaterialReturnsPage() {
     handleFilterChange,
     dateRange,
     setDateRange,
+    getPaginatedData,
+    setCurrentPage,
   } = useTableControls({ data, config: tableConfig });
 
   const handleSort = handleSortRaw as (key: string | number | symbol) => void;
@@ -117,46 +115,66 @@ export default function PersonAMetallisationMaterialReturnsPage() {
     return true;
   });
 
-  const handleAccept = async (ret: any) => {
+    const handleAccept = async (ret: any) => {
     try {
-      await materialReturnService.accept(ret.originalId, "Metallisation");
+      const { authService } = await import("@/src/services/authService");
+      const user = await authService.getCurrentProfile();
+      await materialReturnService.accept(ret.originalId, user?.id || "");
+
+      const { supabaseRest } = await import("@/src/services/supabaseClient");
+      const returnRecord = await supabaseRest.getById("material_returns", ret.originalId, "material_id");
+      
+      if (returnRecord && (returnRecord as any).material_id) {
+        const { productionStageService } = await import("@/src/services/productionStageService");
+        await productionStageService.updateMetallisation((returnRecord as any).material_id, {
+          status: "Returned" as any
+        } as any);
+      }
+      
       loadData();
     } catch (err) {
       console.error("Failed to accept material return", err);
+      alert("Return accepted, but update failed — please refresh and verify");
     }
   };
 
   const rejectMaterialReturn = async (id: string) => {
     try {
-      await materialReturnService.reject(id, "Metallisation");
+      
+      const { authService } = await import("@/src/services/authService");
+      const user = await authService.getCurrentProfile();
+      await materialReturnService.reject(id, user?.id || "");
       loadData();
     } catch (err) {
       console.error("Failed to reject material return", err);
     }
   };
 
-  const handleCreateReturn = async (formData: { materialId: string; weight: string; usedWeight: string; reason: string }) => {
+    const handleCreateReturn = async (items: any[]) => {
     try {
       const { authService } = await import("@/src/services/authService");
       const user = await authService.getCurrentProfile();
-      const payload = {
-        return_no: generateId("MRT"),
-        material_type: "raw_material" as const,
-        inventory_id: formData.materialId,
-        returned_by: user?.id,
-        weight_kg: Number(formData.weight),
-        used_weight_kg: Number(formData.usedWeight),
-        quantity_returned: Number(formData.weight) - Number(formData.usedWeight),
-        reason: `[Metallisation] ${formData.reason}`,
-      };
-      console.log("Submitting return payload:", payload);
-      await materialReturnService.create(payload as any);
+      for (const item of items) {
+        const payload = {
+          return_no: generateId("MRTN"),
+          material_type: "raw_material" as const,
+          inventory_id: item.materialId,
+          returned_by: user?.id,
+          weight_kg: Number(item.weight),
+          used_weight_kg: Number(item.usedWeight || 0),
+          quantity_returned: Number(item.weight) - Number(item.usedWeight || 0),
+          reason: `[Metallisation] ${item.reason}`,
+        };
+        await materialReturnService.create(payload);
+      }
       setIsModalOpen(false);
       loadData();
     } catch (err) {
       console.error("Failed to create material return", err);
     }
   };
+
+  const { paginatedData, totalPages, validPage: currentPage } = getPaginatedData(filteredData);
 
   if (loading) return <div className="p-6 text-center text-[#5C5C5C]">Loading material returns...</div>;
 
@@ -179,11 +197,11 @@ export default function PersonAMetallisationMaterialReturnsPage() {
         <section className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="relative max-w-[400px] w-full">
             <Search className="w-4 h-4 text-[#A1A1AA] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-            <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search by Return ID..." className="h-[40px] w-full pl-9 pr-3 bg-white border border-[#EBEBEB] rounded-[8px] text-[14px] placeholder:text-[#A1A1AA] focus:outline-none focus:border-[#00B6E2]" />
+            <input type="text" value={searchQuery} onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }} placeholder="Search by Return ID..." className="h-[40px] w-full pl-9 pr-3 bg-white border border-[#EBEBEB] rounded-[8px] text-[14px] placeholder:text-[#A1A1AA] focus:outline-none focus:border-[#00B6E2]" />
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
             <TableToolbar dateRange={dateRange} onDateRangeChange={setDateRange} onExport={() => {
-              const exportData = filteredData.map((row: any) => ({
+              const exportData = paginatedData.map((row: any) => ({
                 "Return ID": row.id ?? "",
                 "Material ID": row.materialId ?? "",
                 "Weight": row.weight ?? "",
@@ -215,7 +233,7 @@ export default function PersonAMetallisationMaterialReturnsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#EAECF0]">
-                {filteredData.map((row, idx) => (
+                {paginatedData.map((row, idx) => (
                   <tr key={idx} className="hover:bg-gray-50/50 transition-colors group">
                     <td className="px-4 py-4 text-[14px] font-medium text-[#00B6E2]">{row.id}</td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C]">{row.materialId}</td>
@@ -237,12 +255,13 @@ export default function PersonAMetallisationMaterialReturnsPage() {
                     </td>
                   </tr>
                 ))}
-                {filteredData.length === 0 && (
+                {paginatedData.length === 0 && (
                   <tr><td colSpan={8} className="px-4 py-8 text-center text-[#5C5C5C] text-[14px]">No material returns found.</td></tr>
                 )}
               </tbody>
             </table>
           </div>
+          <TablePagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
         </section>
       </div>
     </div>

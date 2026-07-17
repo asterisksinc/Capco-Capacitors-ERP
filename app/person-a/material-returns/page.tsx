@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Search } from "lucide-react";
 import { materialReturnService } from "@/src/services/materialReturnService";
 import type { TableConfig } from "@/hooks/useTableControls";
+import { TablePagination } from "@/components/table/TablePagination";
 import { useTableControls } from "@/hooks/useTableControls";
 import { SortableHeader } from "@/components/table/SortableHeader";
 import { TableToolbar } from "@/components/table/TableToolbar";
@@ -88,6 +89,8 @@ export default function PersonAMaterialReturnsPage() {
     handleFilterChange,
     dateRange,
     setDateRange,
+    getPaginatedData,
+    setCurrentPage,
   } = useTableControls({ data, config: tableConfig });
 
   const handleSort = handleSortRaw as (key: string | number | symbol) => void;
@@ -115,6 +118,8 @@ export default function PersonAMaterialReturnsPage() {
     }
   };
 
+  const { paginatedData, totalPages, validPage: currentPage } = getPaginatedData(filteredData);
+
   if (loading) return <div className="p-6 text-center text-[#5C5C5C]">Loading material returns...</div>;
 
   return (
@@ -125,10 +130,10 @@ export default function PersonAMaterialReturnsPage() {
         <section className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="relative max-w-[400px] w-full">
             <Search className="w-4 h-4 text-[#A1A1AA] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-            <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search by Return ID..." className="h-[40px] w-full pl-9 pr-3 bg-white border border-[#EBEBEB] rounded-[8px] text-[14px] placeholder:text-[#A1A1AA] focus:outline-none focus:border-[#00B6E2]" />
+            <input type="text" value={searchQuery} onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }} placeholder="Search by Return ID..." className="h-[40px] w-full pl-9 pr-3 bg-white border border-[#EBEBEB] rounded-[8px] text-[14px] placeholder:text-[#A1A1AA] focus:outline-none focus:border-[#00B6E2]" />
           </div>
           <TableToolbar dateRange={dateRange} onDateRangeChange={setDateRange} onExport={() => {
-            const exportData = filteredData.map((row: any) => ({
+            const exportData = paginatedData.map((row: any) => ({
               "Return ID": row.id ?? "",
               "Material ID": row.materialId ?? "",
               "Weight": row.weight ?? "",
@@ -154,7 +159,7 @@ export default function PersonAMaterialReturnsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#EAECF0]">
-                {filteredData.map((row, idx) => (
+                {paginatedData.map((row, idx) => (
                   <tr key={idx} className="hover:bg-gray-50/50 transition-colors group">
                     <td className="px-4 py-4 text-[14px] font-medium text-[#00B6E2]">{row.id}</td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C]">{row.materialId}</td>
@@ -176,12 +181,13 @@ export default function PersonAMaterialReturnsPage() {
                     </td>
                   </tr>
                 ))}
-                {filteredData.length === 0 && (
+                {paginatedData.length === 0 && (
                   <tr><td colSpan={8} className="px-4 py-8 text-center text-[#5C5C5C] text-[14px]">No material returns from Person B.</td></tr>
                 )}
               </tbody>
             </table>
           </div>
+          <TablePagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
         </section>
       </div>
     </div>

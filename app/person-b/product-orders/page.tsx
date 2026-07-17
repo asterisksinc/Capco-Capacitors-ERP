@@ -20,6 +20,7 @@ type ProductOrderRow = {
 };
 
 import type { TableConfig } from "@/hooks/useTableControls";
+import { TablePagination } from "@/components/table/TablePagination";
 import { useTableControls } from "@/hooks/useTableControls";
 import { SortableHeader } from "@/components/table/SortableHeader";
 import { TableToolbar } from "@/components/table/TableToolbar";
@@ -114,8 +115,7 @@ export default function PersonBProductOrdersPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [qrData, setQrData] = useState<QRModalData | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [formData, setFormData] = useState<ProductOrderFormData>(() => createDefaultFormData());
+const [formData, setFormData] = useState<ProductOrderFormData>(() => createDefaultFormData());
 
   const generateProductOrderId = () => `PO-CC-${String(Date.now()).slice(-6)}`;
 
@@ -135,7 +135,9 @@ export default function PersonBProductOrdersPage() {
     filters,
     handleFilterChange,
     dateRange,
-    setDateRange
+    setDateRange,
+    getPaginatedData,
+    setCurrentPage,
   } = useTableControls({ data: productOrders, config: productOrderConfig });
 
   const [tableFilters, setTableFilters] = useState<FilterState>(() => {
@@ -216,26 +218,6 @@ export default function PersonBProductOrdersPage() {
     row.id.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const pageSize = 6;
-  const totalPages = Math.max(1, Math.ceil(searchedData.length / pageSize));
-  const safeCurrentPage = Math.min(currentPage, totalPages);
-  const paginatedProductOrders = searchedData.slice(
-    (safeCurrentPage - 1) * pageSize,
-    safeCurrentPage * pageSize,
-  );
-  const rangeStart = searchedData.length === 0 ? 0 : (safeCurrentPage - 1) * pageSize + 1;
-  const rangeEnd = Math.min(safeCurrentPage * pageSize, searchedData.length);
-
-  const pageNumbers = Array.from({ length: totalPages }, (_, index) => index + 1).slice(
-    Math.max(0, safeCurrentPage - 2),
-    Math.min(totalPages, safeCurrentPage + 1),
-  );
-
-  const goToPage = (page: number) => {
-    const nextPage = Math.max(1, Math.min(page, totalPages));
-    setCurrentPage(nextPage);
-  };
-
   const handleSearchChange = (value: string) => {
     setSearchQuery(value);
     setCurrentPage(1);
@@ -245,6 +227,8 @@ export default function PersonBProductOrdersPage() {
   const poInProgress = productOrders.filter((p) => p.status === "In-progress").length;
   const poYetToStart = productOrders.filter((p) => p.status === "Yet to Start").length;
   const poCompleted = productOrders.filter((p) => p.status === "Completed").length;
+
+  const { paginatedData, totalPages, validPage: currentPage } = getPaginatedData(searchedData);
 
   const kpiStats = [
     { label: "Total Product Orders", value: String(totalPO), icon: ClipboardList, valClass: "text-[#171717]", subtext: `${poInProgress} in-progress` },
@@ -583,7 +567,7 @@ export default function PersonBProductOrdersPage() {
             <input 
               type="text" 
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
               placeholder="Search by Product Order ID..." 
               className="h-[40px] w-full pl-9 pr-3 bg-white border border-[#EBEBEB] rounded-[8px] text-[14px] text-[#171717] placeholder:text-[#A1A1AA] focus:outline-none focus:border-[#00B6E2] " 
             />
@@ -633,7 +617,7 @@ export default function PersonBProductOrdersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#EAECF0]">
-                {paginatedProductOrders.map((row, idx) => (
+                {paginatedData.map((row, idx) => (
                   <tr key={idx} className="hover:bg-gray-50/50 transition-colors group">
                     <td className="px-4 py-4 text-[14px] font-medium text-[#00B6E2] whitespace-nowrap">
                       <Link href={`/person-b/product-orders/${row.id.replace('#', '')}`} className="hover:underline cursor-pointer">
@@ -670,7 +654,7 @@ export default function PersonBProductOrdersPage() {
                     </td>
                   </tr>
                 ))}
-                {paginatedProductOrders.length === 0 && (
+                {paginatedData.length === 0 && (
                   <tr>
                     <td colSpan={10} className="px-5 py-8 text-center text-[14px] text-[#5C5C5C]">
                       No product orders found.
@@ -680,45 +664,7 @@ export default function PersonBProductOrdersPage() {
               </tbody>
             </table>
           </div>
-
-          {/* Pagination Footer */}
-          <div className="flex items-center justify-between border-t border-[#EAECF0] px-6 py-4">
-            <p className="text-[14px] text-[#5C5C5C]">
-              Showing <span className="font-semibold text-[#171717]">{rangeStart}</span> to <span className="font-semibold text-[#171717]">{rangeEnd}</span> of <span className="font-semibold text-[#171717]">{searchedData.length}</span> documents
-            </p>
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                onClick={() => goToPage(safeCurrentPage - 1)}
-                disabled={safeCurrentPage === 1}
-                className="w-8 h-8 flex items-center justify-center rounded-[6px] border border-[#EBEBEB] text-[#5C5C5C] hover:bg-gray-50 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              {pageNumbers.map((pageNumber) => (
-                <button
-                  key={pageNumber}
-                  type="button"
-                  onClick={() => goToPage(pageNumber)}
-                  className={`w-8 h-8 flex items-center justify-center rounded-[6px] text-[14px] font-medium transition-colors ${
-                    pageNumber === safeCurrentPage
-                      ? "bg-[#00B6E2] text-white"
-                      : "border border-[#EBEBEB] text-[#5C5C5C] hover:bg-gray-50"
-                  }`}
-                >
-                  {pageNumber}
-                </button>
-              ))}
-              <button
-                type="button"
-                onClick={() => goToPage(safeCurrentPage + 1)}
-                disabled={safeCurrentPage === totalPages}
-                className="w-8 h-8 flex items-center justify-center rounded-[6px] border border-[#EBEBEB] text-[#5C5C5C] hover:bg-gray-50 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
+          <TablePagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
         </section>
 
       </div>

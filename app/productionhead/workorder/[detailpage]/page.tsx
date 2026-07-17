@@ -9,6 +9,7 @@ import { MobileHeader } from "@/components/MobileHeader";
 import { use, useState, useEffect, useMemo } from "react";
 import { workOrderService } from "@/src/services/workOrderService";
 import type { TableConfig } from "@/hooks/useTableControls";
+import { TablePagination } from "@/components/table/TablePagination";
 import { useTableControls } from "@/hooks/useTableControls";
 import { SortableHeader } from "@/components/table/SortableHeader";
 import { TableToolbar } from "@/components/table/TableToolbar";
@@ -192,6 +193,8 @@ export default function SupervisorWorkOrderDetailPage({ params }: DetailPageProp
     handleFilterChange,
     dateRange,
     setDateRange,
+    getPaginatedData,
+    setCurrentPage,
   } = useTableControls({ data: currentData, config: currentConfig });
 
   // ── Loading / not-found guards ────────────────────────────────────────────
@@ -210,6 +213,8 @@ export default function SupervisorWorkOrderDetailPage({ params }: DetailPageProp
       </div>
     );
   }
+
+  const { paginatedData, totalPages, validPage: currentPage } = getPaginatedData(processedData);
 
   const kpiStats = [
     { label: "Work Order", value: woData.work_order_no, icon: Layers },
@@ -399,7 +404,7 @@ export default function SupervisorWorkOrderDetailPage({ params }: DetailPageProp
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#EAECF0]">
-                {processedData.map((row, idx) => (
+                {paginatedData.map((row, idx) => (
                   <tr key={idx} className="hover:bg-gray-50/50 transition-colors group">
                     {currentConfig.columns.map((col) => {
                       const key = String(col.key);
@@ -443,7 +448,7 @@ export default function SupervisorWorkOrderDetailPage({ params }: DetailPageProp
                     })}
                   </tr>
                 ))}
-                {processedData.length === 0 && (
+                {paginatedData.length === 0 && (
                   <tr>
                     <td colSpan={currentConfig.columns.length} className="px-4 py-10 text-center text-[14px] text-[#5C5C5C]">
                       No {activeTab} records yet.
@@ -453,6 +458,7 @@ export default function SupervisorWorkOrderDetailPage({ params }: DetailPageProp
               </tbody>
             </table>
           </div>
+          <TablePagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
         </div>
       </section>
 

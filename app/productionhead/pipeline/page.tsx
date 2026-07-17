@@ -11,6 +11,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import type { TableConfig } from "@/hooks/useTableControls";
+import { TablePagination } from "@/components/table/TablePagination";
 import { useTableControls } from "@/hooks/useTableControls";
 import { SortableHeader } from "@/components/table/SortableHeader";
 import { TableToolbar } from "@/components/table/TableToolbar";
@@ -251,7 +252,7 @@ export default function PipelinePage() {
     handleSort: handleWorkSort,
     filters: workFilters,
     handleFilterChange: handleWorkFilter,
-  } = useTableControls({ data: pipelineWorkOrders, config: workOrderConfig });
+    getPaginatedData, setCurrentPage } = useTableControls({ data: pipelineWorkOrders, config: workOrderConfig });
 
   const {
     processedData: processedProductOrders,
@@ -334,6 +335,7 @@ export default function PipelinePage() {
       </div>
     );
   }
+
   return (
     <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-white flex flex-col relative w-full max-w-full">
       <MobileHeader title="Pipeline" />
@@ -441,7 +443,7 @@ export default function PipelinePage() {
             <input 
               type="text" 
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
               placeholder="Search..." 
               className="h-10 md:h-[40px] w-full pl-9 pr-3 bg-white border border-[#EBEBEB] rounded-lg md:rounded-[8px] text-[14px]" 
             />
@@ -601,6 +603,7 @@ export default function PipelinePage() {
                 </table>
               )}
             </div>
+          
 
             <div className="flex items-center justify-between border-t border-[#EAECF0] pt-4 mt-2">
               <p className="text-[14px] text-[#5C5C5C]">

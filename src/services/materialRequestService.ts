@@ -17,7 +17,7 @@ export type MaterialRequestPayload = {
 export const materialRequestService = {
   list(params?: ListParams) {
     return supabaseRest.list("material_requests", {
-      select: params?.select ?? "*,stock(stock_no,weight_kg,grade),inventory(raw_material_code,net_weight_kg)",
+      select: params?.select ?? "*,stock(stock_no,weight_kg,grade),inventory(raw_material_code,net_weight_kg),work_orders(micron,width_m)",
       order: params?.order ?? "created_at",
       ascending: params?.ascending,
       filters: params?.filters,

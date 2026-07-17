@@ -21,15 +21,15 @@ export function CreateMaterialRequestModal({
   mode = "default",
   workOrders = [],
 }: CreateMaterialRequestModalProps) {
-  const [formItems, setFormItems] = useState<MaterialRequestItem[]>([
-    { productNo: "", weight: "", requestedQty: "", issuedQty: "0", grade: "" },
+  const [formItems, setFormItems] = useState<any[]>([
+    { productNo: "", requestedQty: "" },
   ]);
 
   const addFormItem = () => {
-    setFormItems([...formItems, { productNo: "", weight: "", requestedQty: "", issuedQty: "0", grade: "" }]);
+    setFormItems([...formItems, { productNo: "", requestedQty: "" }]);
   };
 
-  const updateFormItem = (idx: number, patch: Partial<MaterialRequestItem>) => {
+  const updateFormItem = (idx: number, patch: any) => {
     setFormItems(formItems.map((item, i) => i === idx ? { ...item, ...patch } : item));
   };
 
@@ -41,9 +41,9 @@ export function CreateMaterialRequestModal({
   const handleSubmit = () => {
     let valid = true;
     if (mode === "work-order") {
-      valid = formItems.every((item) => item.productNo.trim() && item.weight.trim());
+      valid = formItems.every((item) => item.productNo.trim() && item.requestedQty.trim());
     } else {
-      valid = formItems.every((item) => item.weight.trim() && item.requestedQty.trim() && item.grade.trim());
+      valid = formItems.every((item) => item.productNo.trim() && item.requestedQty.trim());
     }
     if (!valid) return;
     onSubmit(formItems.map((item) => ({ ...item, issuedQty: "0" })));
@@ -70,43 +70,18 @@ export function CreateMaterialRequestModal({
                   <button onClick={() => removeFormItem(idx)} className="text-[12px] text-[#D92D20] hover:underline">Remove</button>
                 )}
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                {mode === "work-order" ? (
-                  <>
-                    <div className="flex flex-col gap-2">
-                      <label className="text-[13px] font-medium">Work Order ID</label>
-                      <select value={item.productNo} onChange={(e) => updateFormItem(idx, { productNo: e.target.value })} className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]">
-                        <option value="">Select Work Order...</option>
-                        {workOrders.map((wo) => <option key={wo.id} value={wo.id}>{wo.work_order_no || wo.id}</option>)}
-                      </select>
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <label className="text-[13px] font-medium">Weight</label>
-                      <input value={item.weight} onChange={(e) => updateFormItem(idx, { weight: e.target.value })} placeholder="Enter weight" className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]" />
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="flex flex-col gap-2">
-                      <label className="text-[13px] font-medium">Weight</label>
-                      <input value={item.weight} onChange={(e) => updateFormItem(idx, { weight: e.target.value })} placeholder="Enter weight" className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]" />
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <label className="text-[13px] font-medium">Requested Qty</label>
-                      <input type="number" min="1" value={item.requestedQty} onChange={(e) => updateFormItem(idx, { requestedQty: e.target.value })} placeholder="Qty" className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]" />
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <label className="text-[13px] font-medium">Grade</label>
-                      <select value={item.grade} onChange={(e) => updateFormItem(idx, { grade: e.target.value })} className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]">
-                        <option value="">Select grade</option>
-                        <option value="A+">A+</option>
-                        <option value="AA">AA</option>
-                        <option value="A">A</option>
-                        <option value="B">B</option>
-                      </select>
-                    </div>
-                  </>
-                )}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="flex flex-col gap-2">
+                  <label className="text-[13px] font-medium">Work Order ID</label>
+                  <select value={item.productNo} onChange={(e) => updateFormItem(idx, { productNo: e.target.value })} className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]">
+                    <option value="">Select Work Order...</option>
+                    {workOrders.map((wo) => <option key={wo.id} value={wo.id}>{wo.work_order_no || wo.id}</option>)}
+                  </select>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className="text-[13px] font-medium">Requested Qty</label>
+                  <input type="number" min="1" value={item.requestedQty} onChange={(e) => updateFormItem(idx, { requestedQty: e.target.value })} placeholder="Enter quantity" className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]" />
+                </div>
               </div>
             </div>
           ))}

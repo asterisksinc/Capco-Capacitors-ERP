@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import type { TableConfig } from "@/hooks/useTableControls";
+import { TablePagination } from "@/components/table/TablePagination";
 import { useTableControls } from "@/hooks/useTableControls";
 import { SortableHeader } from "@/components/table/SortableHeader";
 import { TableToolbar } from "@/components/table/TableToolbar";
@@ -101,7 +102,9 @@ export default function StoreHeadWorkOrderPage() {
     filters,
     handleFilterChange,
     dateRange,
-    setDateRange
+    setDateRange,
+    getPaginatedData,
+    setCurrentPage,
   } = useTableControls({ data: rows, config: workOrderConfig });
 
   const [tableFilters, setTableFilters] = useState<FilterState>(() => {
@@ -188,6 +191,8 @@ export default function StoreHeadWorkOrderPage() {
     },
   ];
 
+  const { paginatedData, totalPages, validPage: currentPage } = getPaginatedData(filteredData);
+
   if (loading) {
     return <div className="p-6 text-center text-[#5C5C5C]">Loading work orders...</div>;
   }
@@ -259,7 +264,7 @@ export default function StoreHeadWorkOrderPage() {
             <input 
               type="text" 
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
               placeholder="Search by Work Order ID..." 
               className="h-[40px] w-full pl-9 pr-3 bg-white border border-[#EBEBEB] rounded-[8px] text-[14px] text-[#171717] placeholder:text-[#A1A1AA] focus:outline-none focus:border-[#00B6E2] " 
             />
@@ -268,7 +273,7 @@ export default function StoreHeadWorkOrderPage() {
             dateRange={dateRange}
             onDateRangeChange={setDateRange}
             onExport={() => {
-              const exportData = filteredData.map(row => ({
+              const exportData = paginatedData.map(row => ({
                 "Work Order ID": row.id,
                 "Micron": row.micron,
                 "Width": row.width,
@@ -320,7 +325,7 @@ export default function StoreHeadWorkOrderPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#EAECF0]">
-                {filteredData.length > 0 ? filteredData.map((row, idx) => (
+                {paginatedData.length > 0 ? paginatedData.map((row, idx) => (
                   <tr key={idx} className="hover:bg-gray-50/50 transition-colors group">
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C] font-medium whitespace-nowrap">
                       <Link href={`/store-head/workorder/${row.id}`} className="hover:text-[#00B6E2] hover:underline cursor-pointer">
@@ -375,6 +380,7 @@ export default function StoreHeadWorkOrderPage() {
               </tbody>
             </table>
           </div>
+          <TablePagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
         </section>
       </div>
 

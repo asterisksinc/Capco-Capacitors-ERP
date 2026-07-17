@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { productOrderService } from "@/src/services/productOrderService";
 import type { TableConfig } from "@/hooks/useTableControls";
+import { TablePagination } from "@/components/table/TablePagination";
 import { useTableControls } from "@/hooks/useTableControls";
 import { SortableHeader } from "@/components/table/SortableHeader";
 import { TableToolbar } from "@/components/table/TableToolbar";
@@ -101,6 +102,8 @@ export default function PersonAProductOrdersPage() {
     handleFilterChange,
     dateRange,
     setDateRange,
+    getPaginatedData,
+    setCurrentPage,
   } = useTableControls({ data: productOrders, config });
 
   const handleSort = handleSortRaw as (key: string | number | symbol) => void;
@@ -133,6 +136,8 @@ export default function PersonAProductOrdersPage() {
     return true;
   });
 
+  const { paginatedData, totalPages, validPage: currentPage } = getPaginatedData(filteredData);
+
   if (loading) return <div className="p-6 text-center text-[#5C5C5C]">Loading product orders...</div>;
 
   return (
@@ -143,10 +148,10 @@ export default function PersonAProductOrdersPage() {
         <section className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="relative max-w-[400px] w-full">
             <Search className="w-4 h-4 text-[#A1A1AA] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-            <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search by Order ID..." className="h-[40px] w-full pl-9 pr-3 bg-white border border-[#EBEBEB] rounded-[8px] text-[14px] placeholder:text-[#A1A1AA] focus:outline-none focus:border-[#00B6E2]" />
+            <input type="text" value={searchQuery} onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }} placeholder="Search by Order ID..." className="h-[40px] w-full pl-9 pr-3 bg-white border border-[#EBEBEB] rounded-[8px] text-[14px] placeholder:text-[#A1A1AA] focus:outline-none focus:border-[#00B6E2]" />
           </div>
           <TableToolbar dateRange={dateRange} onDateRangeChange={setDateRange} onExport={() => {
-            const exportData = filteredData.map(row => ({
+            const exportData = paginatedData.map(row => ({
               "Order ID": row.id, "Product Code": row.code, "Type": row.type, "Grade": row.grade,
               "Batch Size": row.batchSize, "Status": row.status, "Stage": row.stage, "Created": row.timestamp,
             }));
@@ -168,7 +173,7 @@ export default function PersonAProductOrdersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#EAECF0]">
-                {filteredData.map((row, idx) => (
+                {paginatedData.map((row, idx) => (
                   <tr key={idx} className="hover:bg-gray-50/50 transition-colors group">
                     <td className="px-4 py-4 text-[14px] font-medium text-[#00B6E2] whitespace-nowrap">
                       <Link href={`/person-a/product-orders/${row.id.replace('#', '')}`} className="hover:underline">{row.id}</Link>
@@ -190,12 +195,13 @@ export default function PersonAProductOrdersPage() {
                     </td>
                   </tr>
                 ))}
-                {filteredData.length === 0 && (
+                {paginatedData.length === 0 && (
                   <tr><td colSpan={9} className="px-4 py-8 text-center text-[#5C5C5C]">No product orders.</td></tr>
                 )}
               </tbody>
             </table>
           </div>
+          <TablePagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
         </section>
       </div>
       {qrData && <QRCodeModal id={qrData.id} type={qrData.type} details={qrData.details} onClose={() => setQrData(null)} />}

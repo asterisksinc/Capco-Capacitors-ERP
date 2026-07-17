@@ -35,16 +35,20 @@ export function useTableControls<T extends Record<string, unknown>>({
     to: "",
   });
 
+  const [currentPage, setCurrentPage] = useState(1);
+
   const handleSort = (key: keyof T) => {
     let direction: "asc" | "desc" = "asc";
     if (sortConfig && sortConfig.key === key) {
       if (sortConfig.direction === "asc") direction = "desc";
       else if (sortConfig.direction === "desc") {
         setSortConfig(null);
+        setCurrentPage(1);
         return;
       }
     }
     setSortConfig({ key, direction });
+    setCurrentPage(1);
   };
 
   const handleFilterChange = (key: string, value: string) => {
@@ -56,6 +60,7 @@ export function useTableControls<T extends Record<string, unknown>>({
       }
       return { ...prev, [key]: value };
     });
+    setCurrentPage(1);
   };
 
   const parseDate = (val: string) => {
@@ -138,6 +143,21 @@ export function useTableControls<T extends Record<string, unknown>>({
     return processed;
   }, [data, config, sortConfig, filters, dateRange]);
 
+  const getPaginatedData = <D>(dataToPaginate: D[]) => {
+    const pageSize = 10;
+    const totalPages = Math.ceil(dataToPaginate.length / pageSize) || 1;
+    const validPage = Math.min(currentPage, totalPages);
+    
+    const startIndex = (validPage - 1) * pageSize;
+    const paginatedData = dataToPaginate.slice(startIndex, startIndex + pageSize);
+
+    return {
+      paginatedData,
+      totalPages,
+      validPage,
+    };
+  };
+
   return {
     processedData: filteredAndSortedData,
     sortConfig,
@@ -145,6 +165,11 @@ export function useTableControls<T extends Record<string, unknown>>({
     filters,
     handleFilterChange,
     dateRange,
-    setDateRange,
+    setDateRange: (range: { from: string; to: string }) => {
+      setDateRange(range);
+      setCurrentPage(1);
+    },
+    getPaginatedData,
+    setCurrentPage,
   };
 }

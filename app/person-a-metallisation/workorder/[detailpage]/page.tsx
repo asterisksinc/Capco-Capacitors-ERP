@@ -10,6 +10,7 @@ import { useStore } from "@/hooks/useStore";
 import { ScannerInput } from "@/components/ScannerInput";
 import { computeWorkflowProgress } from "@/lib/data";
 import type { TableConfig } from "@/hooks/useTableControls";
+import { TablePagination } from "@/components/table/TablePagination";
 import { useTableControls } from "@/hooks/useTableControls";
 import { SortableHeader } from "@/components/table/SortableHeader";
 import { TableToolbar } from "@/components/table/TableToolbar";
@@ -276,9 +277,13 @@ export default function OperatorMetallisationDetailPage({ params }: DetailPagePr
     handleFilterChange,
     dateRange,
     setDateRange,
+    getPaginatedData,
+    setCurrentPage,
   } = useTableControls({ data: currentData, config: currentConfig });
 
   const handleSort = handleSortRaw as (key: string | number | symbol) => void;
+
+  const { paginatedData, totalPages, validPage: currentPage } = getPaginatedData(processedData);
 
   if (loading) return <div className="p-6 text-center text-[#5C5C5C]">Loading details...</div>;
   if (!workOrderFlowData) return <div className="p-6 text-center text-[#5C5C5C]">Work Order not found</div>;
@@ -807,7 +812,7 @@ export default function OperatorMetallisationDetailPage({ params }: DetailPagePr
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#EAECF0]">
-                {processedData.map((row, idx) => (
+                {paginatedData.map((row, idx) => (
                   <tr key={idx} className="hover:bg-gray-50/50 transition-colors group">
                     {currentConfig.columns.map((col) => {
                       if (String(col.key) === "qr") {
@@ -881,6 +886,7 @@ export default function OperatorMetallisationDetailPage({ params }: DetailPagePr
               </tbody>
             </table>
           </div>
+          <TablePagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
         </div>
       </section>
       {qrData && <QRCodeModal id={qrData.id} type={qrData.type} details={qrData.details} onClose={() => setQrData(null)} />}
