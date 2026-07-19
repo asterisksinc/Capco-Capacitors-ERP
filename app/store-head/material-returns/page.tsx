@@ -54,7 +54,7 @@ export default function StoreHeadMaterialReturnsPage() {
         originalId: row.id,
         materialId: row.inventory?.raw_material_code || row.stock?.stock_no || row.material_id || "-",
         weight: row.weight_kg ? String(row.weight_kg) : "-",
-        usedWeight: row.used_weight_kg ? String(row.used_weight_kg) : "-",
+        usedWeight: row.used_weight_kg != null ? String(row.used_weight_kg) : "-",
         reason: row.reason || "-",
         status: row.status || "Returned",
         returnedBy: row.returned_by || "-",
@@ -97,28 +97,22 @@ export default function StoreHeadMaterialReturnsPage() {
       await materialReturnService.accept(row.originalId, user?.id || "");
 
       const { supabaseRest } = await import("@/src/services/supabaseClient");
-      const returnRecord = await supabaseRest.getById("material_returns", row.originalId, "inventory_id,material_id,weight_kg");
+      const returnRecord = await supabaseRest.getById("material_returns", row.originalId, "inventory_id,material_id,weight_kg,used_weight_kg,quantity_returned");
       
       const targetInvId = (returnRecord as any)?.inventory_id || (returnRecord as any)?.material_id;
       
       if (targetInvId) {
         const { inventoryService } = await import("@/src/services/inventoryService");
-        const { productionStageService } = await import("@/src/services/productionStageService");
-        
-        const inventoryRecord = await inventoryService.getById(targetInvId);
-        
-        const prevUsedWeight = (inventoryRecord as any).used_weight_kg || 0;
-        const returnedWeight = (returnRecord as any).weight_kg || 0;
-        const newUsedWeight = Math.max(0, prevUsedWeight - returnedWeight);
-        
-        const netWeight = (inventoryRecord as any).net_weight_kg || 0;
-        const wastage = (inventoryRecord as any).wastage_weight_kg || 0;
-        const newGrossWeight = netWeight - newUsedWeight - wastage;
+        const usedWeight = Number((returnRecord as any)?.used_weight_kg || 0);
+        const returnedWeight = Number((returnRecord as any)?.quantity_returned ?? (Number((returnRecord as any)?.weight_kg || 0) - usedWeight));
+        const nextStatus = returnedWeight > 0 ? "In Inventory" : "Used Completely";
         
         await inventoryService.update(targetInvId, {
-          used_weight_kg: newUsedWeight,
-          gross_weight_kg: newGrossWeight,
-          status: "Returned" as any
+          used_weight_kg: usedWeight,
+          gross_weight_kg: Math.max(0, returnedWeight),
+          current_weight_kg: Math.max(0, returnedWeight),
+          status: nextStatus as any,
+          stage: "Inventory" as any,
         } as any);
       }
 

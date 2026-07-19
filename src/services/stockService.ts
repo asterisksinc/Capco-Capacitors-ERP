@@ -17,7 +17,7 @@ export const stockService = {
     return supabaseRest.list("stock", {
       select:
         params?.select ??
-        "*,created_by_profile:profiles!stock_created_by_fkey(id,full_name,email,phone,worker_label,team_name),slitting(slitting_no,product_no,created_by_profile:profiles!slitting_created_by_fkey(id,full_name,email,phone,worker_label,team_name),operator:profiles!slitting_operator_id_fkey(id,full_name,email,phone,worker_label,team_name)),work_orders(work_order_no),qr_references(qr_payload,qr_url)",
+        "*,created_by_profile:profiles!stock_created_by_fkey(id,full_name,email,phone,worker_label,team_name),slitting(slitting_no,product_no,gross_weight_kg,used_weight_kg,created_by_profile:profiles!slitting_created_by_fkey(id,full_name,email,phone,worker_label,team_name),operator:profiles!slitting_operator_id_fkey(id,full_name,email,phone,worker_label,team_name)),work_orders(work_order_no),qr_references(qr_payload,qr_url)",
       order: params?.order ?? "created_at",
       ascending: params?.ascending,
       filters: params?.filters,

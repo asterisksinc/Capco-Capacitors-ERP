@@ -22,6 +22,8 @@ type MetallisationRow = {
   coilNo: string;
   rmId: string;
   weight: string;
+  grossWeight: string;
+  usedWeight: string;
   factoryWastageWeight: string;
   timestamp: string;
   nextStage: string;
@@ -52,6 +54,8 @@ const metallisationConfig: TableConfig<MetallisationRow> = {
     { key: "coilNo", label: "Coil No.", type: "text", sortable: true },
     { key: "rmId", label: "RM ID", type: "text", sortable: true },
     { key: "weight", label: "Weight", type: "text", sortable: true },
+    { key: "grossWeight", label: "Gross Weight", type: "text", sortable: true },
+    { key: "usedWeight", label: "Used Weight", type: "text", sortable: true },
     { key: "factoryWastageWeight", label: "Factory Wastage Weight", type: "number", sortable: true },
     { key: "timestamp", label: "Timestamp", type: "date", sortable: true },
     { key: "nextStage", label: "Next Stage", type: "text", sortable: false },
@@ -75,6 +79,8 @@ export default function OperatorMetallisationStockPage() {
           coilNo: met.coil_no || met.metallisation_no || met.id,
           rmId: met.inventory?.raw_material_code || met.inventory?.roll_no || "-",
           weight: met.weight_kg ? String(met.weight_kg) : "0",
+          grossWeight: met.gross_weight_kg != null ? String(met.gross_weight_kg) : "0",
+          usedWeight: met.used_weight_kg != null ? String(met.used_weight_kg) : "0",
           factoryWastageWeight: met.factory_wastage_kg ? String(met.factory_wastage_kg) : "0",
           timestamp: new Date(met.created_at).toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }),
           nextStage: "Slitting",
@@ -230,6 +236,8 @@ export default function OperatorMetallisationStockPage() {
                 "Coil No": row.coilNo,
                 "RM ID": row.rmId,
                 "Weight": row.weight,
+                "Gross Weight": row.grossWeight,
+                "Used Weight": row.usedWeight,
                 "Factory Wastage": row.factoryWastageWeight,
                 "Timestamp": row.timestamp,
                 "Next Stage": row.nextStage,
@@ -269,6 +277,8 @@ export default function OperatorMetallisationStockPage() {
                     <td className="px-4 py-4 text-[14px] font-medium text-[#171717] whitespace-nowrap">{row.coilNo}</td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.rmId}</td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.weight}kgs</td>
+                    <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.grossWeight}kgs</td>
+                    <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.usedWeight}kgs</td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.factoryWastageWeight}kgs</td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.timestamp}</td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.nextStage}</td>
@@ -276,7 +286,7 @@ export default function OperatorMetallisationStockPage() {
                       <StatusBadge status={row.status} />
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
-                      <button onClick={() => setQrData({ id: row.coilNo, type: "MC", details: { "Coil No": row.coilNo, "RM ID": row.rmId, "Weight": row.weight, "Status": row.status } })} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors">
+                      <button onClick={() => setQrData({ id: row.coilNo, type: "MC", details: { "Coil No": row.coilNo, "RM ID": row.rmId, "Weight": row.weight, "Gross Weight": row.grossWeight, "Used Weight": row.usedWeight, "Status": row.status } })} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors">
                         <QrCode className="w-4 h-4" />
                       </button>
                     </td>

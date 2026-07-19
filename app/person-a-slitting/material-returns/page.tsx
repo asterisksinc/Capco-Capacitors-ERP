@@ -85,7 +85,7 @@ export default function PersonASlittingMaterialReturnsPage() {
         originalId: row.id,
         materialId: row.inventory?.raw_material_code || row.stock?.stock_no || (((typeof metallisationData !== "undefined" ? metallisationData : []) as any[])?.find(m => m.id === row.material_id)?.coil_no) || row.material_id || "-",
         weight: row.weight_kg ? String(row.weight_kg) : "-",
-        usedWeight: row.used_quantity ? String(row.used_quantity) : "-",
+        usedWeight: row.used_weight_kg != null ? String(row.used_weight_kg) : "-",
         reason: row.reason || "-",
         status: row.status || "Returned",
         returnedBy: profileMap.get(row.returned_by) || row.returned_by,

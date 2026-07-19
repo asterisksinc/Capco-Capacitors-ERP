@@ -90,20 +90,17 @@ export default function StoreHeadInventoryPage() {
         ]);
         
         const wastageMap = new Map();
-        const usedWeightMap = new Map();
         (metallisationRows as any[]).forEach(m => {
           if (m.raw_material_id) {
             const currentW = wastageMap.get(m.raw_material_id) || 0;
             wastageMap.set(m.raw_material_id, currentW + (m.factory_wastage_kg || 0));
-            const currentU = usedWeightMap.get(m.raw_material_id) || 0;
-            usedWeightMap.set(m.raw_material_id, currentU + (m.weight_kg || 0));
           }
         });
 
         const formatted = (rows as any[]).map(row => ({
           ...row,
           wastage_weight_kg: wastageMap.has(row.id) ? wastageMap.get(row.id) : null,
-          used_weight_kg: usedWeightMap.has(row.id) ? usedWeightMap.get(row.id) : null,
+          used_weight_kg: row.used_weight_kg ?? null,
           damaged_weight_kg: null,
         }));
         

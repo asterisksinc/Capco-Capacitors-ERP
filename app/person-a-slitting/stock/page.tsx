@@ -20,6 +20,8 @@ type StockRow = {
   stockId: string;
   linkedWoId: string;
   weight: string;
+  grossWeight: string;
+  usedWeight: string;
   width: string;
   micron: string;
   grade: string;
@@ -50,6 +52,8 @@ const filterConfig: FilterConfig = {
 const stockConfig: TableConfig<StockRow> = {
   columns: [
     { key: "stockId", label: "STOCK ID", type: "text", sortable: true },
+    { key: "grossWeight", label: "Gross Weight", type: "text", sortable: true },
+    { key: "usedWeight", label: "Used Weight", type: "text", sortable: true },
     { key: "width", label: "Width", type: "text", sortable: true },
     { key: "micron", label: "Micron", type: "text", sortable: true },
     { key: "weight", label: "Weight", type: "text", sortable: true },
@@ -73,6 +77,8 @@ export default function OperatorSlittingStockPage() {
           stockId: row.stock_no || row.id,
           linkedWoId: row.work_orders?.work_order_no || "-",
           weight: row.weight_kg ? String(row.weight_kg) : "-",
+          grossWeight: row.slitting?.gross_weight_kg != null ? String(row.slitting.gross_weight_kg) : "-",
+          usedWeight: row.slitting?.used_weight_kg != null ? String(row.slitting.used_weight_kg) : "-",
           width: row.width_m ? String(row.width_m) : "-",
           micron: row.micron ? String(row.micron) : "-",
           grade: row.grade || "-",
@@ -244,6 +250,8 @@ export default function OperatorSlittingStockPage() {
               const exportData = paginatedData.map(row => ({
                 "Stock ID": row.stockId,
                 "Linked WO ID": row.linkedWoId,
+                "Gross Weight": row.grossWeight,
+                "Used Weight": row.usedWeight,
                 "Weight": row.weight,
                 "Width": row.width,
                 "Micron": row.micron,
@@ -287,6 +295,8 @@ export default function OperatorSlittingStockPage() {
                         {row.stockId}
                       </Link>
                     </td>
+                    <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.grossWeight}kgs</td>
+                    <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.usedWeight}kgs</td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.width}</td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.micron}</td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.weight}kgs</td>
@@ -298,7 +308,7 @@ export default function OperatorSlittingStockPage() {
                     </td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.timestamp}</td>
                     <td className="px-4 py-3 whitespace-nowrap">
-                      <button onClick={() => setQrData({ id: row.stockId, type: "RM", details: { "Stock ID": row.stockId, "Linked WO": row.linkedWoId, "Weight": row.weight, "Width": row.width, "Micron": row.micron, "Grade": row.grade, "Stage": row.stage } })} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors">
+                      <button onClick={() => setQrData({ id: row.stockId, type: "RM", details: { "Stock ID": row.stockId, "Linked WO": row.linkedWoId, "Weight": row.weight, "Gross Weight": row.grossWeight, "Used Weight": row.usedWeight, "Width": row.width, "Micron": row.micron, "Grade": row.grade, "Stage": row.stage } })} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors">
                         <QrCode className="w-4 h-4" />
                       </button>
                     </td>

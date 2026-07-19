@@ -8,6 +8,8 @@ export type MetallisationPayload = {
   coil_no?: string;
   machine_no?: string;
   weight_kg: number;
+  gross_weight_kg?: number;
+  used_weight_kg?: number;
   weight_after_metallisation_kg?: number;
   optical_density?: number;
   resistance_ohms?: number;
@@ -27,6 +29,8 @@ export type SlittingPayload = {
   operator_id?: string;
   product_no: string;
   weight_kg: number;
+  gross_weight_kg?: number;
+  used_weight_kg?: number;
   thickness_micron: number;
   width_m?: number;
   number_of_bags?: number;
@@ -110,6 +114,8 @@ export const productionStageService = {
   addMetallisation(payload: MetallisationPayload) {
     return supabaseRest.create("metallisation", {
       ...payload,
+      gross_weight_kg: payload.gross_weight_kg ?? payload.weight_kg,
+      used_weight_kg: payload.used_weight_kg ?? 0,
       factory_wastage_kg: payload.factory_wastage_kg ?? 0,
       next_stage: "Slitting",
       stage: "Metallisation",
@@ -130,6 +136,8 @@ export const productionStageService = {
   addSlitting(payload: SlittingPayload) {
     return supabaseRest.create("slitting", {
       ...payload,
+      gross_weight_kg: payload.gross_weight_kg ?? payload.weight_kg,
+      used_weight_kg: payload.used_weight_kg ?? 0,
       number_of_bags: payload.number_of_bags ?? 0,
       stage: "Stock",
       status: "Completed" satisfies WorkflowStatus,

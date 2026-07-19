@@ -79,7 +79,7 @@ export default function PersonAMetallisationMaterialReturnsPage() {
         originalId: row.id,
         materialId: row.inventory?.raw_material_code || row.stock?.stock_no || metallisationById.get(row.material_id)?.metallisation_no || row.material_id || "-",
         weight: row.weight_kg ? String(row.weight_kg) : "-",
-        usedWeight: row.used_quantity ? String(row.used_quantity) : "-",
+        usedWeight: row.used_weight_kg != null ? String(row.used_weight_kg) : "-",
         reason: row.reason || "-",
         status: row.status || "Returned",
         returnedBy: row.returned_by || "-",
@@ -122,12 +122,15 @@ export default function PersonAMetallisationMaterialReturnsPage() {
       await materialReturnService.accept(ret.originalId, user?.id || "");
 
       const { supabaseRest } = await import("@/src/services/supabaseClient");
-      const returnRecord = await supabaseRest.getById("material_returns", ret.originalId, "material_id");
+      const returnRecord = await supabaseRest.getById("material_returns", ret.originalId, "material_id,weight_kg,used_weight_kg,quantity_returned");
       
       if (returnRecord && (returnRecord as any).material_id) {
         const { productionStageService } = await import("@/src/services/productionStageService");
+        const usedWeight = Number((returnRecord as any).used_weight_kg || 0);
+        const grossWeight = Number((returnRecord as any).quantity_returned ?? (Number((returnRecord as any).weight_kg || 0) - usedWeight));
         await productionStageService.updateMetallisation((returnRecord as any).material_id, {
-          status: "Returned" as any
+          used_weight_kg: usedWeight,
+          gross_weight_kg: Math.max(0, grossWeight),
         } as any);
       }
       

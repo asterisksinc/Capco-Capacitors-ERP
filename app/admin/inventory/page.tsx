@@ -85,13 +85,10 @@ export default function AdminInventoryPage() {
       ]);
 
       const wastageMap = new Map();
-      const usedWeightMap = new Map();
       (metallisationData as any[]).forEach((m) => {
         if (m.raw_material_id) {
           const currentW = wastageMap.get(m.raw_material_id) || 0;
           wastageMap.set(m.raw_material_id, currentW + (m.factory_wastage_kg || 0));
-          const currentU = usedWeightMap.get(m.raw_material_id) || 0;
-          usedWeightMap.set(m.raw_material_id, currentU + (m.weight_kg || 0));
         }
       });
 
@@ -104,7 +101,7 @@ export default function AdminInventoryPage() {
         weight: item.net_weight_kg != null ? `${item.net_weight_kg}kgs` : "-",
         netWeight: item.net_weight_kg != null ? `${item.net_weight_kg}kgs` : "-",
         grossWeight: item.gross_weight_kg != null ? `${item.gross_weight_kg}kgs` : "-",
-        usedWeight: usedWeightMap.has(item.id) ? `${usedWeightMap.get(item.id)}kgs` : "-",
+        usedWeight: item.used_weight_kg != null ? `${item.used_weight_kg}kgs` : "-",
         wastageWeight: wastageMap.has(item.id) ? `${wastageMap.get(item.id)}kgs` : "-",
         damagedWeight: "-",
         temperature: item.temperature_c != null ? `${item.temperature_c}°C` : "-",

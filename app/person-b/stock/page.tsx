@@ -23,6 +23,8 @@ type StockRow = {
   stockId: string;
   linkedWoId: string;
   weight: string;
+  grossWeight: string;
+  usedWeight: string;
   width: string;
   micron: string;
   grade: string;
@@ -35,6 +37,8 @@ type MetallisationRow = {
   coilNo: string;
   rmId: string;
   weight: string;
+  grossWeight: string;
+  usedWeight: string;
   factoryWastageWeight: string;
   timestamp: string;
   nextStage: string;
@@ -80,6 +84,8 @@ const filterConfigMet: FilterConfig = {
 const stockConfig: TableConfig<any> = {
   columns: [
     { key: "stockId", label: "STOCK ID", type: "text", sortable: true },
+    { key: "grossWeight", label: "Gross Weight", type: "text", sortable: true },
+    { key: "usedWeight", label: "Used Weight", type: "text", sortable: true },
     { key: "weight", label: "Weight", type: "text", sortable: true },
     { key: "width", label: "Width", type: "text", sortable: true },
     { key: "micron", label: "Micron", type: "text", sortable: true },
@@ -96,6 +102,8 @@ const metallisationConfig: TableConfig<any> = {
     { key: "coilNo", label: "Coil No.", type: "text", sortable: true },
     { key: "rmId", label: "RM ID", type: "text", sortable: true },
     { key: "weight", label: "Weight", type: "text", sortable: true },
+    { key: "grossWeight", label: "Gross Weight", type: "text", sortable: true },
+    { key: "usedWeight", label: "Used Weight", type: "text", sortable: true },
     { key: "factoryWastageWeight", label: "Factory Wastage Weight", type: "number", sortable: true },
     { key: "timestamp", label: "Timestamp", type: "date", sortable: true },
     { key: "nextStage", label: "Next Stage", type: "text", sortable: false },
@@ -124,6 +132,8 @@ export default function PersonBStockPage() {
           stockId: row.stock_no || row.id,
           linkedWoId: row.work_orders?.work_order_no || "-",
           weight: row.weight_kg ? String(row.weight_kg) : "-",
+          grossWeight: row.slitting?.gross_weight_kg != null ? String(row.slitting.gross_weight_kg) : "-",
+          usedWeight: row.slitting?.used_weight_kg != null ? String(row.slitting.used_weight_kg) : "-",
           width: row.width_m ? String(row.width_m) : "-",
           micron: row.micron ? String(row.micron) : "-",
           grade: row.grade || "-",
@@ -136,6 +146,8 @@ export default function PersonBStockPage() {
           coilNo: met.coil_no || met.metallisation_no || met.id,
           rmId: met.inventory?.raw_material_code || met.inventory?.roll_no || "-",
           weight: met.weight_kg ? String(met.weight_kg) : "0",
+          grossWeight: met.gross_weight_kg != null ? String(met.gross_weight_kg) : "0",
+          usedWeight: met.used_weight_kg != null ? String(met.used_weight_kg) : "0",
           factoryWastageWeight: met.factory_wastage_kg ? String(met.factory_wastage_kg) : "0",
           timestamp: new Date(met.created_at).toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }),
           nextStage: "Slitting",
@@ -382,6 +394,8 @@ export default function PersonBStockPage() {
                   "Coil No": row.coilNo,
                   "RM ID": row.rmId,
                   "Weight": row.weight,
+                  "Gross Weight": row.grossWeight,
+                  "Used Weight": row.usedWeight,
                   "Factory Wastage": row.factoryWastageWeight,
                   "Timestamp": row.timestamp,
                   "Next Stage": row.nextStage,
@@ -392,6 +406,8 @@ export default function PersonBStockPage() {
                 const exportData = filteredData.map((row: any) => ({
                   "Stock ID": row.stockId,
                   "Linked WO ID": row.linkedWoId,
+                  "Gross Weight": row.grossWeight,
+                  "Used Weight": row.usedWeight,
                   "Weight": row.weight,
                   "Width": row.width,
                   "Micron": row.micron,
@@ -453,12 +469,14 @@ export default function PersonBStockPage() {
                         <td className="px-4 py-4 text-[14px] font-medium text-[#171717] whitespace-nowrap">{row.coilNo}</td>
                         <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.rmId}</td>
                         <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap tabular-nums">{row.weight}kgs</td>
+                        <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap tabular-nums">{row.grossWeight}kgs</td>
+                        <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap tabular-nums">{row.usedWeight}kgs</td>
                         <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap tabular-nums">{row.factoryWastageWeight}kgs</td>
                         <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.timestamp}</td>
                         <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.nextStage}</td>
                         <td className="px-4 py-4 whitespace-nowrap"><StatusBadge status={row.status} /></td>
                         <td className="px-4 py-3 whitespace-nowrap">
-                          <button onClick={() => setQrData({ id: row.coilNo, type: "MC", details: { "Coil No": row.coilNo, "RM ID": row.rmId, "Weight": row.weight, "Status": row.status } })} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors">
+                          <button onClick={() => setQrData({ id: row.coilNo, type: "MC", details: { "Coil No": row.coilNo, "RM ID": row.rmId, "Weight": row.weight, "Gross Weight": row.grossWeight, "Used Weight": row.usedWeight, "Status": row.status } })} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors">
                             <QrCode className="w-4 h-4" />
                           </button>
                         </td>
@@ -477,7 +495,9 @@ export default function PersonBStockPage() {
                             {row.stockId}
                           </Link>
                         </td>
-                        <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.weight}</td>
+                        <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.grossWeight}kgs</td>
+                        <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.usedWeight}kgs</td>
+                        <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.weight}kgs</td>
                         <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.width}</td>
                         <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.micron}</td>
                         <td className="px-4 py-4 text-[14px] font-medium text-[#171717] whitespace-nowrap">{row.grade}</td>
@@ -488,7 +508,7 @@ export default function PersonBStockPage() {
                         </td>
                         <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.timestamp}</td>
                         <td className="px-4 py-3 whitespace-nowrap">
-                          <button onClick={() => setQrData({ id: row.stockId, type: "RM", details: { "Stock ID": row.stockId, "Linked WO": row.linkedWoId, "Weight": row.weight, "Width": row.width, "Micron": row.micron, "Grade": row.grade, "Stage": row.stage } })} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors">
+                          <button onClick={() => setQrData({ id: row.stockId, type: "RM", details: { "Stock ID": row.stockId, "Linked WO": row.linkedWoId, "Weight": row.weight, "Gross Weight": row.grossWeight, "Used Weight": row.usedWeight, "Width": row.width, "Micron": row.micron, "Grade": row.grade, "Stage": row.stage } })} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors">
                             <QrCode className="w-4 h-4" />
                           </button>
                         </td>

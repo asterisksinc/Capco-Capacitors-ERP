@@ -217,6 +217,8 @@ create table if not exists public.metallisation (
   coil_no text,
   machine_no text,
   weight_kg numeric(12,3) not null,
+  gross_weight_kg numeric(12,3) not null default 0,
+  used_weight_kg numeric(12,3) not null default 0,
   weight_after_metallisation_kg numeric(12,3),
   optical_density numeric(10,3),
   resistance_ohms numeric(10,3),
@@ -236,6 +238,8 @@ create table if not exists public.metallisation (
 );
 
 alter table public.metallisation
+  add column if not exists gross_weight_kg numeric(12,3) not null default 0,
+  add column if not exists used_weight_kg numeric(12,3) not null default 0,
   add column if not exists factory_wastage_image_url text,
   add column if not exists photo_url text,
   add column if not exists metallisation_image_url text,
@@ -256,6 +260,8 @@ create table if not exists public.slitting (
   operator_id uuid references public.profiles(id),
   product_no text not null unique,
   weight_kg numeric(12,3) not null,
+  gross_weight_kg numeric(12,3) not null default 0,
+  used_weight_kg numeric(12,3) not null default 0,
   thickness_micron numeric(10,2) not null,
   width_m numeric(10,3),
   number_of_bags integer not null default 0,
@@ -280,6 +286,8 @@ alter table public.work_order_materials
   add column if not exists store_head_review_image_url text;
 
 alter table public.slitting
+  add column if not exists gross_weight_kg numeric(12,3) not null default 0,
+  add column if not exists used_weight_kg numeric(12,3) not null default 0,
   add column if not exists slitting_image_url text,
   add column if not exists slitting_review_image_url text;
 
