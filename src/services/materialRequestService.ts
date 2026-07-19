@@ -1,4 +1,4 @@
-import { supabaseRest, type ListParams, type WorkflowStatus } from "./supabaseClient";
+import { supabaseRest, supabaseStorage, type ListParams, type WorkflowStatus } from "./supabaseClient";
 
 export type MaterialRequestPayload = {
   request_no: string;
@@ -11,6 +11,7 @@ export type MaterialRequestPayload = {
   requested_quantity: number;
   grade?: string;
   requested_by?: string;
+  qc_image_url?: string;
   notes?: string;
 };
 
@@ -28,12 +29,21 @@ export const materialRequestService = {
   create(payload: MaterialRequestPayload) {
     return supabaseRest.create("material_requests", { ...payload, status: "Pending" satisfies WorkflowStatus, issued_quantity: 0 });
   },
-  issue(id: string, issuedBy: string, issuedQuantity: number) {
+  issue(id: string, issuedBy: string, issuedQuantity: number, qcImageUrl?: string) {
     return supabaseRest.update("material_requests", id, {
       issued_by: issuedBy,
       issued_quantity: issuedQuantity,
       issued_at: new Date().toISOString(),
+      ...(qcImageUrl ? { qc_image_url: qcImageUrl } : {}),
       status: "Issued" satisfies WorkflowStatus,
+    });
+  },
+  uploadQcImage(requestNo: string, file: Blob & { name?: string }) {
+    return supabaseStorage.uploadProductionImage({
+      stage: "raw-material",
+      ownerCode: requestNo,
+      file,
+      label: "material-request-qc",
     });
   },
   remove(id: string) {

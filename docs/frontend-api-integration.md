@@ -240,7 +240,8 @@ Material Requests:
 
 - `materialRequestService.list()`
 - `materialRequestService.create(payload)`
-- `materialRequestService.issue(id, issuedBy, issuedQuantity)`
+- `materialRequestService.issue(id, issuedBy, issuedQuantity, qcImageUrl?)`
+- `materialRequestService.uploadQcImage(requestNo, file)`
 - `materialRequestService.remove(id)`
 
 Material Returns:

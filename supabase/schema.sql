@@ -457,11 +457,21 @@ create table if not exists public.material_requests (
   requested_by uuid references public.profiles(id),
   issued_by uuid references public.profiles(id),
   issued_at timestamptz,
+  qc_image_url text,
   status public.workflow_status not null default 'Pending',
   notes text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.material_requests
+  add column if not exists qc_image_url text;
+
+comment on column public.material_requests.qc_image_url is 'Public Supabase Storage URL for the QC image uploaded when the Store Head issues a material request.';
+
+alter table public.material_requests
+  drop constraint if exists material_requests_qc_image_url_format,
+  add constraint material_requests_qc_image_url_format check (qc_image_url is null or qc_image_url ~* '^https?://');
 
 create table if not exists public.material_returns (
   id uuid primary key default gen_random_uuid(),

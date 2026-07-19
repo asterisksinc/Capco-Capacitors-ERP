@@ -12,6 +12,8 @@
     { "key": "productionImageObjectPath", "value": "raw-material/RM-9001/raw-material.jpg" },
     { "key": "rawMaterialImageUrl", "value": "https://YOUR-PROJECT-REF.supabase.co/storage/v1/object/public/production-stage-images/raw-material/RM-9001/raw-material.jpg" },
     { "key": "storeHeadReviewImageUrl", "value": "https://YOUR-PROJECT-REF.supabase.co/storage/v1/object/public/production-stage-images/raw-material/WO-2026-001/store-head-review.jpg" },
+    { "key": "materialRequestQcImagePath", "value": "raw-material/MR-2001/material-request-qc.jpg" },
+    { "key": "materialRequestQcImageUrl", "value": "https://YOUR-PROJECT-REF.supabase.co/storage/v1/object/public/production-stage-images/raw-material/MR-2001/material-request-qc.jpg" },
     { "key": "metallisationImageUrl", "value": "https://YOUR-PROJECT-REF.supabase.co/storage/v1/object/public/production-stage-images/metallisation/MC-2001/metallisation.jpg" },
     { "key": "metallisationReviewImageUrl", "value": "https://YOUR-PROJECT-REF.supabase.co/storage/v1/object/public/production-stage-images/metallisation/MC-2001/review.jpg" },
     { "key": "factoryWastageImageUrl", "value": "https://YOUR-PROJECT-REF.supabase.co/storage/v1/object/public/production-stage-images/metallisation/MC-2001/factory-wastage.jpg" },
@@ -22,7 +24,8 @@
     { "key": "workOrderId", "value": "50000000-0000-0000-0000-000000000001" },
     { "key": "productOrderId", "value": "90000000-0000-0000-0000-000000000001" },
     { "key": "inventoryId", "value": "40000000-0000-0000-0000-000000000003" },
-    { "key": "stockId", "value": "80000000-0000-0000-0000-000000000001" }
+    { "key": "stockId", "value": "80000000-0000-0000-0000-000000000001" },
+    { "key": "requestId", "value": "70000000-0000-0000-0000-000000000001" }
   ],
   "auth": {
     "type": "bearer",
@@ -47,6 +50,26 @@
           }
         },
         "description": "Upload raw material, metallisation, or slitting images first. Use paths like raw-material/RM-9001/raw-material.jpg, metallisation/MC-2001/review.jpg, or slitting/SL-2001/review.jpg. Then store the public URL on the relevant API record."
+      }
+    },
+    {
+      "name": "Storage - Upload Material Request QC Image",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "apikey", "value": "{{anonKey}}" },
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+          { "key": "x-upsert", "value": "true" },
+          { "key": "Content-Type", "value": "image/jpeg" }
+        ],
+        "url": "{{supabaseUrl}}/storage/v1/object/{{productionImageBucket}}/{{materialRequestQcImagePath}}",
+        "body": {
+          "mode": "file",
+          "file": {
+            "src": ""
+          }
+        },
+        "description": "Upload the Store Head QC image for a raw-material issue request. Reuse the same production-stage-images bucket, but keep a separate path and URL for material request QC evidence."
       }
     },
     {
@@ -392,6 +415,21 @@
         "url": "{{supabaseUrl}}/rest/v1/material_requests",
         "body": { "mode": "raw", "raw": "{\n  \"request_no\": \"MR-2001\",\n  \"material_type\": \"stock\",\n  \"stock_id\": \"{{stockId}}\",\n  \"requested_quantity\": 20,\n  \"grade\": \"AA\",\n  \"requested_by\": \"20000000-0000-0000-0000-000000000007\",\n  \"status\": \"Pending\"\n}" },
         "description": "Success response: [{ \"request_no\": \"MR-2001\" }]\nError response: { \"message\": \"duplicate key value violates unique constraint\" }"
+      }
+    },
+    {
+      "name": "Material Requests - Issue With QC Image",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          { "key": "apikey", "value": "{{anonKey}}" },
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Prefer", "value": "return=representation" }
+        ],
+        "url": "{{supabaseUrl}}/rest/v1/material_requests?id=eq.{{requestId}}",
+        "body": { "mode": "raw", "raw": "{\n  \"issued_by\": \"20000000-0000-0000-0000-000000000003\",\n  \"issued_quantity\": 20,\n  \"issued_at\": \"2026-07-19T10:30:00.000Z\",\n  \"qc_image_url\": \"{{materialRequestQcImageUrl}}\",\n  \"status\": \"Issued\"\n}" },
+        "description": "Upload the QC image first, then patch the material request with issued quantity and qc_image_url."
       }
     },
     {

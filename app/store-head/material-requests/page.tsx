@@ -40,7 +40,10 @@ export default function StoreHeadMaterialRequestsPage() {
   
   const [isIssueModalOpen, setIsIssueModalOpen] = useState(false);
   const [issueReqId, setIssueReqId] = useState("");
+  const [issueRequestNo, setIssueRequestNo] = useState("");
   const [issueItems, setIssueItems] = useState<any[]>([]);
+  const [qcImageFile, setQcImageFile] = useState<File | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const loadData = async () => {
     setLoading(true);
@@ -61,6 +64,7 @@ export default function StoreHeadMaterialRequestsPage() {
         width: row.work_orders?.width_m ? String(row.work_orders.width_m) : "-",
         requestedQty: row.requested_quantity ? String(row.requested_quantity) : "-",
         status: row.status || "Pending",
+        qcImageUrl: row.qc_image_url || "",
         requestedBy: row.requested_by || "-",
         createdAt: new Date(row.created_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
         issuedAt: row.updated_at ? new Date(row.updated_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "-",
@@ -97,7 +101,9 @@ export default function StoreHeadMaterialRequestsPage() {
 
   const openIssueModal = (req: any) => {
     setIssueReqId(req.originalId);
+    setIssueRequestNo(req.id);
     setIssueItems([{ micron: req.micron, width: req.width, requestedQty: req.requestedQty, issuedQty: req.requestedQty }]);
+    setQcImageFile(null);
     setIsIssueModalOpen(true);
   };
 
@@ -107,13 +113,23 @@ export default function StoreHeadMaterialRequestsPage() {
 
   const submitIssue = async () => {
     try {
+      if (!qcImageFile) {
+        alert("Please upload the QC image before issuing material.");
+        return;
+      }
+      setIsSubmitting(true);
       const { authService } = await import("@/src/services/authService");
       const user = await authService.getCurrentProfile();
-      await materialRequestService.issue(issueReqId, user?.id || "", Number(issueItems[0].issuedQty));
+      const upload = await materialRequestService.uploadQcImage(issueRequestNo || issueReqId, qcImageFile);
+      await materialRequestService.issue(issueReqId, user?.id || "", Number(issueItems[0].issuedQty), upload.publicUrl);
       setIsIssueModalOpen(false);
+      setIssueRequestNo("");
+      setQcImageFile(null);
       loadData();
     } catch (err) {
       console.error("Failed to issue material", err);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -157,10 +173,24 @@ export default function StoreHeadMaterialRequestsPage() {
                   </div>
                 </div>
               ))}
+              <div className="border border-[#DDE1E8] rounded-[12px] p-4">
+                <div className="flex flex-col gap-2">
+                  <label className="text-[13px] font-medium">QC Image</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setQcImageFile(e.target.files?.[0] ?? null)}
+                    className="block w-full text-[14px] text-[#344054] file:mr-3 file:rounded-[8px] file:border-0 file:bg-[#E6F8FD] file:px-3 file:py-2 file:text-[13px] file:font-medium file:text-[#00B6E2]"
+                  />
+                  <p className="text-[12px] text-[#667085]">
+                    Upload the QC image for this raw-material issue. This uses the existing production image bucket with a dedicated material-request QC path.
+                  </p>
+                </div>
+              </div>
             </div>
             <div className="flex items-center justify-end gap-3 px-6 py-5 bg-[#FAFAFA] border-t border-[#EBEBEB]">
               <button onClick={() => setIsIssueModalOpen(false)} className="h-[40px] px-4 bg-white border border-[#EBEBEB] text-[#171717] text-[14px] font-medium rounded-[6px] hover:bg-gray-50">Cancel</button>
-              <button onClick={submitIssue} className="h-[40px] px-5 bg-[#00B6E2] text-white text-[14px] font-medium rounded-[6px] hover:bg-[#0092b5]">Issue</button>
+              <button onClick={submitIssue} disabled={isSubmitting} className="h-[40px] px-5 bg-[#00B6E2] text-white text-[14px] font-medium rounded-[6px] hover:bg-[#0092b5] disabled:opacity-60 disabled:cursor-not-allowed">{isSubmitting ? "Issuing..." : "Issue"}</button>
             </div>
           </div>
         </div>
