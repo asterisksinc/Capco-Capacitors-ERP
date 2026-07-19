@@ -10,6 +10,8 @@ import { SortableHeader } from "@/components/table/SortableHeader";
 import { TableToolbar } from "@/components/table/TableToolbar";
 import { MobileHeader } from "@/components/MobileHeader";
 import { exportToExcel } from "@/lib/exportExcel";
+import { IssueMaterialModal } from "@/components/material/IssueMaterialModal";
+import { authService } from "@/src/services/authService";
 
 const tableConfig: TableConfig<any> = {
   columns: [
@@ -60,6 +62,7 @@ export default function StoreHeadMaterialRequestsPage() {
       setData(relevantRows.map((row: any) => ({
         id: row.request_no || row.id,
         originalId: row.id,
+        workOrderId: row.work_order_id,
         micron: row.work_orders?.micron ? String(row.work_orders.micron) : "-",
         width: row.work_orders?.width_m ? String(row.work_orders.width_m) : "-",
         requestedQty: row.requested_quantity ? String(row.requested_quantity) : "-",
@@ -99,29 +102,64 @@ export default function StoreHeadMaterialRequestsPage() {
     return true;
   });
 
-  const openIssueModal = (req: any) => {
-    setIssueReqId(req.originalId);
-    setIssueRequestNo(req.id);
-    setIssueItems([{ micron: req.micron, width: req.width, requestedQty: req.requestedQty, issuedQty: req.requestedQty }]);
-    setQcImageFile(null);
-    setIsIssueModalOpen(true);
-  };
+  const [issueReqQty, setIssueReqQty] = useState(0);
+  const [issueReqWorkOrderId, setIssueReqWorkOrderId] = useState("");
+  const [availableRawMaterials, setAvailableRawMaterials] = useState<any[]>([]);
 
-  const updateIssueItem = (idx: number, val: string) => {
-    setIssueItems(issueItems.map((item, i) => i === idx ? { ...item, issuedQty: val } : item));
-  };
-
-  const submitIssue = async () => {
+  const openIssueModal = async (row: any) => {
+    setIssueReqId(row.originalId);
+    setIssueReqQty(Number(row.requestedQty));
+    setIssueReqWorkOrderId(row.workOrderId);
+    
     try {
-      if (!qcImageFile) {
-        alert("Please upload the QC image before issuing material.");
-        return;
-      }
-      setIsSubmitting(true);
-      const { authService } = await import("@/src/services/authService");
+      const { inventoryService } = await import("@/src/services/inventoryService");
+      const allInventory = await inventoryService.list({ filters: { status: "In Inventory" } });
+      
+      const woMicron = String(row.micron);
+      const woWidth = String(row.width);
+      
+      const filtered = allInventory.filter((item: any) => {
+        const itemMicron = String(item.micron ?? "-");
+        const itemWidth = String(item.width_m ?? "-");
+        const matchMicron = woMicron && woMicron !== "-" ? itemMicron === woMicron : true;
+        const matchWidth = woWidth && woWidth !== "-" ? itemWidth === woWidth : true;
+        return matchMicron && matchWidth;
+      }).sort((a: any, b: any) => {
+        const aReturned = a.status === "Returned" ? 1 : 0;
+        const bReturned = b.status === "Returned" ? 1 : 0;
+        if (aReturned !== bReturned) {
+          return bReturned - aReturned;
+        }
+        return new Date(a.date_received || a.created_at).getTime() - new Date(b.date_received || b.created_at).getTime();
+      });
+      
+      setAvailableRawMaterials(filtered);
+      setIsIssueModalOpen(true);
+    } catch (err) {
+      console.error("Failed to fetch inventory", err);
+    }
+  };
+
+  const submitIssue = async (selectedIds: string[], totalWeight: number) => {
+    try {
       const user = await authService.getCurrentProfile();
-      const upload = await materialRequestService.uploadQcImage(issueRequestNo || issueReqId, qcImageFile);
-      await materialRequestService.issue(issueReqId, user?.id || "", Number(issueItems[0].issuedQty), upload.publicUrl);
+      await materialRequestService.issue(issueReqId, user?.id || "", totalWeight);
+      
+      const quantity_kg_by_inventory_id: Record<string, number> = {};
+      selectedIds.forEach(id => {
+        const item = availableRawMaterials.find(m => m.id === id);
+        quantity_kg_by_inventory_id[id] = Number(item?.net_weight_kg ?? item?.weight ?? 0);
+      });
+
+      const { workOrderService } = await import("@/src/services/workOrderService");
+      await workOrderService.assignRawMaterials({
+        work_order_id: issueReqWorkOrderId,
+        inventory_ids: selectedIds,
+        assigned_to: "", 
+        assigned_by: user?.id || "",
+        quantity_kg_by_inventory_id
+      });
+      
       setIsIssueModalOpen(false);
       setIssueRequestNo("");
       setQcImageFile(null);
@@ -154,46 +192,13 @@ export default function StoreHeadMaterialRequestsPage() {
       <MobileHeader title="Material Requests" />
 
       {isIssueModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#171717]/40 backdrop-blur-sm px-4">
-          <div className="bg-white rounded-[16px] w-full max-w-[600px] shadow-lg flex flex-col overflow-hidden">
-            <div className="flex items-start justify-between px-6 py-5 border-b border-[#EBEBEB]">
-              <div>
-                <h2 className="text-[28px] leading-tight font-semibold text-[#171717]">Issue Material</h2>
-                <p className="text-[15px] text-[#5C5C5C]">Set issued quantities</p>
-              </div>
-              <button onClick={() => setIsIssueModalOpen(false)} className="text-[#5C5C5C] hover:text-[#171717] p-1"><X className="w-5 h-5" /></button>
-            </div>
-            <div className="px-6 py-6 flex flex-col gap-4">
-              {issueItems.map((item, idx) => (
-                <div key={idx} className="border border-[#DDE1E8] rounded-[12px] p-4">
-                  <p className="text-[13px] font-semibold text-[#344054] mb-2">Item {idx + 1} (Micron: {item.micron}, Width: {item.width}, Requested: {item.requestedQty})</p>
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[13px] font-medium">Issued Quantity</label>
-                    <input type="number" min="0" value={item.issuedQty} onChange={(e) => updateIssueItem(idx, e.target.value)} className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]" />
-                  </div>
-                </div>
-              ))}
-              <div className="border border-[#DDE1E8] rounded-[12px] p-4">
-                <div className="flex flex-col gap-2">
-                  <label className="text-[13px] font-medium">QC Image</label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => setQcImageFile(e.target.files?.[0] ?? null)}
-                    className="block w-full text-[14px] text-[#344054] file:mr-3 file:rounded-[8px] file:border-0 file:bg-[#E6F8FD] file:px-3 file:py-2 file:text-[13px] file:font-medium file:text-[#00B6E2]"
-                  />
-                  <p className="text-[12px] text-[#667085]">
-                    Upload the QC image for this raw-material issue. This uses the existing production image bucket with a dedicated material-request QC path.
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center justify-end gap-3 px-6 py-5 bg-[#FAFAFA] border-t border-[#EBEBEB]">
-              <button onClick={() => setIsIssueModalOpen(false)} className="h-[40px] px-4 bg-white border border-[#EBEBEB] text-[#171717] text-[14px] font-medium rounded-[6px] hover:bg-gray-50">Cancel</button>
-              <button onClick={submitIssue} disabled={isSubmitting} className="h-[40px] px-5 bg-[#00B6E2] text-white text-[14px] font-medium rounded-[6px] hover:bg-[#0092b5] disabled:opacity-60 disabled:cursor-not-allowed">{isSubmitting ? "Issuing..." : "Issue"}</button>
-            </div>
-          </div>
-        </div>
+        <IssueMaterialModal
+          onClose={() => setIsIssueModalOpen(false)}
+          onSubmit={submitIssue}
+          items={availableRawMaterials}
+          requestedQty={issueReqQty}
+          itemType="raw_material"
+        />
       )}
 
       <div className="w-full px-4 md:px-6 pt-[72px] md:pt-6 pb-6 flex flex-col gap-6">

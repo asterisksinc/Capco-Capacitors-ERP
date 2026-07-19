@@ -57,6 +57,8 @@ const stockConfig: TableConfig<StockRow> = {
     { key: "width", label: "Width", type: "text", sortable: true },
     { key: "micron", label: "Micron", type: "text", sortable: true },
     { key: "weight", label: "Weight", type: "text", sortable: true },
+    { key: "grossWeight", label: "Gross Weight", type: "text", sortable: true },
+    { key: "usedWeight", label: "Used Weight", type: "text", sortable: true },
     { key: "grade", label: "Grade", type: "text", sortable: true },
     { key: "stage", label: "Stage", type: "enum", sortable: false, filter: "dropdown", options: ["Slitting", "Ready for Winding", "Completed"] },
     { key: "timestamp", label: "Timestamp", type: "date", sortable: true },
@@ -77,13 +79,13 @@ export default function OperatorSlittingStockPage() {
           stockId: row.stock_no || row.id,
           linkedWoId: row.work_orders?.work_order_no || "-",
           weight: row.weight_kg ? String(row.weight_kg) : "-",
-          grossWeight: row.slitting?.gross_weight_kg != null ? String(row.slitting.gross_weight_kg) : "-",
-          usedWeight: row.slitting?.used_weight_kg != null ? String(row.slitting.used_weight_kg) : "-",
+          grossWeight: row.gross_weight_kg ? String(row.gross_weight_kg) : "-",
+          usedWeight: row.used_weight_kg ? String(row.used_weight_kg) : "-",
           width: row.width_m ? String(row.width_m) : "-",
           micron: row.micron ? String(row.micron) : "-",
           grade: row.grade || "-",
           stage: row.stage === "Stock" ? "Ready for Winding" : (row.stage || "Ready for Winding"),
-          timestamp: new Date(row.created_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
+          timestamp: new Date(row.created_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }),
         })));
       } catch (err) {
         console.error("Failed to load stock data", err);
@@ -250,9 +252,9 @@ export default function OperatorSlittingStockPage() {
               const exportData = paginatedData.map(row => ({
                 "Stock ID": row.stockId,
                 "Linked WO ID": row.linkedWoId,
+                "Weight": row.weight,
                 "Gross Weight": row.grossWeight,
                 "Used Weight": row.usedWeight,
-                "Weight": row.weight,
                 "Width": row.width,
                 "Micron": row.micron,
                 "Grade": row.grade,
@@ -300,6 +302,8 @@ export default function OperatorSlittingStockPage() {
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.width}</td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.micron}</td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.weight}kgs</td>
+                    <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.grossWeight}kgs</td>
+                    <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.usedWeight}kgs</td>
                     <td className="px-4 py-4 text-[14px] font-medium text-[#171717] whitespace-nowrap">{row.grade}</td>
                     <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">
                        <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded-[6px] text-xs font-medium tracking-wide">

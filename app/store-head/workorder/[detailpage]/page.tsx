@@ -295,8 +295,6 @@ export default function StoreHeadWorkOrderDetailPage({ params }: DetailPageProps
                 <span>Width: <span className="font-medium text-[#171717]">{item.width_m ?? "-"}</span></span>
                 <span className="w-[1px] h-3 bg-[#DDE1E8]"></span>
                 <span>Micron: <span className="font-medium text-[#171717]">{item.micron ?? "-"}</span></span>
-                <span className="w-[1px] h-3 bg-[#DDE1E8]"></span>
-                <span>Grade: <span className="font-medium text-[#171717]">{item.grade ?? "A"}</span></span>
               </div>
             </label>
           );

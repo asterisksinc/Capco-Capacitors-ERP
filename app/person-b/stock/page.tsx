@@ -37,8 +37,8 @@ type MetallisationRow = {
   coilNo: string;
   rmId: string;
   weight: string;
-  grossWeight: string;
-  usedWeight: string;
+  grossWeight?: string;
+  usedWeight?: string;
   factoryWastageWeight: string;
   timestamp: string;
   nextStage: string;
@@ -87,6 +87,8 @@ const stockConfig: TableConfig<any> = {
     { key: "grossWeight", label: "Gross Weight", type: "text", sortable: true },
     { key: "usedWeight", label: "Used Weight", type: "text", sortable: true },
     { key: "weight", label: "Weight", type: "text", sortable: true },
+    { key: "grossWeight", label: "Gross Weight", type: "text", sortable: true },
+    { key: "usedWeight", label: "Used Weight", type: "text", sortable: true },
     { key: "width", label: "Width", type: "text", sortable: true },
     { key: "micron", label: "Micron", type: "text", sortable: true },
     { key: "grade", label: "Grade", type: "text", sortable: true },
@@ -132,13 +134,13 @@ export default function PersonBStockPage() {
           stockId: row.stock_no || row.id,
           linkedWoId: row.work_orders?.work_order_no || "-",
           weight: row.weight_kg ? String(row.weight_kg) : "-",
-          grossWeight: row.slitting?.gross_weight_kg != null ? String(row.slitting.gross_weight_kg) : "-",
-          usedWeight: row.slitting?.used_weight_kg != null ? String(row.slitting.used_weight_kg) : "-",
+          grossWeight: row.gross_weight_kg ? String(row.gross_weight_kg) : "-",
+          usedWeight: row.used_weight_kg ? String(row.used_weight_kg) : "-",
           width: row.width_m ? String(row.width_m) : "-",
           micron: row.micron ? String(row.micron) : "-",
           grade: row.grade || "-",
           stage: row.stage === "Stock" ? "Ready for Winding" : (row.stage || "Ready for Winding"),
-          timestamp: new Date(row.created_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
+          timestamp: new Date(row.created_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }),
         })));
         
         setMetallisationData((metRows as any[]).map((met: any) => ({
@@ -146,8 +148,8 @@ export default function PersonBStockPage() {
           coilNo: met.coil_no || met.metallisation_no || met.id,
           rmId: met.inventory?.raw_material_code || met.inventory?.roll_no || "-",
           weight: met.weight_kg ? String(met.weight_kg) : "0",
-          grossWeight: met.gross_weight_kg != null ? String(met.gross_weight_kg) : "0",
-          usedWeight: met.used_weight_kg != null ? String(met.used_weight_kg) : "0",
+          grossWeight: met.gross_weight_kg ? String(met.gross_weight_kg) : "-",
+          usedWeight: met.used_weight_kg ? String(met.used_weight_kg) : "-",
           factoryWastageWeight: met.factory_wastage_kg ? String(met.factory_wastage_kg) : "0",
           timestamp: new Date(met.created_at).toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }),
           nextStage: "Slitting",
@@ -326,8 +328,6 @@ export default function PersonBStockPage() {
     <div className="font-dm-sans min-h-[calc(100vh-72px)] bg-white flex flex-col overflow-x-hidden">
       <MobileHeader title="Stock Management" />
 
-
-
       {/* Mobile KPI 2x2 */}
       <section className="grid grid-cols-2 gap-0 md:hidden mx-4 mt-6 bg-white border border-[#EBEBEB] rounded-[12px]">
         {kpiStats.map((stat, i) => {
@@ -395,7 +395,7 @@ export default function PersonBStockPage() {
                   "RM ID": row.rmId,
                   "Weight": row.weight,
                   "Gross Weight": row.grossWeight,
-                  "Used Weight": row.usedWeight,
+                  "UsedWeight": row.usedWeight,
                   "Factory Wastage": row.factoryWastageWeight,
                   "Timestamp": row.timestamp,
                   "Next Stage": row.nextStage,
@@ -406,9 +406,9 @@ export default function PersonBStockPage() {
                 const exportData = filteredData.map((row: any) => ({
                   "Stock ID": row.stockId,
                   "Linked WO ID": row.linkedWoId,
+                  "Weight": row.weight,
                   "Gross Weight": row.grossWeight,
                   "Used Weight": row.usedWeight,
-                  "Weight": row.weight,
                   "Width": row.width,
                   "Micron": row.micron,
                   "Grade": row.grade,
@@ -495,9 +495,9 @@ export default function PersonBStockPage() {
                             {row.stockId}
                           </Link>
                         </td>
-                        <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.grossWeight}kgs</td>
-                        <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.usedWeight}kgs</td>
-                        <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.weight}kgs</td>
+                        <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.weight}</td>
+                        <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.grossWeight}</td>
+                        <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.usedWeight}</td>
                         <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.width}</td>
                         <td className="px-4 py-4 text-[14px] text-[#5C5C5C] whitespace-nowrap">{row.micron}</td>
                         <td className="px-4 py-4 text-[14px] font-medium text-[#171717] whitespace-nowrap">{row.grade}</td>

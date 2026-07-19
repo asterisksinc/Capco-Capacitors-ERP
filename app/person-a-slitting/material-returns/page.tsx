@@ -65,7 +65,7 @@ export default function PersonASlittingMaterialReturnsPage() {
       if (Array.isArray((typeof metallisationData !== "undefined" ? metallisationData : []))) {
         (typeof metallisationData !== "undefined" ? metallisationData : []).forEach((m: any) => {
           console.log(m);
-          if (m.metallisation_no) {
+          if (m.metallisation_no && m.status !== "Returned") {
             options.push({
               id: m.id,
               label: m.metallisation_no,

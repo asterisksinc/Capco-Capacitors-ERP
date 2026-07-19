@@ -13,7 +13,9 @@ import { TableToolbar } from "@/components/table/TableToolbar";
 import { MobileHeader } from "@/components/MobileHeader";
 import { exportToExcel } from "@/lib/exportExcel";
 import { CreateMaterialRequestModal } from "@/components/material/CreateMaterialRequestModal";
+import { IssueMaterialModal } from "@/components/material/IssueMaterialModal";
 import type { MaterialRequestItem } from "@/lib/data";
+import { workOrderService } from "@/src/services/workOrderService";
 
 const tableConfig: TableConfig<any> = {
   columns: [
@@ -47,7 +49,7 @@ export default function PersonAMetallisationMaterialRequestsPage() {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  
+
   const [isIssueModalOpen, setIsIssueModalOpen] = useState(false);
   const [issueReqId, setIssueReqId] = useState("");
   const [issueItems, setIssueItems] = useState<any[]>([]);
@@ -62,31 +64,32 @@ export default function PersonAMetallisationMaterialRequestsPage() {
         import("@/src/services/workOrderService").then((m) => m.workOrderService.list())
       ]);
 
-      const sortedWorkOrders = (woRows as any[]).sort((a, b) => 
+      const sortedWorkOrders = (woRows as any[]).sort((a, b) =>
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
       setWorkOrders(sortedWorkOrders);
-      
+
       let relevantRows = rows;
       if (pathname.includes("/person-a-metallisation")) {
         relevantRows = rows.filter((r: any) => {
           return r.notes?.includes("[Slitting]");
         });
       }
-      
-      setData(relevantRows.map((row: any) =>  {
+
+      setData(relevantRows.map((row: any) => {
         return {
           id: row.request_no || row.id,
-        originalId: row.id,
-        notes: row.notes || "",
-        micron: row.work_orders?.micron ? String(row.work_orders.micron) : "-",
-        width: row.work_orders?.width_m ? String(row.work_orders.width_m) : "-",
-        requestedQty: row.requested_quantity ? String(row.requested_quantity) : "-",
-        status: row.status || "Pending",
-        requestedBy: row.requested_by || "-",
-        // notes: row.notes || "",
-        createdAt: new Date(row.created_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
-        // issuedAt: row.updated_at ? new Date(row.updated_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "-",
+          originalId: row.id,
+          workOrderId: row.work_order_id,
+          notes: row.notes || "",
+          micron: row.work_orders?.micron ? String(row.work_orders.micron) : "-",
+          width: row.work_orders?.width_m ? String(row.work_orders.width_m) : "-",
+          requestedQty: row.requested_quantity ? String(row.requested_quantity) : "-",
+          status: row.status || "Pending",
+          requestedBy: row.requested_by || "-",
+          // notes: row.notes || "",
+          createdAt: new Date(row.created_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
+          // issuedAt: row.updated_at ? new Date(row.updated_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "-",
         };
       }));
     } catch (err) {
@@ -142,29 +145,93 @@ export default function PersonAMetallisationMaterialRequestsPage() {
     }
   };
 
-  const openIssueModal = (req: any) => {
-    console.log(req);
-    setIssueReqId(req.originalId);
-    setIssueItems([{ micron: req.micron, width: req.width, requestedQty: req.requestedQty, issuedQty: req.requestedQty }]);
-    setIsIssueModalOpen(true);
+  const [issueReqQty, setIssueReqQty] = useState(0);
+  const [issueReqWorkOrderId, setIssueReqWorkOrderId] = useState("");
+  const [availableCoils, setAvailableCoils] = useState<any[]>([]);
+
+  const openIssueModal = async (row: any) => {
+    setIssueReqId(row.originalId);
+    setIssueReqQty(Number(row.requestedQty));
+    setIssueReqWorkOrderId(row.workOrderId);
+
+    try {
+      const { productionStageService } = await import("@/src/services/productionStageService");
+      const allCoils = await productionStageService.listMetallisation();
+
+      const woMicron = String(row.micron);
+      const woWidth = String(row.width);
+
+      // Cache work orders by id so coils sharing the same work order don't refetch it repeatedly
+      const workOrderCache = new Map<string, any>();
+      const getWorkOrder = async (workOrderId: string) => {
+        if (!workOrderId) return null;
+        if (workOrderCache.has(workOrderId)) return workOrderCache.get(workOrderId);
+        const wo = await workOrderService.getById(workOrderId);
+        workOrderCache.set(workOrderId, wo);
+        return wo;
+      };
+
+      // Array.prototype.filter can't take an async predicate — a Promise is always
+      // truthy, so the old version let every coil through regardless of match.
+      // Resolve matches first with Promise.all, then filter on the resolved result.
+      const matchResults = await Promise.all(
+        allCoils.map(async (coil: any) => {
+          // Only coils that have already been returned are eligible for re-issue
+          if (coil.status !== "Returned") return { coil, matches: false };
+
+          const workOrder = await getWorkOrder(coil.work_order_id);
+          const itemMicron = String(workOrder?.micron ?? "-");
+          const itemWidth = String(workOrder?.width_m ?? "-");
+          const matchMicron = woMicron && woMicron !== "-" ? itemMicron === woMicron : true;
+          const matchWidth = woWidth && woWidth !== "-" ? itemWidth === woWidth : true;
+
+          // Attach the resolved micron/width onto the coil so the Issue modal
+          // has something to display — these fields don't exist on the coil itself.
+          const enrichedCoil = {
+            ...coil,
+            micron: itemMicron,
+            width: itemWidth,
+          };
+
+          return { coil: enrichedCoil, matches: matchMicron && matchWidth };
+        })
+      );
+
+      const filtered = matchResults
+        .filter((result) => result.matches)
+        .map((result) => result.coil)
+        .sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+
+      setAvailableCoils(filtered);
+      console.log(availableCoils);
+      setIsIssueModalOpen(true);
+    } catch (err) {
+      console.error("Failed to fetch available coils", err);
+    }
   };
 
-  const updateIssueItem = (idx: number, val: string) => {
-    setIssueItems(issueItems.map((item, i) => i === idx ? { ...item, issuedQty: val } : item));
-  };
-
-  const submitIssue = async () => {
+  const submitIssue = async (selectedIds: string[], totalWeight: number) => {
     try {
       const { authService } = await import("@/src/services/authService");
       const user = await authService.getCurrentProfile();
-      await materialRequestService.issue(issueReqId, user?.id || "", Number(issueItems[0].issuedQty));
+      await materialRequestService.issue(issueReqId, user?.id || "", totalWeight);
+
+      if (issueReqWorkOrderId) {
+        const { productionStageService } = await import("@/src/services/productionStageService");
+        await Promise.all(
+          selectedIds.map((id) =>
+            productionStageService.updateMetallisation(id, { work_order_id: issueReqWorkOrderId })
+          )
+        );
+      }
+
       setIsIssueModalOpen(false);
       loadData();
     } catch (err) {
       console.error("Failed to issue material", err);
     }
   };
-  
+
   const rejectMaterialRequest = async (id: string) => {
     try {
       const { authService } = await import("@/src/services/authService");
@@ -208,32 +275,13 @@ export default function PersonAMetallisationMaterialRequestsPage() {
       )}
 
       {isIssueModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#171717]/40 backdrop-blur-sm px-4">
-          <div className="bg-white rounded-[16px] w-full max-w-[600px] shadow-lg flex flex-col overflow-hidden">
-            <div className="flex items-start justify-between px-6 py-5 border-b border-[#EBEBEB]">
-              <div>
-                <h2 className="text-[28px] leading-tight font-semibold text-[#171717]">Issue Material</h2>
-                <p className="text-[15px] text-[#5C5C5C]">Set issued quantities</p>
-              </div>
-              <button onClick={() => setIsIssueModalOpen(false)} className="text-[#5C5C5C] hover:text-[#171717] p-1"><X className="w-5 h-5" /></button>
-            </div>
-            <div className="px-6 py-6 flex flex-col gap-4">
-              {issueItems.map((item, idx) => (
-                <div key={idx} className="border border-[#DDE1E8] rounded-[12px] p-4">
-                  <p className="text-[13px] font-semibold text-[#344054] mb-2">Item {idx + 1} (Micron: {item.micron}, Width: {item.width}, Requested: {item.requestedQty})</p>
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[13px] font-medium">Issued Quantity</label>
-                    <input type="number" min="0" value={item.issuedQty} onChange={(e) => updateIssueItem(idx, e.target.value)} className="h-[42px] rounded-[8px] border border-[#DDE1E8] px-3 text-[14px]" />
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="flex items-center justify-end gap-3 px-6 py-5 bg-[#FAFAFA] border-t border-[#EBEBEB]">
-              <button onClick={() => setIsIssueModalOpen(false)} className="h-[40px] px-4 bg-white border border-[#EBEBEB] text-[#171717] text-[14px] font-medium rounded-[6px] hover:bg-gray-50">Cancel</button>
-              <button onClick={submitIssue} className="h-[40px] px-5 bg-[#00B6E2] text-white text-[14px] font-medium rounded-[6px] hover:bg-[#0092b5]">Issue</button>
-            </div>
-          </div>
-        </div>
+        <IssueMaterialModal
+          onClose={() => setIsIssueModalOpen(false)}
+          onSubmit={submitIssue}
+          items={availableCoils}
+          requestedQty={issueReqQty}
+          itemType="metallisation"
+        />
       )}
 
       <div className="w-full px-4 md:px-6 pt-[72px] md:pt-6 pb-6 flex flex-col gap-6">

@@ -57,7 +57,7 @@ export default function PersonAMetallisationMaterialReturnsPage() {
       
       const options: { id: string; label: string; weight: string }[] = [];
       for (const item of invData as any[]) {
-        if (item.raw_material_code) {
+        if (item.raw_material_code && item.status !== "Returned") {
           options.push({
             id: item.id,
             label: item.raw_material_code,
@@ -79,7 +79,7 @@ export default function PersonAMetallisationMaterialReturnsPage() {
         originalId: row.id,
         materialId: row.inventory?.raw_material_code || row.stock?.stock_no || metallisationById.get(row.material_id)?.metallisation_no || row.material_id || "-",
         weight: row.weight_kg ? String(row.weight_kg) : "-",
-        usedWeight: row.used_weight_kg != null ? String(row.used_weight_kg) : "-",
+        usedWeight: row.used_weight_kg ? String(row.used_weight_kg) : "-",
         reason: row.reason || "-",
         status: row.status || "Returned",
         returnedBy: row.returned_by || "-",

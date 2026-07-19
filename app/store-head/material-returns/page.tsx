@@ -90,7 +90,7 @@ export default function StoreHeadMaterialReturnsPage() {
     return true;
   });
 
-    const handleAccept = async (row: any) => {
+  const handleAccept = async (row: any) => {
     try {
       const { authService } = await import("@/src/services/authService");
       const user = await authService.getCurrentProfile();
@@ -98,18 +98,27 @@ export default function StoreHeadMaterialReturnsPage() {
 
       const { supabaseRest } = await import("@/src/services/supabaseClient");
       const returnRecord = await supabaseRest.getById("material_returns", row.originalId, "inventory_id,material_id,weight_kg,used_weight_kg,quantity_returned");
-      
+
       const targetInvId = (returnRecord as any)?.inventory_id || (returnRecord as any)?.material_id;
-      
+
       if (targetInvId) {
         const { inventoryService } = await import("@/src/services/inventoryService");
+
+        const inventoryRecord = await inventoryService.getById(targetInvId);
+        console.log(inventoryRecord);
+
         const usedWeight = Number((returnRecord as any)?.used_weight_kg || 0);
         const returnedWeight = Number((returnRecord as any)?.quantity_returned ?? (Number((returnRecord as any)?.weight_kg || 0) - usedWeight));
+        // Fetch wastage from inventory
+        const wastageWeight = Number((inventoryRecord as any)?.wastage_weight_kg || 0);
+
+        // Gross Weight = Returned Weight - Wastage Weight
+        const grossWeight = Math.max(0, returnedWeight - wastageWeight);
         const nextStatus = returnedWeight > 0 ? "In Inventory" : "Used Completely";
-        
+
         await inventoryService.update(targetInvId, {
           used_weight_kg: usedWeight,
-          gross_weight_kg: Math.max(0, returnedWeight),
+          gross_weight_kg: Math.max(0, grossWeight),
           current_weight_kg: Math.max(0, returnedWeight),
           status: nextStatus as any,
           stage: "Inventory" as any,
@@ -125,7 +134,7 @@ export default function StoreHeadMaterialReturnsPage() {
 
   const rejectMaterialReturn = async (id: string) => {
     try {
-      
+
       const { authService } = await import("@/src/services/authService");
       const user = await authService.getCurrentProfile();
       await materialReturnService.reject(id, user?.id || "");
