@@ -273,8 +273,9 @@ export default function SupervisorStockPage() {
           <TableToolbar
             dateRange={dateRange}
             onDateRangeChange={setDateRange}
-            onExport={() => {
-              const exportData = filteredData.map(row => ({
+            onExport={(scope = "all") => {
+            const dataToExport = scope === "all" ? filteredData : paginatedData;
+            const exportData = dataToExport.map(row => ({
                 "Stock ID": row.stockId,
                 "Linked WO ID": row.linkedWoId,
                 "Weight": row.weight,

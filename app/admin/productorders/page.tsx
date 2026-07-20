@@ -160,8 +160,9 @@ export default function ProductOrdersPage() {
             />
           </div>
 
-          <TableToolbar dateRange={dateRange} onDateRangeChange={setDateRange} onExport={() => {
-            const exportData = paginatedData.map((row: any) => ({
+          <TableToolbar dateRange={dateRange} onDateRangeChange={setDateRange} onExport={(scope = "all") => {
+            const dataToExport = scope === "all" ? filteredData : paginatedData;
+            const exportData = dataToExport.map((row: any) => ({
               "Order ID": row.id ?? "",
               "Product Code": row.code ?? "",
               "Capacitor Type": row.type ?? "",

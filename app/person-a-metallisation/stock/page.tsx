@@ -231,8 +231,9 @@ export default function OperatorMetallisationStockPage() {
           <TableToolbar
             dateRange={dateRange}
             onDateRangeChange={setDateRange}
-            onExport={() => {
-              const exportData = paginatedData.map(row => ({
+            onExport={(scope = "all") => {
+            const dataToExport = scope === "all" ? filteredData : paginatedData;
+            const exportData = dataToExport.map(row => ({
                 "Coil No": row.coilNo,
                 "RM ID": row.rmId,
                 "Weight": row.weight,
@@ -286,7 +287,7 @@ export default function OperatorMetallisationStockPage() {
                       <StatusBadge status={row.status} />
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
-                      <button onClick={() => setQrData({ id: row.coilNo, type: "MC", details: { "Coil No": row.coilNo, "RM ID": row.rmId, "Weight": row.weight, "Gross Weight": row.grossWeight, "Used Weight": row.usedWeight, "Status": row.status } })} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors">
+                      <button onClick={() => setQrData({ id: row.coilNo, type: "MC", details: { "Coil No": row.coilNo, "RM ID": row.rmId, "Weight": row.weight, "Status": row.status } })} className="text-[#5C5C5C] hover:text-[#00B6E2] transition-colors">
                         <QrCode className="w-4 h-4" />
                       </button>
                     </td>

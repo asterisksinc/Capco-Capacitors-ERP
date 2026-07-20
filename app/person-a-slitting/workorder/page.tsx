@@ -229,8 +229,9 @@ export default function OperatorWorkOrderPage() {
           <TableToolbar
             dateRange={dateRange}
             onDateRangeChange={setDateRange}
-            onExport={() => {
-              const exportData = paginatedData.map(row => ({
+            onExport={(scope = "all") => {
+            const dataToExport = scope === "all" ? filteredData : paginatedData;
+            const exportData = dataToExport.map(row => ({
                 "Work Order ID": row.id,
                 "Micron": row.micron,
                 "Width": row.width,

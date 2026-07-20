@@ -105,7 +105,6 @@ export default function StoreHeadMaterialReturnsPage() {
         const { inventoryService } = await import("@/src/services/inventoryService");
 
         const inventoryRecord = await inventoryService.getById(targetInvId);
-        console.log(inventoryRecord);
 
         const usedWeight = Number((returnRecord as any)?.used_weight_kg || 0);
         const returnedWeight = Number((returnRecord as any)?.quantity_returned ?? (Number((returnRecord as any)?.weight_kg || 0) - usedWeight));
@@ -114,7 +113,7 @@ export default function StoreHeadMaterialReturnsPage() {
 
         // Gross Weight = Returned Weight - Wastage Weight
         const grossWeight = Math.max(0, returnedWeight - wastageWeight);
-        const nextStatus = returnedWeight > 0 ? "In Inventory" : "Used Completely";
+        const nextStatus = returnedWeight > 0 ? "Returned" : "Used Completely";
 
         await inventoryService.update(targetInvId, {
           used_weight_kg: usedWeight,
@@ -159,8 +158,9 @@ export default function StoreHeadMaterialReturnsPage() {
             <input type="text" value={searchQuery} onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }} placeholder="Search by Return ID..." className="h-[40px] w-full pl-9 pr-3 bg-white border border-[#EBEBEB] rounded-[8px] text-[14px] placeholder:text-[#A1A1AA] focus:outline-none focus:border-[#00B6E2]" />
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
-            <TableToolbar dateRange={dateRange} onDateRangeChange={setDateRange} onExport={() => {
-              const exportData = paginatedData.map((row: any) => ({
+            <TableToolbar dateRange={dateRange} onDateRangeChange={setDateRange} onExport={(scope = "all") => {
+            const dataToExport = scope === "all" ? filteredData : paginatedData;
+            const exportData = dataToExport.map((row: any) => ({
                 "Return ID": row.id ?? "",
                 "Material ID": row.materialId ?? "",
                 "Weight": row.weight ?? "",

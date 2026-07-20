@@ -68,12 +68,18 @@ export function UniversalTraceModal({
   const allowed = allowedStages[role] || allowedStages["admin"];
   const scannedType = detectEntityType(searchValue);
   
-  // Custom access deniability check: Store Head cannot view PO details.
-  const isAccessDenied = (() => {
-    if (!searchValue.trim() || scannedType === "Unknown") return false;
-    if (role === "store-head" && scannedType === "PO") return true;
-    return false;
+  // Custom access deniability check
+  const accessCheck = (() => {
+    if (!searchValue.trim() || scannedType === "Unknown") return { denied: false };
+    if (role === "store-head" && scannedType === "PO") {
+      return { denied: true, message: `Your role (STORE-HEAD) does not have permission to view ${typeLabels[scannedType] || scannedType} details.` };
+    }
+    if (pathname.includes("/person-a-metallisation") && scannedType === "PM") {
+      return { denied: true, message: "You don't have access to slitting material." };
+    }
+    return { denied: false };
   })();
+  const isAccessDenied = accessCheck.denied;
  
   const getGuide = () => {
     switch (role) {
@@ -385,7 +391,7 @@ export function UniversalTraceModal({
                 <AlertTriangle className="w-10 h-10 text-[#FB3748]" />
                 <p className="text-[14px] font-bold text-[#FB3748]">Access Denied</p>
                 <p className="text-[12px] text-[#FB3748] max-w-[360px] font-medium leading-relaxed">
-                  Your role ({role.toUpperCase()}) does not have permission to view {typeLabels[scannedType] || scannedType} details.
+                  {accessCheck.message}
                 </p>
               </div>
             )}

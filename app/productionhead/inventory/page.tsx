@@ -83,18 +83,7 @@ export default function ProductionHeadInventoryPage() {
   useEffect(() => {
     async function loadData() {
       try {
-        const [data, metallisationData] = await Promise.all([
-          inventoryService.list(),
-          productionStageService.listMetallisation()
-        ]);
-        
-        const wastageMap = new Map();
-        (metallisationData as any[]).forEach((m) => {
-          if (m.raw_material_id) {
-            const currentW = wastageMap.get(m.raw_material_id) || 0;
-            wastageMap.set(m.raw_material_id, currentW + (m.factory_wastage_kg || 0));
-          }
-        });
+        const data = await inventoryService.list();
 
         const formatted = (data as any[]).map((item) => ({
           ...item,
@@ -105,14 +94,14 @@ export default function ProductionHeadInventoryPage() {
           net_weight_kg: item.net_weight_kg,
           gross_weight_kg: item.gross_weight_kg,
           used_weight_kg: item.used_weight_kg,
-          wastage_weight_kg: wastageMap.has(item.id) ? wastageMap.get(item.id) : null,
+          wastage_weight_kg: item.wastage_weight_kg ?? null,
           damaged_weight_kg: null,
           temperature_c: item.temperature_c,
           supplier: item.supplier,
           date_received: item.date_received,
           status: item.status
         }));
-        
+
         setInventoryItems(formatted);
       } catch (err) {
         console.error("Failed to load inventory", err);

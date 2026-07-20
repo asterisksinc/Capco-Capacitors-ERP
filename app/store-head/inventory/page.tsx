@@ -82,48 +82,36 @@ export default function StoreHeadInventoryPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function loadData() {
-      try {
-        const [rows, metallisationRows] = await Promise.all([
-          inventoryService.list(),
-          productionStageService.listMetallisation()
-        ]);
-        
-        const wastageMap = new Map();
-        (metallisationRows as any[]).forEach(m => {
-          if (m.raw_material_id) {
-            const currentW = wastageMap.get(m.raw_material_id) || 0;
-            wastageMap.set(m.raw_material_id, currentW + (m.factory_wastage_kg || 0));
-          }
-        });
+  async function loadData() {
+    try {
+      const rows = await inventoryService.list();
 
-        const formatted = (rows as any[]).map(row => ({
-          ...row,
-          wastage_weight_kg: wastageMap.has(row.id) ? wastageMap.get(row.id) : null,
-          used_weight_kg: row.used_weight_kg ?? null,
-          damaged_weight_kg: null,
-        }));
-        
-        setInventoryItems(formatted);
-      } catch (err) {
-        console.error("Failed to load inventory", err);
-      } finally {
-        setLoading(false);
-      }
+      const formatted = (rows as any[]).map(row => ({
+        ...row,
+        wastage_weight_kg: row.wastage_weight_kg ?? null,
+        used_weight_kg: row.used_weight_kg ?? null,
+        damaged_weight_kg: null,
+      }));
+
+      setInventoryItems(formatted);
+    } catch (err) {
+      console.error("Failed to load inventory", err);
+    } finally {
+      setLoading(false);
     }
-    loadData();
-  }, []);
+  }
+  loadData();
+}, []);
 
-  const filteredData = inventoryItems.filter((row) => {
-    if (!searchQuery) return true;
-    const q = searchQuery.toLowerCase();
-    return (
-      row.raw_material_code?.toLowerCase().includes(q) ||
-      row.roll_no?.toLowerCase().includes(q) ||
-      row.supplier?.toLowerCase().includes(q)
-    );
-  });
-
+const filteredData = inventoryItems.filter((row) => {
+  if (!searchQuery) return true;
+  const q = searchQuery.toLowerCase();
+  return (
+    row.raw_material_code?.toLowerCase().includes(q) ||
+    row.roll_no?.toLowerCase().includes(q) ||
+    row.supplier?.toLowerCase().includes(q)
+  );
+});
 
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;

@@ -223,7 +223,7 @@ export default function SupervisorWorkOrderDetailPage({ params }: DetailPageProp
     { label: "Quantity", value: String(woData.quantity), icon: Package },
   ];
 
-  const exportCurrentTab = () => {
+  const exportCurrentTab = (scope = "all") => {
     const exportData = currentData.map((row: any) => ({
       ...(activeTab === "Raw Material"
         ? {

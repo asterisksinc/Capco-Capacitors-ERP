@@ -365,10 +365,14 @@ export default function OperatorSlittingDetailPage({ params }: DetailPageProps) 
   };
 
   const isSlittingRowValid = (row: SlittingForm) => {
-    if (!row.coilId.trim() || row.noOfBags < 1) return false;
+    if (!row.coilId.trim() || !hasPositiveNumber(String(row.noOfBags))) return false;
+    let totalBagWeight = 0;
     for (const bag of row.bags) {
       if (!bag.productNo.trim() || !bag.grade.trim() || !hasPositiveNumber(bag.weight)) return false;
+      totalBagWeight += parseFloat(bag.weight) || 0;
     }
+    const coilData = coilLookup.get(row.coilId);
+    if (coilData && totalBagWeight > (parseFloat(String(coilData.weight)) || 0)) return false;
     return true;
   };
 
@@ -713,7 +717,17 @@ export default function OperatorSlittingDetailPage({ params }: DetailPageProps) 
                 </div>
               </div>
               <div className="bg-[#FAFAFA] border border-[#EBEBEB] rounded-[8px] p-4 flex flex-col gap-3 mt-2">
-                <p className="text-[13px] font-semibold text-[#171717] mb-1">Bag Details</p>
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-[13px] font-semibold text-[#171717]">Bag Details</p>
+                  {(() => {
+                    const totalBagWeight = row.bags.reduce((acc, bag) => acc + (parseFloat(bag.weight) || 0), 0);
+                    const coilWeight = parseFloat(String(coilData?.weight || 0));
+                    if (coilData && totalBagWeight > coilWeight) {
+                      return <p className="text-[12px] font-medium text-[#D92D20]">Total bag weight ({totalBagWeight}kg) exceeds coil weight ({coilWeight}kg)</p>;
+                    }
+                    return null;
+                  })()}
+                </div>
                 {row.bags.map((bag, bagIdx) => (
                   <div key={bag.id} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center bg-white p-3 border border-[#EBEBEB] rounded-[6px]">
                     <div className="flex flex-col gap-1.5">

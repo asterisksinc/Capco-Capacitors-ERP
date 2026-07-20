@@ -78,44 +78,33 @@ export default function AdminInventoryPage() {
   const [isExporting, setIsExporting] = useState(false);
 
   const fetchInventory = async () => {
-    try {
-      const [data, metallisationData] = await Promise.all([
-        inventoryService.list(),
-        productionStageService.listMetallisation()
-      ]);
+  try {
+    const data = await inventoryService.list();
 
-      const wastageMap = new Map();
-      (metallisationData as any[]).forEach((m) => {
-        if (m.raw_material_id) {
-          const currentW = wastageMap.get(m.raw_material_id) || 0;
-          wastageMap.set(m.raw_material_id, currentW + (m.factory_wastage_kg || 0));
-        }
-      });
-
-      const formatted = (data as any[]).map((item) => ({
-        id: item.id,
-        rawMaterialId: item.raw_material_code || "-",
-        rollId: item.roll_no || "-",
-        micron: item.micron != null ? String(item.micron) : "-",
-        width: item.width_m != null ? String(item.width_m) : "-",
-        weight: item.net_weight_kg != null ? `${item.net_weight_kg}kgs` : "-",
-        netWeight: item.net_weight_kg != null ? `${item.net_weight_kg}kgs` : "-",
-        grossWeight: item.gross_weight_kg != null ? `${item.gross_weight_kg}kgs` : "-",
-        usedWeight: item.used_weight_kg != null ? `${item.used_weight_kg}kgs` : "-",
-        wastageWeight: wastageMap.has(item.id) ? `${wastageMap.get(item.id)}kgs` : "-",
-        damagedWeight: "-",
-        temperature: item.temperature_c != null ? `${item.temperature_c}°C` : "-",
-        supplier: item.supplier || "-",
-        date: item.date_received ? new Date(item.date_received).toLocaleDateString("en-GB") : "-",
-        status: item.status || "In Inventory"
-      }));
-      setInventoryItems(formatted);
-    } catch (err) {
-      console.error("Failed to load inventory:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    const formatted = (data as any[]).map((item) => ({
+      id: item.id,
+      rawMaterialId: item.raw_material_code || "-",
+      rollId: item.roll_no || "-",
+      micron: item.micron != null ? String(item.micron) : "-",
+      width: item.width_m != null ? String(item.width_m) : "-",
+      weight: item.net_weight_kg != null ? `${item.net_weight_kg}kgs` : "-",
+      netWeight: item.net_weight_kg != null ? `${item.net_weight_kg}kgs` : "-",
+      grossWeight: item.gross_weight_kg != null ? `${item.gross_weight_kg}kgs` : "-",
+      usedWeight: item.used_weight_kg != null ? `${item.used_weight_kg}kgs` : "-",
+      wastageWeight: item.wastage_weight_kg != null ? `${item.wastage_weight_kg}kgs` : "-",
+      damagedWeight: "-",
+      temperature: item.temperature_c != null ? `${item.temperature_c}°C` : "-",
+      supplier: item.supplier || "-",
+      date: item.date_received ? new Date(item.date_received).toLocaleDateString("en-GB") : "-",
+      status: item.status || "In Inventory"
+    }));
+    setInventoryItems(formatted);
+  } catch (err) {
+    console.error("Failed to load inventory:", err);
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
     fetchInventory();

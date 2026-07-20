@@ -11,7 +11,7 @@ import { TableToolbar } from "@/components/table/TableToolbar";
 import { MobileHeader } from "@/components/MobileHeader";
 import { exportToExcel } from "@/lib/exportExcel";
 import { CreateMaterialReturnModal } from "@/components/material/CreateMaterialReturnModal";
-import { inventoryService } from "@/src/services/inventoryService";
+import { productionStageService } from "@/src/services/productionStageService";
 
 const tableConfig: TableConfig<any> = {
   columns: [
@@ -48,13 +48,12 @@ export default function PersonAMetallisationMaterialReturnsPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const { productionStageService } = await import("@/src/services/productionStageService");
       const [rows, invData, metallisationData] = await Promise.all([
         materialReturnService.list(),
         import("@/src/services/inventoryService").then((m) => m.inventoryService.list()),
         productionStageService.listMetallisation()
       ]);
-      
+
       const options: { id: string; label: string; weight: string }[] = [];
       for (const item of invData as any[]) {
         if (item.raw_material_code && item.status !== "Returned") {
@@ -115,7 +114,7 @@ export default function PersonAMetallisationMaterialReturnsPage() {
     return true;
   });
 
-    const handleAccept = async (ret: any) => {
+  const handleAccept = async (ret: any) => {
     try {
       const { authService } = await import("@/src/services/authService");
       const user = await authService.getCurrentProfile();
@@ -123,17 +122,27 @@ export default function PersonAMetallisationMaterialReturnsPage() {
 
       const { supabaseRest } = await import("@/src/services/supabaseClient");
       const returnRecord = await supabaseRest.getById("material_returns", ret.originalId, "material_id,weight_kg,used_weight_kg,quantity_returned");
-      
+
       if (returnRecord && (returnRecord as any).material_id) {
-        const { productionStageService } = await import("@/src/services/productionStageService");
         const usedWeight = Number((returnRecord as any).used_weight_kg || 0);
-        const grossWeight = Number((returnRecord as any).quantity_returned ?? (Number((returnRecord as any).weight_kg || 0) - usedWeight));
+        const returnedWeight = Number((returnRecord as any).quantity_returned ?? (Number((returnRecord as any).weight_kg || 0) - usedWeight));
+
+        const allCoils = await productionStageService.listMetallisation();
+        const coilRecord = (allCoils as any[]).find((c) => c.id === (returnRecord as any).material_id);
+        const wastageWeight = Number(coilRecord?.factory_wastage_kg || 0);
+
+        // Gross Weight = Returned Weight - Wastage Weight
+        const grossWeight = Math.max(0, returnedWeight - wastageWeight);
+
+        const nextStatus = grossWeight > 0 ? "Returned" : "Used Completely";
+
         await productionStageService.updateMetallisation((returnRecord as any).material_id, {
           used_weight_kg: usedWeight,
-          gross_weight_kg: Math.max(0, grossWeight),
+          gross_weight_kg: grossWeight,
+          status: nextStatus as any,
         } as any);
       }
-      
+
       loadData();
     } catch (err) {
       console.error("Failed to accept material return", err);
@@ -143,7 +152,7 @@ export default function PersonAMetallisationMaterialReturnsPage() {
 
   const rejectMaterialReturn = async (id: string) => {
     try {
-      
+
       const { authService } = await import("@/src/services/authService");
       const user = await authService.getCurrentProfile();
       await materialReturnService.reject(id, user?.id || "");
@@ -153,7 +162,7 @@ export default function PersonAMetallisationMaterialReturnsPage() {
     }
   };
 
-    const handleCreateReturn = async (items: any[]) => {
+  const handleCreateReturn = async (items: any[]) => {
     try {
       const { authService } = await import("@/src/services/authService");
       const user = await authService.getCurrentProfile();
@@ -203,8 +212,9 @@ export default function PersonAMetallisationMaterialReturnsPage() {
             <input type="text" value={searchQuery} onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }} placeholder="Search by Return ID..." className="h-[40px] w-full pl-9 pr-3 bg-white border border-[#EBEBEB] rounded-[8px] text-[14px] placeholder:text-[#A1A1AA] focus:outline-none focus:border-[#00B6E2]" />
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
-            <TableToolbar dateRange={dateRange} onDateRangeChange={setDateRange} onExport={() => {
-              const exportData = paginatedData.map((row: any) => ({
+            <TableToolbar dateRange={dateRange} onDateRangeChange={setDateRange} onExport={(scope = "all") => {
+            const dataToExport = scope === "all" ? filteredData : paginatedData;
+            const exportData = dataToExport.map((row: any) => ({
                 "Return ID": row.id ?? "",
                 "Material ID": row.materialId ?? "",
                 "Weight": row.weight ?? "",

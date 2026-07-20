@@ -23,6 +23,7 @@ import { productionStageService } from "@/src/services/productionStageService";
 import { authService } from "@/src/services/authService";
 import { getAccessToken, supabaseConfig } from "@/src/services/supabaseClient";
 import { useEffect } from "react";
+import { inventoryService } from "@/src/services/inventoryService";
 
 type DetailPageProps = {
   params: Promise<{ detailpage: string }>;
@@ -345,60 +346,69 @@ export default function OperatorMetallisationDetailPage({ params }: DetailPagePr
   };
 
   const submitCurrentStage = async () => {
-    if (!isCurrentStepTwoValid) {
-      alert("Please upload the required QC images for all items.");
-      return;
-    }
+  if (!isCurrentStepTwoValid) {
+    alert("Please upload the required QC images for all items.");
+    return;
+  }
 
-    setIsSubmitting(true);
-    try {
-      const user = await authService.getCurrentProfile();
-      const payload = metallisationRowsInput;
+  setIsSubmitting(true);
+  try {
+    const user = await authService.getCurrentProfile();
+    const payload = metallisationRowsInput;
 
-      for (const item of payload) {
-        const rmData = rmLookup.get(item.rmId);
-        
-        // Upload images
-        const [factoryWastageUrl, photoUrl, qcUrl] = await Promise.all([
-          uploadImage(woData.work_order_no, item.coilNo, item.factoryWastageImage!.file!),
-          uploadImage(woData.work_order_no, item.coilNo, item.photoOfWeight!.file!),
-          uploadImage(woData.work_order_no, item.coilNo, item.qcImage!.file!)
-        ]);
+    for (const item of payload) {
+      const rmData = rmLookup.get(item.rmId);
+      const factoryWastage = parseFloat(item.factoryWastageWeight) || 0;
 
-        await productionStageService.addMetallisation({
-          metallisation_no: item.coilNo,
-          work_order_id: woData.id,
-          raw_material_id: rmData?.raw_material_id || "",
-          weight_kg: parseFloat(item.weightAfterMetallisation) || 0,
-          factory_wastage_kg: parseFloat(item.factoryWastageWeight) || 0,
-          factory_wastage_image_url: factoryWastageUrl,
-          photo_url: photoUrl,
-          qc_details: {
-            qc: "pass",
-            remarks: "",
-            images: {
-              weight_after_metallisation: photoUrl,
-              qc: qcUrl
-            }
-          },
-          operator_id: user?.id,
-        });
-      }
+      // Upload images
+      const [factoryWastageUrl, photoUrl, qcUrl] = await Promise.all([
+        uploadImage(woData.work_order_no, item.coilNo, item.factoryWastageImage!.file!),
+        uploadImage(woData.work_order_no, item.coilNo, item.photoOfWeight!.file!),
+        uploadImage(woData.work_order_no, item.coilNo, item.qcImage!.file!)
+      ]);
 
-      await workOrderService.update(woData.id, {
-        stage: "Slitting",
-        status: "In-progress"
+      await productionStageService.addMetallisation({
+        metallisation_no: item.coilNo,
+        work_order_id: woData.id,
+        raw_material_id: rmData?.raw_material_id || "",
+        weight_kg: parseFloat(item.weightAfterMetallisation) || 0,
+        factory_wastage_kg: factoryWastage,
+        factory_wastage_image_url: factoryWastageUrl,
+        photo_url: photoUrl,
+        qc_details: {
+          qc: "pass",
+          remarks: "",
+          images: {
+            weight_after_metallisation: photoUrl,
+            qc: qcUrl
+          }
+        },
+        operator_id: user?.id,
       });
 
-      setModalStep(3);
-      fetchWorkOrder();
-    } catch (err: any) {
-      console.error(err);
-      alert(`Failed to save data: ${err.message}`);
-    } finally {
-      setIsSubmitting(false);
+      if (rmData?.raw_material_id) {
+        const inventoryRecord = await inventoryService.getById(rmData.raw_material_id);
+        const prevWastage = Number((inventoryRecord as any)?.wastage_weight_kg || 0);
+        await inventoryService.update(rmData.raw_material_id, {
+          wastage_weight_kg: prevWastage + factoryWastage,
+        } as any);
+      }
     }
-  };
+
+    await workOrderService.update(woData.id, {
+      stage: "Slitting",
+      status: "In-progress"
+    });
+
+    setModalStep(3);
+    fetchWorkOrder();
+  } catch (err: any) {
+    console.error(err);
+    alert(`Failed to save data: ${err.message}`);
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   const overviewFields = [
     { label: "Word Count", value: workOrderFlowData.overview.wordCount },

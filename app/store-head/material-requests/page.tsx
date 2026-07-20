@@ -208,8 +208,9 @@ export default function StoreHeadMaterialRequestsPage() {
             <input type="text" value={searchQuery} onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }} placeholder="Search by Request ID..." className="h-[40px] w-full pl-9 pr-3 bg-white border border-[#EBEBEB] rounded-[8px] text-[14px] placeholder:text-[#A1A1AA] focus:outline-none focus:border-[#00B6E2]" />
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
-            <TableToolbar dateRange={dateRange} onDateRangeChange={setDateRange} onExport={() => {
-              const exportData = filteredData.map((row: any) => ({
+            <TableToolbar dateRange={dateRange} onDateRangeChange={setDateRange} onExport={(scope = "all") => {
+            const dataToExport = scope === "all" ? filteredData : paginatedData;
+            const exportData = dataToExport.map((row: any) => ({
                 "Request ID": row.id ?? "",
                 "Micron": row.micron ?? "",
                 "Width": row.width ?? "",

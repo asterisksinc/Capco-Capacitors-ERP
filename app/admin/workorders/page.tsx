@@ -160,8 +160,9 @@ export default function WorkOrdersPage() {
             />
           </div>
 
-          <TableToolbar dateRange={dateRange} onDateRangeChange={setDateRange} onExport={() => {
-            const exportData = paginatedData.map((row: any) => ({
+          <TableToolbar dateRange={dateRange} onDateRangeChange={setDateRange} onExport={(scope = "all") => {
+            const dataToExport = scope === "all" ? filteredData : paginatedData;
+            const exportData = dataToExport.map((row: any) => ({
               "Work Order ID": row.id ?? "",
               "Micron": row.micron ?? "",
               "Width": row.width ?? "",
