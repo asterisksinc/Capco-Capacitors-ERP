@@ -81,6 +81,8 @@ Role codes:
 - `person_a`
 - `operator_1_metallisation`
 - `operator_2_slitting`
+- `slitting_qc`
+- `slitting_operator`
 - `person_b`
 - `operator_3_winding`
 - `operator_4_spray`
@@ -88,6 +90,12 @@ Role codes:
 - `accountant`
 
 RLS policies in `supabase/rls-policies.sql` restrict reads and writes by role. Frontend should load the profile after login and route users to their existing role area.
+
+Slitting role routing:
+
+- `slitting_qc` uses the existing Slitting dashboard route, `/person-a-slitting`.
+- `operator_2_slitting` is still supported as a legacy compatibility role.
+- `slitting_operator` should use a scan/confirm workflow and must not call QC batch creation APIs.
 
 ## Request Format
 
@@ -226,6 +234,38 @@ Production Stages:
 - `productionStageService.listSpray()`
 - `productionStageService.addSpray(payload)`
 
+Slitting Operator and QC:
+
+- `slittingService.scanMetallisationCoil(qrValue)`
+- `slittingService.confirmMetallisationCoil({ qr_value, work_order_id?, product_order_id?, idempotency_key? })`
+- `slittingService.listConfirmations(params?)`
+- `slittingService.createPacketBatch({ slitting_id, packet_type, quantity, product_order_id?, item_weights?, item_grades?, idempotency_key, metadata? })`
+- `slittingService.listBatches(params?)`
+- `slittingService.stickerDownloadUrl(documentId)`
+- `slittingService.stickerPrintUrl(documentId)`
+- `slittingService.batchStickerDownloadUrl(batchId)`
+- `slittingService.batchStickerPrintUrl(batchId)`
+
+Notifications:
+
+- `notificationService.list(params?)`
+- `notificationService.unreadCount()`
+- `notificationService.markRead(notificationIds?)`
+- `notificationService.registerPushSubscription(subscription, userAgent?)`
+- `notificationService.deactivatePushSubscription(endpoint)`
+
+Server routes for browser/PWA integration:
+
+- `GET /api/notifications?limit=50`
+- `PATCH /api/notifications` with `{ "notificationIds": ["uuid"] }`; omit IDs to mark all read
+- `POST /api/push` with `{ "action": "register", "subscription": PushSubscriptionJSON }`
+- `DELETE /api/push` with `{ "endpoint": "..." }`
+- `POST /api/push` with `{ "action": "sendPending" }` from a server job or Postman to process pending pushes
+- `GET /api/documents/generated_documents/:id?intent=download`
+- `GET /api/documents/generated_documents/:id?intent=print`
+- `GET /api/documents/slitting_batches/:id?kind=stickers&intent=download`
+- `GET /api/documents/slitting_batches/:id?kind=stickers&intent=print`
+
 Stock:
 
 - `stockService.list()`
@@ -303,8 +343,44 @@ Raw material flow:
 3. Store Head assigns inventory with `workOrderService.assignRawMaterials`.
 4. Person A hands material to Operator 1 by updating `work_order_materials`.
 5. Operator 1 adds metallisation with `productionStageService.addMetallisation`.
-6. Operator 2 adds slitting with `productionStageService.addSlitting`.
-7. Slitting output is added to `stock`.
+6. Slitting Operator scans a completed metallisation coil with `slittingService.scanMetallisationCoil(qrValue)`.
+7. Slitting Operator confirms the coil with `slittingService.confirmMetallisationCoil(...)`.
+8. Slitting QC uses the existing Slitting dashboard and creates/updates the Slitting record with `productionStageService.addSlitting`.
+9. Slitting QC creates bag or packet records in one transaction with `slittingService.createPacketBatch`.
+10. Slitting output is available for stickers, QR, documents, and stock flow.
+
+Slitting Operator popup flow:
+
+```ts
+const scan = await slittingService.scanMetallisationCoil(qrValueOrCoilNo);
+
+const confirmation = await slittingService.confirmMetallisationCoil({
+  qr_value: qrValueOrCoilNo,
+  work_order_id: scan.work_order_id,
+  product_order_id: scan.product_order?.id,
+  idempotency_key: `${scan.metallisation_id}:${currentProfile.id}:confirm`,
+});
+```
+
+Display these scan fields in the popup when available: `metallisation_no`, `coil_no`, `work_order_no`, `product_order.product_order_no`, `material`, `micron`, `width_m`, `weight_kg`, `metallisation_status`, `existing_slitting_status`, `already_confirmed`, `confirmed_by`, and `confirmed_at`.
+
+Slitting QC ten-bag batch flow:
+
+```ts
+const result = await slittingService.createPacketBatch({
+  slitting_id: slittingRecord.id,
+  packet_type: "Bag",
+  quantity: 10,
+  product_order_id: productOrderId,
+  item_weights: [5.9, 5.9, 5.9, 5.9, 5.9, 5.9, 5.9, 5.9, 5.9, 6.1],
+  item_grades: ["AA", "AA", "AA", "AA", "AA", "AA", "AA", "AA", "AA", "AA"],
+  idempotency_key: `${slittingRecord.id}:bags:10:${formSubmissionId}`,
+});
+
+window.open(slittingService.batchStickerPrintUrl(String(result.batch.id)), "_blank");
+```
+
+Use a stable `idempotency_key` for retries. Do not generate a new key when retrying the same submit click.
 
 Metallisation with images:
 
@@ -321,6 +397,61 @@ Product order flow:
 4. Operator 3 adds winding with `productionStageService.addWinding`.
 5. Operator 4 adds spray with `productionStageService.addSpray`.
 6. Final output is added with `finishedGoodsService.create`.
+
+## PWA Push Notification Integration
+
+Required environment variables:
+
+```bash
+NEXT_PUBLIC_WEB_PUSH_VAPID_PUBLIC_KEY=your_web_push_vapid_public_key
+WEB_PUSH_VAPID_PRIVATE_KEY=your_web_push_vapid_private_key
+WEB_PUSH_SUBJECT=mailto:admin@capco.local
+```
+
+Frontend registration shape:
+
+```ts
+const registration = await navigator.serviceWorker.ready;
+const subscription = await registration.pushManager.subscribe({
+  userVisibleOnly: true,
+  applicationServerKey: urlBase64ToUint8Array(process.env.NEXT_PUBLIC_WEB_PUSH_VAPID_PUBLIC_KEY!),
+});
+
+await fetch("/api/push", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${accessToken}`,
+  },
+  body: JSON.stringify({ action: "register", subscription: subscription.toJSON() }),
+});
+```
+
+Service worker receive handler:
+
+```js
+self.addEventListener("push", (event) => {
+  const payload = event.data ? event.data.json() : {};
+  event.waitUntil(
+    self.registration.showNotification(payload.title || "CAPCO", {
+      body: payload.body || "New notification",
+      data: payload.data || {},
+    })
+  );
+});
+```
+
+How to test on Android mobile:
+
+1. Set the VAPID env vars and run the app over HTTPS. For local phone testing, use a trusted tunnel such as ngrok or deploy a staging URL.
+2. Open the PWA in Chrome on Android, log in as `slittingqc@capco.local` or `slittingoperator@capco.local`.
+3. Install the PWA from Chrome menu, then allow notifications when prompted.
+4. Confirm `/api/push` register returns `{ "ok": true }`.
+5. Create a Work Order or Product Order with `stage: "Slitting"` as Production Head.
+6. Confirm a row appears in `public.notifications` for Slitting QC and Slitting Operator.
+7. Trigger delivery by calling `POST /api/push` with `{ "action": "sendPending" }` from Postman or a server-side scheduled job.
+8. The Android device should show the notification. If it does not, check Chrome site notification permission, Android app notification permission, and `push_subscriptions.is_active`.
+9. For delivery failures, inspect `notifications.push_status`, `notifications.push_error`, and `push_subscriptions.failure_count`.
 
 ## Supabase Setup
 

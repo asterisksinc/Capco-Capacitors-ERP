@@ -6,6 +6,7 @@
   },
   "variable": [
     { "key": "supabaseUrl", "value": "https://YOUR-PROJECT-REF.supabase.co" },
+    { "key": "NEXT_PUBLIC_BACKEND_URL", "value": "http://localhost:3000" },
     { "key": "anonKey", "value": "your_supabase_anon_key" },
     { "key": "accessToken", "value": "" },
     { "key": "productionImageBucket", "value": "production-stage-images" },
@@ -23,6 +24,9 @@
     { "key": "slittingReviewImageUrl", "value": "https://YOUR-PROJECT-REF.supabase.co/storage/v1/object/public/production-stage-images/slitting/SL-2001/review.jpg" },
     { "key": "workOrderId", "value": "50000000-0000-0000-0000-000000000001" },
     { "key": "productOrderId", "value": "90000000-0000-0000-0000-000000000001" },
+    { "key": "slittingId", "value": "70000000-0000-0000-0000-000000000003" },
+    { "key": "slittingBatchId", "value": "" },
+    { "key": "generatedDocumentId", "value": "" },
     { "key": "inventoryId", "value": "40000000-0000-0000-0000-000000000003" },
     { "key": "stockId", "value": "80000000-0000-0000-0000-000000000001" },
     { "key": "requestId", "value": "70000000-0000-0000-0000-000000000001" }
@@ -490,6 +494,94 @@
         ],
         "url": "{{supabaseUrl}}/rest/v1/finished_goods?select=*,product_orders(product_order_no)&order=updated_at.desc",
         "description": "Success response: [{ \"finished_good_no\": \"FG-1001\" }]\nError response: { \"message\": \"permission denied\" }"
+      }
+    },
+    {
+      "name": "Slitting Operator - Scan Metallisation Coil",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "apikey", "value": "{{anonKey}}" },
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{supabaseUrl}}/rest/v1/rpc/scan_slitting_metallisation_coil",
+        "body": { "mode": "raw", "raw": "{\n  \"p_qr_value\": \"capco://metallisation/MC-0003\"\n}" },
+        "description": "Returns metallisation coil, work order, stage/status, and existing confirmation details for the Slitting Operator confirmation popup."
+      }
+    },
+    {
+      "name": "Slitting Operator - Confirm Metallisation Coil",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "apikey", "value": "{{anonKey}}" },
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{supabaseUrl}}/rest/v1/rpc/confirm_slitting_metallisation_coil",
+        "body": { "mode": "raw", "raw": "{\n  \"p_qr_value\": \"capco://metallisation/MC-0003\",\n  \"p_work_order_id\": \"50000000-0000-0000-0000-000000000004\",\n  \"p_product_order_id\": \"90000000-0000-0000-0000-000000000003\",\n  \"p_idempotency_key\": \"scan-confirm-MC-0003-001\"\n}" },
+        "description": "Concurrency-safe and idempotent coil confirmation. Duplicate confirms return the existing confirmation instead of creating another one."
+      }
+    },
+    {
+      "name": "Slitting QC - Create 10 Bag Batch",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "apikey", "value": "{{anonKey}}" },
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{supabaseUrl}}/rest/v1/rpc/create_slitting_packet_batch",
+        "body": { "mode": "raw", "raw": "{\n  \"p_slitting_id\": \"{{slittingId}}\",\n  \"p_packet_type\": \"Bag\",\n  \"p_quantity\": 10,\n  \"p_product_order_id\": \"90000000-0000-0000-0000-000000000003\",\n  \"p_item_weights\": [5.9,5.9,5.9,5.9,5.9,5.9,5.9,5.9,5.9,6.1],\n  \"p_item_grades\": [\"AA\",\"AA\",\"AA\",\"AA\",\"AA\",\"AA\",\"AA\",\"AA\",\"AA\",\"AA\"],\n  \"p_idempotency_key\": \"qc-batch-SA-0003-10-bags-001\",\n  \"p_metadata\": { \"test_case\": \"ten_bags\" }\n}" },
+        "description": "Creates one Slitting batch, exactly ten bag rows, ten QR references, and ten sticker document records in one transaction."
+      }
+    },
+    {
+      "name": "Notifications - List",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+        ],
+        "url": "{{NEXT_PUBLIC_BACKEND_URL}}/api/notifications?limit=50",
+        "description": "Lists in-app notifications visible to the authenticated user."
+      }
+    },
+    {
+      "name": "Push - Register Subscription",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{NEXT_PUBLIC_BACKEND_URL}}/api/push",
+        "body": { "mode": "raw", "raw": "{\n  \"action\": \"register\",\n  \"subscription\": {\n    \"endpoint\": \"https://push.example/subscription-id\",\n    \"keys\": {\n      \"p256dh\": \"browser_public_key\",\n      \"auth\": \"browser_auth_secret\"\n    }\n  }\n}" },
+        "description": "Registers one browser/PWA device subscription for the authenticated profile. Multiple devices per user are supported."
+      }
+    },
+    {
+      "name": "Documents - Batch Stickers Print",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+        ],
+        "url": "{{NEXT_PUBLIC_BACKEND_URL}}/api/documents/slitting_batches/{{slittingBatchId}}?kind=stickers&intent=print",
+        "description": "Returns one inline printer-friendly HTML document containing all stickers in the selected Slitting batch."
+      }
+    },
+    {
+      "name": "Documents - Individual Sticker Download",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+        ],
+        "url": "{{NEXT_PUBLIC_BACKEND_URL}}/api/documents/generated_documents/{{generatedDocumentId}}?intent=download",
+        "description": "Downloads a generated sticker document without recreating the business record or changing serial numbers."
       }
     },
     {

@@ -1,7 +1,7 @@
 import { buildQrPayload, supabaseRest, toCsv, type ListParams, type WorkflowStage, type WorkflowStatus } from "./supabaseClient";
 
 export type WorkOrderPayload = {
-  work_order_no: string;
+  work_order_no?: string;
   micron: number;
   width_m: number;
   quantity: number;
@@ -24,7 +24,12 @@ export const workOrderService = {
     });
   },
   listForRole(role: string, profileId?: string) {
-    const filters = role.includes("operator") || role === "person_a" ? { assigned_to: profileId ?? "" } : undefined;
+    let filters: ListParams["filters"];
+    if (role === "slitting_operator" || role === "slitting_qc" || role === "operator_2_slitting") {
+      filters = { stage: "Slitting" };
+    } else if (role.includes("operator") || role === "person_a") {
+      filters = { assigned_to: profileId ?? "" };
+    }
     return workOrderService.list({ filters });
   },
   getById(id: string) {
@@ -53,11 +58,16 @@ export const workOrderService = {
     }));
   },
   create(payload: WorkOrderPayload) {
-    return supabaseRest.create("work_orders", {
+    const workOrderPayload = {
       ...payload,
       stage: payload.stage ?? "Raw Material",
       status: payload.status ?? "Yet to Start",
-    });
+    };
+    if (workOrderPayload.work_order_no) return supabaseRest.create("work_orders", workOrderPayload);
+
+    return supabaseRest
+      .rpc<string>("capco_next_serial", { p_entity: "work_order" })
+      .then((work_order_no) => supabaseRest.create("work_orders", { ...workOrderPayload, work_order_no }));
   },
   update(id: string, payload: Partial<WorkOrderPayload>) {
     return supabaseRest.update("work_orders", id, payload);

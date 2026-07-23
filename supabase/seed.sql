@@ -13,7 +13,9 @@ insert into public.roles (id, code, name, description, permissions) values
 ('10000000-0000-0000-0000-000000000008','operator_3_winding','Operator 3 - Winding','Performs winding','{"modules":["winding","product_orders"],"actions":["read","create","update"]}'),
 ('10000000-0000-0000-0000-000000000009','operator_4_spray','Operator 4 - Spray','Performs spray and moves goods to finished goods','{"modules":["spray","finished_goods"],"actions":["read","create","update"]}'),
 ('10000000-0000-0000-0000-000000000010','sales','Sales','Reads product and finished goods data','{"modules":["product_orders","finished_goods"],"actions":["read","export"]}'),
-('10000000-0000-0000-0000-000000000011','accountant','Accountant','Vendor purchases and payments','{"modules":["vendor_purchases","finished_goods"],"actions":["read","create","update","export"]}')
+('10000000-0000-0000-0000-000000000011','accountant','Accountant','Vendor purchases and payments','{"modules":["vendor_purchases","finished_goods"],"actions":["read","create","update","export"]}'),
+('10000000-0000-0000-0000-000000000012','slitting_qc','Slitting QC','Performs slitting QC, batch creation, QR, and stickers','{"modules":["slitting","stock","work_orders","product_orders","material_requests","material_returns"],"actions":["read","create","update","export","download","print"]}'),
+('10000000-0000-0000-0000-000000000013','slitting_operator','Slitting Operator','Scans and confirms metallisation coils entering slitting','{"modules":["slitting_confirmations","metallisation","work_orders","product_orders"],"actions":["read","create"]}')
 on conflict (code) do update set name = excluded.name, permissions = excluded.permissions, updated_at = now();
 
 insert into public.profiles (id, role_id, reports_to, team_name, worker_label, full_name, email, phone, status, metadata) values
@@ -33,7 +35,9 @@ insert into public.profiles (id, role_id, reports_to, team_name, worker_label, f
 ('20000000-0000-0000-0000-000000000014','10000000-0000-0000-0000-000000000006','20000000-0000-0000-0000-000000000004','Person A Team','Slitting 2','Harish Babu','slitting2@capco.local','+919900000014','active','{"password_seed":"Capco@123"}'),
 ('20000000-0000-0000-0000-000000000015','10000000-0000-0000-0000-000000000006','20000000-0000-0000-0000-000000000004','Person A Team','Slitting 3','Manoj Verma','slitting3@capco.local','+919900000015','active','{"password_seed":"Capco@123"}'),
 ('20000000-0000-0000-0000-000000000016','10000000-0000-0000-0000-000000000008','20000000-0000-0000-0000-000000000007','Person B Team','Winding 2','Arun Das','winding2@capco.local','+919900000016','active','{"password_seed":"Capco@123"}'),
-('20000000-0000-0000-0000-000000000017','10000000-0000-0000-0000-000000000009','20000000-0000-0000-0000-000000000007','Person B Team','Spray 2','Vijay Reddy','spray2@capco.local','+919900000017','active','{"password_seed":"Capco@123"}')
+('20000000-0000-0000-0000-000000000017','10000000-0000-0000-0000-000000000009','20000000-0000-0000-0000-000000000007','Person B Team','Spray 2','Vijay Reddy','spray2@capco.local','+919900000017','active','{"password_seed":"Capco@123"}'),
+('20000000-0000-0000-0000-000000000018','10000000-0000-0000-0000-000000000012','20000000-0000-0000-0000-000000000004','Person A Team','Slitting QC','Neha Bansal','slittingqc@capco.local','+919900000018','active','{"password_seed":"Capco@123","login_note":"Create matching Supabase Auth user for Slitting QC testing."}'),
+('20000000-0000-0000-0000-000000000019','10000000-0000-0000-0000-000000000013','20000000-0000-0000-0000-000000000004','Person A Team','Slitting Operator','Vikram Singh','slittingoperator@capco.local','+919900000019','active','{"password_seed":"Capco@123","login_note":"Create matching Supabase Auth user for Slitting Operator testing."}')
 on conflict (phone) do update set full_name = excluded.full_name, role_id = excluded.role_id, reports_to = excluded.reports_to, team_name = excluded.team_name, worker_label = excluded.worker_label, email = excluded.email, status = excluded.status, updated_at = now();
 
 insert into public.qr_references (id, entity_type, entity_code, qr_payload, qr_url, created_by) values
@@ -133,3 +137,35 @@ insert into public.pipeline_tracking (entity_type, entity_id, from_stage, to_sta
 ('work_order','50000000-0000-0000-0000-000000000001','Slitting','Stock','Completed','20000000-0000-0000-0000-000000000006',null,'Slitting output added to stock','20000000-0000-0000-0000-000000000006','2026-06-27 15:00+05:30'),
 ('product_order','90000000-0000-0000-0000-000000000001','Stock','Winding','In-progress','20000000-0000-0000-0000-000000000006','20000000-0000-0000-0000-000000000007','Stock assigned to Person B for winding','20000000-0000-0000-0000-000000000006','2026-06-29 10:00+05:30'),
 ('product_order','90000000-0000-0000-0000-000000000001','Winding','Spray','Completed','20000000-0000-0000-0000-000000000008','20000000-0000-0000-0000-000000000009','Winding completed and moved to spray','20000000-0000-0000-0000-000000000008','2026-07-01 09:00+05:30');
+
+-- Slitting Operator / QC verification data. Apply the slitting migration before these rows.
+insert into public.qr_references (id, entity_type, entity_code, qr_payload, qr_url, created_by) values
+('30000000-0000-0000-0000-000000000013','work_order','WO-0003','capco://work-orders/WO-0003',null,'20000000-0000-0000-0000-000000000002'),
+('30000000-0000-0000-0000-000000000014','metallisation','MC-0003','capco://metallisation/MC-0003',null,'20000000-0000-0000-0000-000000000005'),
+('30000000-0000-0000-0000-000000000015','slitting','SA-0003','capco://slitting/SA-0003',null,'20000000-0000-0000-0000-000000000018'),
+('30000000-0000-0000-0000-000000000016','product_order','PO-0003','capco://product-orders/PO-0003',null,'20000000-0000-0000-0000-000000000002')
+on conflict (qr_payload) do nothing;
+
+insert into public.inventory (id, raw_material_code, raw_material_name, roll_no, micron, width_m, net_weight_kg, gross_weight_kg, current_weight_kg, actual_weight_kg, damaged_weight_kg, used_weight_kg, wastage_weight_kg, wet_weight_kg, supplier, temperature_c, date_received, status, stage, assigned_work_order_id, created_by) values
+('40000000-0000-0000-0000-000000000006','RM-8306','BOPP Capacitor Film','RL-2401-006',4.5,1.0,60.0,61.2,60.0,60.0,0,0,0,60.4,'VedaCap Industries',25,'2026-07-02','Being Used','Metallisation',null,'20000000-0000-0000-0000-000000000001')
+on conflict (raw_material_code) do update set status = excluded.status, stage = excluded.stage, updated_at = now();
+
+insert into public.work_orders (id, work_order_no, micron, width_m, quantity, stage, status, planned_start_date, due_date, assigned_to, qr_reference_id, created_by) values
+('50000000-0000-0000-0000-000000000004','WO-0003',4.5,1.0,6000,'Slitting','In-progress','2026-07-02','2026-07-09','20000000-0000-0000-0000-000000000004','30000000-0000-0000-0000-000000000013','20000000-0000-0000-0000-000000000002')
+on conflict (work_order_no) do update set stage = excluded.stage, status = excluded.status, updated_at = now();
+
+update public.inventory
+set assigned_work_order_id = '50000000-0000-0000-0000-000000000004'
+where raw_material_code = 'RM-8306';
+
+insert into public.metallisation (id, metallisation_no, work_order_id, raw_material_id, operator_id, coil_no, machine_no, weight_kg, weight_after_metallisation_kg, optical_density, resistance_ohms, factory_wastage_kg, qc_details, next_stage, status, qr_reference_id, created_by, created_at) values
+('60000000-0000-0000-0000-000000000003','MC-0003','50000000-0000-0000-0000-000000000004','40000000-0000-0000-0000-000000000006','20000000-0000-0000-0000-000000000005','MC-0003','MET-02',60.0,59.2,2.42,1.47,0.8,'{"qc":"pass","remarks":"Seed coil for slitting operator scan and QC batch tests"}','Slitting','Completed','30000000-0000-0000-0000-000000000014','20000000-0000-0000-0000-000000000005','2026-07-02 13:00+05:30')
+on conflict (metallisation_no) do update set status = excluded.status, next_stage = excluded.next_stage, updated_at = now();
+
+insert into public.product_orders (id, product_order_no, product_code, product_name, capacitor_type, grade, specifications, quantity, batch_size, customer, instructions, stage, status, planned_start_date, delivery_commitment, assigned_to, qr_reference_id, created_by) values
+('90000000-0000-0000-0000-000000000003','PO-0003','C-450V-47uF','Motor Run Capacitor','Motor','AA','{"capacitance":"47uF","voltage_rating":"450V AC"}',6000,6000,'Slitting Test Customer','Seed product order for slitting notifications and batch sticker tests','Slitting','In-progress','2026-07-02','2026-07-12 09:00+05:30','20000000-0000-0000-0000-000000000018','30000000-0000-0000-0000-000000000016','20000000-0000-0000-0000-000000000002')
+on conflict (product_order_no) do update set stage = excluded.stage, status = excluded.status, updated_at = now();
+
+insert into public.slitting (id, slitting_no, work_order_id, metallisation_id, raw_material_id, operator_id, product_no, weight_kg, thickness_micron, width_m, number_of_bags, grade, grade_each_bag, weight_each_bag, remarks, stage, status, qr_reference_id, created_by, created_at) values
+('70000000-0000-0000-0000-000000000003','SA-0003','50000000-0000-0000-0000-000000000004','60000000-0000-0000-0000-000000000003','40000000-0000-0000-0000-000000000006','20000000-0000-0000-0000-000000000018','PM-0003',59.2,4.5,1.0,0,'AA','[]','[]','Seed slitting record for ten-bag batch creation after operator confirmation','Slitting','Quality Check Pending','30000000-0000-0000-0000-000000000015','20000000-0000-0000-0000-000000000018','2026-07-03 10:30+05:30')
+on conflict (slitting_no) do update set status = excluded.status, updated_at = now();

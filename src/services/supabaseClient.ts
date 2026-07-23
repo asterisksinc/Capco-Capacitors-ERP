@@ -7,6 +7,8 @@ export type RoleCode =
   | "person_a"
   | "operator_1_metallisation"
   | "operator_2_slitting"
+  | "slitting_qc"
+  | "slitting_operator"
   | "person_b"
   | "operator_3_winding"
   | "operator_4_spray"

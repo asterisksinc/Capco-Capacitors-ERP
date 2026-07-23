@@ -1,7 +1,7 @@
 import { supabaseRest, supabaseStorage, type Json, type ListParams, type WorkflowStatus } from "./supabaseClient";
 
 export type MetallisationPayload = {
-  metallisation_no: string;
+  metallisation_no?: string;
   work_order_id: string;
   raw_material_id: string;
   operator_id?: string;
@@ -22,12 +22,12 @@ export type MetallisationPayload = {
 };
 
 export type SlittingPayload = {
-  slitting_no: string;
+  slitting_no?: string;
   work_order_id: string;
   metallisation_id?: string;
   raw_material_id?: string;
   operator_id?: string;
-  product_no: string;
+  product_no?: string;
   weight_kg: number;
   gross_weight_kg?: number;
   used_weight_kg?: number;
@@ -112,8 +112,10 @@ export const productionStageService = {
     return supabaseRest.getById("spray", id, stageSelects.spray);
   },
   addMetallisation(payload: MetallisationPayload) {
-    return supabaseRest.create("metallisation", {
+    const createMetallisation = (metallisation_no: string) => supabaseRest.create("metallisation", {
       ...payload,
+      metallisation_no,
+      coil_no: payload.coil_no ?? metallisation_no,
       gross_weight_kg: payload.gross_weight_kg ?? payload.weight_kg,
       used_weight_kg: payload.used_weight_kg ?? 0,
       factory_wastage_kg: payload.factory_wastage_kg ?? 0,
@@ -121,6 +123,8 @@ export const productionStageService = {
       stage: "Metallisation",
       status: "Completed" satisfies WorkflowStatus,
     });
+    if (payload.metallisation_no) return createMetallisation(payload.metallisation_no);
+    return supabaseRest.rpc<string>("capco_next_serial", { p_entity: "metallisation_coil" }).then(createMetallisation);
   },
   updateMetallisation(id: string, payload: Partial<MetallisationPayload>) {
     return supabaseRest.update("metallisation", id, payload);
@@ -134,14 +138,22 @@ export const productionStageService = {
     });
   },
   addSlitting(payload: SlittingPayload) {
-    return supabaseRest.create("slitting", {
+    const createSlitting = (slitting_no: string, product_no: string) => supabaseRest.create("slitting", {
       ...payload,
+      slitting_no,
+      product_no,
       gross_weight_kg: payload.gross_weight_kg ?? payload.weight_kg,
       used_weight_kg: payload.used_weight_kg ?? 0,
       number_of_bags: payload.number_of_bags ?? 0,
-      stage: "Stock",
-      status: "Completed" satisfies WorkflowStatus,
+      stage: "Slitting",
+      status: payload.number_of_bags && payload.number_of_bags > 0 ? ("Completed" satisfies WorkflowStatus) : ("Quality Check Pending" satisfies WorkflowStatus),
     });
+    if (payload.slitting_no && payload.product_no) return createSlitting(payload.slitting_no, payload.product_no);
+
+    return Promise.all([
+      payload.slitting_no ? Promise.resolve(payload.slitting_no) : supabaseRest.rpc<string>("capco_next_serial", { p_entity: "slitting" }),
+      payload.product_no ? Promise.resolve(payload.product_no) : supabaseRest.rpc<string>("capco_next_serial", { p_entity: "stock" }),
+    ]).then(([slitting_no, product_no]) => createSlitting(slitting_no, product_no));
   },
   updateSlitting(id: string, payload: Partial<SlittingPayload>) {
     return supabaseRest.update("slitting", id, payload);

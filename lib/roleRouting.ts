@@ -9,6 +9,8 @@ const roleRoutes: Record<RoleCode, string> = {
   person_a: "/person-a",
   operator_1_metallisation: "/person-a-metallisation",
   operator_2_slitting: "/person-a-slitting",
+  slitting_qc: "/person-a-slitting",
+  slitting_operator: "/person-a-slitting",
   person_b: "/person-b",
   operator_3_winding: "/person-b",
   operator_4_spray: "/person-b",
