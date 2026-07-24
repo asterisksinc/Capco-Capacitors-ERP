@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "devf": "next dev",
-    "lint": "eslint"
+    "lint": "eslint",
+    "sync:auth-users": "node scripts/sync-supabase-auth-users.mjs"
   },
   "dependencies": {
     "@yudiel/react-qr-scanner": "^2.6.0",
