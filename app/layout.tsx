@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { DM_Sans } from "next/font/google";
+import { AppProviders } from "@/components/AppProviders";
 import "./globals.css";
 
 const dmSans = DM_Sans({
@@ -18,9 +19,6 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-import { NotificationProvider } from "@/contexts/NotificationContext";
-import { NotificationOverlay } from "@/components/NotificationOverlay";
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -29,10 +27,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${dmSans.variable} h-full antialiased`}>
       <body className="min-h-full">
-        <NotificationProvider>
-          {children}
-          <NotificationOverlay />
-        </NotificationProvider>
+        <AppProviders>{children}</AppProviders>
       </body>
     </html>
   );
