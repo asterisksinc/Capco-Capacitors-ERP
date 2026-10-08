@@ -1,8 +1,16 @@
+"use client";
+
 import { ArrowRight, ChevronDown, Mail, Menu, Phone } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export function PublicNav({ variant = "light" }: { variant?: "light" | "transparent" }) {
   const isTransparent = variant === "transparent";
+  const pathname = usePathname();
+  const activeClass = "font-semibold text-[#58c7e8]";
+  const isSolutionsActive = pathname.startsWith("/solutions");
+  const isProductsActive = pathname.startsWith("/products");
+  const isLoginActive = pathname === "/login";
 
   return (
     <header className={`sticky top-0 z-30 w-full border-b backdrop-blur ${isTransparent ? "border-white/15 bg-[#101010]/78 text-white" : "border-[#e4e4e4] bg-white/94 text-black"}`}>
@@ -11,15 +19,12 @@ export function PublicNav({ variant = "light" }: { variant?: "light" | "transpar
           capco<span className="text-[#58c7e8]">.</span>
         </span>
         <nav className="hidden items-center gap-8 text-base lg:flex">
-          <Link href="/" className="inline-flex items-center gap-1 transition hover:text-[#58c7e8]">
-            Home
-          </Link>
           <span className="inline-flex cursor-default items-center gap-1 opacity-70" aria-disabled="true">
             Company
             <ChevronDown size={16} />
           </span>
           <div className="group relative">
-            <Link href="/solutions/oem" className="inline-flex items-center gap-1 transition hover:text-[#58c7e8]">
+            <Link href="/solutions/oem" className={`inline-flex items-center gap-1 transition hover:text-[#58c7e8] ${isSolutionsActive ? activeClass : ""}`}>
               Solutions
               <ChevronDown size={16} />
             </Link>
@@ -32,7 +37,7 @@ export function PublicNav({ variant = "light" }: { variant?: "light" | "transpar
               </Link>
             </div>
           </div>
-          <Link href="/products" className="inline-flex items-center gap-1 transition hover:text-[#58c7e8]">
+          <Link href="/products" className={`inline-flex items-center gap-1 transition hover:text-[#58c7e8] ${isProductsActive ? activeClass : ""}`}>
             Products
             <ChevronDown size={16} />
           </Link>
@@ -47,7 +52,12 @@ export function PublicNav({ variant = "light" }: { variant?: "light" | "transpar
             <Phone size={16} />
             1800-XXX-XXXX
           </span>
-          <Link href="/login" className={`inline-flex h-12 items-center border px-4 text-sm font-semibold ${isTransparent ? "border-white/35 text-white" : "border-black"}`}>
+          <Link
+            href="/login"
+            className={`inline-flex h-12 items-center border px-4 text-sm font-semibold transition hover:border-[#58c7e8] hover:text-[#58c7e8] ${
+              isLoginActive ? "border-[#58c7e8] text-[#58c7e8]" : isTransparent ? "border-white/35 text-white" : "border-black"
+            }`}
+          >
             Dealer Login
           </Link>
           <Link href="/#contact" className="inline-flex h-12 items-center bg-[#58c7e8] px-4 text-sm font-semibold text-[#020202]">
