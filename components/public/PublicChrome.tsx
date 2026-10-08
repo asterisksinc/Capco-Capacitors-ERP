@@ -5,18 +5,21 @@ export function PublicNav({ variant = "light" }: { variant?: "light" | "transpar
   const isTransparent = variant === "transparent";
 
   return (
-    <header className={`${isTransparent ? "absolute border-transparent bg-transparent text-white" : "sticky border-[#e4e4e4] bg-white/94 text-black backdrop-blur"} top-0 z-30 w-full border-b`}>
+    <header className={`sticky top-0 z-30 w-full border-b backdrop-blur ${isTransparent ? "border-white/15 bg-[#101010]/78 text-white" : "border-[#e4e4e4] bg-white/94 text-black"}`}>
       <div className="mx-auto flex h-[86px] max-w-[1920px] items-center justify-between px-7">
-        <Link href="/" className={`text-2xl font-extrabold tracking-normal ${isTransparent ? "text-white" : "text-[#020202]"}`}>
+        <span className={`text-2xl font-extrabold tracking-normal ${isTransparent ? "text-white" : "text-[#020202]"}`}>
           capco<span className="text-[#58c7e8]">.</span>
-        </Link>
+        </span>
         <nav className="hidden items-center gap-8 text-base lg:flex">
-          <Link href="/#why" className="inline-flex items-center gap-1">
+          <Link href="/" className="inline-flex items-center gap-1 transition hover:text-[#58c7e8]">
+            Home
+          </Link>
+          <span className="inline-flex cursor-default items-center gap-1 opacity-70" aria-disabled="true">
             Company
             <ChevronDown size={16} />
-          </Link>
+          </span>
           <div className="group relative">
-            <Link href="/solutions/oem" className="inline-flex items-center gap-1">
+            <Link href="/solutions/oem" className="inline-flex items-center gap-1 transition hover:text-[#58c7e8]">
               Solutions
               <ChevronDown size={16} />
             </Link>
@@ -29,21 +32,21 @@ export function PublicNav({ variant = "light" }: { variant?: "light" | "transpar
               </Link>
             </div>
           </div>
-          <Link href="/products" className="inline-flex items-center gap-1">
+          <Link href="/products" className="inline-flex items-center gap-1 transition hover:text-[#58c7e8]">
             Products
             <ChevronDown size={16} />
           </Link>
-          <Link href="/#projects" className="inline-flex items-center gap-1">
+          <span className="inline-flex cursor-default items-center gap-1 opacity-70" aria-disabled="true">
             Resources
             <ChevronDown size={16} />
-          </Link>
-          <Link href="/#contact">Contact</Link>
+          </span>
+          <span className="cursor-default opacity-70" aria-disabled="true">Contact</span>
         </nav>
         <div className="hidden items-center gap-4 lg:flex">
-          <a href="tel:18000000000" className="inline-flex h-12 items-center gap-2 px-4 text-sm font-medium">
+          <span className="inline-flex h-12 cursor-default items-center gap-2 px-4 text-sm font-medium opacity-70" aria-disabled="true">
             <Phone size={16} />
             1800-XXX-XXXX
-          </a>
+          </span>
           <Link href="/login" className={`inline-flex h-12 items-center border px-4 text-sm font-semibold ${isTransparent ? "border-white/35 text-white" : "border-black"}`}>
             Dealer Login
           </Link>
