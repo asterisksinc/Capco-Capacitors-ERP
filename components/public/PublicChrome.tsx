@@ -1,11 +1,14 @@
 "use client";
 
-import { ArrowRight, ChevronDown, Mail, Menu, Phone } from "lucide-react";
+import { ArrowRight, ChevronDown, Mail, Menu, Phone, X } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 
-export function PublicNav({ variant = "light" }: { variant?: "light" | "transparent" }) {
-  const isTransparent = variant === "transparent";
+export function PublicNav({ variant = "light", logoSrc, className = "" }: { variant?: "light" | "transparent" | "overlay"; logoSrc?: string; className?: string }) {
+  const isTransparent = variant !== "light";
+  const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
   const activeClass = "font-semibold text-[#58c7e8]";
   const isSolutionsActive = pathname.startsWith("/solutions");
@@ -13,22 +16,22 @@ export function PublicNav({ variant = "light" }: { variant?: "light" | "transpar
   const isLoginActive = pathname === "/login";
 
   return (
-    <header className={`sticky top-0 z-30 w-full border-b backdrop-blur ${isTransparent ? "border-white/15 bg-[#101010]/78 text-white" : "border-[#e4e4e4] bg-white/94 text-black"}`}>
+    <header className={`sticky top-0 z-30 w-full border-b backdrop-blur ${isTransparent ? "border-white/15 bg-[#101010]/78 text-white" : "border-[#e4e4e4] bg-white/94 text-black"} ${className}`}>
       <div className="mx-auto flex h-[86px] max-w-[1920px] items-center justify-between px-7">
-        <span className={`text-2xl font-extrabold tracking-normal ${isTransparent ? "text-white" : "text-[#020202]"}`}>
-          capco<span className="text-[#58c7e8]">.</span>
-        </span>
+        <Link href="/" aria-label="CAPCO home" className={`text-2xl font-extrabold tracking-normal ${isTransparent ? "text-white" : "text-[#020202]"}`}>
+          {logoSrc ? <Image src={logoSrc} alt="CAPCO Capacitors" width={127} height={47} priority /> : <>capco<span className="text-[#58c7e8]">.</span></>}
+        </Link>
         <nav className="hidden items-center gap-8 text-base lg:flex">
           <span className="inline-flex cursor-default items-center gap-1 opacity-70" aria-disabled="true">
             Company
             <ChevronDown size={16} />
           </span>
           <div className="group relative">
-            <Link href="/solutions/oem" className={`inline-flex items-center gap-1 transition hover:text-[#58c7e8] ${isSolutionsActive ? activeClass : ""}`}>
+            <Link href="/solutions/oem" className={`inline-flex items-center gap-1 transition hover:text-[#58c7e8] ${isSolutionsActive && variant !== "overlay" ? activeClass : ""}`}>
               Solutions
               <ChevronDown size={16} />
             </Link>
-            <div className="invisible absolute left-0 top-full z-40 min-w-[210px] border border-[#e4e4e4] bg-white p-2 text-black opacity-0 shadow-xl transition group-hover:visible group-hover:opacity-100">
+            <div className="invisible absolute left-0 top-full z-40 min-w-[210px] border border-[#e4e4e4] bg-white p-2 text-black opacity-0 shadow-xl transition group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
               <Link href="/solutions/oem" className="block px-4 py-3 text-sm hover:bg-[#f5f5f5]">
                 OEM
               </Link>
@@ -45,7 +48,7 @@ export function PublicNav({ variant = "light" }: { variant?: "light" | "transpar
             Resources
             <ChevronDown size={16} />
           </span>
-          <span className="cursor-default opacity-70" aria-disabled="true">Contact</span>
+          <Link href={variant === "overlay" ? "#contact" : "/#contact"}>Contact</Link>
         </nav>
         <div className="hidden items-center gap-4 lg:flex">
           <span className="inline-flex h-12 cursor-default items-center gap-2 px-4 text-sm font-medium opacity-70" aria-disabled="true">
@@ -60,14 +63,17 @@ export function PublicNav({ variant = "light" }: { variant?: "light" | "transpar
           >
             Dealer Login
           </Link>
-          <Link href="/#contact" className="inline-flex h-12 items-center bg-[#58c7e8] px-4 text-sm font-semibold text-[#020202]">
+          <Link href={variant === "overlay" ? "mailto:sales@capcocapacitor.com?subject=Request%20Quote" : "/#contact"} className="inline-flex h-12 items-center bg-[#58c7e8] px-4 text-sm font-semibold text-[#020202]">
             Request Quote
           </Link>
         </div>
-        <button className={`rounded-lg p-3 lg:hidden ${isTransparent ? "bg-white/10" : "bg-[#f5f5f5]"}`} aria-label="Open menu">
-          <Menu size={20} />
+        <button type="button" className={`rounded-lg p-3 lg:hidden ${isTransparent ? "bg-white/10" : "bg-[#f5f5f5]"}`} aria-label={mobileOpen ? "Close menu" : "Open menu"} aria-expanded={mobileOpen} aria-controls="public-mobile-menu" onClick={() => setMobileOpen(!mobileOpen)}>
+          {mobileOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
       </div>
+      {mobileOpen && <nav id="public-mobile-menu" aria-label="Mobile navigation" className="absolute left-0 top-full w-full border-b border-black/10 bg-white p-6 text-black shadow-xl lg:hidden" onKeyDown={event => { if (event.key === "Escape") setMobileOpen(false); }}>
+        {[["Home", "/"], ["OEM Solutions", "/solutions/oem"], ["Dealership / Industrial Solutions", "/solutions/dealership"], ["Products", "/products"], ["Contact", variant === "overlay" ? "#contact" : "/#contact"], ["Dealer Login", "/login"]].map(([label, href]) => <Link key={label} href={href} onClick={() => setMobileOpen(false)} className="block border-b border-black/10 py-3 text-base">{label}</Link>)}
+      </nav>}
     </header>
   );
 }

@@ -264,7 +264,7 @@ function SolutionFooter({ industrial }: { industrial: boolean }) {
 
 export function SolutionPage({ variant }: { variant: "oem" | "industrial" }) {
   const industrial = variant === "industrial";
-  return <main className={styles.page}>
+  return <main className={styles.page} data-variant={variant}>
     <Hero industrial={industrial} />
     {industrial ? <><IndustrialIntro /><IndustrialServices /></> : <><OemOverview /><DevelopmentProcess /></>}
     <PartnerStrip />
