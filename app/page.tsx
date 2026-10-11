@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
+import ClientTicker from "@/components/public/ClientTicker";
 import { PublicFooter, PublicNav } from "@/components/public/PublicChrome";
 
 const products = [
@@ -143,6 +144,8 @@ export default function Home() {
           </div>
         ))}
       </section>
+
+      <ClientTicker />
 
       <section id="why" className="px-6 py-20 lg:min-h-[334px] lg:px-[60px] lg:py-[100px]">
         <div className="mx-auto max-w-[1800px]">
