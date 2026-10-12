@@ -2,6 +2,7 @@ export type PublicProduct = {
   slug: string;
   date: string;
   category: string;
+  tagLabel?: string;
   title: string;
   author: string;
   image: string;
@@ -13,27 +14,30 @@ export const publicProducts: PublicProduct[] = [
     slug: "zinc-aluminium-alloy-metalised-bopp-film",
     date: "08.06.2026",
     category: "Metalized Polypropylene Film [ MPP ]",
+    tagLabel: "METALIZED POLYPROPYLENE FILM [ MPP ]",
     title: "Zinc / Aluminium Alloy Metalised BOPP Film",
     author: "Russell Gold",
-    image: "/figma/products/product-1.png",
+    image: "/figma/products/card-1-bopp.png",
     summary: "In-house Leybold-metallized BOPP film for self-healing, high-voltage capacitor applications.",
   },
   {
     slug: "fan-capacitor",
     date: "08.02.2026",
     category: "Fan Capacitors",
+    tagLabel: "FAN CAPACITOR",
     title: "Fan Capacitor",
     author: "Russell Gold",
-    image: "/figma/products/product-2.png",
+    image: "/figma/products/card-2-fan.png",
     summary: "Compact IS:2993 certified capacitors for fans, HVAC equipment, and appliance assemblies.",
   },
   {
     slug: "motor-run-capacitor",
     date: "07.27.2026",
     category: "Motor Capacitors",
+    tagLabel: "MOTOR CAPACITOR",
     title: "Motor Run Capacitor",
     author: "Dan Barcelo",
-    image: "/figma/products/product-3.png",
+    image: "/figma/products/card-3-motor.png",
     summary: "Reliable motor-run units for continuous duty applications with stable capacitance tolerance.",
   },
   {

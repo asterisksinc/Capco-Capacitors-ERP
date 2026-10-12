@@ -1,20 +1,23 @@
 "use client";
 
+/* eslint-disable @next/next/no-img-element */
 import {
   ArrowLeft,
   ArrowRight,
   Award,
-  BadgeCheck,
   BookOpen,
   Download,
-  Factory,
-  Globe2,
-  ShieldCheck,
   Zap,
 } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
-import { PublicFooter, PublicNav } from "@/components/public/PublicChrome";
+import {
+  PublicFaqSection,
+  PublicFooter,
+  PublicNav,
+  ReadyToSpecifyCapcoSection,
+} from "@/components/public/PublicChrome";
 
 const products = [
   ["BOPP Substrate", "CAT: MPP-01", "Metalized Polypropylene Film (MPP)", "In-house Leybold-metallized BOPP film for self-healing, high-voltage capacitor applications.", "THICKNESS: 3.5-14 Micron", "VOLTAGE: Up to 4000V AC", "Explore MPP Film"],
@@ -25,13 +28,129 @@ const products = [
   ["OEM Co-Engineering", "CAT: CUST-ENG", "Customized Capacitors", "Co-engineered capacitors tailored to your electrical, thermal, and mechanical requirements.", "DIMENSIONS: Per Specification", "TERMINALS: Custom Pins/Tags", "Request Custom Solution"],
 ];
 
-const industries = [
-  ["HVAC & Refrigeration", "SYSTEM SECTOR: 01", "HVAC & Commercial Refrigeration Systems", "Motor run capacitors for AC units, HVAC systems, compressors, and rooftop cooling applications.", ["Capacity Range: 0.5-432 MFD", "Voltage Rating: 400-440V AC", "Standards: ISI / BIS verified"]],
-  ["Water Pumps & Agriculture", "SYSTEM SECTOR: 02", "Water Pumps & Agriculture", "Submersible panel and motor-start capacitor support for pumps, borewells, and agricultural drives.", ["Capacity Range: 10-120 MFD", "Surge Tolerance: Up to 550V AC", "Enclosure: Flame-retardant"]],
-  ["Home Appliances", "SYSTEM SECTOR: 03", "Home Appliances & Consumer Electronics", "Compact P2 capacitors for washing machines, refrigerators, fans, and air-conditioning assemblies.", ["Life: 30,000 operating hours", "Terminals: Faston or wire leads", "Safety: P2 protection"]],
-  ["Industrial Manufacturing", "SYSTEM SECTOR: 04", "Industrial Power Factor Correction", "PFC cells, box type capacitors, and capacitor banks for APFC panels and continuous-duty facilities.", ["Range: 0.5-25 KVAR", "Banks: Up to 150 KVAR", "Standard: IS:13340"]],
-  ["Lighting & Infrastructure", "SYSTEM SECTOR: 05", "Lighting & Municipal Infrastructure", "Lighting and UV lamp capacitors for street lights, luminaires, and high-output industrial fixtures.", ["Capacity: 1-45 MFD", "Frequency: 50 / 60 Hz", "Standard: IS:1569"]],
-  ["Export Markets", "SYSTEM SECTOR: 06", "Export Markets", "CE-marked capacitor programs with documentation support for international procurement teams.", ["Markets: 15+ countries", "Docs: COO / test certs", "Compliance: CE / RoHS"]],
+type IndustrySolution = {
+  tab: string;
+  sector: string;
+  title: string;
+  body: string;
+  tags: readonly string[];
+  cta: string;
+  href: string;
+  specHeading: string;
+  specs: readonly string[];
+  metaLeft: readonly [string, string];
+  metaRight: readonly [string, string];
+};
+
+const industries: readonly IndustrySolution[] = [
+  {
+    tab: "HVAC & Refrigeration",
+    sector: "SYSTEM SECTOR: 01",
+    title: "HVAC & Commercial Refrigeration Systems",
+    body: "Motor run capacitors for AC units, HVAC systems, compressors, and rooftop cooling applications. Engineered with P2 safety disconnector protection and high thermal endurance up to +85°C.",
+    tags: ["Motor Run Capacitors", "Compressor Duty"],
+    cta: "Explore HVAC Solutions",
+    href: "/products/motor-run-capacitor",
+    specHeading: "P2 Safety Disconnector",
+    specs: [
+      "Capacity: 0.5 to 432 MFD",
+      "Voltage Rating: 400 to 440V AC",
+      "Operating Temp: -25°C to +85°C",
+      "Standard: IS:2993 & IEC 60252-1",
+    ],
+    metaLeft: ["APPROVAL:", "BIS / ISI / CE"],
+    metaRight: ["OEM BATCHES:", "JIT READY"],
+  },
+  {
+    tab: "Water Pumps & Agriculture",
+    sector: "SYSTEM SECTOR: 02",
+    title: "Water Pumps & Agricultural Drive Panels",
+    body: "Submersible panel capacitors (10–120 MFD), motor start capacitors (40–500 MFD), and heat-resistant designs for borewell and agricultural pumps. Reinforced burst-proof construction built to handle severe rural grid voltage fluctuations.",
+    tags: ["Submersible Capacitors", "Motor Start Capacitors"],
+    cta: "Explore Pump Solutions",
+    href: "/products/submersible-panel-capacitor",
+    specHeading: "Fluctuation Tolerant",
+    specs: [
+      "Capacity: 10 to 120 MFD",
+      "Surge Tolerance: Up to 550V AC",
+      "Enclosure: Flame-retardant Plastic/Alum",
+      "Standard: IS:2993 Certified",
+    ],
+    metaLeft: ["APPROVAL:", "BIS / ISI"],
+    metaRight: ["STATUS:", "PAN-INDIA JIT"],
+  },
+  {
+    tab: "Home Appliances",
+    sector: "SYSTEM SECTOR: 03",
+    title: "Home Appliances & Consumer Electronics",
+    body: "P2 burst-proof capacitors for washing machines, refrigerators, and ACs with inbuilt discharge resistors and IEC 60252-1 compliance. Compact form factors developed specifically for high-density appliance integration.",
+    tags: ["Appliance Capacitors", "P2 Safety Technology"],
+    cta: "Explore Appliance Solutions",
+    href: "/products/ac-refrigeration-washing-machine-capacitor",
+    specHeading: "IEC Compliant",
+    specs: [
+      "Life Expectancy: 30,000 Operating Hours",
+      "Loss Factor: tan δ ≤ 0.002 at 50Hz",
+      "Terminations: Faston 6.3mm or Wire Leads",
+      "Resistor: Inbuilt Bleeder Resistor",
+    ],
+    metaLeft: ["APPROVAL:", "CE / RoHS / BIS"],
+    metaRight: ["OEM BATCHES:", "READY"],
+  },
+  {
+    tab: "Industrial Manufacturing",
+    sector: "SYSTEM SECTOR: 04",
+    title: "Industrial Power Factor Correction & APFC Panels",
+    body: "Heavy-duty cylindrical PFC cells (0.5–25 KVAR), box-type capacitors, and modular banks up to 150 KVAR for continuous industrial facilities. Self-healing metallized polypropylene construction with overpressure disconnector.",
+    tags: ["PFC Cylindrical Cells", "APFC Capacitor Banks"],
+    cta: "Explore PFC Solutions",
+    href: "/products/pfc-cylindrical-capacitor",
+    specHeading: "Heavy Duty IS:13340",
+    specs: [
+      "Rating: 0.5 to 25 KVAR / Cell",
+      "Bank Capacity: Up to 150 KVAR",
+      "Inrush Current: Up to 200x Rated IN",
+      "Standard: IS:13340 & IEC 60831-1/2",
+    ],
+    metaLeft: ["APPROVAL:", "IS:13340 / BIS"],
+    metaRight: ["DUTY:", "CONTINUOUS 24/7"],
+  },
+  {
+    tab: "Lighting & Infrastructure",
+    sector: "SYSTEM SECTOR: 05",
+    title: "Lighting & Municipal Infrastructure",
+    body: "Precision lighting and high-frequency UV lamp capacitors with integrated discharge resistors for street lights, industrial luminaires, highway corridors, and industrial UV curing lines.",
+    tags: ["Luminaire Capacitors", "UV Lamp Capacitors"],
+    cta: "Explore Lighting Solutions",
+    href: "/products/lighting-luminaire-capacitor",
+    specHeading: "IS:1569 Standard",
+    specs: [
+      "Capacitance: 1 to 45 MFD",
+      "Rated Voltage: 230V to 440V AC (50/60Hz)",
+      "Safety: Integrated Discharge Resistor",
+      "Standard: IS:1569 & EN 61048",
+    ],
+    metaLeft: ["APPROVAL:", "IS:1569 / CE"],
+    metaRight: ["LIFE:", "30,000+ HOURS"],
+  },
+  {
+    tab: "Export Markets",
+    sector: "SYSTEM SECTOR: 06",
+    title: "Global OEM & Distributor Export Programs",
+    body: "CE, RoHS, and UL-aligned capacitor programs with complete export documentation, fumigated sea-worthy palletization, and container-load dispatch to 15+ international markets across the Middle East, Africa, South Asia, and North America.",
+    tags: ["CE & RoHS Certified", "Container-Load Supply"],
+    cta: "Explore Export Solutions",
+    href: "/contact?category=export#enquiry-form",
+    specHeading: "Export Compliant",
+    specs: [
+      "Footprint: 15+ Countries Worldwide",
+      "Compliance: CE, RoHS, UL 810 & GSO",
+      "Documentation: COO, NABL & Test Reports",
+      "Dispatch: FOB / CIF Container Loads",
+    ],
+    metaLeft: ["APPROVAL:", "CE / UL / GSO"],
+    metaRight: ["STATUS:", "EXPORT READY"],
+  },
 ] as const;
 
 const whyFeatures = [
@@ -41,26 +160,104 @@ const whyFeatures = [
 ];
 
 const certifications = [
-  ["BIS ISI", "IS:2993 / IS:13340", ShieldCheck],
-  ["ISO 9001", "Quality Management", BadgeCheck],
-  ["CE Mark", "European Conformity", Globe2],
-  ["IEC 60252-1", "AC Motor Capacitors", Factory],
-  ["IEC 60831", "Power Capacitors", Zap],
-];
+  {
+    title: "BIS ISI",
+    sub1: "IS:1709 / IS:1569",
+    sub2: "IS:2993 / IS:13340",
+    icon: "/figma/home/bis-isi.svg",
+  },
+  {
+    title: "ISO 9001",
+    sub1: "2008 Standards",
+    sub2: "Quality Management",
+    icon: "/figma/home/iso-9001.svg",
+  },
+  {
+    title: "CE MARK",
+    sub1: "European Conformity",
+    sub2: "Low Voltage Directive",
+    icon: "/figma/home/ce-mark.svg",
+  },
+  {
+    title: "IEC 60252-1",
+    sub1: "AC Motor Capacitors",
+    sub2: "General Safety Rules",
+    icon: "/figma/home/iec-logo.svg",
+  },
+  {
+    title: "IEC 60831",
+    sub1: "Power Capacitors",
+    sub2: "Self-Healing Shunt",
+    icon: "/figma/home/iec-logo.svg",
+  },
+] as const;
+
+const WORLD_MAP_DOT_ROWS = [
+  "........####......####..............########............................",
+  "......#######....######.........##################......................",
+  "....#########...########.....############################...............",
+  "...##########..#########...####################################.........",
+  "..###########....#######..########################################......",
+  "...#########......#####..##########################################.....",
+  "....#######........####.###########################################.....",
+  ".....#####..........###.########..################################......",
+  "......###............#####...###...##############################.......",
+  ".......##............############....############################.......",
+  "........##..........##############....##########################........",
+  ".........###.......################....########################.........",
+  "..........#####....#################.....#####################..........",
+  "..........#######..##################.....###################...........",
+  "...........########.#################......######...########............",
+  "...........#########..###############.......####.....######.###.........",
+  "............########...##############........##.......####..####........",
+  "............########....############...................##....####.......",
+  ".............#######.....##########...........................###.......",
+  ".............######.......#########......................########.......",
+  "..............#####........#######.....................###########......",
+  "..............####.........#######....................#############.....",
+  "...............###..........#####.....................#############.....",
+  "...............###...........####......................###########......",
+  "................##............##........................#########.......",
+  "................#.........................................#####.....##..",
+] as const;
+
+const manufacturingSteps = [
+  {
+    num: "01",
+    title: "Raw Film Procurement",
+    subtitle: "Certified BOPP Film",
+    body: "Sourced from trusted suppliers with strict dielectric strength, tolerance, and RoHS controls.",
+  },
+  {
+    num: "02",
+    title: "Metallization",
+    subtitle: "In-House Alloy Deposition",
+    body: "Zinc/Aluminium layers vacuum-deposited via Leybold (Germany) for uniform surface resistivity (6–9 Ω/sq).",
+  },
+  {
+    num: "03",
+    title: "Automatic Winding",
+    subtitle: "Precision Non-Inductive",
+    body: "High-speed fully automatic winding ensures ≤±5% capacitance tolerance and minimal internal losses.",
+  },
+  {
+    num: "04",
+    title: "Encapsulation & Safety",
+    subtitle: "Dry & Oil Encapsulation",
+    body: "Resin- or oil-filled housing with application-specific P2 over-pressure disconnectors for thermal and electrical stress protection.",
+  },
+  {
+    num: "05",
+    title: "Testing & Quality Check",
+    subtitle: "IEC-Compliant Test Regime",
+    body: "100% tested for capacitance, voltage endurance, and insulation resistance before vacuum-sealed packaging.",
+  },
+] as const;
 
 const projects = [
   ["/figma/project-catalogs-card.png", "Product Catalogs & Spec Sheets", "Downloadable PDFs with electrical specs, BIS certifications, and installation guides.", "Browse Downloads"],
   ["/figma/project-success-card.png", "Success Stories", "OEM and dealer projects with measurable cost, lead-time, and reliability outcomes.", "View Case Studies"],
   ["/figma/project-insights-card.png", "Industry Trends & Best Practices", "Selection guides, PFC notes, and capacitor application insights.", "Read Insights"],
-];
-
-const faqs = [
-  "What is the minimum order quantity for OEM shipments?",
-  "Can you match capacitors from other manufacturers?",
-  "What is the typical lead time for custom capacitor development?",
-  "Do you provide technical documentation for our compliance files?",
-  "Can CAPCO support JIT delivery for our assembly lines?",
-  "What industries do you currently serve as an OEM partner?",
 ];
 
 function Eyebrow({ children, light = false }: { children: React.ReactNode; light?: boolean }) {
@@ -91,49 +288,48 @@ function ButtonLink({ children, light = false }: { children: React.ReactNode; li
 
 export default function Home() {
   const [industryIndex, setIndustryIndex] = useState(0);
+  const [processIndex, setProcessIndex] = useState(0);
   const activeIndustry = industries[industryIndex];
-  const [sector, title, body, specs] = activeIndustry.slice(1) as [string, string, string, readonly string[]];
+  const activeProcess = manufacturingSteps[processIndex];
 
   return (
     <main className="min-h-screen bg-white text-[#020202]">
-      <div className="relative">
-        <PublicNav variant="transparent" />
-        <section className="relative min-h-[640px] overflow-hidden bg-[#101010] text-white md:min-h-[760px] lg:min-h-[1139px]">
-          <Image src="/figma/home/rectangle-1.png" alt="" fill priority sizes="100vw" className="object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/5 to-black/25" />
-          <div className="relative mx-auto flex min-h-[640px] max-w-[1920px] flex-col justify-end px-6 pb-[118px] pt-28 md:min-h-[760px] lg:min-h-[1139px] lg:px-[60px] lg:pb-[188px]">
-            <div className="grid gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-end">
-              <div>
-                <Eyebrow light>Electrical Systems Built For The Next Century</Eyebrow>
-                <h1 className="mt-6 max-w-[780px] text-[52px] font-normal leading-[0.96] tracking-normal sm:text-[78px] lg:text-[104px]">
-                  India&apos;s Trusted Capacitor Manufacturer
-                </h1>
-                <div className="mt-8 flex flex-wrap gap-4">
-                  <ButtonLink>Explore Products</ButtonLink>
-                  <ButtonLink light>Explore Programs</ButtonLink>
-                </div>
+      <section className="relative flex min-h-[700px] flex-col justify-between overflow-hidden bg-[#101010] text-white lg:h-screen lg:max-h-screen">
+        <Image src="/figma/home/rectangle-1.png" alt="" fill priority sizes="100vw" className="object-cover" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/30 via-black/10 to-black/65" />
+        <PublicNav variant="overlay" className="relative z-20 shrink-0" />
+        <div className="relative z-10 mx-auto mt-auto flex w-full max-w-[1920px] flex-col justify-end px-6 pb-16 pt-10 lg:px-[60px] lg:pb-[88px]">
+          <div className="grid gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-end">
+            <div>
+              <Eyebrow light>Electrical Systems Built For The Next Century</Eyebrow>
+              <h1 className="mt-5 max-w-[780px] text-[44px] font-normal leading-[0.96] tracking-normal sm:text-[64px] lg:text-[84px] xl:text-[100px]">
+                India&apos;s Trusted Capacitor Manufacturer
+              </h1>
+              <div className="mt-7 flex flex-wrap gap-4">
+                <ButtonLink>Explore Products</ButtonLink>
+                <ButtonLink light>Explore Programs</ButtonLink>
               </div>
-              <div className="grid gap-8 lg:justify-items-end">
-                <p className="max-w-[560px] text-xl leading-[1.45] text-white/82">
-                  BIS-certified motor run, PFC, lighting, and custom capacitors engineered with in-house BOPP metallization, JIT supply, and OEM-ready compliance.
-                </p>
-                <div className="grid w-full max-w-[660px] gap-3 sm:grid-cols-3">
-                  {[
-                    ["BIS ISI", "Certified"],
-                    ["ISO 9001", "Quality Certified"],
-                    ["15+ Export", "Markets"],
-                  ].map(([value, label]) => (
-                    <div key={value} className="border border-white/20 bg-black/25 p-4 backdrop-blur">
-                      <p className="text-lg font-semibold">{value}</p>
-                      <p className="mt-1 text-xs text-white/62">{label}</p>
-                    </div>
-                  ))}
-                </div>
+            </div>
+            <div className="grid gap-6 lg:justify-items-end">
+              <p className="max-w-[560px] text-lg leading-[1.45] text-white/85 xl:text-xl">
+                BIS-certified motor run, PFC, lighting, and custom capacitors engineered with in-house BOPP metallization, JIT supply, and OEM-ready compliance.
+              </p>
+              <div className="grid w-full max-w-[660px] gap-3 sm:grid-cols-3">
+                {[
+                  ["BIS ISI", "Certified"],
+                  ["ISO 9001", "Quality Certified"],
+                  ["15+ Export", "Markets"],
+                ].map(([value, label]) => (
+                  <div key={value} className="border border-white/20 bg-black/25 p-4 backdrop-blur">
+                    <p className="text-lg font-semibold">{value}</p>
+                    <p className="mt-1 text-xs text-white/62">{label}</p>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
-        </section>
-      </div>
+        </div>
+      </section>
 
       <section className="grid border-b border-[#e4e4e4] bg-[#f5f5f5] md:grid-cols-3">
         {[["32+ Years", "In Manufacturing"], ["500+", "Authorized Dealers"], ["15+", "Export Countries"]].map(([value, label]) => (
@@ -217,36 +413,132 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="industries" className="bg-[#f5f5f5] px-6 py-20 lg:min-h-[1120px] lg:px-[60px] lg:py-[100px]">
+      <section id="industries" className="bg-[#F4F4F4] px-6 py-20 lg:px-[60px] lg:py-[100px]">
         <div className="mx-auto max-w-[1800px]">
           <Eyebrow>Application-Specific Expertise</Eyebrow>
-          <h2 className="mt-6 text-4xl font-normal tracking-normal lg:text-5xl">Capacitor Solutions by Industry</h2>
-          <div className="mt-12 overflow-x-auto bg-white">
-            <div className="flex min-w-[1080px]">
-              {industries.map((industry, index) => (
-                <button
-                  key={industry[0]}
-                  onClick={() => setIndustryIndex(index)}
-                  className={`relative h-[60px] flex-1 border-b px-4 text-center text-base ${industryIndex === index ? "border-[#020202] font-semibold text-[#020202]" : "border-[#e4e4e4] text-[#595959]"}`}
-                >
-                  {industry[0]}
-                </button>
-              ))}
+          <h2 className="mt-5 text-[34px] font-normal leading-[1.05] tracking-[-0.04em] text-[#020202] sm:text-[42px] lg:mt-6 lg:text-[48px]">
+            Capacitor Solutions by Industry
+          </h2>
+
+          {/* 6-Tab Selector Bar */}
+          <div className="mt-10 overflow-x-auto border-b border-[#DBDBDB] lg:mt-[56px]">
+            <div className="flex min-w-[980px] items-center justify-between">
+              {industries.map((industry, index) => {
+                const isActive = industryIndex === index;
+                return (
+                  <button
+                    key={industry.tab}
+                    type="button"
+                    onClick={() => setIndustryIndex(index)}
+                    className={`relative cursor-pointer px-4 pb-5 pt-2 text-center text-[16px] transition lg:text-[18px] ${
+                      isActive
+                        ? "border-b-2 border-[#020202] font-medium text-[#020202]"
+                        : "border-b-2 border-transparent font-normal text-[#595959] hover:text-[#020202]"
+                    }`}
+                  >
+                    {industry.tab}
+                  </button>
+                );
+              })}
             </div>
           </div>
-          <div className="grid overflow-hidden bg-white p-8 lg:min-h-[650px] lg:grid-cols-[1fr_420px] lg:p-[60px]">
-            <div>
-              <p className="text-sm font-semibold text-[#58c7e8]">{sector}</p>
-              <h3 className="mt-4 text-3xl font-normal">{title}</h3>
-              <p className="mt-6 max-w-4xl text-xl leading-[1.4] text-[#595959]">{body}</p>
-              <div className="mt-8"><ButtonLink>Explore Solutions</ButtonLink></div>
+
+          {/* Main Clipped White Card */}
+          <div
+            style={{
+              clipPath:
+                "polygon(0 0, 100% 0, 100% calc(100% - 76px), calc(100% - 76px) 100%, 0 100%)",
+            }}
+            className="mt-8 grid items-center gap-10 bg-white p-8 sm:p-10 lg:mt-[42px] lg:min-h-[540px] lg:grid-cols-[1fr_528px] lg:p-[60px]"
+          >
+            {/* Left Column: Sector Copy, Clipped Tag Pills & CTA Button */}
+            <div className="flex h-full flex-col justify-between">
+              <div>
+                <p className="text-[16px] font-normal uppercase tracking-normal text-[#58C7E8] lg:text-[18px]">
+                  {activeIndustry.sector}
+                </p>
+                <h3 className="mt-3 text-[28px] font-normal leading-[1.15] tracking-[-0.03em] text-[#020202] lg:text-[36px]">
+                  {activeIndustry.title}
+                </h3>
+                <p className="mt-6 max-w-[780px] text-[16px] leading-[1.48] text-[#595959] lg:text-[18px]">
+                  {activeIndustry.body}
+                </p>
+
+                {/* 2 Clipped Grey Tag Pills */}
+                <div className="mt-7 flex flex-wrap gap-3">
+                  {activeIndustry.tags.map((tag) => (
+                    <span
+                      key={tag}
+                      style={{
+                        clipPath:
+                          "polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%)",
+                      }}
+                      className="inline-flex h-[40px] items-center bg-[#F4F4F4] px-4 text-[14px] font-normal text-[#020202]"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Bottom-Left Clipped Cyan CTA Button */}
+              <div className="mt-10 lg:mt-12">
+                <Link
+                  href={activeIndustry.href}
+                  style={{
+                    clipPath:
+                      "polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%)",
+                  }}
+                  className="inline-flex min-h-[56px] min-w-[228px] items-end justify-between gap-6 bg-[#58C7E8] px-3.5 pb-3 pt-6 text-[13px] font-medium leading-[1.2] text-[#020202] transition hover:-translate-y-0.5 hover:brightness-95"
+                >
+                  <span>{activeIndustry.cta}</span>
+                  <img src="/figma/solutions/24503.svg" alt="" aria-hidden="true" />
+                </Link>
+              </div>
             </div>
-            <aside className="mt-10 bg-[#d9f4fb] p-8 lg:mt-0" style={{ clipPath: "polygon(0 0, 100% 0, 100% calc(100% - 62px), calc(100% - 62px) 100%, 0 100%)" }}>
-              <p className="text-sm text-[#595959]">Key Specifications</p>
-              <h4 className="mt-2 text-2xl font-semibold">Fit Safety Disconnecter</h4>
-              <ul className="mt-6 space-y-4 text-base">
-                {specs.map((spec) => <li key={spec}>+ {spec}</li>)}
-              </ul>
+
+            {/* Right Column: Clipped Light Cyan Key Specifications Box */}
+            <aside
+              style={{
+                clipPath:
+                  "polygon(0 0, 100% 0, 100% calc(100% - 62px), calc(100% - 62px) 100%, 0 100%)",
+              }}
+              className="flex min-h-[380px] flex-col justify-between bg-[#DFF4FC] p-7 sm:p-9 lg:min-h-[416px] lg:p-10"
+            >
+              <div>
+                <p className="text-[12px] font-normal text-[#595959]">Key Specifications</p>
+                <h4 className="mt-1.5 text-[20px] font-medium leading-[1.2] tracking-[-0.02em] text-[#020202] lg:text-[22px]">
+                  {activeIndustry.specHeading}
+                </h4>
+
+                <ul className="mt-6 space-y-3.5 text-[14px] leading-[1.35] text-[#020202]">
+                  {activeIndustry.specs.map((spec) => (
+                    <li key={spec} className="flex items-start gap-2">
+                      <span className="mt-[2px] text-[#020202]">•</span>
+                      <span>{spec}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div>
+                <div className="my-7 h-px w-full bg-[#BCEAF8]" />
+                <div className="flex flex-wrap items-center gap-4 text-[12px] uppercase tracking-[0.02em]">
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="text-[#595959]">{activeIndustry.metaLeft[0]}</span>
+                    <strong className="font-semibold text-[#020202]">
+                      {activeIndustry.metaLeft[1]}
+                    </strong>
+                  </span>
+                  <span className="h-3.5 w-px bg-[#BCEAF8]" aria-hidden="true" />
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="text-[#595959]">{activeIndustry.metaRight[0]}</span>
+                    <strong className="font-semibold text-[#020202]">
+                      {activeIndustry.metaRight[1]}
+                    </strong>
+                  </span>
+                </div>
+              </div>
             </aside>
           </div>
         </div>
@@ -254,39 +546,161 @@ export default function Home() {
 
       <section id="process" className="bg-white px-6 py-24 lg:min-h-[530px] lg:px-[60px] lg:py-[100px]">
         <div className="mx-auto grid max-w-[1800px] gap-12 lg:grid-cols-[0.95fr_1fr]">
-          <div className="flex items-end gap-5">
-            <span className="text-xs text-[#595959]">01/05</span>
-            <button className="bg-[#f5f5f5] p-3" aria-label="Previous process step"><ArrowLeft size={18} /></button>
-            <button className="bg-[#f5f5f5] p-3" aria-label="Next process step"><ArrowRight size={18} /></button>
+          <div className="flex flex-col justify-between gap-8">
+            <div>
+              <Eyebrow>Vertical Integration</Eyebrow>
+              <h2 className="mt-5 text-[34px] font-normal leading-[1.05] tracking-[-0.04em] text-[#020202] sm:text-[42px] lg:mt-6 lg:text-[48px]">
+                5-Stage In-House
+                <br />
+                Manufacturing Process
+              </h2>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <span className="font-mono text-xs text-[#595959]" aria-live="polite">
+                {activeProcess.num}/05
+              </span>
+              <button
+                type="button"
+                aria-label="Previous process step"
+                onClick={() =>
+                  setProcessIndex(
+                    (prev) => (prev + manufacturingSteps.length - 1) % manufacturingSteps.length
+                  )
+                }
+                className="grid h-[52px] w-[52px] cursor-pointer place-items-center rounded-[8px] bg-[#F4F4F4] transition hover:bg-[#E8E8E8]"
+              >
+                <img src="/figma/solutions/a96fb.svg" alt="" aria-hidden="true" className="rotate-180" />
+              </button>
+              <button
+                type="button"
+                aria-label="Next process step"
+                onClick={() => setProcessIndex((prev) => (prev + 1) % manufacturingSteps.length)}
+                className="grid h-[52px] w-[52px] cursor-pointer place-items-center rounded-[8px] bg-[#F4F4F4] transition hover:bg-[#E8E8E8]"
+              >
+                <img src="/figma/solutions/a96fb.svg" alt="" aria-hidden="true" />
+              </button>
+            </div>
           </div>
-          <div className="border-l border-[#e4e4e4] pl-10">
-            <div className="flex h-12 w-12 items-center justify-center bg-[#f5f5f5] text-sm">01</div>
-            <h2 className="mt-6 text-3xl font-normal tracking-normal">Raw Film Procurement</h2>
-            <p className="mt-3 text-lg font-medium text-[#58c7e8]">Certified BOPP Film</p>
-            <p className="mt-8 max-w-2xl text-xl leading-[1.45] text-[#595959]">Sourced from trusted suppliers with strict dielectric strength, tolerance, and RoHS controls.</p>
-            <div className="mt-9"><ButtonLink>View Our Manufacturing Facilities</ButtonLink></div>
+
+          <div className="border-l border-[#E4E4E4] pl-8 lg:pl-12">
+            <div className="flex h-12 w-12 items-center justify-center bg-[#F4F4F4] text-sm font-medium text-[#020202]">
+              {activeProcess.num}
+            </div>
+            <h3 className="mt-6 text-3xl font-normal tracking-[-0.03em] text-[#020202] lg:text-[36px]">
+              {activeProcess.title}
+            </h3>
+            <p className="mt-3 text-lg font-medium text-[#58C7E8]">{activeProcess.subtitle}</p>
+            <p className="mt-7 max-w-2xl text-lg leading-[1.48] text-[#595959] lg:text-xl">
+              {activeProcess.body}
+            </p>
+            <div className="mt-9">
+              <Link
+                href="/about#facilities"
+                style={{
+                  clipPath:
+                    "polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%)",
+                }}
+                className="inline-flex min-h-[56px] min-w-[272px] items-end justify-between gap-6 bg-[#58C7E8] px-3.5 pb-3 pt-6 text-[13px] font-medium leading-[1.2] text-[#020202] transition hover:-translate-y-0.5 hover:brightness-95"
+              >
+                <span>View Our Manufacturing Facilities</span>
+                <img src="/figma/solutions/24503.svg" alt="" aria-hidden="true" />
+              </Link>
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="bg-[#dff8ff] px-6 py-20 lg:min-h-[642px] lg:px-[60px] lg:py-[92px]">
-        <div className="mx-auto max-w-[1800px]">
-          <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
+      <section className="relative overflow-hidden bg-[#EEFAFF] px-6 py-20 lg:px-[60px] lg:py-[100px]">
+        {/* Dotted World Map Background on Right Half */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-y-0 right-0 flex w-[76%] items-center justify-end overflow-hidden opacity-90 lg:w-[66%]"
+        >
+          <svg
+            viewBox="0 0 980 390"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-full w-full object-cover object-right"
+          >
+            {WORLD_MAP_DOT_ROWS.map((row, rIdx) =>
+              Array.from(row).map((ch, cIdx) =>
+                ch === "#" ? (
+                  <circle
+                    key={`${rIdx}-${cIdx}`}
+                    cx={cIdx * 13.5 + 8}
+                    cy={rIdx * 14.5 + 10}
+                    r={3.2}
+                    fill="#C6E7F6"
+                  />
+                ) : null,
+              ),
+            )}
+          </svg>
+        </div>
+
+        <div className="relative z-10 mx-auto max-w-[1800px]">
+          <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <Eyebrow>Meet Global Compliance</Eyebrow>
-              <h2 className="mt-6 text-4xl font-normal tracking-normal lg:text-5xl">Certified for Quality, Safety & Export</h2>
-              <p className="mt-5 max-w-2xl text-base leading-[1.5] text-[#595959]">Industrial precision achieved through global standards, autonomous manufacturing, and stringent dielectric verification.</p>
+              <div className="flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.02em] text-[#020202]">
+                <span className="h-1.5 w-1.5 bg-[#58C7E8]" />
+                TRUST THROUGH COMPLIANCE
+              </div>
+              <h2 className="mt-4 text-[36px] font-normal leading-[1.08] tracking-[-0.04em] text-[#020202] sm:text-[42px] lg:text-[48px]">
+                Certified for Quality, Safety &amp; Export
+              </h2>
+              <p className="mt-4 max-w-[960px] text-[15px] leading-[1.5] text-[#595959] lg:text-[17px]">
+                Industrial precision achieved through single-roof production, autonomous machinery, and stringent dielectric verification.
+              </p>
             </div>
-            <ButtonLink>Download Compliance Certificate</ButtonLink>
+
+            <a
+              href="/catalogs/capco-product-catalog.pdf"
+              download
+              style={{
+                clipPath:
+                  "polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%)",
+              }}
+              className="inline-flex min-h-[56px] w-full max-w-[320px] shrink-0 items-end justify-between gap-4 bg-[#58C7E8] px-4 pb-3 pt-6 text-[13px] font-medium leading-[1.2] text-[#020202] transition hover:-translate-y-0.5 hover:brightness-95"
+            >
+              <span>Download Compliance Certificates (PDF)</span>
+              <img src="/figma/solutions/4e858.svg" alt="" aria-hidden="true" />
+            </a>
           </div>
-          <div className="mt-12 grid gap-4 bg-white p-5 md:grid-cols-5">
-            {certifications.map(([certTitle, certBody, Icon]) => (
-              <article key={certTitle as string} className="flex min-h-[150px] flex-col items-center justify-center border border-[#e5e5e5] text-center">
-                <Icon size={26} className="text-[#58c7e8]" />
-                <h3 className="mt-5 font-semibold">{certTitle as string}</h3>
-                <p className="mt-2 text-sm text-[#595959]">{certBody as string}</p>
-              </article>
-            ))}
+
+          <div className="mt-12 rounded-[20px] bg-white px-4 py-10 shadow-[0_14px_44px_rgba(88,199,232,0.14)] lg:mt-[52px] lg:px-6 lg:py-[52px]">
+            <div className="grid grid-cols-1 divide-y divide-[#EAEAEA] sm:grid-cols-2 sm:divide-y-0 lg:grid-cols-5 lg:divide-x lg:divide-[#EAEAEA]">
+              {certifications.map((cert) => (
+                <article
+                  key={cert.title}
+                  className="flex flex-col items-center px-6 py-6 text-center lg:py-2"
+                >
+                  <div
+                    style={{
+                      clipPath:
+                        "polygon(0 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%)",
+                    }}
+                    className="flex h-[78px] w-[78px] items-center justify-center bg-[#EEFAFF]"
+                  >
+                    <img
+                      src={cert.icon}
+                      alt={cert.title}
+                      className="h-[42px] w-[42px] object-contain"
+                    />
+                  </div>
+                  <h3 className="mt-8 text-[20px] font-medium leading-[1.2] tracking-[-0.02em] text-[#020202] lg:text-[22px]">
+                    {cert.title}
+                  </h3>
+                  <div className="my-4 h-[1.5px] w-[46px] bg-[#BCEAF8]" />
+                  <p className="text-[15px] font-normal leading-[1.35] text-[#020202] lg:text-[16px]">
+                    {cert.sub1}
+                  </p>
+                  <p className="mt-1.5 text-[13px] font-normal leading-[1.35] text-[#595959]">
+                    {cert.sub2}
+                  </p>
+                </article>
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -357,73 +771,12 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="relative flex min-h-[558px] items-center justify-center overflow-hidden bg-white px-6 py-[60px] text-center lg:px-[60px]">
-        <div
-          className="absolute inset-x-0 top-0 h-[558px]"
-          style={{
-            background:
-              "linear-gradient(90deg, #ffffff 0%, rgba(178,242,255,0.92) 18%, #58c7e8 50%, rgba(178,242,255,0.92) 82%, #ffffff 100%)",
-          }}
-        />
-        <div
-          className="absolute inset-x-0 top-0 h-[558px] opacity-35"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(255,255,255,0.42) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.42) 1px, transparent 1px)",
-            backgroundSize: "72px 72px",
-          }}
-        />
-        <div className="relative flex flex-col items-center gap-10">
-          <div className="flex flex-col items-center gap-7">
-            <div className="flex items-center gap-2 text-[12px] font-semibold uppercase text-[#020202]">
-              <span className="h-1.5 w-1.5 bg-white" />
-              Ready to Specify CAPCO?
-            </div>
-            <h2 className="max-w-[946px] text-4xl font-normal leading-[1.2] tracking-normal lg:text-5xl">
-              Get Technical Support, Competitive Pricing & BIS-Certified Quality
-            </h2>
-            <p className="max-w-[698px] text-lg leading-[1.4] text-[#595959]">
-              Whether you need a single custom capacitor or a complete supply chain partnership, our team is ready to support your requirements.
-            </p>
-          </div>
-          <div className="flex flex-wrap justify-center gap-4">
-            <ButtonLink>Request Quote</ButtonLink>
-            <ButtonLink light>Download Product Catalog</ButtonLink>
-          </div>
-          <div className="h-px w-[381px] max-w-full bg-[#58c7e8]" />
-          <div className="flex flex-wrap justify-center gap-10 text-lg">
-            {["Response within 24 hours", "BIS/CE Documentation Included", "OEM Pricing Available"].map((item) => (
-              <div key={item} className="flex items-center gap-2">
-                <span className="flex h-11 w-11 items-center justify-center bg-[#9eeafd]">
-                  <BadgeCheck size={18} />
-                </span>
-                <span>{item}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <ReadyToSpecifyCapcoSection />
 
-      <section className="bg-white px-6 py-20 lg:min-h-[973px] lg:px-[60px] lg:py-[140px]">
-        <div className="mx-auto max-w-[800px] text-center">
-          <Eyebrow>Popular Questions</Eyebrow>
-          <h2 className="mt-6 text-4xl font-normal tracking-normal lg:text-5xl">Frequently Asked Questions</h2>
-          <div className="mt-12 border-t border-[#e4e4e4] text-left">
-            {faqs.map((question) => (
-              <button key={question} className="flex min-h-[76px] w-full items-center justify-between gap-6 border-b border-[#e4e4e4] px-6 text-left text-base">
-                <span>{question}</span>
-                <span className="text-2xl font-light">+</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      </section>
+      <PublicFaqSection />
 
-      <PublicFooter
-        ctaTitle="Ready to Partner?"
-        ctaBody="Whether you need a single custom capacitor or a complete supply chain partnership, our OEM team is ready to support your requirements with technical expertise, competitive pricing, and reliable delivery."
-        ctaButton="Start a Conversation"
-      />
+      <PublicFooter />
     </main>
   );
 }
+
