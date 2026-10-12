@@ -11,7 +11,8 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import ClientTicker from "@/components/public/ClientTicker";
 import {
   PublicFaqSection,
   PublicFooter,
@@ -254,6 +255,54 @@ const manufacturingSteps = [
   },
 ] as const;
 
+const testimonials = [
+  {
+    badge: "OEM Client Case",
+    sector: "HVAC Manufacturing",
+    quote:
+      "CAPCO's vertically integrated manufacturing helped us reduce capacitor costs by 28% while improving lead times from 12 weeks to 10 days. Their co-engineering support was critical for our new AC product line.",
+    initials: "RK",
+    name: "Rajesh Kumar",
+    role: "Head of Procurement",
+  },
+  {
+    badge: "Agricultural OEM",
+    sector: "Submersible Pumps",
+    quote:
+      "Field failure rates dropped by over 64% across rural high-fluctuation grids once we standardized on CAPCO heavy-duty submersible panel capacitors with P2 safety disconnectors.",
+    initials: "SP",
+    name: "Suresh Patel",
+    role: "VP of Engineering, Western Pump Systems",
+  },
+  {
+    badge: "Industrial EPC",
+    sector: "APFC Panel Integration",
+    quote:
+      "From 5 KVAR cylindrical cells to 150 KVAR modular banks, CAPCO's IS:13340 certified capacitors hold capacitance within strict tolerances even under continuous 24/7 harmonic load.",
+    initials: "AM",
+    name: "Ananya Mehta",
+    role: "Chief Electrical Consultant, VoltGrid Infra",
+  },
+  {
+    badge: "Appliance Tier-1",
+    sector: "Consumer Electronics",
+    quote:
+      "In-house Leybold metallization and Metar Swiss winding give CAPCO a level of batch-to-batch dielectric consistency that imported alternatives simply could not match on JIT schedules.",
+    initials: "VN",
+    name: "Vikram Nair",
+    role: "Director of Supply Chain, AeroCool Appliances",
+  },
+  {
+    badge: "Global Distributor",
+    sector: "MENA & Africa Exports",
+    quote:
+      "Complete CE, RoHS, and NABL test documentation alongside sea-worthy palletized container dispatch has made CAPCO our primary capacitor partner across six international markets.",
+    initials: "KA",
+    name: "Khalid Al-Mansoor",
+    role: "Managing Director, Gulf Power Components",
+  },
+] as const;
+
 const projects = [
   ["/figma/project-catalogs-card.png", "Product Catalogs & Spec Sheets", "Downloadable PDFs with electrical specs, BIS certifications, and installation guides.", "Browse Downloads"],
   ["/figma/project-success-card.png", "Success Stories", "OEM and dealer projects with measurable cost, lead-time, and reliability outcomes.", "View Case Studies"],
@@ -289,8 +338,28 @@ function ButtonLink({ children, light = false }: { children: React.ReactNode; li
 export default function Home() {
   const [industryIndex, setIndustryIndex] = useState(0);
   const [processIndex, setProcessIndex] = useState(0);
+  const [testimonialIndex, setTestimonialIndex] = useState(0);
+  const [projectIndex, setProjectIndex] = useState(0);
+  const projectsContainerRef = useRef<HTMLDivElement | null>(null);
+
   const activeIndustry = industries[industryIndex];
   const activeProcess = manufacturingSteps[processIndex];
+  const activeTestimonial = testimonials[testimonialIndex];
+
+  const scrollToProject = (targetIdx: number) => {
+    const normalized = (targetIdx + projects.length) % projects.length;
+    setProjectIndex(normalized);
+    const container = projectsContainerRef.current;
+    if (!container) return;
+    const cards = container.querySelectorAll<HTMLElement>("[data-project-card]");
+    const card = cards[normalized];
+    if (card) {
+      container.scrollTo({
+        left: card.offsetLeft - container.offsetLeft,
+        behavior: "smooth",
+      });
+    }
+  };
 
   return (
     <main className="min-h-screen bg-white text-[#020202]">
@@ -339,6 +408,8 @@ export default function Home() {
           </div>
         ))}
       </section>
+
+      <ClientTicker />
 
       <section id="why" className="px-6 py-20 lg:min-h-[334px] lg:px-[60px] lg:py-[100px]">
         <div className="mx-auto max-w-[1800px]">
@@ -714,47 +785,137 @@ export default function Home() {
             </div>
             <ButtonLink>Read More Case Studies</ButtonLink>
           </div>
-          <div className="relative mt-[60px] flex min-h-[315px] items-center justify-center bg-white px-6 py-12 lg:px-[152px]">
-            <button className="absolute left-5 top-1/2 hidden -translate-y-1/2 bg-[#f5f5f5] p-3 lg:block" aria-label="Previous testimonial"><ArrowLeft size={20} /></button>
+          <div className="relative mt-[60px] flex min-h-[340px] flex-col items-center justify-center bg-white px-6 py-12 lg:px-[152px]">
+            <button
+              type="button"
+              onClick={() =>
+                setTestimonialIndex(
+                  (prev) => (prev + testimonials.length - 1) % testimonials.length
+                )
+              }
+              className="absolute left-5 top-1/2 hidden -translate-y-1/2 cursor-pointer rounded-[8px] bg-[#F4F4F4] p-3.5 transition hover:bg-[#E8E8E8] lg:block"
+              aria-label="Previous testimonial"
+            >
+              <ArrowLeft size={20} />
+            </button>
             <div className="mx-auto max-w-[1284px] text-center">
               <div className="inline-flex items-center gap-3 text-sm text-[#595959]">
-                <span className="bg-[#f5f5f5] px-3 py-2">OEM Client Case</span>
-                <span>HVAC Manufacturing</span>
+                <span className="bg-[#f5f5f5] px-3 py-2">{activeTestimonial.badge}</span>
+                <span>{activeTestimonial.sector}</span>
+                <span className="font-mono text-xs text-[#8C8C8C]">
+                  {String(testimonialIndex + 1).padStart(2, "0")}/
+                  {String(testimonials.length).padStart(2, "0")}
+                </span>
               </div>
               <blockquote className="mt-8 text-3xl font-normal leading-[1.13] tracking-normal text-[#020202] lg:text-5xl">
-                CAPCO&apos;s vertically integrated manufacturing helped us reduce capacitor costs by 28% while improving lead times from 12 weeks to 10 days. Their co-engineering support was critical for our new AC product line.
+                {activeTestimonial.quote}
               </blockquote>
               <div className="mt-10 flex items-center justify-center gap-5">
-                <div className="flex h-16 w-16 items-center justify-center bg-[#ededed] text-lg font-semibold">RK</div>
+                <div className="flex h-16 w-16 items-center justify-center bg-[#ededed] text-lg font-semibold">
+                  {activeTestimonial.initials}
+                </div>
                 <div className="text-left">
-                  <p className="font-semibold">Rajesh Kumar</p>
-                  <p className="mt-1 text-sm text-[#595959]">Head of Procurement</p>
+                  <p className="font-semibold">{activeTestimonial.name}</p>
+                  <p className="mt-1 text-sm text-[#595959]">{activeTestimonial.role}</p>
                 </div>
               </div>
+              <div className="mt-8 flex items-center justify-center gap-3 lg:hidden">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setTestimonialIndex(
+                      (prev) => (prev + testimonials.length - 1) % testimonials.length
+                    )
+                  }
+                  className="cursor-pointer rounded-[8px] bg-[#F4F4F4] p-3 transition hover:bg-[#E8E8E8]"
+                  aria-label="Previous testimonial"
+                >
+                  <ArrowLeft size={20} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setTestimonialIndex((prev) => (prev + 1) % testimonials.length)
+                  }
+                  className="cursor-pointer rounded-[8px] bg-[#F4F4F4] p-3 transition hover:bg-[#E8E8E8]"
+                  aria-label="Next testimonial"
+                >
+                  <ArrowRight size={20} />
+                </button>
+              </div>
             </div>
-            <button className="absolute right-5 top-1/2 hidden -translate-y-1/2 bg-[#f5f5f5] p-3 lg:block" aria-label="Next testimonial"><ArrowRight size={20} /></button>
+            <button
+              type="button"
+              onClick={() =>
+                setTestimonialIndex((prev) => (prev + 1) % testimonials.length)
+              }
+              className="absolute right-5 top-1/2 hidden -translate-y-1/2 cursor-pointer rounded-[8px] bg-[#F4F4F4] p-3.5 transition hover:bg-[#E8E8E8] lg:block"
+              aria-label="Next testimonial"
+            >
+              <ArrowRight size={20} />
+            </button>
           </div>
         </div>
       </section>
 
       <section id="projects" className="bg-[#f5f5f5] px-6 py-20 lg:min-h-[1210px] lg:px-[60px] lg:py-[100px]">
         <div className="mx-auto max-w-[1800px]">
-          <div className="flex items-end justify-between">
+          <div className="flex items-end justify-between gap-4">
             <div>
               <Eyebrow>Trusted By Industry Leaders</Eyebrow>
               <h2 className="mt-6 text-4xl font-normal tracking-normal lg:text-5xl">Projects</h2>
             </div>
-            <div className="hidden text-right lg:block">
-              <p className="text-sm text-[#595959]">01/03</p>
+            <div className="text-right">
+              <p className="font-mono text-sm text-[#595959]" aria-live="polite">
+                {String(projectIndex + 1).padStart(2, "0")}/
+                {String(projects.length).padStart(2, "0")}
+              </p>
               <div className="mt-2 flex gap-3">
-                <button className="bg-white p-3" aria-label="Previous project"><ArrowLeft size={20} /></button>
-                <button className="bg-white p-3" aria-label="Next project"><ArrowRight size={20} /></button>
+                <button
+                  type="button"
+                  onClick={() => scrollToProject(projectIndex - 1)}
+                  className="cursor-pointer rounded-[8px] bg-white p-3 transition hover:bg-[#E8E8E8]"
+                  aria-label="Previous project"
+                >
+                  <ArrowLeft size={20} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => scrollToProject(projectIndex + 1)}
+                  className="cursor-pointer rounded-[8px] bg-white p-3 transition hover:bg-[#E8E8E8]"
+                  aria-label="Next project"
+                >
+                  <ArrowRight size={20} />
+                </button>
               </div>
             </div>
           </div>
-          <div className="mt-14 flex snap-x gap-2 overflow-x-auto pb-3">
+          <div
+            ref={projectsContainerRef}
+            onScroll={(e) => {
+              const container = e.currentTarget;
+              const cards = container.querySelectorAll<HTMLElement>("[data-project-card]");
+              let closestIdx = 0;
+              let minDiff = Infinity;
+              cards.forEach((card, idx) => {
+                const diff = Math.abs(card.offsetLeft - container.offsetLeft - container.scrollLeft);
+                if (diff < minDiff) {
+                  minDiff = diff;
+                  closestIdx = idx;
+                }
+              });
+              if (closestIdx !== projectIndex) {
+                setProjectIndex(closestIdx);
+              }
+            }}
+            className="mt-14 flex snap-x snap-mandatory gap-4 overflow-x-auto pb-3 scroll-smooth"
+          >
             {projects.map(([image, projectTitle, projectBody, cta], index) => (
-              <article key={projectTitle} className="relative h-[560px] w-[84vw] max-w-[1512px] shrink-0 snap-start overflow-hidden rounded-[18px] lg:h-[864px] lg:w-[78vw]">
+              <article
+                key={projectTitle}
+                data-project-card
+                className="relative h-[560px] w-[84vw] max-w-[1512px] shrink-0 snap-start overflow-hidden rounded-[18px] lg:h-[864px] lg:w-[78vw]"
+              >
                 <Image src={image} alt="" fill sizes="(min-width: 1024px) 78vw, 84vw" className="object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-b from-black/10 to-black/48" />
                 <div className="absolute bottom-10 left-8 text-white lg:bottom-[90px] lg:left-12">

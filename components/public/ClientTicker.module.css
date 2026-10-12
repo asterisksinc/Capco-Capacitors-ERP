@@ -1,0 +1,156 @@
+.ticker {
+  position: relative;
+  overflow: hidden;
+  padding: 48px 24px;
+  color: #121212;
+  background: transparent;
+}
+
+.content {
+  width: 100%;
+  max-width: 1800px;
+  margin-inline: auto;
+}
+
+.viewport {
+  width: 100%;
+  overflow: hidden;
+}
+
+.logoTrack {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+  animation: scrollLogos 60s linear infinite;
+}
+
+.logoGroup {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 90px;
+  padding-right: 90px;
+}
+
+.logoGroup svg {
+  display: block;
+  flex: none;
+}
+
+.ruler {
+  position: relative;
+  height: 32px;
+  margin-top: 28px;
+  overflow: hidden;
+}
+
+.rulerTrack {
+  display: flex;
+  align-items: flex-start;
+  gap: 29px;
+  width: max-content;
+  will-change: transform;
+  /* Five ticks make one repeating 150px interval. */
+  animation: scrollRuler 3s linear infinite;
+}
+
+.minorTick,
+.majorTick {
+  display: block;
+  flex: none;
+  width: 1px;
+}
+
+.minorTick {
+  height: 8.1px;
+  background: rgb(18 18 18 / 25%);
+}
+
+.majorTick {
+  height: 18px;
+  background: rgb(18 18 18 / 55%);
+}
+
+.marker {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 2px;
+  height: 22px;
+  margin-left: -1px;
+  background: currentColor;
+}
+
+.pointer {
+  position: absolute;
+  top: 24px;
+  left: 50%;
+  width: 0;
+  height: 0;
+  margin-left: -5px;
+  border-right: 5px solid transparent;
+  border-bottom: 6px solid currentColor;
+  border-left: 5px solid transparent;
+}
+
+.control {
+  position: absolute;
+  top: 8px;
+  right: 24px;
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border: 1px solid #e4e4e4;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.control:hover {
+  background: #f5f5f5;
+}
+
+.control:focus-visible {
+  outline: 2px solid #009ac6;
+  outline-offset: 3px;
+}
+
+.ticker[data-paused="true"] .logoTrack,
+.ticker[data-paused="true"] .rulerTrack {
+  animation-play-state: paused;
+}
+
+@keyframes scrollLogos {
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@keyframes scrollRuler {
+  to {
+    transform: translate3d(-150px, 0, 0);
+  }
+}
+
+@media (min-width: 1024px) {
+  .ticker {
+    padding: 64px 60px;
+  }
+
+  .control {
+    top: 16px;
+    right: 60px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .logoTrack,
+  .rulerTrack {
+    animation: none;
+    will-change: auto;
+  }
+
+  .control {
+    display: none;
+  }
+}
