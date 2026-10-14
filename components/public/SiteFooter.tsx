@@ -31,13 +31,12 @@ const linkGroups = [
     links: [
       ["OEMs", "/solutions/oem"],
       ["Dealership", "/contact?category=dealership#enquiry-form"],
-      ["B2D Marketing Landing Page", "/contact?category=dealership#enquiry-form"],
       ["Industrial Enquiry", "/solutions/dealership"],
     ],
   },
   {
     title: "Global Footprint",
-    links: ["UAE", "USA", "Sri Lanka", "Bangladesh", "Turkey", "African Continent", "Egypt"]
+    links: ["UAE", "USA", "Sri Lanka", "Bangladesh", "Turkey", "African Continent"]
       .map((country) => [country, enquiry(`${country} export enquiry`)]),
   },
   {

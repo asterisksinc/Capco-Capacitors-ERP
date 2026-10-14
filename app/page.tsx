@@ -209,7 +209,7 @@ const manufacturingSteps = [
   },
   {
     num: "02",
-    title: "Metallization",
+    title: "In-House Metallization",
     subtitle: "In-House Alloy Deposition",
     body: "Zinc/Aluminium layers vacuum-deposited via Leybold (Germany) for uniform surface resistivity (6–9 Ω/sq).",
   },

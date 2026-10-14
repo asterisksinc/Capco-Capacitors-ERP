@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, type FormEvent } from "react";
+import { SiteFooter } from "@/components/public/SiteFooter";
 
 export const DEFAULT_FAQS = [
   {
@@ -484,6 +485,7 @@ export function PublicFooter({
       </section>
 
       <footer
+        hidden
         style={{
           backgroundImage: 'url("/figma/solutions/a62f2.png")',
           backgroundSize: "100% 100%",
@@ -618,6 +620,7 @@ export function PublicFooter({
           </div>
         </div>
       </footer>
+      <SiteFooter />
     </>
   );
 }

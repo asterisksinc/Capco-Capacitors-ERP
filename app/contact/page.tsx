@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState, type ChangeEvent, type DragEvent, type FormEvent } from "react";
 import { PublicNav } from "@/components/public/PublicChrome";
+import { SiteFooter } from "@/components/public/SiteFooter";
 
 type ActiveTab = "general" | "dealership" | "oem" | "export";
 
@@ -2800,7 +2801,7 @@ export default function ContactPage() {
       </section>
 
       {/* Footer */}
-      <footer
+      <footer hidden
         className="border-t border-[#595959]/65 bg-[#121212] bg-cover bg-center px-6 pb-8 pt-14 text-white lg:px-[60px] lg:pb-[32px] lg:pt-[64px]"
         style={{ backgroundImage: "url('/figma/solutions/a62f2.png')" }}
       >
@@ -2862,7 +2863,6 @@ export default function ContactPage() {
                   links: [
                     ["OEMs", "/solutions/oem"],
                     ["Dealership", "/solutions/dealership"],
-                    ["B2D Marketing Landing Page", "/solutions/dealership"],
                     ["Industrial Enquiry", enquiryMailto("Industrial Enquiry")],
                   ],
                 },
@@ -2875,7 +2875,6 @@ export default function ContactPage() {
                     "Bangladesh",
                     "Turkey",
                     "African Continent",
-                    "Egypt",
                   ].map((label) => [label, enquiryMailto(`${label} enquiry`)]),
                 },
                 {
@@ -2952,6 +2951,7 @@ export default function ContactPage() {
           </div>
         </div>
       </footer>
+      <SiteFooter />
     </main>
   );
 }

@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { PublicNav } from "@/components/public/PublicChrome";
+import { SiteFooter } from "@/components/public/SiteFooter";
 import { type PublicProduct, publicProducts } from "@/lib/publicProducts";
 
 const includedItems = [
@@ -727,6 +728,7 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
           </div>
         </div>
       </section>
+      <SiteFooter />
     </main>
   );
 }
