@@ -13,9 +13,9 @@ import HomeMotion from "@/components/public/HomeMotion";
 import ClientTicker from "@/components/public/ClientTicker";
 import {
   PublicFaqSection,
-  PublicFooter,
   ReadyToSpecifyCapcoSection,
 } from "@/components/public/PublicChrome";
+import { SiteFooter } from "@/components/public/SiteFooter";
 
 const productLinks = [
   "/products/zinc-aluminium-alloy-metalised-bopp-film", "/products/motor-run-capacitor",
@@ -678,7 +678,7 @@ export default function Home() {
           <div className="flex min-h-[86px] flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
             <div>
               <Eyebrow>Trusted By Industry Leaders</Eyebrow>
-              <h2 className="mt-6 text-4xl font-normal tracking-normal lg:text-5xl">What Our Partners Say</h2>
+              <h2 className="mt-6 text-4xl font-normal tracking-normal lg:text-5xl">Testimonials</h2>
             </div>
             <ButtonLink href="#projects">Read More Case Studies</ButtonLink>
           </div>
@@ -833,7 +833,7 @@ export default function Home() {
 
       <PublicFaqSection />
 
-      <PublicFooter />
+      <SiteFooter />
     </main>
   );
 }

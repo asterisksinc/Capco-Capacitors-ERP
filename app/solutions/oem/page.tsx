@@ -1,10 +1,8 @@
 ﻿import type { Metadata } from "next";
 import { SolutionPage } from "@/components/public/SolutionPage";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "OEM Capacitor Solutions | CAPCO",
-  description: "Co-engineered capacitor solutions, vertically integrated manufacturing, and dedicated support for equipment manufacturers.",
-};
+export const metadata: Metadata = pageMetadata("/oem-solutions/", "/solutions/oem/");
 
 export default function OemSolutionsPage() {
   return <SolutionPage variant="oem" />;

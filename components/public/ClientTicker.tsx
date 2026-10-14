@@ -1,12 +1,10 @@
 "use client";
 
 import { Pause, Play } from "lucide-react";
+import Image from "next/image";
 import { useState } from "react";
 import { clientTickerLogos } from "./clientTickerLogos";
 import styles from "./ClientTicker.module.css";
-
-// Each group exceeds the 1,800px viewport so the loop stays filled on wide screens.
-const logoSequence = [...clientTickerLogos, ...clientTickerLogos, ...clientTickerLogos];
 
 export default function ClientTicker() {
   const [paused, setPaused] = useState(false);
@@ -24,24 +22,22 @@ export default function ClientTicker() {
       </button>
 
       <div className={styles.content}>
-        <div className={styles.viewport} role="img" aria-label="Client logos">
-          <div className={styles.logoTrack} aria-hidden="true">
+        <div className={styles.viewport}>
+          <div className={styles.logoTrack}>
             {[0, 1].map((copy) => (
-              <div className={styles.logoGroup} key={copy}>
-                {logoSequence.map((logo, index) => (
-                  <svg
-                    key={index}
-                    viewBox={logo.viewBox}
-                    height="22"
-                    width={logo.width}
-                    fill="currentColor"
-                    aria-hidden="true"
-                    focusable="false"
-                  >
-                    {logo.paths.map((path, pathIndex) => (
-                      <path key={pathIndex} d={path} fillRule="evenodd" clipRule="evenodd" />
-                    ))}
-                  </svg>
+              <div className={styles.logoGroup} key={copy} aria-hidden={copy === 1 ? true : undefined}>
+                {clientTickerLogos.map((logo) => (
+                  <div className={styles.logoFrame} key={logo.src}>
+                    <Image
+                      src={logo.src}
+                      alt={copy === 0 ? logo.alt : ""}
+                      width={logo.width}
+                      height={logo.height}
+                      sizes="168px"
+                      loading="eager"
+                      unoptimized={logo.src.endsWith(".gif")}
+                    />
+                  </div>
                 ))}
               </div>
             ))}

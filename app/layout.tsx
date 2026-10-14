@@ -10,8 +10,9 @@ const geist = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "Capco Capacitors ERP",
-  description: "Supervisor work order management dashboard for Capco.",
+  title: "CAPCO Capacitors | Capacitor Manufacturer in India",
+  description: "CAPCO Capacitors manufactures BIS & CE certified motor run, PFC, lighting and custom capacitors for OEMs, dealers and industrial buyers across India.",
+  keywords: ["capacitor manufacturer India", "CAPCO Capacitors", "BIS certified capacitors", "PFC capacitors", "motor run capacitors"],
 };
 
 export const viewport: Viewport = {

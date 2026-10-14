@@ -1,19 +1,8 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Contact Us | CAPCO Capacitors",
-  description:
-    "Engineering Support, Dealership Onboarding & Global Supply — Get in touch with CAPCO Capacitors (Dada Energies Pvt. Ltd.).",
-};
+export const metadata: Metadata = pageMetadata("/contact/");
 
-export default function ContactLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return (
-    <div>
-      {children}
-    </div>
-  );
+export default function ContactLayout({ children }: { children: React.ReactNode }) {
+  return <div>{children}</div>;
 }
