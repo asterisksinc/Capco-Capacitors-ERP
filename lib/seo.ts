@@ -6,7 +6,7 @@ import { seoMetadata, type SeoPath } from "./seo-metadata";
 const configuredOrigin = process.env.NEXT_PUBLIC_SITE_URL;
 export const siteOrigin = configuredOrigin ? new URL(configuredOrigin).origin : undefined;
 
-export function pageMetadata(path: SeoPath, canonicalPath = path): Metadata {
+export function pageMetadata(path: SeoPath, canonicalPath: string = path): Metadata {
   const entry = seoMetadata[path];
   const canonical = siteOrigin ? new URL(canonicalPath, siteOrigin).toString() : undefined;
 
