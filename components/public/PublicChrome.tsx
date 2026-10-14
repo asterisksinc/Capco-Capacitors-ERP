@@ -145,11 +145,26 @@ export function PublicNav({
               <Link href="/products/motor-run-capacitor" className="block px-4 py-2.5 text-sm hover:bg-[#F5F5F5]">
                 Motor Run Capacitors
               </Link>
+              <Link href="/products/motor-start-capacitor" className="block px-4 py-2.5 text-sm hover:bg-[#F5F5F5]">
+                Motor Start Capacitors
+              </Link>
+              <Link href="/products/submersible-panel-capacitor" className="block px-4 py-2.5 text-sm hover:bg-[#F5F5F5]">
+                Submersible Panel Capacitors
+              </Link>
+              <Link href="/products/ac-refrigeration-washing-machine-capacitor" className="block px-4 py-2.5 text-sm hover:bg-[#F5F5F5]">
+                A.C. / Refrigeration / Washing Machine
+              </Link>
               <Link href="/products/pfc-cylindrical-capacitor" className="block px-4 py-2.5 text-sm hover:bg-[#F5F5F5]">
                 Power Factor Correction (PFC)
               </Link>
+              <Link href="/products/capacitor-bank" className="block px-4 py-2.5 text-sm hover:bg-[#F5F5F5]">
+                Capacitor Banks
+              </Link>
               <Link href="/products/lighting-luminaire-capacitor" className="block px-4 py-2.5 text-sm hover:bg-[#F5F5F5]">
-                Luminaire &amp; UV Capacitors
+                Lighting Capacitors
+              </Link>
+              <Link href="/products/uv-lamp-capacitor" className="block px-4 py-2.5 text-sm hover:bg-[#F5F5F5]">
+                UV Lamp Capacitors
               </Link>
             </div>
           </div>
@@ -190,6 +205,12 @@ export function PublicNav({
         </nav>
 
         <div className="public-nav-actions hidden items-center justify-end gap-3.5 lg:flex">
+          <Link
+            href="/solutions/dealership"
+            className="inline-flex h-12 items-center border border-[#020202] px-4 text-[13px] font-medium transition hover:bg-[#F5F5F5]"
+          >
+            Dealer Login
+          </Link>
           <a
             href="tel:+919848014000"
             className="hidden h-12 items-center gap-2 px-3 text-[13px] font-medium transition hover:text-[#58C7E8] xl:inline-flex"

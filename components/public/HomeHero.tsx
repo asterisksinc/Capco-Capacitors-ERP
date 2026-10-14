@@ -19,11 +19,10 @@ export default function HomeHero() {
       <PublicNav variant="overlay" />
       <div className={styles.content}>
         <p className={styles.description} data-reveal>
-          BIS-certified motor run, PFC, lighting &amp; custom capacitors. In-house Leybold metallization, Metar winding, and 5,000+ dealers pan-India.
+          BIS-certified motor run, PFC, lighting &amp; custom capacitors. In-house Leybold metallization, Metar winding, and 500+ dealers pan-India.
         </p>
         <div className={styles.tags} data-reveal>
-          <span>Electrical systems built for the next century</span>
-          <span>Vertically integrated since 1994</span>
+          <span>Vertically Integrated Since 1994</span>
         </div>
         <div className={styles.divider} />
         <h1 id="home-title" className={styles.title}>
@@ -35,8 +34,8 @@ export default function HomeHero() {
             <span>Explore Products</span>
             <img src="/figma/solutions/490a3.svg" alt="" />
           </Link>
-          <Link href="/solutions/oem" className={`${styles.button} ${styles.secondary}`}>
-            <span>Explore Programs</span>
+          <Link href="/contact?category=oem#enquiry-form" className={`${styles.button} ${styles.secondary}`}>
+            <span>Request Quote</span>
             <img src="/figma/solutions/5ec8a.svg" alt="" />
           </Link>
         </div>

@@ -7,6 +7,7 @@ import { useState } from "react";
 import { PublicNav } from "@/components/public/PublicChrome";
 import { SiteFooter } from "@/components/public/SiteFooter";
 import { type PublicProduct, publicProducts } from "@/lib/publicProducts";
+import { productCopy } from "@/lib/productCopy";
 
 const includedItems = [
   "Vaccum Sealed",
@@ -187,7 +188,17 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
     (offset) => publicProducts[(carouselPage * 3 + offset) % publicProducts.length]
   );
 
-  const phaseData = manufacturingPhases[activePhase];
+  const pageCopy = productCopy[product.slug];
+  const phaseData = pageCopy
+    ? {
+        phase: `PHASE ${String(activePhase + 1).padStart(2, "0")}`,
+        category: pageCopy.phases[activePhase].category,
+        step: `${String(activePhase + 1).padStart(2, "0")} / 05`,
+        title: pageCopy.phases[activePhase].title,
+        description: pageCopy.phases[activePhase].description,
+        nextPreview: pageCopy.phases[(activePhase + 1) % pageCopy.phases.length].title,
+      }
+    : manufacturingPhases[activePhase];
   const location = locations[activeLocation];
 
   const isBoppFilm = product.slug === "zinc-aluminium-alloy-metalised-bopp-film";
@@ -232,10 +243,10 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
           <div className="mx-auto mt-6 max-w-[920px] text-center lg:mt-[10px]">
             <p className="inline-flex items-center gap-2.5 text-[13px] font-medium tracking-[-0.02em] text-[#121212]">
               <span className="h-[4px] w-[4px] bg-[#4D65FF]" />
-              {displayCategory}
+              {pageCopy?.heroTag ?? displayCategory}
             </p>
             <h1 className="mt-5 text-[40px] font-normal leading-[1.03] tracking-[-0.04em] text-[#020202] sm:text-[56px] lg:text-[72px]">
-              {isBoppFilm ? (
+              {pageCopy ? pageCopy.heroTitle : isBoppFilm ? (
                 <>
                   Zinc/ Aluminium Alloy
                   <br />
@@ -257,19 +268,19 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
             {/* Top-Left Cell */}
             <div className="flex flex-col justify-between border-b border-[#E7E7E7] p-6 lg:min-h-[481px] lg:border-b-0 lg:border-r lg:p-[24px]">
               <h2 className="text-[20px] font-normal leading-[1.2] tracking-[-0.03em] text-[#020202] lg:text-[22px]">
-                Premium-Grade Metallized Dielectric Film
+                {pageCopy?.infoTag ?? "Premium-Grade Metallized Dielectric Film"}
               </h2>
               <p className="mt-16 max-w-[345px] text-[14px] leading-[1.38] tracking-[-0.02em] text-[#404040] lg:mt-0">
-                {isBoppFilm
+                {pageCopy?.description ?? (isBoppFilm
                   ? "In-house Leybold-metallized BOPP film engineered for self-healing, high-voltage capacitor applications with superior volumetric efficiency."
-                  : `${product.summary} Engineered with in-house Leybold-metallized BOPP film for self-healing, high-voltage capacitor applications with superior volumetric efficiency.`}
+                  : `${product.summary} Engineered with in-house Leybold-metallized BOPP film for self-healing, high-voltage capacitor applications with superior volumetric efficiency.`)}
               </p>
             </div>
 
             {/* Top-Right Cell */}
             <div className="p-6 lg:min-h-[481px] lg:p-[24px]">
               <h2 className="text-[20px] font-normal leading-[1.2] tracking-[-0.03em] text-[#020202] lg:text-[22px]">
-                Engineered for Reliability
+                {pageCopy?.includedTag ?? "Engineered for Reliability"}
               </h2>
               <div className="relative mx-auto mt-10 aspect-[759/280] w-full max-w-[759px] lg:mt-[76px]">
                 <Image
@@ -290,8 +301,11 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
               <h2 className="text-[20px] font-normal leading-[1.2] tracking-[-0.03em] text-[#020202] lg:text-[22px]">
                 What&apos;s included
               </h2>
+              <p className="mt-2 text-[13px] font-medium text-[#595959]">
+                {pageCopy?.includedTag ?? "Engineered for Reliability"}
+              </p>
               <div className="mt-6 flex flex-col items-start gap-[10px]">
-                {includedItems.map((item) => (
+                {(pageCopy?.includedItems ?? includedItems).map((item) => (
                   <span
                     key={item}
                     className="inline-flex items-center rounded-full bg-[#F4F4F4] px-[16px] py-[9px] text-[13px] font-normal leading-none tracking-[-0.02em] text-[#121212]"
@@ -329,7 +343,7 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
           {/* Trusted By Pill */}
           <div className="px-6 text-center">
             <p className="inline-flex max-w-full items-center justify-center rounded-full bg-[#F5F5F5] px-5 py-2.5 font-mono text-[10px] uppercase leading-[1.35] tracking-[0.06em] text-[#595959]">
-              TRUSTED BY LEADING CAPACITOR MANUFACTURERS ACROSS INDIA, MIDDLE EAST &amp; SOUTHEAST ASIA
+              {pageCopy?.logoTagline ?? "TRUSTED BY LEADING CAPACITOR MANUFACTURERS ACROSS INDIA, MIDDLE EAST & SOUTHEAST ASIA"}
             </p>
           </div>
 
@@ -374,6 +388,10 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
 
           {/* Interactive Phase Timeline */}
           <div className="mt-24 lg:mt-[510px]">
+            <div className="mx-auto mb-14 max-w-[720px] px-6 text-center">
+              <p className="text-[13px] font-medium uppercase tracking-[0.06em] text-[#121212]">{pageCopy?.processTag ?? "End-to-End Control"}</p>
+              <p className="mt-3 text-[17px] leading-[1.45] text-[#595959]">{pageCopy?.processTagline ?? "Every production step is managed for consistent quality and dependable delivery."}</p>
+            </div>
             {/* Phase Header */}
             <div className="px-6 text-center">
               <p className="font-mono text-[11px] uppercase tracking-[0.06em] text-[#121212]">
@@ -480,7 +498,7 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
               {/* Faded Next Phase Preview on Right */}
               <button
                 type="button"
-                onClick={() => setActivePhase((prev) => (prev + 1) % manufacturingPhases.length)}
+                onClick={() => setActivePhase((prev) => (prev + 1) % (pageCopy?.phases.length ?? manufacturingPhases.length))}
                 className="absolute right-[60px] top-[70px] hidden cursor-pointer text-[13px] tracking-[-0.01em] text-[#C8C8C8] transition hover:text-[#595959] xl:block"
               >
                 {phaseData.nextPreview}
@@ -516,12 +534,10 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
             <div>
               <p className="inline-flex items-center gap-2.5 text-[13px] font-medium tracking-[-0.02em] text-[#121212]">
                 <span className="h-[4px] w-[4px] bg-[#4D65FF]" />
-                Complete Capacitors Solutions
+                {pageCopy?.moreProductsTag ?? "Complete Capacitor Solutions"}
               </p>
               <h2 className="mt-5 text-[36px] font-normal leading-[1.02] tracking-[-0.04em] text-[#020202] sm:text-[48px] lg:mt-6 lg:text-[56px]">
-                Explore our full
-                <br />
-                range of capacitors.
+                {pageCopy?.moreProductsTagline ?? "Explore our full range of capacitors."}
               </h2>
             </div>
 
@@ -680,12 +696,10 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
         <div className="mx-auto max-w-[1800px]">
           <p className="inline-flex items-center gap-2.5 text-[13px] font-medium tracking-[-0.02em] text-white">
             <span className="h-[5px] w-[5px] bg-[#4D65FF]" />
-            Ready to Partner?
+            {pageCopy?.ctaTag ?? "Ready to Partner?"}
           </p>
           <h2 className="mt-6 text-[36px] font-normal leading-[1.02] tracking-[-0.05em] text-white sm:text-[52px] lg:mt-[32px] lg:text-[72px]">
-            Start Your OEM Journey
-            <br />
-            with Capco Capacitors
+            {pageCopy?.ctaTagline ?? "Start Your OEM Journey with CAPCO Capacitors"}
           </h2>
 
           {/* 3 Rounded Image Cards */}
@@ -712,7 +726,14 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
           </div>
 
           {/* Bottom-Left Schedule Technical Consultation Clipped White Button */}
-          <div className="mt-12 lg:mt-[64px]">
+          <div className="mt-12 flex flex-wrap gap-4 lg:mt-[64px]">
+            <Link
+              href="/contact?category=oem#enquiry-form"
+              className="inline-flex min-h-[64px] w-[240px] max-w-full items-end justify-between bg-[#58C7E8] px-3 pb-3 pt-6 text-[14px] font-medium leading-[1.2] text-[#121212] transition hover:-translate-y-0.5 hover:brightness-95 lg:min-h-[80px]"
+            >
+              <span>{pageCopy?.primaryCta ?? "Request OEM Pricing"}</span>
+              <img src="/figma/solutions/24503.svg" alt="" aria-hidden="true" />
+            </Link>
             <Link
               href="/contact#oem-solutions"
               style={{
@@ -722,7 +743,7 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
               }}
               className="inline-flex min-h-[64px] w-[301px] max-w-full items-end justify-between px-3 pb-3 pt-6 text-[14px] font-medium leading-[1.2] text-[#121212] transition hover:-translate-y-0.5 hover:brightness-95 lg:min-h-[80px]"
             >
-              <span>Schedule Technical Consultation</span>
+              <span>{pageCopy?.secondaryCta ?? "Schedule Technical Consultation"}</span>
               <img src="/figma/solutions/24503.svg" alt="" aria-hidden="true" />
             </Link>
           </div>

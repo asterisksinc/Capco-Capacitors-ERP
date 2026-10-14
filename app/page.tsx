@@ -52,7 +52,7 @@ const industries: readonly IndustrySolution[] = [
     tab: "HVAC & Refrigeration",
     sector: "SYSTEM SECTOR: 01",
     title: "HVAC & Commercial Refrigeration Systems",
-    body: "Motor run capacitors (0.5–100 MFD), P2 safety-equipped AC capacitors, and custom dual-capacitance configurations for compressors and fan motors. Engineered for high ambient temperature resilience up to 85°C with continuous duty cycles.",
+    body: "Motor run capacitors (0.5–100 MFD), P2 safety-equipped AC capacitors, and custom dual-capacitance configurations for compressors and fan motors.",
     tags: ["Motor Run Capacitors", "P2 AC Capacitors", "Custom Solutions"],
     cta: "Explore HVAC Solutions",
     href: "/products/motor-run-capacitor",
@@ -71,7 +71,7 @@ const industries: readonly IndustrySolution[] = [
     tab: "Water Pumps & Agriculture",
     sector: "SYSTEM SECTOR: 02",
     title: "Water Pumps & Agricultural Drive Panels",
-    body: "Submersible panel capacitors (10–120 MFD), motor start capacitors (40–500 MFD), and heat-resistant designs for borewell and agricultural pumps. Reinforced burst-proof construction built to handle severe rural grid voltage fluctuations.",
+    body: "Submersible panel capacitors (10–120 MFD), motor start capacitors (40–500 MFD), and heat-resistant designs for borewell and agricultural pumps.",
     tags: ["Submersible Capacitors", "Motor Start Capacitors"],
     cta: "Explore Pump Solutions",
     href: "/products/submersible-panel-capacitor",
@@ -89,7 +89,7 @@ const industries: readonly IndustrySolution[] = [
     tab: "Home Appliances",
     sector: "SYSTEM SECTOR: 03",
     title: "Home Appliances & Consumer Electronics",
-    body: "P2 burst-proof capacitors for washing machines, refrigerators, and ACs with inbuilt discharge resistors and IEC 60252-1 compliance. Compact form factors developed specifically for high-density appliance integration.",
+    body: "P2 burst-proof capacitors for washing machines, refrigerators, and ACs with inbuilt discharge resistors and IEC 60252-1 compliance.",
     tags: ["Appliance Capacitors", "P2 Safety Technology"],
     cta: "Explore Appliance Solutions",
     href: "/products/ac-refrigeration-washing-machine-capacitor",
@@ -107,7 +107,7 @@ const industries: readonly IndustrySolution[] = [
     tab: "Industrial Manufacturing",
     sector: "SYSTEM SECTOR: 04",
     title: "Industrial Power Factor Correction & APFC Panels",
-    body: "Heavy-duty cylindrical PFC cells (0.5–25 KVAR), box-type capacitors, and modular banks up to 150 KVAR for continuous industrial facilities. Self-healing metallized polypropylene construction with overpressure disconnector.",
+    body: "Cylindrical PFC capacitors (0.5–25 KVAR), capacitor banks (up to 150 KVAR), and APFC panel integration support for power factor correction.",
     tags: ["PFC Cylindrical Cells", "APFC Capacitor Banks"],
     cta: "Explore PFC Solutions",
     href: "/products/pfc-cylindrical-capacitor",
@@ -125,7 +125,7 @@ const industries: readonly IndustrySolution[] = [
     tab: "Lighting & Infrastructure",
     sector: "SYSTEM SECTOR: 05",
     title: "Lighting & Municipal Infrastructure",
-    body: "Precision lighting and high-frequency UV lamp capacitors with integrated discharge resistors for street lights, industrial luminaires, highway corridors, and industrial UV curing lines.",
+    body: "Lighting capacitors (1–45 MFD) with inbuilt discharge resistors, UV lamp capacitors (up to 4000V), and Smart City-compliant solutions.",
     tags: ["Luminaire Capacitors", "UV Lamp Capacitors"],
     cta: "Explore Lighting Solutions",
     href: "/products/lighting-luminaire-capacitor",
@@ -143,7 +143,7 @@ const industries: readonly IndustrySolution[] = [
     tab: "Export Markets",
     sector: "SYSTEM SECTOR: 06",
     title: "Global OEM & Distributor Export Programs",
-    body: "CE, RoHS, and UL-aligned capacitor programs with complete export documentation, fumigated sea-worthy palletization, and container-load dispatch to 15+ international markets across the Middle East, Africa, South Asia, and North America.",
+    body: "CE-marked capacitors, export documentation support, and regional compliance guidance for equipment destined for Middle East and Southeast Asia.",
     tags: ["CE & RoHS Certified", "Container-Load Supply"],
     cta: "Explore Export Solutions",
     href: "/contact?category=export#enquiry-form",
@@ -160,9 +160,9 @@ const industries: readonly IndustrySolution[] = [
 ] as const;
 
 const whyFeatures = [
-  ["In-House Metallization Plant", "Leybold (Germany) BOPP film metallization + Metar (Switzerland) automatic winding = Better pricing, faster delivery, zero supply disruptions.", "Learn About Our Technology"],
-  ["BIS, ISO & CE Certified", "Every product meets IS:2993, IS:13340, IEC 60252-1 standards qualified for government tenders, OEM specs, and export markets.", "View Certifications"],
-  ["5,000+ Trusted Dealers, JIT Delivery", "From Hyderabad to Guwahati, our dealer network ensures local availability, technical support, and just-in-time replenishment for OEMs.", "Find a Dealer Near You"],
+  ["In-House Metallization & Winding", "Leybold (Germany) BOPP film metallization + Metar (Switzerland) automatic winding = Better pricing, faster delivery, zero supply disruptions.", "Learn About Our Technology"],
+  ["BIS, ISO & CE Certified", "Every product meets IS:2993, IS:13340, IEC 60252-1 standards—qualified for government tenders, OEM specs, and export markets.", "View Certifications"],
+  ["500+ Authorized Dealers, JIT Delivery", "From Hyderabad to Guwahati, our dealer network ensures local availability, technical support, and just-in-time replenishment for OEMs.", "Find a Dealer Near You"],
 ];
 
 const certifications = [
@@ -215,9 +215,9 @@ const manufacturingSteps = [
   },
   {
     num: "03",
-    title: "Automatic Winding",
-    subtitle: "Precision Non-Inductive",
-    body: "High-speed fully automatic winding ensures ≤±5% capacitance tolerance and minimal internal losses.",
+    title: "Metar Automatic Winding",
+    subtitle: "Precision Non-Inductive Winding",
+    body: "Metar (Switzerland) high-speed winding ensures <±5% capacitance tolerance and minimal internal losses.",
   },
   {
     num: "04",
@@ -227,64 +227,46 @@ const manufacturingSteps = [
   },
   {
     num: "05",
-    title: "Testing & Quality Check",
-    subtitle: "IEC-Compliant Test Regime",
+    title: "Testing & Dispatch",
+    subtitle: "BIS-Certified Batch Release",
     body: "100% tested for capacitance, voltage endurance, and insulation resistance before vacuum-sealed packaging.",
   },
 ] as const;
 
 const testimonials = [
   {
-    badge: "OEM Client Case",
-    sector: "HVAC Manufacturing",
+    badge: "OEM",
+    sector: "HVAC Manufacturing, Pune",
     quote:
       "CAPCO's vertically integrated manufacturing helped us reduce capacitor costs by 28% while improving lead times from 12 weeks to 10 days. Their co-engineering support was critical for our new AC product line.",
     initials: "RK",
     name: "Rajesh Kumar",
-    role: "Head of Procurement",
+    role: "Head of Procurement · Leading HVAC Manufacturer",
   },
   {
-    badge: "Agricultural OEM",
-    sector: "Submersible Pumps",
+    badge: "Dealer",
+    sector: "Electrical Distribution, Vijayawada",
     quote:
-      "Field failure rates dropped by over 64% across rural high-fluctuation grids once we standardized on CAPCO heavy-duty submersible panel capacitors with P2 safety disconnectors.",
-    initials: "SP",
-    name: "Suresh Patel",
-    role: "VP of Engineering, Western Pump Systems",
+      "From a single store in Vijayawada to 5 outlets, CAPCO's dealer program transformed our business. MDF-funded local advertising and OEM partnerships drove 8x growth in 6 years.",
+    initials: "SR",
+    name: "Suresh Reddy",
+    role: "Owner · Sri Venkateswara Electricals",
   },
   {
-    badge: "Industrial EPC",
-    sector: "APFC Panel Integration",
+    badge: "Industrial Buyer",
+    sector: "Automotive Components, Chennai",
     quote:
-      "From 5 KVAR cylindrical cells to 150 KVAR modular banks, CAPCO's IS:13340 certified capacitors hold capacitance within strict tolerances even under continuous 24/7 harmonic load.",
+      "We replaced imported PFC capacitors with CAPCO's 25 KVAR cylindrical units. Power factor improved from 0.78 to 0.95, cutting our electricity demand charges by 40%.",
     initials: "AM",
-    name: "Ananya Mehta",
-    role: "Chief Electrical Consultant, VoltGrid Infra",
-  },
-  {
-    badge: "Appliance Tier-1",
-    sector: "Consumer Electronics",
-    quote:
-      "In-house Leybold metallization and Metar Swiss winding give CAPCO a level of batch-to-batch dielectric consistency that imported alternatives simply could not match on JIT schedules.",
-    initials: "VN",
-    name: "Vikram Nair",
-    role: "Director of Supply Chain, AeroCool Appliances",
-  },
-  {
-    badge: "Global Distributor",
-    sector: "MENA & Africa Exports",
-    quote:
-      "Complete CE, RoHS, and NABL test documentation alongside sea-worthy palletized container dispatch has made CAPCO our primary capacitor partner across six international markets.",
-    initials: "KA",
-    name: "Khalid Al-Mansoor",
-    role: "Managing Director, Gulf Power Components",
+    name: "Amit Sharma",
+    role: "Plant Maintenance Head · Automotive Components Manufacturer",
   },
 ] as const;
 
 const projects = [
-  ["/figma/solutions/2f1e3.png", "Product Catalogs & Spec Sheets", "Downloadable PDFs with electrical specs, BIS certifications, and installation guides.", "Browse Technical Docs"],
-  ["/figma/solutions/f5300.png", "Success Stories", "OEM and dealer projects with measurable cost, lead-time, and reliability outcomes.", "View Case Studies"],
-  ["/figma/solutions/17639.png", "Industry Trends & Best Practices", "Selection guides, PFC notes, and capacitor application insights.", "Read Insights"],
+  ["/figma/solutions/2f1e3.png", "Product Catalogs & Spec Sheets", "Downloadable PDFs with electrical specs, BIS certifications, and installation guides for all CAPCO products.", "Browse Technical Docs"],
+  ["/figma/solutions/f5300.png", "Success Stories", "See how OEMs, dealers, and industrial buyers achieved cost savings, efficiency gains, and growth with CAPCO capacitors.", "View Case Studies"],
+  ["/figma/solutions/17639.png", "Industry Trends & Best Practices", "Power factor correction guides, capacitor selection tips, and updates on Indian electrical manufacturing.", "Read Latest Insights"],
 ];
 
 function Eyebrow({ children, light = false }: { children: React.ReactNode; light?: boolean }) {
@@ -339,7 +321,7 @@ export default function Home() {
       <HomeHero />
 
       <section className="grid border-b border-[#e4e4e4] bg-[#f5f5f5] md:grid-cols-3">
-        {[["32+ Years", "In Manufacturing"], ["5,000+", "Authorized Dealers"], ["15+", "Export Countries"]].map(([value, label]) => (
+        {[["32+ Years", "In Manufacturing"], ["500+", "Authorized Dealers"], ["15+", "Export Countries"]].map(([value, label]) => (
           <div key={label} className="flex min-h-[156px] flex-col items-center justify-center border-[#e4e4e4] py-10 md:min-h-[296px] md:border-r">
             <strong className="text-4xl font-normal leading-none md:text-[56px]">{value}</strong>
             <span className="mt-4 text-base text-[#595959] md:text-lg">{label}</span>
@@ -547,7 +529,15 @@ export default function Home() {
       </section>
 
       <section id="process" aria-label="Manufacturing process" className="bg-white px-6 py-24 lg:min-h-[600px] lg:px-[60px] lg:py-[100px]">
-        <div className="mx-auto grid max-w-[1800px] gap-12 lg:grid-cols-[0.95fr_1fr]">
+        <div className="mx-auto max-w-[1800px]">
+          <Eyebrow>End-to-End Control</Eyebrow>
+          <h2 className="mt-5 max-w-[760px] text-[34px] font-normal leading-[1.05] tracking-[-0.04em] sm:text-[42px] lg:mt-6 lg:text-[48px]">
+            From Raw Film to Final Capacitor
+          </h2>
+          <p className="mt-5 max-w-[820px] text-lg leading-[1.48] text-[#595959]">
+            CAPCO&apos;s vertically integrated manufacturing ensures complete quality control, cost efficiency, and supply chain reliability—from BOPP film procurement to final testing.
+          </p>
+          <div className="mt-12 grid gap-12 lg:grid-cols-[0.95fr_1fr] lg:mt-[60px]">
           <div className="order-2 flex flex-col justify-end gap-8 lg:order-1">
             <div className="flex items-center gap-4">
               <span className="font-mono text-xs text-[#595959]" aria-live="polite">
@@ -602,6 +592,7 @@ export default function Home() {
             </div>
           </div>
         </div>
+        </div>
       </section>
 
       <section className="relative overflow-hidden bg-[#EEFAFF] px-6 py-20 lg:px-[60px] lg:py-[100px]">
@@ -618,7 +609,7 @@ export default function Home() {
                 Certified for Quality, Safety &amp; Export
               </h2>
               <p className="mt-4 max-w-[960px] text-[15px] leading-[1.5] text-[#595959] lg:text-[17px]">
-                Industrial precision achieved through single-roof production, autonomous machinery, and stringent dielectric verification.
+                All CAPCO capacitors are manufactured under ISO 9001:2008 QMS and comply with BIS, CE, and IEC standards—qualified for Indian government tenders, OEM specifications, and export to Middle East, Africa, and Southeast Asia.
               </p>
             </div>
 
@@ -678,7 +669,7 @@ export default function Home() {
           <div className="flex min-h-[86px] flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
             <div>
               <Eyebrow>Trusted By Industry Leaders</Eyebrow>
-              <h2 className="mt-6 text-4xl font-normal tracking-normal lg:text-5xl">Testimonials</h2>
+              <h2 className="mt-6 text-4xl font-normal tracking-normal lg:text-5xl">What Our Partners Say</h2>
             </div>
             <ButtonLink href="#projects">Read More Case Studies</ButtonLink>
           </div>
@@ -759,8 +750,8 @@ export default function Home() {
         <div className="mx-auto max-w-[1800px]">
           <div className="flex items-end justify-between gap-4">
             <div>
-              <Eyebrow>Trusted By Industry Leaders</Eyebrow>
-              <h2 className="mt-6 text-4xl font-normal tracking-normal lg:text-5xl">What Our Partners Say</h2>
+              <Eyebrow>Knowledge Hub</Eyebrow>
+              <h2 className="mt-6 text-4xl font-normal tracking-normal lg:text-5xl">Technical Resources &amp; Insights</h2>
             </div>
             <div className="text-right">
               <p className="font-mono text-sm text-[#595959]" aria-live="polite">
