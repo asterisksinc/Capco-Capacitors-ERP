@@ -73,7 +73,7 @@ const locations = [
     name: "Bell Junction",
     type: "Operating site",
     detail: "West Texas · ERCOT",
-    body: "Standalone storage dispatching into ERCOT West. Containerized LFP, energized and operated by Anode from first dispatch.",
+    body: "Standalone storage dispatching into ERCOT West. Containerized LFP, energized and operated by Capco from first dispatch.",
     x: 30,
     y: 32.5,
     icon: "6261e.svg",

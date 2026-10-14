@@ -23211,7 +23211,7 @@ top: -1px;
 
 
 
-/* Talk with an expert at Anode */
+/* Talk with an expert at Capco */
 
 width: 381px;
 height: 37px;
@@ -25276,7 +25276,7 @@ align-self: stretch;
 flex-grow: 0;
 
 
-/* ©2026 Anode Energy */
+/* ©2026 Capco Energy */
 
 width: 581.33px;
 height: 15px;

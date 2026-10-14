@@ -34,7 +34,6 @@ export const DEFAULT_FAQS = [
   },
 ] as const;
 
-const SPECIFY_ACCENT_CELLS = new Set([2, 6, 38, 50, 74, 92, 118, 146, 169, 202, 231, 250]);
 
 export function PublicNav({
   variant = "light",
@@ -53,7 +52,6 @@ export function PublicNav({
   const isSolutionsActive = pathname.startsWith("/solutions");
   const isProductsActive = pathname.startsWith("/products");
   const isContactActive = pathname.startsWith("/contact");
-  const isLoginActive = pathname === "/login";
 
   return (
     <header
@@ -65,12 +63,12 @@ export function PublicNav({
             : "sticky top-0 border-b border-[#E4E4E4] bg-white/95 text-[#020202] backdrop-blur"
       } ${className}`}
     >
-      <div className="mx-auto flex h-[86px] max-w-[1920px] items-center justify-between px-6 lg:px-[60px]">
+      <div className="public-nav-inner mx-auto flex h-[92px] max-w-[1920px] items-center justify-between px-6 lg:px-[44px]">
         <Link href="/" aria-label="CAPCO home" className="inline-flex shrink-0 items-center">
           <Image src={logoSrc} alt="CAPCO Capacitors" width={127} height={47} priority />
         </Link>
 
-        <nav className="hidden items-center gap-8 text-[15px] font-normal lg:flex">
+        <nav aria-label="Main navigation" className="public-nav-menu hidden items-center gap-6 text-[15px] font-normal lg:flex xl:gap-8">
           {/* Company Dropdown */}
           <div className="group relative py-2">
             <Link
@@ -190,26 +188,14 @@ export function PublicNav({
           </Link>
         </nav>
 
-        <div className="hidden items-center gap-3.5 lg:flex">
+        <div className="public-nav-actions hidden items-center justify-end gap-3.5 lg:flex">
           <a
             href="tel:+919848014000"
-            className="inline-flex h-12 items-center gap-2 px-3 text-[13px] font-medium transition hover:text-[#58C7E8]"
+            className="hidden h-12 items-center gap-2 px-3 text-[13px] font-medium transition hover:text-[#58C7E8] xl:inline-flex"
           >
             <Phone size={15} />
             1800-XXX-XXXX
           </a>
-          <Link
-            href="/login"
-            className={`inline-flex h-12 items-center border px-4 text-[13px] font-medium transition hover:border-[#58C7E8] hover:text-[#58C7E8] ${
-              isLoginActive
-                ? "border-[#58C7E8] text-[#58C7E8]"
-                : isDarkHero
-                  ? "border-white/75 text-white"
-                  : "border-[#020202] text-[#020202]"
-            }`}
-          >
-            Dealer Login
-          </Link>
           <Link
             href="/contact?category=oem#enquiry-form"
             className="inline-flex h-12 items-center bg-[#58C7E8] px-4 text-[13px] font-medium text-[#020202] transition hover:bg-[#41b7d9]"
@@ -246,7 +232,7 @@ export function PublicNav({
             ["Dealership / Industrial Solutions", "/solutions/dealership"],
             ["Products", "/products"],
             ["Contact", "/contact"],
-            ["Dealer Login", "/login"],
+            ["Request Quote", "/contact?category=oem#enquiry-form"],
           ].map(([label, href]) => (
             <Link
               key={label}
@@ -287,7 +273,7 @@ export function ArrowButton({
       className={`inline-flex h-14 items-center gap-7 px-4 text-sm font-semibold transition ${
         light ? "bg-white text-[#020202] hover:bg-[#58C7E8]" : "bg-[#58C7E8] text-[#020202] hover:bg-[#41b7d9]"
       }`}
-      style={{ clipPath: "polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 0 100%)" }}
+      style={{ clipPath: "polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%)" }}
     >
       <span>{children}</span>
       <ArrowRight size={18} />
@@ -298,40 +284,13 @@ export function ArrowButton({
 export function ReadyToSpecifyCapcoSection() {
   return (
     <section className="relative flex min-h-[520px] items-center justify-center overflow-hidden bg-white px-6 py-[60px] text-center lg:min-h-[558px] lg:px-[60px]">
-      {/* Figma Ellipse 1: 1742x808 #58C7E8 with 200px blur */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute left-1/2 top-[calc(50%-237.5px)] h-[808px] w-[1742px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#58C7E8] blur-[200px]"
-      />
-
-      {/* Figma Frame 83: 62x62 grid with #EEF7FD borders and accent filled cells at 0.3 opacity */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 mx-auto flex max-w-[1920px] flex-wrap content-center items-center justify-center overflow-hidden opacity-30"
-      >
-        {Array.from({ length: 288 }, (_, idx) => {
-          const isFilled = SPECIFY_ACCENT_CELLS.has(idx);
-          return (
-            <span
-              key={idx}
-              style={
-                isFilled
-                  ? {
-                      clipPath:
-                        "polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%)",
-                    }
-                  : undefined
-              }
-              className={`-mx-[0.5px] h-[62px] w-[62px] shrink-0 border border-[#EEF7FD] ${
-                isFilled ? "bg-[#EEF7FD]" : ""
-              }`}
-            />
-          );
-        })}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+        <img src="/figma/home/c64c6.svg" alt="" className="absolute left-1/2 top-[-755px] max-w-none -translate-x-1/2" />
+        <img src="/figma/home/79c1e.svg" alt="" className="absolute left-1/2 top-0 max-w-none -translate-x-1/2" />
       </div>
 
       {/* Foreground Content (z-10) */}
-      <div className="relative z-10 mx-auto flex max-w-[946px] flex-col items-center">
+      <div className="relative z-10 mx-auto flex w-full min-w-0 max-w-[946px] flex-col items-center">
         <p className="inline-flex items-center justify-center gap-2 text-[14px] font-medium uppercase leading-none text-[#020202]">
           <span className="h-[6px] w-[6px] bg-white" />
           READY TO SPECIFY CAPCO?
@@ -349,7 +308,7 @@ export function ReadyToSpecifyCapcoSection() {
         </p>
 
         {/* Action Buttons */}
-        <div className="mt-7 flex flex-wrap items-center justify-center gap-4">
+        <div className="mt-7 flex w-full flex-wrap items-center justify-center gap-4">
           <Link
             href="/contact?category=oem#enquiry-form"
             style={{
@@ -369,7 +328,7 @@ export function ReadyToSpecifyCapcoSection() {
               clipPath:
                 "polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%)",
             }}
-            className="inline-flex min-h-[56px] w-[300px] items-end justify-between bg-white px-3 pb-3 pt-6 text-[14px] font-medium leading-[1.2] text-[#020202] transition hover:-translate-y-0.5 hover:bg-[#F4F4F4]"
+            className="inline-flex min-h-[56px] w-[300px] max-w-full items-end justify-between gap-3 bg-white px-3 pb-3 pt-6 text-left text-[14px] font-medium leading-[1.2] text-[#020202] transition hover:-translate-y-0.5 hover:bg-[#F4F4F4]"
           >
             <span>Download Product Catalog (PDF)</span>
             <img src="/figma/solutions/4e858.svg" alt="" aria-hidden="true" />
@@ -377,7 +336,7 @@ export function ReadyToSpecifyCapcoSection() {
         </div>
 
         {/* 381px Divider Line */}
-        <div className="my-10 h-px w-[381px] max-w-full bg-[#58C7E8]" />
+        <div className="my-10 h-px w-full max-w-[381px] bg-[#58C7E8]" />
 
         {/* 3 Trust Features */}
         <div className="flex flex-wrap items-center justify-center gap-6 lg:gap-10">
@@ -386,30 +345,10 @@ export function ReadyToSpecifyCapcoSection() {
             "BIS/CE Documentation Included",
             "OEM Pricing Available",
           ].map((label, idx) => (
-            <div key={label} className="inline-flex items-center gap-2.5">
-              <span
-                style={{
-                  clipPath:
-                    "polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%)",
-                }}
-                className="grid h-[44px] w-[44px] place-items-center bg-[#58C7E8]/40 text-[#020202]"
-              >
-                {idx === 0 ? (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                    <circle cx="12" cy="12" r="9" />
-                    <path d="M12 7v5l3 2" />
-                  </svg>
-                ) : idx === 1 ? (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                    <path d="M12 2l2.4 1.8 3-.3 1.2 2.8 2.8 1.2-.3 3L22.9 13l-1.8 2.4.3 3-2.8 1.2-1.2 2.8-3-.3L12 23.9l-2.4-1.8-3 .3-1.2-2.8-2.8-1.2.3-3L1.1 13l1.8-2.4-.3-3 2.8-1.2 1.2-2.8 3 .3L12 2z" />
-                    <path d="M9 12l2 2 4-4" />
-                  </svg>
-                ) : (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                    <path d="M12 21s-7-4.5-7-10a4 4 0 017-2.6A4 4 0 0119 11c0 5.5-7 10-7 10z" />
-                  </svg>
-                )}
-              </span>
+            <div key={label} className="inline-flex max-w-full items-center gap-2.5 text-left">
+              <img src={[
+                "/figma/home/ffd18.svg", "/figma/home/b0b0f.svg", "/figma/home/93f49.svg",
+              ][idx]} alt="" className="shrink-0" />
               <span className="text-[16px] font-normal text-[#020202] lg:text-[18px]">{label}</span>
             </div>
           ))}
@@ -552,10 +491,10 @@ export function PublicFooter({
         className="border-t border-white/10 bg-[#121212] px-6 pb-10 pt-16 text-white lg:px-[60px]"
       >
         <div className="mx-auto max-w-[1800px]">
-          <div className="grid gap-12 lg:grid-cols-[1fr_1040px] lg:gap-[120px]">
+          <div className="grid gap-12 lg:grid-cols-[minmax(0,680fr)_minmax(0,1040fr)] lg:gap-[80px]">
             <div>
               <h3 className="text-[28px] font-normal tracking-[-0.04em] text-white lg:text-[32px]">
-                Talk with an expert at Anode
+                Talk with an expert at Capco
               </h3>
               <form onSubmit={handleNewsletter} className="mt-4 flex max-w-[276px]">
                 <input
@@ -659,9 +598,9 @@ export function PublicFooter({
 
           <div className="mt-16 flex flex-wrap items-center justify-between gap-6 text-[12px] text-white/55 lg:mt-[120px]">
             <Link href="/" aria-label="CAPCO home">
-              <img src="/figma/solutions/75083.svg" alt="ANODE" className="h-auto max-w-[240px]" />
+              <img src="/figma/solutions/75083.svg" alt="Capco" className="h-auto max-w-[240px]" />
             </Link>
-            <span>©2026 Anode Energy</span>
+            <span>©2026 Capco Energy</span>
             <div className="flex flex-col text-white">
               <Link href="/privacy-policy" className="hover:text-[#58C7E8]">
                 Privacy Policy

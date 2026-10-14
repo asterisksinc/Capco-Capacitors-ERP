@@ -18,6 +18,7 @@ export default function ClientTicker() {
         className={styles.control}
         onClick={() => setPaused((value) => !value)}
         aria-label={paused ? "Resume client ticker" : "Pause client ticker"}
+        aria-pressed={paused}
       >
         {paused ? <Play size={14} aria-hidden="true" /> : <Pause size={14} aria-hidden="true" />}
       </button>

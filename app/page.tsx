@@ -4,21 +4,24 @@
 import {
   ArrowLeft,
   ArrowRight,
-  Award,
-  BookOpen,
-  Download,
-  Zap,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRef, useState } from "react";
+import HomeHero from "@/components/public/HomeHero";
+import HomeMotion from "@/components/public/HomeMotion";
 import ClientTicker from "@/components/public/ClientTicker";
 import {
   PublicFaqSection,
   PublicFooter,
-  PublicNav,
   ReadyToSpecifyCapcoSection,
 } from "@/components/public/PublicChrome";
+
+const productLinks = [
+  "/products/zinc-aluminium-alloy-metalised-bopp-film", "/products/motor-run-capacitor",
+  "/products/pfc-cylindrical-capacitor", "/products/lighting-luminaire-capacitor",
+  "/products/uv-lamp-capacitor", "/contact?category=oem#enquiry-form",
+];
 
 const products = [
   ["BOPP Substrate", "CAT: MPP-01", "Metalized Polypropylene Film (MPP)", "In-house Leybold-metallized BOPP film for self-healing, high-voltage capacitor applications.", "THICKNESS: 3.5-14 Micron", "VOLTAGE: Up to 4000V AC", "Explore MPP Film"],
@@ -38,6 +41,7 @@ type IndustrySolution = {
   cta: string;
   href: string;
   specHeading: string;
+  specBody?: string;
   specs: readonly string[];
   metaLeft: readonly [string, string];
   metaRight: readonly [string, string];
@@ -48,19 +52,20 @@ const industries: readonly IndustrySolution[] = [
     tab: "HVAC & Refrigeration",
     sector: "SYSTEM SECTOR: 01",
     title: "HVAC & Commercial Refrigeration Systems",
-    body: "Motor run capacitors for AC units, HVAC systems, compressors, and rooftop cooling applications. Engineered with P2 safety disconnector protection and high thermal endurance up to +85°C.",
-    tags: ["Motor Run Capacitors", "Compressor Duty"],
+    body: "Motor run capacitors (0.5–100 MFD), P2 safety-equipped AC capacitors, and custom dual-capacitance configurations for compressors and fan motors. Engineered for high ambient temperature resilience up to 85°C with continuous duty cycles.",
+    tags: ["Motor Run Capacitors", "P2 AC Capacitors", "Custom Solutions"],
     cta: "Explore HVAC Solutions",
     href: "/products/motor-run-capacitor",
     specHeading: "P2 Safety Disconnector",
+    specBody: "In-house Leybold-metallized BOPP film for self-healing, high-voltage capacitor applications.",
     specs: [
-      "Capacity: 0.5 to 432 MFD",
-      "Voltage Rating: 400 to 440V AC",
-      "Operating Temp: -25°C to +85°C",
-      "Standard: IS:2993 & IEC 60252-1",
+      "Operating Class: Class B (10,000h)",
+      "Thermal Range: -25°C to +85°C",
+      "Voltage Rating: 440V / 500V AC",
+      "Dielectric: Self-healing MPP Film",
     ],
-    metaLeft: ["APPROVAL:", "BIS / ISI / CE"],
-    metaRight: ["OEM BATCHES:", "JIT READY"],
+    metaLeft: ["APPROVAL:", "BIS / IEC 60252-1"],
+    metaRight: ["STATUS:", "IN-STOCK"],
   },
   {
     tab: "Water Pumps & Agriculture",
@@ -155,9 +160,9 @@ const industries: readonly IndustrySolution[] = [
 ] as const;
 
 const whyFeatures = [
-  ["In-House Metallization & Winding", "Leybold Germany BOPP film metallization + Metar Switzerland automatic winding deliver purity, faster delivery, and supply discipline.", "Learn About Our Technology"],
-  ["BIS, ISO & CE Certified", "Every product meets IS:2993, IS:13340, ISO 9001 standards and export requirements across OEM, dealers, and project markets.", "View Certificates"],
-  ["5,000+ Dealers, JIT Delivery", "From Nashik to Coimbatore, our dealer network ensures local availability, technical support, and just-in-time replenishment.", "Meet Dealer Team"],
+  ["In-House Metallization Plant", "Leybold (Germany) BOPP film metallization + Metar (Switzerland) automatic winding = Better pricing, faster delivery, zero supply disruptions.", "Learn About Our Technology"],
+  ["BIS, ISO & CE Certified", "Every product meets IS:2993, IS:13340, IEC 60252-1 standards qualified for government tenders, OEM specs, and export markets.", "View Certifications"],
+  ["5,000+ Trusted Dealers, JIT Delivery", "From Hyderabad to Guwahati, our dealer network ensures local availability, technical support, and just-in-time replenishment for OEMs.", "Find a Dealer Near You"],
 ];
 
 const certifications = [
@@ -165,69 +170,42 @@ const certifications = [
     title: "BIS ISI",
     sub1: "IS:1709 / IS:1569",
     sub2: "IS:2993 / IS:13340",
-    icon: "/figma/home/bis-isi.svg",
+    icon: "/figma/home/64137.svg",
   },
   {
     title: "ISO 9001",
     sub1: "2008 Standards",
     sub2: "Quality Management",
-    icon: "/figma/home/iso-9001.svg",
+    icon: "/figma/home/bbeba.svg",
   },
   {
     title: "CE MARK",
     sub1: "European Conformity",
     sub2: "Low Voltage Directive",
-    icon: "/figma/home/ce-mark.svg",
+    icon: "/figma/home/40e25.svg",
   },
   {
     title: "IEC 60252-1",
     sub1: "AC Motor Capacitors",
     sub2: "General Safety Rules",
-    icon: "/figma/home/iec-logo.svg",
+    icon: "/figma/home/3f482.svg",
   },
   {
     title: "IEC 60831",
     sub1: "Power Capacitors",
     sub2: "Self-Healing Shunt",
-    icon: "/figma/home/iec-logo.svg",
+    icon: "/figma/home/3f482.svg",
   },
 ] as const;
 
-const WORLD_MAP_DOT_ROWS = [
-  "........####......####..............########............................",
-  "......#######....######.........##################......................",
-  "....#########...########.....############################...............",
-  "...##########..#########...####################################.........",
-  "..###########....#######..########################################......",
-  "...#########......#####..##########################################.....",
-  "....#######........####.###########################################.....",
-  ".....#####..........###.########..################################......",
-  "......###............#####...###...##############################.......",
-  ".......##............############....############################.......",
-  "........##..........##############....##########################........",
-  ".........###.......################....########################.........",
-  "..........#####....#################.....#####################..........",
-  "..........#######..##################.....###################...........",
-  "...........########.#################......######...########............",
-  "...........#########..###############.......####.....######.###.........",
-  "............########...##############........##.......####..####........",
-  "............########....############...................##....####.......",
-  ".............#######.....##########...........................###.......",
-  ".............######.......#########......................########.......",
-  "..............#####........#######.....................###########......",
-  "..............####.........#######....................#############.....",
-  "...............###..........#####.....................#############.....",
-  "...............###...........####......................###########......",
-  "................##............##........................#########.......",
-  "................#.........................................#####.....##..",
-] as const;
+
 
 const manufacturingSteps = [
   {
     num: "01",
     title: "Raw Film Procurement",
     subtitle: "Certified BOPP Film",
-    body: "Sourced from trusted suppliers with strict dielectric strength, tolerance, and RoHS controls.",
+    body: "Sourced from trusted suppliers with strict dielectric strength tolerances (>600 V/micron).",
   },
   {
     num: "02",
@@ -304,33 +282,27 @@ const testimonials = [
 ] as const;
 
 const projects = [
-  ["/figma/project-catalogs-card.png", "Product Catalogs & Spec Sheets", "Downloadable PDFs with electrical specs, BIS certifications, and installation guides.", "Browse Downloads"],
-  ["/figma/project-success-card.png", "Success Stories", "OEM and dealer projects with measurable cost, lead-time, and reliability outcomes.", "View Case Studies"],
-  ["/figma/project-insights-card.png", "Industry Trends & Best Practices", "Selection guides, PFC notes, and capacitor application insights.", "Read Insights"],
+  ["/figma/solutions/2f1e3.png", "Product Catalogs & Spec Sheets", "Downloadable PDFs with electrical specs, BIS certifications, and installation guides.", "Browse Technical Docs"],
+  ["/figma/solutions/f5300.png", "Success Stories", "OEM and dealer projects with measurable cost, lead-time, and reliability outcomes.", "View Case Studies"],
+  ["/figma/solutions/17639.png", "Industry Trends & Best Practices", "Selection guides, PFC notes, and capacitor application insights.", "Read Insights"],
 ];
 
 function Eyebrow({ children, light = false }: { children: React.ReactNode; light?: boolean }) {
   return (
-    <div className={`flex items-center gap-2 text-[12px] font-semibold uppercase tracking-normal ${light ? "text-white" : "text-[#020202]"}`}>
+    <div className={`flex items-center gap-2 text-[14px] font-medium uppercase tracking-normal ${light ? "text-white" : "text-[#020202]"}`}>
       <span className="h-1.5 w-1.5 bg-[#58c7e8]" />
       {children}
     </div>
   );
 }
 
-function ButtonLink({ children, light = false }: { children: React.ReactNode; light?: boolean }) {
+function ButtonLink({ children, href = "/contact", light = false, muted = false, download = false }: {
+  children: React.ReactNode; href?: string; light?: boolean; muted?: boolean; download?: boolean;
+}) {
   return (
-    <a
-      href="#contact"
-      className={`inline-flex h-14 items-center gap-6 px-4 text-sm font-semibold transition ${
-        light
-          ? "bg-white !text-[#020202] hover:bg-[#eaf8fc] [&_*]:!text-[#020202] [&_svg]:stroke-[#020202]"
-          : "bg-[#58c7e8] text-[#020202] hover:bg-[#41b7d9] [&_svg]:stroke-[#020202]"
-      }`}
-      style={{ clipPath: "polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 0 100%)" }}
-    >
+    <a href={href} download={download || undefined} className={`home-button ${light ? "home-button--light" : ""} ${muted ? "home-button--muted" : ""}`}>
       <span>{children}</span>
-      <ArrowRight size={18} />
+      <img src={download ? "/figma/solutions/4e858.svg" : "/figma/solutions/a9bc9.svg"} alt="" />
     </a>
   );
 }
@@ -356,52 +328,18 @@ export default function Home() {
     if (card) {
       container.scrollTo({
         left: card.offsetLeft - container.offsetLeft,
-        behavior: "smooth",
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
       });
     }
   };
 
   return (
-    <main className="min-h-screen bg-white text-[#020202]">
-      <section className="relative flex min-h-[700px] flex-col justify-between overflow-hidden bg-[#101010] text-white lg:h-screen lg:max-h-screen">
-        <Image src="/figma/home/rectangle-1.png" alt="" fill priority sizes="100vw" className="object-cover" />
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/30 via-black/10 to-black/65" />
-        <PublicNav variant="overlay" className="relative z-20 shrink-0" />
-        <div className="relative z-10 mx-auto mt-auto flex w-full max-w-[1920px] flex-col justify-end px-6 pb-16 pt-10 lg:px-[60px] lg:pb-[88px]">
-          <div className="grid gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-end">
-            <div>
-              <Eyebrow light>Electrical Systems Built For The Next Century</Eyebrow>
-              <h1 className="mt-5 max-w-[780px] text-[44px] font-normal leading-[0.96] tracking-normal sm:text-[64px] lg:text-[84px] xl:text-[100px]">
-                India&apos;s Trusted Capacitor Manufacturer
-              </h1>
-              <div className="mt-7 flex flex-wrap gap-4">
-                <ButtonLink>Explore Products</ButtonLink>
-                <ButtonLink light>Explore Programs</ButtonLink>
-              </div>
-            </div>
-            <div className="grid gap-6 lg:justify-items-end">
-              <p className="max-w-[560px] text-lg leading-[1.45] text-white/85 xl:text-xl">
-                BIS-certified motor run, PFC, lighting, and custom capacitors engineered with in-house BOPP metallization, JIT supply, and OEM-ready compliance.
-              </p>
-              <div className="grid w-full max-w-[660px] gap-3 sm:grid-cols-3">
-                {[
-                  ["BIS ISI", "Certified"],
-                  ["ISO 9001", "Quality Certified"],
-                  ["15+ Export", "Markets"],
-                ].map(([value, label]) => (
-                  <div key={value} className="border border-white/20 bg-black/25 p-4 backdrop-blur">
-                    <p className="text-lg font-semibold">{value}</p>
-                    <p className="mt-1 text-xs text-white/62">{label}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+    <main className="home-page min-h-screen bg-white text-[#020202]">
+      <HomeMotion />
+      <HomeHero />
 
       <section className="grid border-b border-[#e4e4e4] bg-[#f5f5f5] md:grid-cols-3">
-        {[["32+ Years", "In Manufacturing"], ["500+", "Authorized Dealers"], ["15+", "Export Countries"]].map(([value, label]) => (
+        {[["32+ Years", "In Manufacturing"], ["5,000+", "Authorized Dealers"], ["15+", "Export Countries"]].map(([value, label]) => (
           <div key={label} className="flex min-h-[156px] flex-col items-center justify-center border-[#e4e4e4] py-10 md:min-h-[296px] md:border-r">
             <strong className="text-4xl font-normal leading-none md:text-[56px]">{value}</strong>
             <span className="mt-4 text-base text-[#595959] md:text-lg">{label}</span>
@@ -413,7 +351,7 @@ export default function Home() {
 
       <section id="why" className="px-6 py-20 lg:min-h-[334px] lg:px-[60px] lg:py-[100px]">
         <div className="mx-auto max-w-[1800px]">
-          <div className="grid gap-10 lg:grid-cols-[680px_1fr]">
+          <div className="grid gap-10 lg:grid-cols-[minmax(0,680fr)_minmax(0,612fr)]">
             <div>
               <Eyebrow>Why CAPCO?</Eyebrow>
               <h2 className="mt-6 text-4xl font-normal leading-tight tracking-normal lg:text-5xl">Engineered for Reliability, Backed by Compliance</h2>
@@ -425,29 +363,20 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="px-6 pb-20 lg:min-h-[1743px] lg:px-[60px] lg:pb-[100px]">
-        <div className="mx-auto max-w-[1800px]">
-          <div className="grid gap-2 lg:grid-cols-[1.16fr_0.84fr]">
-            <div className="grid gap-2">
-              {["/figma/products/product-1.png", "/figma/products/product-5.png", "/figma/project-insights-card.png"].map((image) => (
-                <div key={image} className="relative min-h-[330px] overflow-hidden bg-[#e8e8e8] lg:min-h-[505px]">
-                  <Image src={image} alt="" fill sizes="(min-width: 1024px) 58vw, 94vw" className="object-cover" />
-                </div>
-              ))}
-            </div>
-            <div className="grid gap-2">
-              {whyFeatures.map(([featureTitle, featureBody, cta], index) => (
-                <article key={featureTitle} className="flex min-h-[330px] flex-col justify-between bg-[#f3f3f3] p-8 lg:min-h-[505px] lg:p-12">
-                  <div>
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-sm">{String(index + 1).padStart(2, "0")}</div>
-                    <h3 className="mt-8 text-2xl font-medium">{featureTitle}</h3>
-                    <p className="mt-5 max-w-[560px] text-base leading-[1.55] text-[#595959]">{featureBody}</p>
-                  </div>
-                  <ButtonLink>{cta}</ButtonLink>
-                </article>
-              ))}
-            </div>
-          </div>
+      <section aria-label="Why choose CAPCO" className="px-6 lg:px-[60px]">
+        <div className="mx-auto max-w-[1800px] border-b border-[#e4e4e4]">
+          {whyFeatures.map(([featureTitle, featureBody, cta], index) => (
+            <article className="feature-row" key={featureTitle}>
+              <div className="feature-image overflow-hidden">
+                <Image src={['/figma/solutions/2f1e3.png', '/figma/solutions/f5300.png', '/figma/solutions/17639.png'][index]} alt={['CAPCO metallized film rolls', 'Hydroelectric power infrastructure', 'Industrial capacitor systems'][index]} fill sizes="(min-width: 1024px) 55vw, 100vw" className="object-cover" />
+              </div>
+              <div className="feature-copy">
+                <div><img src="/figma/home/85f0e.svg" alt="" /><h3>{featureTitle}</h3></div>
+                <p>{featureBody}</p>
+                <ButtonLink muted href={['/about#manufacturing-line', '/about#compliance', '/solutions/dealership'][index]}>{cta}</ButtonLink>
+              </div>
+            </article>
+          ))}
         </div>
       </section>
 
@@ -458,25 +387,25 @@ export default function Home() {
               <Eyebrow>Complete Capacitor Solutions</Eyebrow>
               <h2 className="mt-6 text-4xl font-normal tracking-normal lg:text-5xl">Browse by Product Category</h2>
             </div>
-            <ButtonLink><Download size={16} /> Download Complete Catalog</ButtonLink>
+            <ButtonLink href="/catalogs/capco-product-catalog.pdf" download>Download Complete Catalog (PDF)</ButtonLink>
           </div>
           <div className="mt-[60px] grid gap-[42px] md:grid-cols-2 xl:grid-cols-3">
-            {products.map(([badge, code, productTitle, productBody, specA, specB, cta]) => (
-              <article key={productTitle} className="flex min-h-[389px] flex-col justify-between bg-[#f5f5f5] p-8">
+            {products.map(([badge, code, productTitle, productBody, specA, specB, cta], index) => (
+              <article key={productTitle} className="product-card flex min-h-[389px] flex-col justify-between gap-9 bg-[#f5f5f5] p-8">
                 <div>
-                  <div className="flex items-center justify-between gap-5">
-                    <span className="bg-white px-3 py-2 text-sm">{badge}</span>
-                    <span className="text-sm font-semibold text-[#58c7e8]">{code}</span>
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <span className="product-badge bg-white px-3 py-2 text-sm">{badge}</span>
+                    <span className="text-sm font-medium text-[#58c7e8]">{code}</span>
                   </div>
                   <h3 className="mt-8 text-2xl font-medium">{productTitle}</h3>
                   <p className="mt-4 text-base leading-[1.45] text-[#595959]">{productBody}</p>
                 </div>
                 <div>
-                  <div className="mb-8 flex flex-wrap gap-x-6 gap-y-2 border-t border-[#dcdcdc] pt-5 text-sm">
+                  <div className="mb-9 flex flex-wrap gap-x-6 gap-y-2 text-sm">
                     <span>{specA}</span>
                     <span>{specB}</span>
                   </div>
-                  <ButtonLink>{cta}</ButtonLink>
+                  <ButtonLink light href={productLinks[index]}>{cta}</ButtonLink>
                 </div>
               </article>
             ))}
@@ -500,6 +429,7 @@ export default function Home() {
                   <button
                     key={industry.tab}
                     type="button"
+                    aria-pressed={isActive}
                     onClick={() => setIndustryIndex(index)}
                     className={`relative cursor-pointer px-4 pb-5 pt-2 text-center text-[16px] transition lg:text-[18px] ${
                       isActive
@@ -520,7 +450,7 @@ export default function Home() {
               clipPath:
                 "polygon(0 0, 100% 0, 100% calc(100% - 76px), calc(100% - 76px) 100%, 0 100%)",
             }}
-            className="mt-8 grid items-center gap-10 bg-white p-8 sm:p-10 lg:mt-[42px] lg:min-h-[540px] lg:grid-cols-[1fr_528px] lg:p-[60px]"
+            className="mt-8 grid items-center gap-10 bg-white p-8 sm:p-10 lg:mt-[42px] lg:min-h-[540px] lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:p-[60px]"
           >
             {/* Left Column: Sector Copy, Clipped Tag Pills & CTA Button */}
             <div className="flex h-full flex-col justify-between">
@@ -581,6 +511,7 @@ export default function Home() {
                 <h4 className="mt-1.5 text-[20px] font-medium leading-[1.2] tracking-[-0.02em] text-[#020202] lg:text-[22px]">
                   {activeIndustry.specHeading}
                 </h4>
+                {activeIndustry.specBody && <p className="mt-4 text-sm leading-[1.4] text-[#595959]">{activeIndustry.specBody}</p>}
 
                 <ul className="mt-6 space-y-3.5 text-[14px] leading-[1.35] text-[#020202]">
                   {activeIndustry.specs.map((spec) => (
@@ -615,18 +546,9 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="process" className="bg-white px-6 py-24 lg:min-h-[530px] lg:px-[60px] lg:py-[100px]">
+      <section id="process" aria-label="Manufacturing process" className="bg-white px-6 py-24 lg:min-h-[600px] lg:px-[60px] lg:py-[100px]">
         <div className="mx-auto grid max-w-[1800px] gap-12 lg:grid-cols-[0.95fr_1fr]">
-          <div className="flex flex-col justify-between gap-8">
-            <div>
-              <Eyebrow>Vertical Integration</Eyebrow>
-              <h2 className="mt-5 text-[34px] font-normal leading-[1.05] tracking-[-0.04em] text-[#020202] sm:text-[42px] lg:mt-6 lg:text-[48px]">
-                5-Stage In-House
-                <br />
-                Manufacturing Process
-              </h2>
-            </div>
-
+          <div className="order-2 flex flex-col justify-end gap-8 lg:order-1">
             <div className="flex items-center gap-4">
               <span className="font-mono text-xs text-[#595959]" aria-live="polite">
                 {activeProcess.num}/05
@@ -654,8 +576,8 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="border-l border-[#E4E4E4] pl-8 lg:pl-12">
-            <div className="flex h-12 w-12 items-center justify-center bg-[#F4F4F4] text-sm font-medium text-[#020202]">
+          <div className="order-1 border-l border-[#E4E4E4] pl-8 lg:order-2 lg:pl-12">
+            <div className="product-badge flex h-16 w-16 items-center justify-center bg-[#F4F4F4] text-2xl font-normal text-[#595959]">
               {activeProcess.num}
             </div>
             <h3 className="mt-6 text-3xl font-normal tracking-[-0.03em] text-[#020202] lg:text-[36px]">
@@ -672,7 +594,7 @@ export default function Home() {
                   clipPath:
                     "polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%)",
                 }}
-                className="inline-flex min-h-[56px] min-w-[272px] items-end justify-between gap-6 bg-[#58C7E8] px-3.5 pb-3 pt-6 text-[13px] font-medium leading-[1.2] text-[#020202] transition hover:-translate-y-0.5 hover:brightness-95"
+                className="inline-flex min-h-[56px] w-full max-w-[300px] items-end justify-between gap-4 bg-[#58C7E8] px-3.5 pb-3 pt-6 text-[13px] font-medium leading-[1.2] text-[#020202] transition hover:-translate-y-0.5 hover:brightness-95"
               >
                 <span>View Our Manufacturing Facilities</span>
                 <img src="/figma/solutions/24503.svg" alt="" aria-hidden="true" />
@@ -683,32 +605,7 @@ export default function Home() {
       </section>
 
       <section className="relative overflow-hidden bg-[#EEFAFF] px-6 py-20 lg:px-[60px] lg:py-[100px]">
-        {/* Dotted World Map Background on Right Half */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-y-0 right-0 flex w-[76%] items-center justify-end overflow-hidden opacity-90 lg:w-[66%]"
-        >
-          <svg
-            viewBox="0 0 980 390"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-full w-full object-cover object-right"
-          >
-            {WORLD_MAP_DOT_ROWS.map((row, rIdx) =>
-              Array.from(row).map((ch, cIdx) =>
-                ch === "#" ? (
-                  <circle
-                    key={`${rIdx}-${cIdx}`}
-                    cx={cIdx * 13.5 + 8}
-                    cy={rIdx * 14.5 + 10}
-                    r={3.2}
-                    fill="#C6E7F6"
-                  />
-                ) : null,
-              ),
-            )}
-          </svg>
-        </div>
+        <img src="/figma/home/compliance-world-map.png" alt="" aria-hidden="true" className="pointer-events-none absolute -right-[8%] -top-[46px] w-[75%] max-w-none" />
 
         <div className="relative z-10 mx-auto max-w-[1800px]">
           <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
@@ -751,18 +648,18 @@ export default function Home() {
                       clipPath:
                         "polygon(0 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%)",
                     }}
-                    className="flex h-[78px] w-[78px] items-center justify-center bg-[#EEFAFF]"
+                    className="flex h-[80px] w-[80px] items-center justify-center bg-[#EEFAFF]"
                   >
                     <img
                       src={cert.icon}
                       alt={cert.title}
-                      className="h-[42px] w-[42px] object-contain"
+                      className="max-w-none"
                     />
                   </div>
-                  <h3 className="mt-8 text-[20px] font-medium leading-[1.2] tracking-[-0.02em] text-[#020202] lg:text-[22px]">
+                  <h3 className="mt-[42px] text-[20px] font-medium leading-[1.2] text-[#020202] lg:text-[24px]">
                     {cert.title}
                   </h3>
-                  <div className="my-4 h-[1.5px] w-[46px] bg-[#BCEAF8]" />
+                  <div className="my-3 h-px w-[80px] bg-[#58c7e8]" />
                   <p className="text-[15px] font-normal leading-[1.35] text-[#020202] lg:text-[16px]">
                     {cert.sub1}
                   </p>
@@ -783,7 +680,7 @@ export default function Home() {
               <Eyebrow>Trusted By Industry Leaders</Eyebrow>
               <h2 className="mt-6 text-4xl font-normal tracking-normal lg:text-5xl">What Our Partners Say</h2>
             </div>
-            <ButtonLink>Read More Case Studies</ButtonLink>
+            <ButtonLink href="#projects">Read More Case Studies</ButtonLink>
           </div>
           <div className="relative mt-[60px] flex min-h-[340px] flex-col items-center justify-center bg-white px-6 py-12 lg:px-[152px]">
             <button
@@ -807,11 +704,11 @@ export default function Home() {
                   {String(testimonials.length).padStart(2, "0")}
                 </span>
               </div>
-              <blockquote className="mt-8 text-3xl font-normal leading-[1.13] tracking-normal text-[#020202] lg:text-5xl">
+              <blockquote className="mt-5 text-2xl font-normal leading-[1.4] text-[#595959] lg:text-[38px]">
                 {activeTestimonial.quote}
               </blockquote>
               <div className="mt-10 flex items-center justify-center gap-5">
-                <div className="flex h-16 w-16 items-center justify-center bg-[#ededed] text-lg font-semibold">
+                <div className="flex h-[62px] w-[62px] items-center justify-center bg-[#eefaff] text-[28px] font-medium text-[#58c7e8]">
                   {activeTestimonial.initials}
                 </div>
                 <div className="text-left">
@@ -858,12 +755,12 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="projects" className="bg-[#f5f5f5] px-6 py-20 lg:min-h-[1210px] lg:px-[60px] lg:py-[100px]">
+      <section id="projects" className="bg-white px-6 py-20 lg:px-[60px] lg:py-[100px]">
         <div className="mx-auto max-w-[1800px]">
           <div className="flex items-end justify-between gap-4">
             <div>
               <Eyebrow>Trusted By Industry Leaders</Eyebrow>
-              <h2 className="mt-6 text-4xl font-normal tracking-normal lg:text-5xl">Projects</h2>
+              <h2 className="mt-6 text-4xl font-normal tracking-normal lg:text-5xl">What Our Partners Say</h2>
             </div>
             <div className="text-right">
               <p className="font-mono text-sm text-[#595959]" aria-live="polite">
@@ -908,23 +805,23 @@ export default function Home() {
                 setProjectIndex(closestIdx);
               }
             }}
-            className="mt-14 flex snap-x snap-mandatory gap-4 overflow-x-auto pb-3 scroll-smooth"
+            className="project-list relative mt-[60px] flex snap-x snap-mandatory gap-2 overflow-x-auto scroll-smooth"
           >
             {projects.map(([image, projectTitle, projectBody, cta], index) => (
               <article
                 key={projectTitle}
                 data-project-card
-                className="relative h-[560px] w-[84vw] max-w-[1512px] shrink-0 snap-start overflow-hidden rounded-[18px] lg:h-[864px] lg:w-[78vw]"
+                className="project-card relative w-[88vw] max-w-[1512px] shrink-0 snap-start overflow-hidden lg:w-[84%]"
               >
                 <Image src={image} alt="" fill sizes="(min-width: 1024px) 78vw, 84vw" className="object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-b from-black/10 to-black/48" />
-                <div className="absolute bottom-10 left-8 text-white lg:bottom-[90px] lg:left-12">
-                  {index === 0 ? <BookOpen size={32} /> : index === 1 ? <Award size={32} /> : <Zap size={32} />}
+                <div className="project-title">
+                  <img src={["/figma/solutions/1856e.svg", "/figma/solutions/cbe03.svg", "/figma/solutions/10f24.svg"][index]} alt="" />
                   <h3 className="mt-4 text-3xl font-normal tracking-normal lg:text-5xl">{projectTitle}</h3>
                 </div>
-                <div className="absolute bottom-4 left-4 right-4 bg-[#101010]/45 p-6 text-white backdrop-blur lg:left-auto lg:w-[560px] lg:p-9">
+                <div className="project-detail">
                   <p className="text-base leading-[1.4] opacity-80">{projectBody}</p>
-                  <div className="mt-8"><ButtonLink light>{cta}</ButtonLink></div>
+                  <div className="mt-8"><ButtonLink light href={["/catalogs/capco-product-catalog.pdf", "/solutions/oem", "/about#manufacturing-line"][index]} download={index === 0}>{cta}</ButtonLink></div>
                 </div>
               </article>
             ))}

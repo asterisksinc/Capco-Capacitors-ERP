@@ -48,7 +48,7 @@ export function LegalPage({ type }: { type: keyof typeof legalCopy }) {
           <div className="h-[560px] w-px bg-[#dedcd7]" />
         </aside>
         <article>
-          <h1 className="text-[56px] font-normal leading-tight tracking-normal lg:text-[72px]">{page.title}</h1>
+          <h1 className="text-[38px] font-normal leading-tight tracking-[-0.04em] sm:text-[56px] lg:text-[72px]">{page.title}</h1>
           <div className="mt-8 grid gap-5 text-sm font-medium leading-[1.35] tracking-normal">
             {page.paragraphs.map((paragraph) => (
               <p key={paragraph}>{paragraph}</p>

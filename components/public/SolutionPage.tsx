@@ -184,7 +184,7 @@ function IndustrialServices() {
 }
 
 const locations = [
-  { name: "Bell Junction", type: "Operating site", detail: "West Texas · ERCOT", body: "Standalone storage dispatching into ERCOT West. Containerized LFP, energized and operated by Anode from first dispatch.", x: 30, y: 56, icon: "6261e.svg" },
+  { name: "Bell Junction", type: "Operating site", detail: "West Texas · ERCOT", body: "Standalone storage dispatching into ERCOT West. Containerized LFP, energized and operated by Capco from first dispatch.", x: 30, y: 56, icon: "6261e.svg" },
   { name: "Cedar Bayou", type: "Operating site", detail: "Site location", body: "Explore the operating network and contact our team for more information.", x: 42, y: 68, icon: "a1758.svg" },
   { name: "Marfa Flats", type: "Operating site", detail: "Site location", body: "Standalone storage on a constrained node, cycling twice daily against congestion.", x: 22, y: 72, icon: "a1758.svg" },
   { name: "Salt Fork", type: "Operating site", detail: "Site location", body: "First fleet site to complete a full augmentation cycle with no measured capacity shortfall.", x: 36, y: 46, icon: "a1758.svg" },
@@ -245,7 +245,7 @@ function SolutionFooter({ industrial }: { industrial: boolean }) {
       </div>
     </section>
     <footer className={styles.footer} style={background("a62f2.png")}>
-      <div className={styles.footerTop}><div className={styles.newsletter}><h3>{industrial ? "Talk with an expert at Anode" : "Join our Newsletter"}</h3>
+      <div className={styles.footerTop}><div className={styles.newsletter}><h3>{industrial ? "Talk with an expert at Capco" : "Join our Newsletter"}</h3>
         <form onSubmit={event => { event.preventDefault(); const form = new FormData(event.currentTarget); window.location.href = `${enquiry("Newsletter enquiry")}&body=${encodeURIComponent(`Please send newsletter information to ${form.get("email")}.`)}`; }}><input type="email" name="email" required aria-label="Email address for newsletter" placeholder="Your email" /><button type="submit">Sign Up</button></form>
       </div><div className={styles.footerLinks}>
         {[

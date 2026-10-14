@@ -43,7 +43,7 @@ export function SortableHeader<T>({
         <button
           onClick={() => onSort(column.key as keyof T)}
           className="flex items-center gap-1.5 text-[13px] font-medium text-[#171717] hover:text-[#00B6E2] transition-colors"
-          style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 500, lineHeight: '120%', letterSpacing: '0%' }}
+          style={{ fontWeight: 500, lineHeight: '120%', letterSpacing: '0%' }}
         >
           {column.label}
           <span className="text-[#A1A1AA]">
@@ -57,7 +57,7 @@ export function SortableHeader<T>({
       ) : (
         <span 
           className="text-[13px] font-medium text-[#171717]"
-          style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 500, lineHeight: '120%', letterSpacing: '0%' }}
+          style={{ fontWeight: 500, lineHeight: '120%', letterSpacing: '0%' }}
         >
           {column.label}
         </span>
