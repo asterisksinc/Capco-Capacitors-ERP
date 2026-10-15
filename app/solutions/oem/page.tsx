@@ -1,5 +1,5 @@
-﻿import type { Metadata } from "next";
-import { SolutionPage } from "@/components/public/SolutionPage";
+import type { Metadata } from "next";
+import { OemSolutionView } from "@/components/public/OemSolutionView";
 
 export const metadata: Metadata = {
   title: "OEM Capacitor Solutions | CAPCO",
@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function OemSolutionsPage() {
-  return <SolutionPage variant="oem" />;
+  return <OemSolutionView />;
 }

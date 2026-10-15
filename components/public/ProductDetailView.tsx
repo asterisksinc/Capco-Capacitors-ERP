@@ -4,6 +4,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import ClientTicker from "@/components/public/ClientTicker";
 import { PublicNav } from "@/components/public/PublicChrome";
 import { type PublicProduct, publicProducts } from "@/lib/publicProducts";
 
@@ -322,8 +323,8 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
         </div>
       </section>
 
-      {/* 4. Trusted By + Ruler Tick Scale + Interactive Phase Timeline */}
-      <section className=" pb-16 pt-20 lg:pb-[120px] lg:pt-[138px]">
+      {/* 4. Trusted By + Client Ticker + Product Showcase + Interactive Phase Timeline */}
+      <section className="pb-16 pt-16 lg:pb-[100px] lg:pt-[100px]">
         <div className="mx-auto max-w-[1920px]">
           {/* Trusted By Pill */}
           <div className="px-6 text-center">
@@ -332,47 +333,27 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
             </p>
           </div>
 
-          {/* Partner Logos Row */}
-          <div className="mx-auto mt-10 max-w-[1800px] overflow-x-auto px-6 scrollbar-none lg:mt-[52px] lg:px-0">
-            <div className="min-w-[960px]">
+          {/* Animated Client Ticker with Integrated Animated Ruler */}
+          <div className="mt-6 lg:mt-10">
+            <ClientTicker />
+          </div>
+
+          {/* Centered Product Visual Showcase */}
+          <div className="relative mx-auto my-12 flex aspect-[16/10] w-full max-w-[620px] items-center justify-center px-6 lg:my-16">
+            <div className="relative h-full w-full">
               <Image
-                src="/figma/products/trusted-logos-strip.png"
-                alt="Trusted capacitor manufacturers"
-                width={1800}
-                height={42}
-                className="h-auto w-full object-contain"
+                src={product.image}
+                alt={product.title}
+                fill
+                priority
+                sizes="(min-width: 1024px) 620px, 92vw"
+                className="object-contain"
               />
             </div>
           </div>
 
-          {/* Horizontal Ruler Tick Scale with Center Pointer */}
-          <div className="mx-auto mt-5 max-w-[1800px] px-6 lg:mt-[24px] lg:px-[24px]" aria-hidden="true">
-            <div className="relative flex items-start justify-between">
-              {Array.from({ length: 55 }, (_, i) => {
-                const isCenter = i === 27;
-                const isMajor = i % 5 === 2;
-                return (
-                  <div key={i} className="flex flex-col items-center">
-                    <span
-                      className={
-                        isCenter
-                          ? "h-[15px] w-[1.5px] bg-[#121212]"
-                          : isMajor
-                            ? "h-[13px] w-[1px] bg-[#8C8C8C]"
-                            : "h-[6px] w-[1px] bg-[#D6D6D6]"
-                      }
-                    />
-                    {isCenter && (
-                      <span className="mt-[2px] h-0 w-0 border-b-[5px] border-l-[3.5px] border-r-[3.5px] border-b-[#121212] border-l-transparent border-r-transparent" />
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
           {/* Interactive Phase Timeline */}
-          <div className="mt-24 lg:mt-[510px]">
+          <div className="mt-8 lg:mt-12">
             {/* Phase Header */}
             <div className="px-6 text-center">
               <p className="font-mono text-[11px] uppercase tracking-[0.06em] text-[#121212]">

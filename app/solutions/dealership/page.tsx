@@ -1,12 +1,12 @@
-﻿import type { Metadata } from "next";
-import { SolutionPage } from "@/components/public/SolutionPage";
+import type { Metadata } from "next";
+import { DealershipSolutionView } from "@/components/public/DealershipSolutionView";
 
-// The updated Figma Dealership frame contains the industrial solutions page.
 export const metadata: Metadata = {
-  title: "Industrial Power Factor Correction Solutions | CAPCO",
-  description: "Power factor audits, APFC panel integration support, and bulk capacitor supply for industrial buyers.",
+  title: "Dealership Solutions | CAPCO Capacitors",
+  description:
+    "Join India's most trusted capacitor dealer network: competitive margins, co-branded marketing support, and 30+ years of brand equity behind every sale.",
 };
 
 export default function DealershipSolutionsPage() {
-  return <SolutionPage variant="industrial" />;
+  return <DealershipSolutionView />;
 }

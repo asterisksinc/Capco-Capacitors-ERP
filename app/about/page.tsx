@@ -1,6 +1,7 @@
 "use client";
 
 /* eslint-disable @next/next/no-img-element */
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -362,7 +363,34 @@ function CsrIcon({ type }: { type: string }) {
   );
 }
 
+function useInView<T extends HTMLElement = HTMLElement>(threshold = 0.15) {
+  const ref = useRef<T | null>(null);
+  const [inView, setInView] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setInView(true);
+        }
+      },
+      { threshold }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [threshold]);
+
+  return [ref, inView] as const;
+}
+
 export default function AboutPage() {
+  const [journeyRef, isJourneyInView] = useInView<HTMLElement>(0.12);
+  const [timelineRef, isTimelineInView] = useInView<HTMLElement>(0.12);
+  const [complianceRef, isComplianceInView] = useInView<HTMLElement>(0.1);
+  const [exportRef, isExportInView] = useInView<HTMLElement>(0.12);
+
   return (
     <main className="min-h-screen overflow-x-clip bg-white text-[#020202]">
       {/* 1. HERO SECTION — 100vh including Navbar */}
@@ -404,8 +432,8 @@ export default function AboutPage() {
             {/* White Horizontal Rule */}
             <div className="my-5 h-px w-full bg-white/50 lg:my-6 xl:my-8" />
 
-            {/* Main Heading */}
-            <h1 className="max-w-[1281px] text-[38px] font-light leading-[1.02] tracking-[-0.048em] text-white sm:text-[56px] lg:text-[72px] xl:text-[88px] 2xl:text-[104px] lg:leading-[1]">
+            {/* Main Heading - Scaled down for balanced hero layout */}
+            <h1 className="max-w-[1120px] text-[34px] font-light leading-[1.05] tracking-[-0.04em] text-white sm:text-[46px] lg:text-[58px] xl:text-[70px] 2xl:text-[78px] lg:leading-[1.06]">
               32+ Years of Capacitor
               <br />
               Manufacturing Excellence
@@ -419,9 +447,9 @@ export default function AboutPage() {
                   clipPath:
                     "polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%)",
                 }}
-                className="inline-flex min-h-[54px] w-[260px] items-end justify-between bg-[#58C7E8] px-3 pb-3 pt-5 text-[14px] font-medium leading-[1.2] text-[#121212] transition hover:-translate-y-0.5 hover:brightness-95"
+                className="inline-flex min-h-[54px] w-[260px] items-end justify-between bg-[#58C7E8] px-3 pb-3 pt-5 text-[14px] font-semibold leading-[1.2] !text-[#121212] transition hover:-translate-y-0.5 hover:brightness-95"
               >
-                <span>Explore Manufacturing Line</span>
+                <span className="!text-[#121212]">Explore Manufacturing Line</span>
                 <img src="/figma/solutions/24503.svg" alt="" aria-hidden="true" />
               </a>
 
@@ -431,17 +459,18 @@ export default function AboutPage() {
                   clipPath:
                     "polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%)",
                 }}
-                className="inline-flex min-h-[54px] w-[208px] items-end justify-between bg-white px-3 pb-3 pt-5 text-[14px] font-medium leading-[1.2] text-[#121212] transition hover:-translate-y-0.5 hover:bg-[#F4F4F4]"
+                className="inline-flex min-h-[54px] w-[218px] items-end justify-between bg-white px-4 pb-3 pt-5 text-[14px] font-semibold leading-[1.2] !text-[#121212] transition hover:-translate-y-0.5 hover:bg-[#F4F4F4]"
               >
-                <span>Verify Certifications</span>
+                <span className="!text-[#121212]">View Certifications</span>
                 <svg
-                  width="16"
-                  height="16"
+                  width="18"
+                  height="18"
                   viewBox="0 0 24 24"
                   fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
+                  stroke="#121212"
+                  strokeWidth="2"
                   aria-hidden="true"
+                  className="shrink-0 text-[#121212]"
                 >
                   <path d="M12 2l2.4 1.8 3-.3 1.2 2.8 2.8 1.2-.3 3L22.9 13l-1.8 2.4.3 3-2.8 1.2-1.2 2.8-3-.3L12 23.9l-2.4-1.8-3 .3-1.2-2.8-2.8-1.2.3-3L1.1 13l1.8-2.4-.3-3 2.8-1.2 1.2-2.8 3 .3L12 2z" />
                   <path d="M9 12l2 2 4-4" />
@@ -590,9 +619,16 @@ export default function AboutPage() {
       </section>
 
       {/* 5. OUR JOURNEY — 500+ DEALERS, 100+ OEM PARTNERS, 15+ EXPORT MARKETS */}
-      <section className="px-6 py-16 lg:px-[60px] lg:py-[100px]">
+      <section ref={journeyRef} className="px-6 py-16 lg:px-[60px] lg:py-[100px]">
         <div className="mx-auto max-w-[1800px]">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div
+            style={{
+              opacity: isJourneyInView ? 1 : 0,
+              transform: isJourneyInView ? "translateY(0)" : "translateY(32px)",
+              transition: "opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1)",
+            }}
+            className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between"
+          >
             <div className="max-w-[680px]">
               <p className="inline-flex items-center gap-2 text-[14px] font-medium uppercase tracking-normal text-[#020202]">
                 <span className="h-[6px] w-[6px] bg-[#58C7E8]" />
@@ -610,16 +646,19 @@ export default function AboutPage() {
             </p>
           </div>
 
-          {/* 3 Stacked Clipped Highlight Cards */}
+          {/* 3 Stacked Clipped Highlight Cards with Scroll Stagger Animation */}
           <div className="mx-auto mt-12 flex max-w-[832px] flex-col gap-5 lg:mt-[60px]">
-            {JOURNEY_HIGHLIGHTS.map((card) => (
+            {JOURNEY_HIGHLIGHTS.map((card, idx) => (
               <article
                 key={card.num}
                 style={{
                   clipPath:
                     "polygon(0 0, 100% 0, 100% calc(100% - 42px), calc(100% - 42px) 100%, 0 100%)",
+                  opacity: isJourneyInView ? 1 : 0,
+                  transform: isJourneyInView ? "translateY(0) scale(1)" : "translateY(36px) scale(0.97)",
+                  transition: `opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1) ${idx * 160 + 150}ms, transform 0.8s cubic-bezier(0.16, 1, 0.3, 1) ${idx * 160 + 150}ms`,
                 }}
-                className={`${card.bg} flex min-h-[260px] flex-col justify-between p-7 sm:p-10 lg:min-h-[295px] lg:p-[42px]`}
+                className={`${card.bg} flex min-h-[260px] flex-col justify-between p-7 sm:p-10 lg:min-h-[295px] lg:p-[42px] transition-all duration-300 hover:-translate-y-1 hover:shadow-lg`}
               >
                 <span className="text-[16px] font-medium text-[#58C7E8]">{card.num}</span>
                 <div className="mt-6">
@@ -694,9 +733,16 @@ export default function AboutPage() {
       </section>
 
       {/* 7. 32 YEARS OF GROWTH, INNOVATION & COMPLIANCE TIMELINE */}
-      <section className="px-6 py-16 lg:px-[60px] lg:py-[100px]">
+      <section id="company-timeline" ref={timelineRef} className="px-6 py-16 lg:px-[60px] lg:py-[100px]">
         <div className="mx-auto max-w-[1800px]">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+          <div
+            style={{
+              opacity: isTimelineInView ? 1 : 0,
+              transform: isTimelineInView ? "translateY(0)" : "translateY(32px)",
+              transition: "opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1)",
+            }}
+            className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between"
+          >
             <div className="max-w-[900px]">
               <p className="inline-flex items-center gap-2 text-[14px] font-medium uppercase tracking-normal text-[#020202]">
                 <span className="h-[6px] w-[6px] bg-[#58C7E8]" />
@@ -726,21 +772,30 @@ export default function AboutPage() {
             </a>
           </div>
 
-          {/* 7 Timeline Rows */}
+          {/* 7 Timeline Rows with Animated Bar Filling and Staggered Entrance */}
           <div className="mt-12 flex flex-col gap-10 lg:mt-[60px] lg:gap-[48px]">
             {TIMELINE_MILESTONES.map((item, idx) => (
               <div
                 key={`${item.year}-${idx}`}
+                style={{
+                  opacity: isTimelineInView ? 1 : 0,
+                  transform: isTimelineInView ? "translateY(0)" : "translateY(24px)",
+                  transition: `opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1) ${idx * 120 + 80}ms, transform 0.75s cubic-bezier(0.16, 1, 0.3, 1) ${idx * 120 + 80}ms`,
+                }}
                 className="grid items-center gap-4 lg:grid-cols-[260px_320px_1fr] lg:gap-[40px]"
               >
                 <div className="text-[28px] font-medium leading-none tracking-[-0.03em] text-[#020202] lg:text-[36px]">
                   {item.year}
                 </div>
 
-                <div className="relative h-[2px] w-full bg-[#DBDBDB]" aria-hidden="true">
+                {/* Progress bar with smooth filling animation */}
+                <div className="relative h-[3px] w-full bg-[#E5E5E5] rounded-full overflow-hidden" aria-hidden="true">
                   <span
-                    className="absolute inset-y-0 left-0 bg-[#58C7E8]"
-                    style={{ width: item.progress }}
+                    className="absolute inset-y-0 left-0 bg-[#58C7E8] rounded-full"
+                    style={{
+                      width: isTimelineInView ? item.progress : "0%",
+                      transition: `width 1.2s cubic-bezier(0.16, 1, 0.3, 1) ${idx * 130 + 200}ms`,
+                    }}
                   />
                 </div>
 
@@ -973,9 +1028,16 @@ export default function AboutPage() {
       </section>
 
       {/* 9. COMPLIANCE — BIS, ISO, CE & IEC CERTIFIED MANUFACTURING */}
-      <section id="compliance" className="bg-[#F4F4F4] px-6 py-16 lg:px-[60px] lg:py-[100px]">
+      <section ref={complianceRef} id="compliance" className="bg-[#F4F4F4] px-6 py-16 lg:px-[60px] lg:py-[100px]">
         <div className="mx-auto max-w-[1800px]">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div
+            style={{
+              opacity: isComplianceInView ? 1 : 0,
+              transform: isComplianceInView ? "translateY(0)" : "translateY(32px)",
+              transition: "opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1)",
+            }}
+            className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between"
+          >
             <div className="max-w-[680px]">
               <p className="inline-flex items-center gap-2 text-[14px] font-medium uppercase tracking-normal text-[#020202]">
                 <span className="h-[6px] w-[6px] bg-[#58C7E8]" />
@@ -994,14 +1056,26 @@ export default function AboutPage() {
           </div>
 
           <div className="mt-12 flex flex-col gap-6 lg:mt-[60px] lg:gap-[20px]">
-            {COMPLIANCE_ROWS.map((row) => (
+            {COMPLIANCE_ROWS.map((row, idx) => (
               <article
                 key={row.label}
+                style={{
+                  opacity: isComplianceInView ? 1 : 0,
+                  transform: isComplianceInView ? "translateY(0)" : "translateY(32px)",
+                  transition: `opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1) ${idx * 110 + 80}ms, transform 0.75s cubic-bezier(0.16, 1, 0.3, 1) ${idx * 110 + 80}ms`,
+                }}
                 className="grid items-start gap-5 lg:grid-cols-[1fr_902px] lg:gap-[42px]"
               >
                 <div className="flex items-center gap-5 pt-2 text-[24px] font-normal leading-[1.2] text-[#595959] sm:text-[30px] lg:gap-[42px] lg:text-[36px]">
                   <span className="whitespace-nowrap">{row.label}</span>
-                  <span className="h-[2px] flex-1 bg-[#D9D9D9]" />
+                  <span
+                    className="h-[2px] bg-[#D9D9D9] transition-all duration-1000 origin-left"
+                    style={{
+                      width: isComplianceInView ? "100%" : "0%",
+                      flex: isComplianceInView ? "1 1 0%" : "0 0 0%",
+                      transition: `all 1s cubic-bezier(0.16, 1, 0.3, 1) ${idx * 110 + 200}ms`,
+                    }}
+                  />
                 </div>
 
                 <div
@@ -1009,7 +1083,7 @@ export default function AboutPage() {
                     clipPath:
                       "polygon(0 0, 100% 0, 100% calc(100% - 42px), calc(100% - 42px) 100%, 0 100%)",
                   }}
-                  className="flex min-h-[340px] flex-col justify-between bg-white p-7 sm:p-10 lg:min-h-[394px] lg:p-[42px]"
+                  className="flex min-h-[340px] flex-col justify-between bg-white p-7 sm:p-10 lg:min-h-[394px] lg:p-[42px] transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
                 >
                   <div>
                     <ComplianceIcon type={row.icon} />
@@ -1134,13 +1208,22 @@ export default function AboutPage() {
 
       {/* 11. EXPORT MARKETS — SERVING OEMS & DISTRIBUTORS IN 15+ COUNTRIES */}
       <section
+        id="export-markets"
+        ref={exportRef}
         style={{
           background: "linear-gradient(180deg, rgba(244, 244, 244, 0) 0%, #EEFAFF 100%)",
         }}
         className="px-6 py-16 lg:px-[60px] lg:py-[100px]"
       >
         <div className="mx-auto max-w-[1800px]">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div
+            style={{
+              opacity: isExportInView ? 1 : 0,
+              transform: isExportInView ? "translateY(0)" : "translateY(32px)",
+              transition: "opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1)",
+            }}
+            className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between"
+          >
             <div className="max-w-[680px]">
               <p className="inline-flex items-center gap-2 text-[14px] font-medium uppercase tracking-normal text-[#020202]">
                 <span className="h-[6px] w-[6px] bg-[#58C7E8]" />
@@ -1160,10 +1243,15 @@ export default function AboutPage() {
           </div>
 
           <div className="mt-12 divide-y divide-[#DBDBDB] lg:mt-[60px]">
-            {EXPORT_REGIONS.map((region) => (
+            {EXPORT_REGIONS.map((region, idx) => (
               <div
                 key={region.code}
-                className="grid items-start gap-6 py-8 first:pt-0 last:pb-0 lg:grid-cols-[310px_1fr_540px] lg:gap-8 lg:py-[36px]"
+                style={{
+                  opacity: isExportInView ? 1 : 0,
+                  transform: isExportInView ? "translateY(0)" : "translateY(24px)",
+                  transition: `opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1) ${idx * 130 + 80}ms, transform 0.75s cubic-bezier(0.16, 1, 0.3, 1) ${idx * 130 + 80}ms`,
+                }}
+                className="grid items-start gap-6 py-8 first:pt-0 last:pb-0 lg:grid-cols-[310px_1fr_540px] lg:gap-8 lg:py-[36px] transition-all duration-300 hover:bg-white/40 px-3 rounded-lg"
               >
                 <div className="text-[22px] font-normal uppercase tracking-[-0.02em] text-[#595959] lg:text-[24px]">
                   {region.code}
@@ -1179,15 +1267,15 @@ export default function AboutPage() {
                 </div>
 
                 <div className="flex flex-wrap items-start gap-2.5 lg:justify-start">
-                  <span className="inline-flex items-center gap-1.5 bg-[#F4F4F4] px-3 py-2 text-[12px] leading-none">
+                  <span className="inline-flex items-center gap-1.5 bg-[#F4F4F4] px-3 py-2 text-[12px] leading-none transition-transform hover:scale-105">
                     <span className="text-[#595959]">COMPLIANCE:</span>
                     <strong className="font-medium text-[#020202]">{region.compliance}</strong>
                   </span>
-                  <span className="inline-flex items-center gap-1.5 bg-[#F4F4F4] px-3 py-2 text-[12px] leading-none">
+                  <span className="inline-flex items-center gap-1.5 bg-[#F4F4F4] px-3 py-2 text-[12px] leading-none transition-transform hover:scale-105">
                     <span className="text-[#595959]">PRIMARY PORT:</span>
                     <strong className="font-medium text-[#020202]">{region.port}</strong>
                   </span>
-                  <span className="inline-flex items-center gap-1.5 bg-[#F4F4F4] px-3 py-2 text-[12px] leading-none">
+                  <span className="inline-flex items-center gap-1.5 bg-[#F4F4F4] px-3 py-2 text-[12px] leading-none transition-transform hover:scale-105">
                     <span className="text-[#595959]">TYPICAL TRANSIT:</span>
                     <strong className="font-medium text-[#020202]">{region.transit}</strong>
                   </span>

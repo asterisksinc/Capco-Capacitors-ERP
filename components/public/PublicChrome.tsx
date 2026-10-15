@@ -477,11 +477,13 @@ export function PublicFooter({
   ctaBody = "Whether you need a single custom capacitor or a complete supply chain partnership, our OEM team is ready to support your requirements with technical expertise, competitive pricing, and reliable delivery.",
   ctaButton = "Request OEM Pricing",
   ctaHref = "/contact?category=oem#enquiry-form",
+  hideCta = false,
 }: {
   ctaTitle?: string;
   ctaBody?: string;
   ctaButton?: string;
   ctaHref?: string;
+  hideCta?: boolean;
 }) {
   const handleNewsletter = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -494,55 +496,56 @@ export function PublicFooter({
 
   return (
     <>
-      <section
-        id="contact"
-        className="relative grid min-h-[560px] place-items-center overflow-hidden bg-[#121212] px-6 py-24 text-white lg:min-h-[720px] lg:px-[60px]"
-      >
-        {/* Concentric Rings & Dial Ticks */}
-        <div className="pointer-events-none absolute inset-0" aria-hidden="true">
-          <span className="absolute left-1/2 top-1/2 h-[560px] w-[560px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/10" />
-          <span className="absolute left-1/2 top-1/2 h-[980px] w-[980px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/[0.06]" />
-          <span className="absolute left-1/2 top-1/2 h-[1500px] w-[1500px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/[0.04]" />
-          <div
-            style={{ backgroundImage: 'url("/figma/solutions/527c0.svg")' }}
-            className="absolute left-1/2 top-1/2 h-[636px] w-[636px] -translate-x-1/2 -translate-y-1/2 bg-contain bg-no-repeat"
-          />
-          <div
-            style={{ backgroundImage: 'url("/figma/solutions/9c1db.svg")' }}
-            className="absolute left-1/2 top-1/2 h-[856px] w-[856px] -translate-x-1/2 -translate-y-1/2 bg-contain bg-no-repeat"
-          />
-          {/* 4 Corner L-Brackets */}
-          <span className="absolute left-[15.9%] top-[18%] hidden h-[10px] w-[10px] border-l border-t border-white/30 lg:block" />
-          <span className="absolute right-[15.9%] top-[18%] hidden h-[10px] w-[10px] border-r border-t border-white/30 lg:block" />
-          <span className="absolute bottom-[18%] left-[15.9%] hidden h-[10px] w-[10px] border-b border-l border-white/30 lg:block" />
-          <span className="absolute bottom-[18%] right-[15.9%] hidden h-[10px] w-[10px] border-b border-r border-white/30 lg:block" />
-        </div>
-
-        <div className="relative z-10 mx-auto max-w-[860px] text-center">
-          <h2 className="text-[36px] font-normal leading-[1.15] tracking-[-0.05em] text-white sm:text-[42px] lg:text-[48px]">
-            {ctaTitle}
-          </h2>
-          {ctaBody ? (
-            <p className="mx-auto mt-6 max-w-[860px] text-[16px] leading-[1.42] tracking-[-0.03em] text-white/90 lg:mt-8 lg:text-[18px]">
-              {ctaBody}
-            </p>
-          ) : null}
-          <div className="mt-8">
-            <Link
-              href={ctaHref}
-              style={{
-                backgroundImage: 'url("/figma/solutions/ad979.svg")',
-                backgroundSize: "100% 100%",
-                backgroundRepeat: "no-repeat",
-              }}
-              className="inline-flex min-h-[68px] w-[200px] items-end justify-between px-3 pb-3 pt-6 text-[14px] font-medium leading-[1.2] text-[#121212] transition hover:-translate-y-0.5 hover:brightness-95"
-            >
-              <span>{ctaButton}</span>
-              <img src="/figma/solutions/24503.svg" alt="" aria-hidden="true" />
-            </Link>
+      {!hideCta && (
+        <section
+          id="contact"
+          className="relative grid min-h-[560px] place-items-center overflow-hidden bg-[#121212] px-6 py-24 text-white lg:min-h-[720px] lg:px-[60px]"
+        >
+          {/* Concentric Rings & Dial Ticks */}
+          <div className="pointer-events-none absolute inset-0" aria-hidden="true">
+            <span className="absolute left-1/2 top-1/2 h-[560px] w-[560px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/10" />
+            <span className="absolute left-1/2 top-1/2 h-[980px] w-[980px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/[0.06]" />
+            <span className="absolute left-1/2 top-1/2 h-[1500px] w-[1500px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/[0.04]" />
+            <div
+              style={{ backgroundImage: 'url("/figma/solutions/527c0.svg")' }}
+              className="absolute left-1/2 top-1/2 h-[636px] w-[636px] -translate-x-1/2 -translate-y-1/2 bg-contain bg-no-repeat"
+            />
+            <div
+              style={{ backgroundImage: 'url("/figma/solutions/9c1db.svg")' }}
+              className="absolute left-1/2 top-1/2 h-[856px] w-[856px] -translate-x-1/2 -translate-y-1/2 bg-contain bg-no-repeat"
+            />
+            {/* 4 Corner L-Brackets */}
+            <span className="absolute left-[15.9%] top-[18%] hidden h-[10px] w-[10px] border-l border-t border-white/30 lg:block" />
+            <span className="absolute right-[15.9%] top-[18%] hidden h-[10px] w-[10px] border-r border-t border-white/30 lg:block" />
+            <span className="absolute bottom-[18%] left-[15.9%] hidden h-[10px] w-[10px] border-b border-l border-white/30 lg:block" />
+            <span className="absolute bottom-[18%] right-[15.9%] hidden h-[10px] w-[10px] border-b border-r border-white/30 lg:block" />
           </div>
-        </div>
-      </section>
+
+          <div className="relative z-10 mx-auto max-w-[860px] text-center">
+            <h2 className="text-[36px] font-normal leading-[1.15] tracking-[-0.05em] text-white sm:text-[42px] lg:text-[48px]">
+              {ctaTitle}
+            </h2>
+            {ctaBody ? (
+              <p className="mx-auto mt-6 max-w-[860px] text-[16px] leading-[1.42] tracking-[-0.03em] text-white/90 lg:mt-8 lg:text-[18px]">
+                {ctaBody}
+              </p>
+            ) : null}
+            <div className="mt-8">
+              <Link
+                href={ctaHref}
+                style={{
+                  clipPath:
+                    "polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%)",
+                }}
+                className="inline-flex min-h-[56px] min-w-[200px] items-end justify-between bg-[#4E76F5] px-4 pb-3 pt-6 text-[14px] font-semibold leading-[1.2] text-white transition hover:-translate-y-0.5 hover:brightness-105"
+              >
+                <span>{ctaButton}</span>
+                <ArrowRight size={16} />
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
 
       <footer
         style={{
@@ -555,7 +558,7 @@ export function PublicFooter({
           <div className="grid gap-12 lg:grid-cols-[1fr_1040px] lg:gap-[120px]">
             <div>
               <h3 className="text-[28px] font-normal tracking-[-0.04em] text-white lg:text-[32px]">
-                Talk with an expert at Anode
+                Join our Newsletter
               </h3>
               <form onSubmit={handleNewsletter} className="mt-4 flex max-w-[276px]">
                 <input
@@ -575,7 +578,7 @@ export function PublicFooter({
               </form>
             </div>
 
-            <div className="grid grid-cols-2 gap-x-8 gap-y-12 sm:grid-cols-2 lg:gap-y-[100px]">
+            <div className="grid grid-cols-2 gap-x-8 gap-y-12 sm:grid-cols-3 lg:gap-y-[60px]">
               <div>
                 <p className="mb-4 text-[14px] text-white/40">Company</p>
                 <div className="space-y-1.5 text-[12px]">
@@ -585,11 +588,11 @@ export function PublicFooter({
                   <Link href="/about" className="block hover:text-[#58C7E8]">
                     About
                   </Link>
-                  <Link href="/solutions/oem" className="block hover:text-[#58C7E8]">
-                    Solutions
+                  <Link href="/about#gallery" className="block hover:text-[#58C7E8]">
+                    Gallery
                   </Link>
-                  <Link href="/products" className="block hover:text-[#58C7E8]">
-                    Projects
+                  <Link href="/about#awards" className="block hover:text-[#58C7E8]">
+                    Awards &amp; Achievements
                   </Link>
                   <Link href="/contact" className="block hover:text-[#58C7E8]">
                     Careers
@@ -604,14 +607,30 @@ export function PublicFooter({
                 <p className="mb-4 text-[14px] text-white/40">Solutions</p>
                 <div className="space-y-1.5 text-[12px]">
                   <Link href="/solutions/oem" className="block hover:text-[#58C7E8]">
-                    Systems
+                    OEMs
                   </Link>
                   <Link href="/solutions/dealership" className="block hover:text-[#58C7E8]">
-                    Deployment
+                    Dealership
                   </Link>
-                  <Link href="/products" className="block hover:text-[#58C7E8]">
-                    Software
+                  <Link href="/solutions" className="block hover:text-[#58C7E8]">
+                    B2D Marketing Landing Page
                   </Link>
+                  <Link href="/contact" className="block hover:text-[#58C7E8]">
+                    Industrial Enquiry
+                  </Link>
+                </div>
+              </div>
+
+              <div>
+                <p className="mb-4 text-[14px] text-white/40">Global Footprint</p>
+                <div className="space-y-1.5 text-[12px]">
+                  <span className="block text-white/80">UAE</span>
+                  <span className="block text-white/80">USA</span>
+                  <span className="block text-white/80">Sri Lanka</span>
+                  <span className="block text-white/80">Bangladesh</span>
+                  <span className="block text-white/80">Turkey</span>
+                  <span className="block text-white/80">African Continent</span>
+                  <span className="block text-white/80">Egypt</span>
                 </div>
               </div>
 
@@ -621,14 +640,14 @@ export function PublicFooter({
                   <Link href="/about#compliance" className="block hover:text-[#58C7E8]">
                     Newsroom
                   </Link>
+                  <Link href="/about" className="block hover:text-[#58C7E8]">
+                    Corporate Social Responsibility
+                  </Link>
+                  <Link href="/about#awards" className="block hover:text-[#58C7E8]">
+                    Awards
+                  </Link>
                   <Link href="/about#compliance" className="block hover:text-[#58C7E8]">
-                    Announcements
-                  </Link>
-                  <Link href="/about" className="block hover:text-[#58C7E8]">
-                    Editorial
-                  </Link>
-                  <Link href="/about" className="block hover:text-[#58C7E8]">
-                    Shareholder Letters
+                    Certifications
                   </Link>
                 </div>
               </div>
@@ -636,6 +655,14 @@ export function PublicFooter({
               <div>
                 <p className="mb-4 text-[14px] text-white/40">Social</p>
                 <div className="space-y-1.5 text-[12px]">
+                  <a
+                    href="https://instagram.com"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="block hover:text-[#58C7E8]"
+                  >
+                    Instagram
+                  </a>
                   <a
                     href="https://linkedin.com"
                     target="_blank"
@@ -645,36 +672,79 @@ export function PublicFooter({
                     LinkedIn
                   </a>
                   <a
-                    href="https://x.com"
+                    href="https://facebook.com"
                     target="_blank"
                     rel="noreferrer"
                     className="block hover:text-[#58C7E8]"
                   >
-                    X (Twitter)
+                    Facebook
+                  </a>
+                  <a
+                    href="https://youtube.com"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="block hover:text-[#58C7E8]"
+                  >
+                    YouTube
+                  </a>
+                </div>
+              </div>
+
+              <div>
+                <p className="mb-4 text-[14px] text-white/40">Contact</p>
+                <div className="space-y-1.5 text-[12px]">
+                  <a
+                    href="https://instagram.com"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="block hover:text-[#58C7E8]"
+                  >
+                    Instagram
+                  </a>
+                  <a
+                    href="https://linkedin.com"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="block hover:text-[#58C7E8]"
+                  >
+                    LinkedIn
+                  </a>
+                  <a
+                    href="https://facebook.com"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="block hover:text-[#58C7E8]"
+                  >
+                    Facebook
+                  </a>
+                  <a
+                    href="https://youtube.com"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="block hover:text-[#58C7E8]"
+                  >
+                    YouTube
                   </a>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="mt-16 flex flex-wrap items-center justify-between gap-6 text-[12px] text-white/55 lg:mt-[120px]">
+          <div className="mt-16 flex flex-wrap items-center justify-between gap-6 text-[12px] text-white/55 lg:mt-[100px]">
             <Link href="/" aria-label="CAPCO home">
-              <img src="/figma/solutions/75083.svg" alt="ANODE" className="h-auto max-w-[240px]" />
+              <Image src="/figma/solutions/caef4.png" alt="CAPCO Capacitors" width={127} height={47} />
             </Link>
-            <span>©2026 Anode Energy</span>
-            <div className="flex flex-col text-white">
+            <span>©2026 Capco Capacitors</span>
+            <div className="flex gap-6 text-white/80">
               <Link href="/privacy-policy" className="hover:text-[#58C7E8]">
                 Privacy Policy
               </Link>
               <Link href="/terms-and-conditions" className="hover:text-[#58C7E8]">
                 Terms &amp; Conditions
               </Link>
-              <Link href="/cookie-policy" className="hover:text-[#58C7E8]">
-                Cookie Policy
-              </Link>
             </div>
             <span>
-              All Rights Reserved. <span className="ml-3">Website by Flowit.Supply</span>
+              All Rights Reserved. <span className="ml-3">Website by Asterisks.Inc</span>
             </span>
           </div>
         </div>
