@@ -5,11 +5,16 @@ import { productCategories, publicProducts } from "@/lib/publicProducts";
 import { Search } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 export default function ProductsPage() {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("All");
+
+  useEffect(() => {
+    const requestedCategory = new URLSearchParams(window.location.search).get("category");
+    if (requestedCategory && productCategories.includes(requestedCategory)) setCategory(requestedCategory);
+  }, []);
 
   const filteredProducts = useMemo(() => {
     const normalized = query.trim().toLowerCase();

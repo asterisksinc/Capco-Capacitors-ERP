@@ -3,10 +3,13 @@
 /* eslint-disable @next/next/no-img-element */
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { ArrowRight } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import ClientTicker from "@/components/public/ClientTicker";
-import { PublicNav } from "@/components/public/PublicChrome";
+import { PublicFaqSection, PublicNav } from "@/components/public/PublicChrome";
+import { SiteFooter } from "@/components/public/SiteFooter";
 import { type PublicProduct, publicProducts } from "@/lib/publicProducts";
+import { productCopy } from "@/lib/productCopy";
 
 const includedItems = [
   "Vaccum Sealed",
@@ -71,7 +74,7 @@ const manufacturingPhases = [
 
 const locations = [
   {
-    name: "Bell Junction",
+    name: "UAE",
     type: "Operating site",
     detail: "West Texas · ERCOT",
     body: "Standalone storage dispatching into ERCOT West. Containerized LFP, energized and operated by Anode from first dispatch.",
@@ -80,57 +83,57 @@ const locations = [
     icon: "6261e.svg",
   },
   {
-    name: "Cedar Bayou",
+    name: "USA",
     type: "Operating site",
-    detail: "Site location",
-    body: "Explore the operating network and contact our team for more information.",
-    x: 42,
-    y: 40.5,
-    icon: "a1758.svg",
-  },
-  {
-    name: "Marfa Flats",
-    type: "Operating site",
-    detail: "Site location",
-    body: "Standalone storage on a constrained node, cycling twice daily against congestion.",
+    detail: "New York, Los Angeles, Houston",
+    body: "UL-certified Motor Run and PFC Capacitors for North American OEMs.",
     x: 22,
-    y: 43.2,
+    y: 29,
     icon: "a1758.svg",
   },
   {
-    name: "Salt Fork",
+    name: "Sri Lanka",
     type: "Operating site",
-    detail: "Site location",
-    body: "First fleet site to complete a full augmentation cycle with no measured capacity shortfall.",
-    x: 36,
-    y: 28,
+    detail: "Colombo",
+    body: "Submersible Panel and Fan Capacitors for South Asian markets.",
+    x: 67,
+    y: 58,
     icon: "a1758.svg",
   },
   {
-    name: "Dallas HQ",
+    name: "Bangladesh",
+    type: "Operating site",
+    detail: "Dhaka & Chittagong",
+    body: "Motor Start and Fan Capacitors for Bangladesh OEMs.",
+    x: 71,
+    y: 43,
+    icon: "a1758.svg",
+  },
+  {
+    name: "Turkey",
     type: "Office",
-    detail: "Office location",
-    body: "Contact the team for information about this location.",
-    x: 52,
-    y: 34,
+    detail: "Istanbul",
+    body: "Lighting and Motor Run Capacitors for Turkey.",
+    x: 53,
+    y: 27,
     icon: "8200f.svg",
   },
   {
-    name: "Austin",
+    name: "African Continent",
     type: "Office",
-    detail: "Office location",
-    body: "Contact the team for information about this location.",
-    x: 47,
-    y: 47.2,
+    detail: "Lagos, Mombasa, Dar es Salaam",
+    body: "PFC Capacitors and Capacitor Banks across Africa.",
+    x: 49,
+    y: 57,
     icon: "8200f.svg",
   },
   {
-    name: "Rotterdam",
+    name: "Egypt",
     type: "In development",
-    detail: "Development location",
-    body: "Contact the team for information about this location.",
-    x: 66,
-    y: 24.5,
+    detail: "Cairo",
+    body: "PFC and Motor Run Capacitors for Egypt.",
+    x: 54,
+    y: 39,
     icon: "ab167.svg",
   },
   {
@@ -171,6 +174,14 @@ const journeySteps = [
   },
 ];
 
+const certifications = [
+  ["/figma/home/bis-isi.svg", "BIS ISI", "IS:1709 / IS:1569", "IS:2993 / IS:13340"],
+  ["/figma/home/iso-9001.svg", "ISO 9001", "2008 Standards", "Quality Management"],
+  ["/figma/home/ce-mark.svg", "CE MARK", "European Conformity", "Low Voltage Directive"],
+  ["/figma/home/iec-logo.svg", "IEC 60252-1", "AC Motor Capacitors", "General Safety Rules"],
+  ["/figma/home/iec-logo.svg", "IEC 60831", "Power Capacitors", "Self-Healing Shunt"],
+] as const;
+
 type ProductDetailViewProps = {
   product: PublicProduct;
   previous: PublicProduct;
@@ -181,13 +192,29 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
   const [activePhase, setActivePhase] = useState(0);
   const [carouselPage, setCarouselPage] = useState(0);
   const [activeLocation, setActiveLocation] = useState(0);
+  const phaseScaleRef = useRef<HTMLDivElement>(null);
+  const phaseMarkerRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   const totalPages = 4;
   const visibleProducts = [0, 1, 2].map(
     (offset) => publicProducts[(carouselPage * 3 + offset) % publicProducts.length]
   );
 
-  const phaseData = manufacturingPhases[activePhase];
+  const copy = productCopy[product.slug];
+  const phaseItems = (copy?.phases ?? manufacturingPhases.map((phase) => ({ category: phase.category, title: phase.title, description: phase.description }))).map((phase, index) => ({
+    ...phase,
+    phase: `PHASE ${String(index + 1).padStart(2, "0")}`,
+    step: `${String(index + 1).padStart(2, "0")} / 05`,
+    nextPreview: index < 4 ? (copy?.phases[index + 1]?.title ?? manufacturingPhases[index + 1]?.title ?? "") : (copy?.phases[0]?.title ?? "Film Procurement"),
+  }));
+  const phaseData = phaseItems[activePhase];
+  useEffect(() => {
+    const container = phaseScaleRef.current;
+    const marker = phaseMarkerRefs.current[activePhase];
+    if (container && marker) {
+      container.scrollTo({ left: Math.max(0, marker.offsetLeft - container.clientWidth / 2), behavior: "smooth" });
+    }
+  }, [activePhase]);
   const location = locations[activeLocation];
 
   const isBoppFilm = product.slug === "zinc-aluminium-alloy-metalised-bopp-film";
@@ -362,66 +389,24 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
               <p className="mt-1 font-mono text-[12px] text-[#595959]">{phaseData.category}</p>
             </div>
 
-            {/* Timeline Axis */}
-            <div className="relative mx-auto mt-3 max-w-[1800px] px-6 lg:px-[60px]">
-              {/* Center Blue Square + Vertical Green Indicator Line */}
-              <div
-                className="pointer-events-none mx-auto flex flex-col items-center"
-                aria-hidden="true"
-              >
-                <span className="h-[5px] w-[5px] bg-[#4D65FF]" />
-                <span className="h-[140px] w-[1px] bg-gradient-to-b from-[#00E05C] via-[#00E05C]/65 to-transparent" />
-              </div>
-
-              {/* Horizontal Axis Line at y=58px from top of indicator */}
-              <div className="relative -mt-[82px] border-t border-[#DFDFDF]">
-                {/* Right-half ticks and numbered phase buttons (01 at 50%, 02 at 68.5%, 03 at 87%) */}
-                <div className="relative h-[44px] w-full">
-                  {/* Small downward ticks along right half */}
-                  <div
-                    className="pointer-events-none absolute inset-x-1/2 top-0 right-0 hidden justify-between sm:flex"
-                    aria-hidden="true"
-                  >
-                    {Array.from({ length: 19 }, (_, idx) => (
-                      <span key={idx} className="h-[5px] w-[1px] bg-[#DFDFDF]" />
-                    ))}
-                  </div>
-
-                  {/* Phase 01 (Center) */}
+            {/* Scrollable phase scale with the selected marker centered on the green guide */}
+            <div ref={phaseScaleRef} onWheel={(event) => { if (phaseScaleRef.current && Math.abs(event.deltaY) > Math.abs(event.deltaX)) { event.preventDefault(); phaseScaleRef.current.scrollBy({ left: event.deltaY, behavior: "smooth" }); } }} className="hide-scrollbar relative mx-auto mt-3 max-w-[1800px] overflow-x-auto overscroll-x-contain px-6 lg:px-[60px]" aria-label="Scrollable phase scale">
+              <div className="relative h-[150px] min-w-[1200px] border-t border-[#DFDFDF] lg:min-w-[2200px]">
+                <div className="pointer-events-none absolute left-1/2 top-0 z-10 h-[140px] w-px -translate-x-1/2 bg-gradient-to-b from-[#00E05C] via-[#00E05C]/65 to-transparent" aria-hidden="true" />
+                <span className="pointer-events-none absolute left-1/2 -top-[5px] z-20 h-[7px] w-[7px] -translate-x-1/2 bg-[#4D65FF]" aria-hidden="true" />
+                {Array.from({ length: Math.max(phaseItems.length * 6, 6) }, (_, idx) => <span key={idx} className="absolute top-0 h-[7px] w-px bg-[#DFDFDF]" style={{ left: `${(idx / Math.max(phaseItems.length * 6 - 1, 1)) * 100}%` }} aria-hidden="true" />)}
+                {phaseItems.map((phase, index) => (
                   <button
+                    ref={(node) => { phaseMarkerRefs.current[index] = node; }}
                     type="button"
-                    onClick={() => setActivePhase(0)}
-                    className={`absolute left-1/2 top-[16px] -translate-x-1/2 cursor-pointer font-mono text-[11px] transition ${
-                      activePhase === 0 ? "font-semibold text-[#121212]" : "text-[#595959] hover:text-[#121212]"
-                    }`}
+                    key={phase.step}
+                    onClick={() => setActivePhase(index)}
+                    style={{ left: `${phaseItems.length === 1 ? 50 : (index / (phaseItems.length - 1)) * 100}%` }}
+                    className={`absolute top-[34px] -translate-x-1/2 cursor-pointer font-mono text-[20px] transition ${activePhase === index ? "scale-125 font-semibold text-[#121212]" : "text-[#595959] hover:scale-110 hover:text-[#121212]"}`}
                   >
-                    01
+                    {String(index + 1).padStart(2, "0")}
                   </button>
-
-                  {/* Phase 02 */}
-                  <button
-                    type="button"
-                    onClick={() => setActivePhase(1)}
-                    className={`absolute left-[68.5%] top-0 -translate-x-1/2 cursor-pointer font-mono text-[11px] transition ${
-                      activePhase === 1 ? "font-semibold text-[#121212]" : "text-[#595959] hover:text-[#121212]"
-                    }`}
-                  >
-                    <span className="mx-auto -mt-[24px] mb-[16px] block h-[24px] w-[1px] bg-[#DFDFDF]" />
-                    02
-                  </button>
-
-                  {/* Phase 03 */}
-                  <button
-                    type="button"
-                    onClick={() => setActivePhase(2)}
-                    className={`absolute left-[87%] top-0 -translate-x-1/2 cursor-pointer font-mono text-[11px] transition ${
-                      activePhase === 2 ? "font-semibold text-[#121212]" : "text-[#595959] hover:text-[#121212]"
-                    }`}
-                  >
-                    <span className="mx-auto -mt-[24px] mb-[16px] block h-[24px] w-[1px] bg-[#DFDFDF]" />
-                    03
-                  </button>
-                </div>
+                ))}
               </div>
             </div>
 
@@ -470,21 +455,23 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
         </div>
       </section>
 
-      {/* 5. 5-Column Partner Strip */}
-      <section aria-label="Partner network" className="border-y border-[#E7E7E7]">
-        <div className="mx-auto grid max-w-[1920px] grid-cols-2 sm:grid-cols-3 lg:min-h-[218px] lg:grid-cols-5">
-          {Array.from({ length: 5 }, (_, idx) => (
-            <div
-              key={idx}
-              className="flex min-h-[110px] items-center justify-center border-b border-r border-[#E7E7E7] px-6 py-6 last:border-r-0 lg:min-h-[218px] lg:border-b-0"
-            >
-              <img
-                src="/figma/solutions/bc3ed.svg"
-                alt="Logoipsum partner"
-                className="h-auto max-w-[140px] lg:max-w-[162px]"
-              />
+      {/* 5. Product compliance certifications */}
+      <section aria-label="Product certifications" className="relative overflow-hidden bg-[#EEFAFF] px-6 py-16 lg:px-[60px] lg:py-[100px]">
+        <img src="/figma/home/compliance-world-map.png" alt="" aria-hidden="true" className="pointer-events-none absolute -right-[8%] -top-[46px] w-[75%] max-w-none opacity-70" />
+        <div className="relative z-10 mx-auto max-w-[1800px]">
+          <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <div className="flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.02em]"><span className="h-1.5 w-1.5 bg-[#58C7E8]" /> TRUST THROUGH COMPLIANCE</div>
+              <h2 className="mt-4 text-[36px] font-normal leading-[1.08] tracking-[-0.04em] sm:text-[42px] lg:text-[48px]">Certified for Quality, Safety &amp; Export</h2>
+              <p className="mt-4 max-w-[960px] text-[15px] leading-[1.5] text-[#595959] lg:text-[17px]">Industrial precision achieved through single-roof production, autonomous machinery, and stringent dielectric verification.</p>
             </div>
-          ))}
+            <a href="/catalogs/capco-product-catalog.pdf" download className="inline-flex min-h-[56px] w-full max-w-[320px] shrink-0 items-end justify-between gap-4 bg-[#58C7E8] px-4 pb-3 pt-6 text-[13px] font-medium text-[#020202]">Download Compliance Certificates (PDF)<span aria-hidden="true" className="text-xl">↓</span></a>
+          </div>
+          <div className="mt-12 rounded-[20px] bg-white px-4 py-8 shadow-[0_14px_44px_rgba(88,199,232,0.14)] lg:mt-[52px] lg:px-6 lg:py-[42px]">
+            <div className="grid grid-cols-1 divide-y divide-[#EAEAEA] sm:grid-cols-2 sm:divide-y-0 lg:grid-cols-5 lg:divide-x lg:divide-[#EAEAEA]">
+              {certifications.map(([icon, title, sub1, sub2]) => <article key={title} className="flex flex-col items-center px-6 py-6 text-center lg:py-2"><div className="flex h-[68px] w-[68px] items-center justify-center bg-[#EEFAFF]"><img src={icon} alt={title} className="max-h-12 max-w-12" /></div><h3 className="mt-8 text-[19px] font-medium">{title}</h3><div className="my-3 h-px w-[64px] bg-[#58C7E8]" /><p className="text-[14px]">{sub1}</p><p className="mt-1 text-[12px] text-[#595959]">{sub2}</p></article>)}
+            </div>
+          </div>
         </div>
       </section>
 
@@ -574,11 +561,11 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
         className="relative h-[570px] w-full overflow-hidden bg-[#9E9E9E] text-white lg:h-[800px]"
       >
         <Image
-          src="/figma/solutions/caf7c.png"
+          src="/figma/home/compliance-world-map.png"
           alt=""
           fill
           sizes="100vw"
-          className="object-cover"
+          className="object-cover opacity-80 mix-blend-screen"
         />
         <div
           className=" absolute inset-0"
@@ -600,7 +587,7 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
         </div>
 
         {/* Interactive Map Markers */}
-        {locations.map((item, idx) => (
+        {locations.slice(0, 7).map((item, idx) => (
           <button
             type="button"
             key={item.name}
@@ -651,9 +638,20 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
               </span>
             ))}
           </div>
-          <span>{String(activeLocation + 1).padStart(2, "0")}/09</span>
+          <span>{String(activeLocation + 1).padStart(2, "0")}/07</span>
         </div>
       </section>
+
+      {false && <PublicFaqSection
+        eyebrow="Technical Clarity"
+        title="Frequently Asked Questions"
+        items={[
+          { q: "What applications is this product suited for?", a: product.summary },
+          { q: "Can CAPCO customize specifications for OEM requirements?", a: "Yes. Capacitance, housing, terminals, dimensions, and packaging can be configured to your application and assembly-line requirements." },
+          { q: "Do you provide compliance and test certificates?", a: "Every shipment can include applicable BIS, ISO, CE, and IEC documentation with batch-level test results." },
+          { q: "What is the typical lead time for bulk orders?", a: "Standard specifications are scheduled for dispatch within 7–15 working days; custom configurations are confirmed with the quotation." },
+        ]}
+      />}
 
       {/* 8. Ready to Partner? — "Start Your OEM Journey with Capco Capacitors" */}
       <section className="bg-[#121212] px-6 py-16 text-white lg:px-[60px] lg:py-[160px]">
@@ -708,6 +706,35 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
           </div>
         </div>
       </section>
+      <PublicFaqSection
+        eyebrow="Technical Clarity"
+        title="Frequently Asked Questions"
+        items={[
+          { q: "What applications is this product suited for?", a: product.summary },
+          { q: "Can CAPCO customize specifications for OEM requirements?", a: "Yes. Capacitance, housing, terminals, dimensions, and packaging can be configured to your application and assembly-line requirements." },
+          { q: "Do you provide compliance and test certificates?", a: "Every shipment can include applicable BIS, ISO, CE, and IEC documentation with batch-level test results." },
+          { q: "What is the typical lead time for bulk orders?", a: "Standard specifications are scheduled for dispatch within 7-15 working days; custom configurations are confirmed with the quotation." },
+        ]}
+      />
+      <section id="contact" className="hidden relative grid min-h-[560px] place-items-center overflow-hidden bg-[#121212] px-6 py-24 text-white lg:min-h-[720px] lg:px-[60px]">
+        <div className="pointer-events-none absolute inset-0" aria-hidden="true">
+          <span className="absolute left-1/2 top-1/2 h-[560px] w-[560px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/10" />
+          <span className="absolute left-1/2 top-1/2 h-[980px] w-[980px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/[0.06]" />
+          <span className="absolute left-1/2 top-1/2 h-[1500px] w-[1500px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/[0.04]" />
+          <div className="absolute left-1/2 top-1/2 h-[636px] w-[636px] -translate-x-1/2 -translate-y-1/2 bg-contain bg-no-repeat" style={{ backgroundImage: 'url("/figma/solutions/527c0.svg")' }} />
+          <div className="absolute left-1/2 top-1/2 h-[856px] w-[856px] -translate-x-1/2 -translate-y-1/2 bg-contain bg-no-repeat" style={{ backgroundImage: 'url("/figma/solutions/9c1db.svg")' }} />
+          <span className="absolute left-[15.9%] top-[18%] hidden h-[10px] w-[10px] border-l border-t border-white/30 lg:block" />
+          <span className="absolute right-[15.9%] top-[18%] hidden h-[10px] w-[10px] border-r border-t border-white/30 lg:block" />
+          <span className="absolute bottom-[18%] left-[15.9%] hidden h-[10px] w-[10px] border-b border-l border-white/30 lg:block" />
+          <span className="absolute bottom-[18%] right-[15.9%] hidden h-[10px] w-[10px] border-b border-r border-white/30 lg:block" />
+        </div>
+        <div className="relative z-10 mx-auto max-w-[860px] text-center">
+          <h2 className="text-[36px] font-normal leading-[1.15] tracking-[-0.05em] text-white sm:text-[42px] lg:text-[48px]">Ready to Partner?</h2>
+          <p className="mx-auto mt-6 max-w-[860px] text-[16px] leading-[1.42] tracking-[-0.03em] text-white/90 lg:mt-8 lg:text-[18px]">Whether you need a single custom capacitor or a complete supply chain partnership, our OEM team is ready to support your requirements with technical expertise, competitive pricing, and reliable delivery.</p>
+          <div className="mt-8"><Link href="/contact?category=oem#enquiry-form" className="inline-flex min-h-[56px] min-w-[200px] items-end justify-between gap-4 bg-[#4E76F5] px-4 pb-3 pt-6 text-[14px] font-semibold leading-[1.2] text-white transition hover:-translate-y-0.5 hover:brightness-105" style={{ clipPath: "polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%)" }}><span>Request OEM Pricing</span><ArrowRight size={16} /></Link></div>
+        </div>
+      </section>
+      <SiteFooter showPartnerCta />
     </main>
   );
 }

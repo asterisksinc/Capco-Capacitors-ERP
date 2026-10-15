@@ -11,7 +11,7 @@ import { capabilities, industrialFaqs, industrialServices, journeyCards, oemFaqs
 import styles from "./SolutionPage.module.css";
 
 const asset = (name: string) => `/figma/solutions/${name}`;
-const enquiry = (subject: string) => `mailto:sales@capcocapacitor.com?subject=${encodeURIComponent(subject)}`;
+const enquiry = (subject: string) => `mailto:info@capcocapacitor.com?subject=${encodeURIComponent(subject)}`;
 const background = (name: string): CSSProperties => ({ backgroundImage: `url("${asset(name)}")` });
 
 function Icon({ name, className = "" }: { name: string; className?: string }) {
@@ -232,7 +232,7 @@ function Facilities() {
         <Button href="https://www.google.com/maps/search/?api=1&query=DADA+ENERGIES+TSIIC+Automotive+Park+Muppireddypally+Telangana+502336" shape="8435a.svg" icon="38a25.svg" className={styles.directionsButton}>Get Directions on Google Maps</Button>
       </div>
     </div>
-    <div className={styles.contactDesks}><a href="tel:+919848014000"><span>COMMERCIAL DESK PHONE</span><i><Icon name="45042.svg" /></i><p>+91 98480 14000</p></a><a href="mailto:sales@capcocapacitor.com"><span>DEPARTMENT EMAIL DESK</span><i><Icon name="1a3aa.svg" /></i><p>sales@capcocapacitor.com</p></a></div>
+    <div className={styles.contactDesks}><a href="tel:+919848014000"><span>COMMERCIAL DESK PHONE</span><i><Icon name="45042.svg" /></i><p>+91-9848014000</p></a><a href="mailto:info@capcocapacitor.com"><span>DEPARTMENT EMAIL DESK</span><i><Icon name="1a3aa.svg" /></i><p>info@capcocapacitor.com</p></a></div>
   </section>;
 }
 

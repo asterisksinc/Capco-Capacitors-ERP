@@ -172,7 +172,7 @@ const EXPORT_CERTIFICATIONS = [
 ];
 
 const enquiryMailto = (subject: string) =>
-  `mailto:sales@capcocapacitor.com?subject=${encodeURIComponent(subject)}`;
+  `mailto:info@capcocapacitor.com?subject=${encodeURIComponent(subject)}`;
 
 function ChevronDownIcon() {
   return (
@@ -2773,12 +2773,12 @@ export default function ContactPage() {
                 />
               </div>
               <span className="text-[16px] font-normal leading-[1.4] text-white transition group-hover:text-[#58C7E8] sm:text-[18px]">
-                +91 98480 14000
+                +91-9848014000
               </span>
             </a>
 
             <a
-              href="mailto:sales@capcocapacitor.com"
+              href="mailto:info@capcocapacitor.com"
               className="group flex flex-col items-start justify-center gap-3"
             >
               <span className="text-[14px] font-normal uppercase leading-[1.2] text-white/50 sm:text-[16px]">
@@ -2793,7 +2793,7 @@ export default function ContactPage() {
                 />
               </div>
               <span className="text-[16px] font-normal leading-[1.4] text-white transition group-hover:text-[#58C7E8] sm:text-[18px]">
-                sales@capcocapacitor.com
+                info@capcocapacitor.com
               </span>
             </a>
           </div>

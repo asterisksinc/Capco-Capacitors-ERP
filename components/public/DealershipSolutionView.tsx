@@ -529,13 +529,13 @@ export function DealershipSolutionView() {
                   COMMERCIAL DESK PHONE
                 </span>
                 <strong className="mt-1 block text-[20px] font-medium text-white sm:text-[24px]">
-                  +91 98480 14000
+                  +91-9848014000
                 </strong>
               </div>
             </a>
 
             <a
-              href="mailto:sales@capcocapacitor.com"
+              href="mailto:info@capcocapacitor.com"
               className="flex items-center gap-5 rounded-[16px] border border-white/10 bg-white/5 p-6 transition hover:bg-white/10 sm:p-8"
             >
               <div className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-white/10 text-white">
@@ -546,7 +546,7 @@ export function DealershipSolutionView() {
                   DEPARTMENT EMAIL DESK
                 </span>
                 <strong className="mt-1 block text-[20px] font-medium text-white sm:text-[24px]">
-                  sales@capcocapacitor.com
+                  info@capcocapacitor.com
                 </strong>
               </div>
             </a>

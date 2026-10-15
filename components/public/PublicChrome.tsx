@@ -139,28 +139,51 @@ export function PublicNav({
               Products
               <ChevronDown size={15} className="transition-transform duration-200 group-hover:rotate-180" />
             </Link>
-            <div className="invisible absolute left-0 top-full z-40 min-w-[260px] border border-[#E4E4E4] bg-white p-2 text-[#020202] opacity-0 shadow-xl transition group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
+            <div className="invisible absolute left-0 top-full z-40 min-w-[280px] border border-[#E4E4E4] bg-white p-2 text-[#020202] opacity-0 shadow-xl transition group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
               <Link href="/products" className="block px-4 py-2.5 text-sm font-medium hover:bg-[#F5F5F5]">
                 All Products
               </Link>
-              <Link
-                href="/products/zinc-aluminium-alloy-metalised-bopp-film"
-                className="block px-4 py-2.5 text-sm hover:bg-[#F5F5F5]"
-              >
-                Metalized BOPP Film (MPP)
-              </Link>
-              <Link href="/products/fan-capacitor" className="block px-4 py-2.5 text-sm hover:bg-[#F5F5F5]">
-                Fan Capacitors
-              </Link>
-              <Link href="/products/motor-run-capacitor" className="block px-4 py-2.5 text-sm hover:bg-[#F5F5F5]">
-                Motor Run Capacitors
-              </Link>
-              <Link href="/products/pfc-cylindrical-capacitor" className="block px-4 py-2.5 text-sm hover:bg-[#F5F5F5]">
-                Power Factor Correction (PFC)
-              </Link>
-              <Link href="/products/lighting-luminaire-capacitor" className="block px-4 py-2.5 text-sm hover:bg-[#F5F5F5]">
-                Luminaire &amp; UV Capacitors
-              </Link>
+              {[
+                ["Metalized Polypropylene Film", "Metalized Polypropylene Film [ MPP ]", "/products/zinc-aluminium-alloy-metalised-bopp-film"],
+                ["Fan / Motor Capacitors", "Fan Capacitors", "/products/fan-capacitor"],
+                ["Luminaire Capacitor", "Luminaire Capacitor", "/products/lighting-luminaire-capacitor"],
+                ["Power Factor Capacitors", "Power Factor Capacitors", "/products/pfc-cylindrical-capacitor"],
+                ["Customized Capacitors", "All", "/products"],
+              ].map(([label, category, href]) => (
+                <div key={label} className="group/product relative">
+                  <Link href={`${href === "/products" ? href : `${href}?category=${encodeURIComponent(category)}`}`} className="flex items-center justify-between px-4 py-3 text-sm hover:bg-[#F5F5F5]">
+                    <span>{label}</span>
+                    {label !== "Customized Capacitors" && <span aria-hidden="true" className="ml-4 text-base leading-none">›</span>}
+                  </Link>
+                  {label === "Metalized Polypropylene Film" && (
+                    <div className="invisible absolute left-full top-0 min-w-[440px] border border-[#E4E4E4] bg-white p-2 opacity-0 shadow-xl transition group-hover/product:visible group-hover/product:opacity-100">
+                      <Link href="/products/zinc-aluminium-alloy-metalised-bopp-film" className="block px-4 py-3 text-sm hover:bg-[#F5F5F5]">Zinc/ Aluminium Alloy Metalized BOPP Film</Link>
+                    </div>
+                  )}
+                  {label === "Fan / Motor Capacitors" && (
+                    <div className="invisible absolute left-full top-0 min-w-[280px] border border-[#E4E4E4] bg-white p-2 opacity-0 shadow-xl transition group-hover/product:visible group-hover/product:opacity-100">
+                      <Link href="/products?category=Fan%20Capacitors" className="block px-4 py-3 text-sm hover:bg-[#F5F5F5]">Fan Capacitor</Link>
+                      <Link href="/products?category=Motor%20Capacitors" className="block px-4 py-3 text-sm hover:bg-[#F5F5F5]">Motor Run Capacitor</Link>
+                      <Link href="/products?category=Motor%20Capacitors" className="block px-4 py-3 text-sm hover:bg-[#F5F5F5]">Motor Start Capacitor</Link>
+                      <Link href="/products?category=Motor%20Capacitors" className="block px-4 py-3 text-sm hover:bg-[#F5F5F5]">Submersible Panel Capacitor</Link>
+                      <Link href="/products?category=Fan%20Capacitors" className="block px-4 py-3 text-sm hover:bg-[#F5F5F5]">A.C. / Refrigeration / Washing Machine Capacitor</Link>
+                    </div>
+                  )}
+                  {label === "Luminaire Capacitor" && (
+                    <div className="invisible absolute left-full top-0 min-w-[240px] border border-[#E4E4E4] bg-white p-2 opacity-0 shadow-xl transition group-hover/product:visible group-hover/product:opacity-100">
+                      <Link href="/products?category=Luminaire%20Capacitor" className="block px-4 py-3 text-sm hover:bg-[#F5F5F5]">Lighting Capacitor</Link>
+                      <Link href="/products?category=Luminaire%20Capacitor" className="block px-4 py-3 text-sm hover:bg-[#F5F5F5]">UV Lamp Capacitor</Link>
+                    </div>
+                  )}
+                  {label === "Power Factor Capacitors" && (
+                    <div className="invisible absolute left-full top-0 min-w-[220px] border border-[#E4E4E4] bg-white p-2 opacity-0 shadow-xl transition group-hover/product:visible group-hover/product:opacity-100">
+                      <Link href="/products?category=Power%20Factor%20Capacitors" className="block px-4 py-3 text-sm hover:bg-[#F5F5F5]">Cylindrical</Link>
+                      <Link href="/products?category=Power%20Factor%20Capacitors" className="block px-4 py-3 text-sm hover:bg-[#F5F5F5]">Box Type</Link>
+                      <Link href="/products?category=Power%20Factor%20Capacitors" className="block px-4 py-3 text-sm hover:bg-[#F5F5F5]">Capacitor Bank</Link>
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
 
@@ -205,7 +228,7 @@ export function PublicNav({
             className="inline-flex h-12 items-center gap-2 px-3 text-[13px] font-medium transition hover:text-[#58C7E8]"
           >
             <Phone size={15} />
-            1800-XXX-XXXX
+            +91-9848014000
           </a>
           <Link
             href="/login"
@@ -501,7 +524,7 @@ export function PublicFooter({
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     const email = form.get("email");
-    window.location.href = `mailto:sales@capcocapacitor.com?subject=${encodeURIComponent(
+    window.location.href = `mailto:info@capcocapacitor.com?subject=${encodeURIComponent(
       "Newsletter Signup"
     )}&body=${encodeURIComponent(`Please subscribe ${email} to CAPCO updates.`)}`;
   };

@@ -75,6 +75,12 @@
 
 .form button:hover { background: #58c7e8; }
 
+.contactCard { margin-top: 38px; max-width: 300px; color: #d0d0d0; font-size: 12px; line-height: 1.7; }
+.contactCard p { margin: 0 0 18px; }
+.contactHeading { color: #58c7e8; font-size: 16px; font-weight: 500; letter-spacing: -.02em; }
+.socialRow { display: flex; flex-wrap: wrap; gap: 14px; border-top: 1px solid rgb(255 255 255 / 20%); padding-top: 14px; }
+.socialRow a { color: white; font-size: 12px; }
+
 .links {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

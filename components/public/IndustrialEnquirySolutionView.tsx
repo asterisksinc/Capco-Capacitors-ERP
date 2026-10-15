@@ -1101,7 +1101,7 @@ export function IndustrialEnquirySolutionView() {
                   <Headphones size={38} className="text-white" />
                 </div>
                 <strong className="text-[18px] font-normal leading-[140%] text-white transition group-hover:text-[#58C7E8]">
-                  +91 98480 14000
+                  +91-9848014000
                 </strong>
               </a>
             </div>
@@ -1112,14 +1112,14 @@ export function IndustrialEnquirySolutionView() {
                 DEPARTMENT EMAIL DESK
               </span>
               <a
-                href="mailto:sales@capcocapacitor.com"
+                href="mailto:info@capcocapacitor.com"
                 className="group flex flex-col items-start gap-4 transition"
               >
                 <div className="grid h-[156px] w-[156px] place-items-center rounded-full border border-white/50 transition group-hover:border-white group-hover:bg-white/10">
                   <Mail size={38} className="text-white" />
                 </div>
                 <strong className="text-[18px] font-normal leading-[140%] text-white transition group-hover:text-[#58C7E8]">
-                  sales@capcocapacitor.com
+                  info@capcocapacitor.com
                 </strong>
               </a>
             </div>

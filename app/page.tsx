@@ -18,9 +18,9 @@ import {
 import { SiteFooter } from "@/components/public/SiteFooter";
 
 const productLinks = [
-  "/products/zinc-aluminium-alloy-metalised-bopp-film", "/products/motor-run-capacitor",
-  "/products/pfc-cylindrical-capacitor", "/products/lighting-luminaire-capacitor",
-  "/products/uv-lamp-capacitor", "/contact?category=oem#enquiry-form",
+  "/products?category=Metalized%20Polypropylene%20Film%20%5B%20MPP%20%5D", "/products?category=Fan%20Capacitors",
+  "/products?category=Power%20Factor%20Capacitors", "/products?category=Luminaire%20Capacitor",
+  "/products?category=Luminaire%20Capacitor", "/products",
 ];
 
 const products = [
@@ -198,6 +198,23 @@ const certifications = [
   },
 ] as const;
 
+const globalMarkets = [
+  { name: "UAE", region: "Middle East", detail: "Dubai & Abu Dhabi · Motor Run and PFC Capacitors", x: 57, y: 34, href: "/regions/middle-east" },
+  { name: "USA", region: "North America", detail: "UL-certified Motor Run and PFC Capacitors", x: 22, y: 29, href: "/regions/usa" },
+  { name: "Sri Lanka", region: "South Asia", detail: "Submersible Panel and Fan Capacitors", x: 67, y: 58, href: "/regions/south-asia" },
+  { name: "Bangladesh", region: "South Asia", detail: "Motor Start and Fan Capacitors", x: 71, y: 43, href: "/regions/south-asia" },
+  { name: "Turkey", region: "Middle East", detail: "Lighting and Motor Run Capacitors", x: 53, y: 27, href: "/regions/middle-east" },
+  { name: "African Continent", region: "Africa", detail: "PFC Capacitors and Capacitor Banks", x: 49, y: 57, href: "/regions/africa" },
+  { name: "Egypt", region: "Middle East", detail: "PFC and Motor Run Capacitors", x: 54, y: 39, href: "/regions/middle-east" },
+] as const;
+
+const regionalBreakdown = [
+  { title: "Middle East", countries: "UAE, Egypt, Turkey", cities: "Dubai, Abu Dhabi, Cairo, Istanbul", products: "Motor Run Capacitors, PFC Capacitors, Lighting Capacitors", standards: "CE, GSO, ESMA, TSE, EOS", ports: "Jebel Ali, Alexandria, Istanbul ports", freight: "7–14 days sea freight from Chennai", href: "/regions/middle-east" },
+  { title: "South Asia", countries: "Sri Lanka, Bangladesh", cities: "Colombo, Dhaka, Chittagong", products: "Submersible Panel Capacitors, Motor Start Capacitors, Fan Capacitors", standards: "SLS, BSTI, CE", ports: "Colombo, Chittagong ports", freight: "3–7 days sea freight from Chennai", href: "/regions/south-asia" },
+  { title: "Africa", countries: "Nigeria, Kenya, Tanzania", cities: "Lagos, Mombasa, Dar es Salaam", products: "PFC Capacitors, Capacitor Banks, Motor Run Capacitors", standards: "SONCAP, PVOC, COC, CE", ports: "Lagos, Mombasa ports", freight: "14–21 days sea freight from Chennai", href: "/regions/africa" },
+  { title: "North America", countries: "USA", cities: "New York, Los Angeles, Houston", products: "UL-Certified Motor Run Capacitors, PFC Capacitors", standards: "UL 810, CSA, NEC", ports: "New York, LA/Long Beach ports", freight: "25–30 days sea freight / 5–7 days air", href: "/regions/usa" },
+] as const;
+
 
 
 const manufacturingSteps = [
@@ -294,6 +311,7 @@ export default function Home() {
   const [processIndex, setProcessIndex] = useState(0);
   const [testimonialIndex, setTestimonialIndex] = useState(0);
   const [projectIndex, setProjectIndex] = useState(0);
+  const [activeMarket, setActiveMarket] = useState(0);
   const projectsContainerRef = useRef<HTMLDivElement | null>(null);
 
   const activeIndustry = industries[industryIndex];
@@ -669,7 +687,7 @@ export default function Home() {
           <div className="flex min-h-[86px] flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
             <div>
               <Eyebrow>Trusted By Industry Leaders</Eyebrow>
-              <h2 className="mt-6 text-4xl font-normal tracking-normal lg:text-5xl">What Our Partners Say</h2>
+              <h2 className="mt-6 text-4xl font-normal tracking-normal lg:text-5xl">Testimonials</h2>
             </div>
             <ButtonLink href="#projects">Read More Case Studies</ButtonLink>
           </div>
@@ -818,6 +836,23 @@ export default function Home() {
             ))}
           </div>
         </div>
+      </section>
+
+      <section id="global-footprint" aria-label="Global footprint" className="relative overflow-hidden bg-[#303030] px-6 py-20 text-white lg:px-[60px] lg:py-[100px]">
+        <div className="mx-auto max-w-[1800px]">
+          <div className="text-center"><Eyebrow>Global Footprint</Eyebrow><h2 className="mt-5 text-4xl font-normal tracking-[-0.04em] lg:text-5xl">Where We Operate</h2></div>
+          <div className="relative mt-12 min-h-[430px] overflow-hidden rounded-[20px] bg-[#818181] lg:min-h-[560px]">
+            <Image src="/figma/home/compliance-world-map.png" alt="World map showing CAPCO markets" fill sizes="100vw" className="object-cover opacity-80 mix-blend-screen" />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-transparent to-black/65" />
+            {globalMarkets.map((market, index) => <Link key={market.name} href={market.href} style={{ left: `${market.x}%`, top: `${market.y}%` }} onMouseEnter={() => setActiveMarket(index)} onFocus={() => setActiveMarket(index)} className="absolute z-10 -translate-x-1/2 -translate-y-1/2" aria-label={`View ${market.name} regional solutions`}><span className={`block h-4 w-4 rounded-full border-2 border-[#58C7E8] bg-[#58C7E8] shadow-[0_0_0_5px_rgba(88,199,232,.22)] transition ${activeMarket === index ? "scale-125" : ""}`} /></Link>)}
+            <div className="absolute left-6 top-6 z-10 max-w-[330px] rounded-xl border border-white/20 bg-black/45 p-5 backdrop-blur-md lg:left-10 lg:top-10"><p className="text-[10px] uppercase tracking-[0.16em] text-[#58C7E8]">{globalMarkets[activeMarket].region}</p><h3 className="mt-2 text-xl">{globalMarkets[activeMarket].name}</h3><p className="mt-3 text-sm leading-6 text-white/75">{globalMarkets[activeMarket].detail}</p><Link href={globalMarkets[activeMarket].href} className="mt-4 inline-block text-sm font-medium text-[#58C7E8]">View regional solutions →</Link></div>
+            <div className="absolute inset-x-6 bottom-5 z-10 flex flex-wrap gap-x-5 gap-y-2 text-[10px] uppercase tracking-wider text-white/70 lg:inset-x-10">{globalMarkets.map((market, index) => <button key={market.name} type="button" onClick={() => setActiveMarket(index)} className="inline-flex items-center gap-2 hover:text-white"><span className="h-2 w-2 rounded-full bg-[#58C7E8]" />{market.name}</button>)}</div>
+          </div>
+        </div>
+      </section>
+
+      <section aria-label="Regional export solutions" className="bg-[#F4F4F4] px-6 py-20 lg:px-[60px] lg:py-[100px]">
+        <div className="mx-auto max-w-[1800px]"><Eyebrow>Regional Breakdown</Eyebrow><h2 className="mt-5 text-4xl font-normal tracking-[-0.04em] lg:text-5xl">Export solutions by market</h2><div className="mt-12 grid gap-4 md:grid-cols-2">{regionalBreakdown.map((region) => <article key={region.title} className="bg-white p-6 lg:p-8"><div className="flex items-start justify-between gap-4"><div><h3 className="text-2xl font-normal">{region.title}</h3><p className="mt-1 text-sm text-[#58C7E8]">{region.countries}</p></div><span className="font-mono text-xs text-[#999]">EXPORT PROGRAM</span></div><dl className="mt-7 grid gap-4 text-sm sm:grid-cols-2"><div><dt className="text-[#999]">Markets</dt><dd className="mt-1">{region.cities}</dd></div><div><dt className="text-[#999]">Products</dt><dd className="mt-1">{region.products}</dd></div><div><dt className="text-[#999]">Standards</dt><dd className="mt-1">{region.standards}</dd></div><div><dt className="text-[#999]">Ports</dt><dd className="mt-1">{region.ports}</dd></div></dl><p className="mt-6 border-t border-[#E5E5E5] pt-4 text-sm text-[#595959]">{region.freight}</p><Link href={region.href} className="mt-5 inline-block text-sm font-medium text-[#020202] hover:text-[#58C7E8]">View {region.title} OEM Solutions →</Link></article>)}</div></div>
       </section>
 
       <ReadyToSpecifyCapcoSection />
