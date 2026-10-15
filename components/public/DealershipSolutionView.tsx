@@ -411,16 +411,12 @@ export function DealershipSolutionView() {
               </div>
             </div>
 
-            {/* Right Column: 4 Step Rows with Stacking Cards Scroll Effect */}
-            <div className="flex flex-col gap-8 pb-12">
-              {dealerAdvantages.map((step, idx) => (
+            {/* Right Column: 4 Step Rows Scrolling beside Sticky Header (as in Video 2) */}
+            <div className="flex flex-col gap-10 lg:gap-14 pb-12">
+              {dealerAdvantages.map((step) => (
                 <div
                   key={step.num}
-                  style={{
-                    top: `${110 + idx * 24}px`,
-                    zIndex: idx + 1,
-                  }}
-                  className="sticky flex flex-col gap-1 rounded-[12px] shadow-xl sm:flex-row transition-transform duration-200"
+                  className="group flex flex-col gap-1 rounded-[12px] shadow-sm sm:flex-row transition-all duration-300 hover:shadow-md"
                 >
                   {/* Number Card */}
                   <div className="relative flex h-[350px] w-full items-center justify-center overflow-hidden rounded-[12px] bg-[#ECECEC] sm:w-[350px] shrink-0">
@@ -428,7 +424,7 @@ export function DealershipSolutionView() {
                       src={step.dial}
                       alt=""
                       aria-hidden="true"
-                      className="pointer-events-none absolute inset-0 m-auto h-[290px] w-[290px] opacity-70"
+                      className="pointer-events-none absolute inset-0 m-auto h-[290px] w-[290px] opacity-70 transition-transform duration-700 ease-out group-hover:rotate-45"
                     />
                     <span className="relative z-10 font-sans text-[72px] font-normal leading-none tracking-tight text-[#121212]">
                       {step.num}
