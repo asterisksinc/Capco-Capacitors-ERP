@@ -389,8 +389,6 @@ export function DealershipSolutionView() {
         processCtaText="Apply for Dealership"
         processCtaHref="/contact?category=dealership#enquiry-form"
         steps={[...dealerAdvantages]}
-        teamEyebrow="Our People"
-        teamHeading="Deep operating experience across development, delivery and dispatch"
       />
 
       {/* 3. Where We Operate (Interactive Map Section) */}

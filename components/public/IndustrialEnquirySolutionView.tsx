@@ -15,10 +15,13 @@ import {
   Award,
   ShieldCheck,
   CheckCircle2,
-  Globe,
   Headphones,
   Mail,
   Zap,
+  Cpu,
+  Layers,
+  Sparkles,
+  TrendingUp,
 } from "lucide-react";
 import {
   PublicFooter,
@@ -34,6 +37,7 @@ const waysCapcoHelps = [
     cta: "Request Power Audit",
     href: "/contact?category=industrial#enquiry-form",
     badge: "QCO 2017 MANDATE OK",
+    icon: ShieldCheck,
   },
   {
     id: "apfc-integration",
@@ -43,6 +47,7 @@ const waysCapcoHelps = [
     cta: "Request APFC Support",
     href: "/contact?category=apfc#enquiry-form",
     badge: "RE-AUDITED ANNUALLY",
+    icon: Cpu,
   },
   {
     id: "bulk-supply",
@@ -52,6 +57,7 @@ const waysCapcoHelps = [
     cta: "Request Bulk Quote",
     href: "/contact?category=bulk#enquiry-form",
     badge: "EN 60252-1 COMPLIANT",
+    icon: Layers,
   },
 ] as const;
 
@@ -141,9 +147,9 @@ const successStories = [
       { label: "[ZQI]", value: "18 Months" },
     ],
     summary:
-      "High landed cost of imported motor run capacitors with 12-week lead times. Capcocapacitors co-engineered equivalent capacitors with Leybold metallization, delivered in 10 days.",
+      "High landed cost of imported motor run capacitors with 12-week lead times. Capco capacitors co-engineered equivalent capacitors with Leybold metallization, delivered in 10 days.",
     fullText:
-      "A Tier-1 HVAC manufacturer was experiencing severe supply disruptions and escalating import duties on European-sourced motor run capacitors. CAPCO's engineering team reverse-engineered the dielectric stack and qualified a custom P2 burst-proof polypropylene capacitor within 3 weeks. Full volume production transitioned within 60 days, cutting unit costs by 28% and stabilizing assembly line inventory with buffer stock held in Hyderabad.",
+      "A Tier-1 HVAC manufacturer was experiencing severe supply disruptions and escalating import duties on European-sourced motor run capacitors. CAPCO's engineering team qualified a custom P2 burst-proof polypropylene capacitor within 3 weeks. Full volume production transitioned within 60 days, cutting unit costs by 28% and stabilizing assembly line inventory with buffer stock held in Hyderabad.",
   },
   {
     image: "/figma/solutions/4596c.png",
@@ -191,95 +197,90 @@ const successStories = [
 
 const faqItems = [
   {
-    q: "What is the minimum order quantity (MOQ) for industrial bulk capacitor orders?",
+    q: "What is the minimum order quantity (MOQ) for dealers?",
     a: "Standard PFC cylindrical cells and banks have flexible minimum order quantities starting from 10 units for evaluation batches, with scheduled buffer stock available for recurring bulk supply agreements.",
   },
   {
-    q: "How does a power factor audit work?",
-    a: "Our certified engineers deploy Class-A power quality analyzers across your main incoming switchgear for 48–72 hours to measure active/reactive power (kVA, kW, kVAR), THD voltage and current harmonics, and peak cyclic loading.",
+    q: "How do I check my MDF balance?",
+    a: "Authorized CAPCO distributors and channel partners can access their Market Development Fund (MDF) ledger directly through the partner portal or via their assigned regional relationship manager.",
   },
   {
-    q: "What is the payback period for CAPCO APFC panel capacitor retrofits?",
-    a: "Most heavy manufacturing, textile, and chemical plants in India recover their entire capacitor retrofit investment within 3 to 7 months by eliminating DISCOM low power factor surcharge penalties and qualifying for power factor rebate incentives.",
+    q: "Can I return unsold inventory?",
+    a: "Yes. Our standard dealer partner agreement includes an inventory re-balancing program, allowing rotation of slow-moving standard ratings for high-demand capacitor models once per fiscal year.",
   },
   {
-    q: "Are CAPCO capacitors compliant with CEA and State Electricity Board norms?",
-    a: "Yes. All CAPCO Power Factor Correction cells are rigorously certified under IS:13340 (Part 1 & 2) and comply with the Central Electricity Authority (CEA) Technical Standards for Connectivity to the Grid.",
+    q: "How do I register a customer for territory protection?",
+    a: "Registered project registrations can be submitted through our sales portal with tender/client specification details to lock exclusive distributor pricing and quotation protection for 90 days.",
   },
   {
-    q: "What safety disconnect features are built into your PFC capacitors?",
-    a: "Every CAPCO cylindrical and heavy-duty box cell incorporates an internal overpressure tear-off disconnector, self-healing zinc-alloy dielectric metallization, and dry flame-retardant polyurethane resin filling.",
+    q: "What if a customer contacts Capco Capacitors directly?",
+    a: "Direct inquiries originating from protected geographic dealer territories are routed back to our authorized regional channel partner with full technical engineering support from our central office.",
   },
   {
-    q: "How quickly can urgent replacement capacitor banks be dispatched?",
-    a: "Standard rating cells (5, 10, 15, 20, 25 KVAR) are held in ready stock at our Hyderabad manufacturing facility and regional buffer hubs for dispatch within 24–48 hours across India.",
+    q: "How do I request urgent stock during peak season?",
+    a: "Fast-track dispatch orders are fulfilled directly from our Hyderabad central buffer warehouse or regional transit hubs within 24–48 hours for pre-cleared credit terms.",
   },
   {
-    q: "Can CAPCO supply detuned reactors for high-harmonic environments?",
-    a: "Yes. We supply matched detuned harmonic filter reactors (5.67%, 7%, 14% filtering factor) engineered specifically for non-linear VFD and induction furnace loads to prevent capacitor resonance.",
+    q: "Is training provided for new dealers?",
+    a: "Yes. CAPCO conducts comprehensive product certifications, APFC sizing workshops, and harmonic analysis training for dealer engineering and sales teams both on-site and at our Hyderabad plant.",
   },
   {
-    q: "Does CAPCO provide commissioning and installation support?",
-    a: "Yes. Our field engineering division provides on-site installation supervision, APFC micro-controller relay parameter tuning, and post-commissioning harmonic verification reports.",
+    q: "Can I sell CAPCO products online (e-commerce)?",
+    a: "Authorized distribution agreements permit authorized online channel distribution adhering to minimum advertised price (MAP) policies and verified genuine manufacturer certification guidelines.",
   },
 ] as const;
 
 const locations = [
   {
+    name: "Bell Junction",
+    type: "OPERATING SITE",
+    detail: "West Texas · ERCOT",
+    body: "Standalone storage dispatching into ERCOT West. Containerized LFP, energized and operated by Anode from first dispatch.",
+    x: 35,
+    y: 42,
+  },
+  {
     name: "TSIIC Automotive Park Hub",
     type: "OPERATING SITE",
     detail: "Medak, Hyderabad - Telangana",
     body: "Flagship 100,000 sq.ft. facility housing Leybold high-vacuum metallization lines and automated winding cells.",
-    x: 48,
-    y: 52,
-    icon: "24503.svg",
+    x: 52,
+    y: 50,
   },
   {
     name: "North Regional Buffer Hub",
-    type: "OFFICE & WAREHOUSE",
+    type: "OFFICE",
     detail: "Delhi NCR - Haryana",
     body: "Regional logistics node ensuring rapid 24-48h dispatch for North Indian OEM corridors.",
-    x: 44,
+    x: 48,
     y: 35,
-    icon: "38a25.svg",
   },
   {
     name: "Western Industrial Office",
     type: "OFFICE",
     detail: "Pune & Ahmedabad Corridor",
     body: "Technical support desk servicing pump, textile, and automation panel builders.",
-    x: 36,
-    y: 54,
-    icon: "38a25.svg",
-  },
-  {
-    name: "Bell Junction Facility",
-    type: "OPERATING SITE",
-    detail: "West Texas - ERCOT",
-    body: "Standalone storage and grid infrastructure component supply dispatch.",
-    x: 65,
-    y: 42,
-    icon: "24503.svg",
+    x: 42,
+    y: 55,
   },
   {
     name: "Middle East Export Office",
     type: "IN DEVELOPMENT",
     detail: "Dubai Logistics City - UAE",
     body: "Expanding regional export distribution center for MENA electrical switchgear markets.",
-    x: 28,
+    x: 62,
     y: 45,
-    icon: "8200f.svg",
   },
 ] as const;
 
 export function IndustrialEnquirySolutionView() {
   const [activeStoryIndex, setActiveStoryIndex] = useState(0);
   const [selectedStory, setSelectedStory] = useState<(typeof successStories)[number] | null>(null);
-  const [activeWayIndex, setActiveWayIndex] = useState(0);
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [activeLocationIndex, setActiveLocationIndex] = useState(0);
 
   const storiesScrollRef = useRef<HTMLDivElement | null>(null);
+  const projectCardsScrollRef = useRef<HTMLDivElement | null>(null);
   const activeLocation = locations[activeLocationIndex];
 
   const scrollToStory = (index: number) => {
@@ -300,9 +301,9 @@ export function IndustrialEnquirySolutionView() {
   return (
     <main className="min-h-screen overflow-x-clip bg-white text-[#020202]">
       {/* ─────────────────────────────────────────────────────────────
-          1. HERO SECTION (100vh on Desktop with Angled Cutout)
+          1. HERO SECTION (Frame 2 - 100vh on Desktop with Angled Cutout)
          ───────────────────────────────────────────────────────────── */}
-      <section className="relative flex h-screen min-h-[720px] max-h-[1194px] flex-col justify-between overflow-hidden bg-[#101010] text-white">
+      <section className="relative flex min-h-[720px] lg:h-[1194px] lg:max-h-[100vh] flex-col justify-between overflow-hidden bg-[#101010] text-white">
         <img
           src="/figma/solutions/22cfa.png"
           alt="Power transmission grid infrastructure across landscape"
@@ -314,15 +315,15 @@ export function IndustrialEnquirySolutionView() {
         <PublicNav variant="overlay" logoSrc="/figma/solutions/caef4.png" className="relative z-30 shrink-0" />
 
         {/* Hero Main Content */}
-        <div className="relative z-10 mx-auto flex w-full max-w-[1920px] flex-1 flex-col justify-end px-6 pb-20 pt-4 lg:px-[60px] lg:pb-[95px]">
+        <div className="relative z-10 mx-auto flex w-full max-w-[1920px] flex-1 flex-col justify-end px-6 pb-16 pt-4 lg:px-[60px] lg:pb-[75px]">
           {/* Top Description on Right (Desktop) */}
-          <div className="mb-6 flex justify-end lg:mb-8">
-            <p className="max-w-[560px] text-left text-[18px] font-normal leading-[1.3] text-white sm:text-[20px] lg:text-[22px] [text-shadow:0px_0px_28px_rgba(255,255,255,0.25)]">
+          <div className="mb-8 flex justify-end lg:mb-10">
+            <p className="max-w-[518px] text-left text-[18px] font-normal leading-[120%] text-white [text-shadow:0px_0px_28.2px_rgba(255,255,255,0.25)] sm:text-[20px] lg:text-[22px]">
               CAPCO provides power factor audits, APFC panel integration support, and bulk capacitor supply (0.5–25 KVAR, up to 150 KVAR banks) for industrial buyers seeking to reduce electricity demand charges, improve voltage stability, and minimize equipment downtime.
             </p>
           </div>
 
-          {/* Eyebrows Row */}
+          {/* Eyebrows Row (Frame 14) */}
           <div className="flex flex-wrap items-center gap-6 text-[15px] font-medium tracking-[0.02em] text-white sm:text-[16px]">
             <span className="inline-flex items-center gap-2">
               <span className="h-[6px] w-[6px] bg-[#58C7E8]" />
@@ -335,17 +336,18 @@ export function IndustrialEnquirySolutionView() {
           </div>
 
           {/* Thin White Rule */}
-          <div className="my-5 h-px w-full bg-white/30" />
+          <div className="my-5 h-px w-full bg-white/50" />
 
           {/* Heading and Action Buttons Grid */}
           <div className="relative">
             <div className="lg:max-w-[70%]">
-              <h1 className="max-w-[1300px] text-[44px] font-light leading-[1.0] tracking-[-3px] text-white sm:text-[68px] md:text-[84px] lg:text-[92px] lg:tracking-[-5px]">
+              <h1 className="max-w-[1281px] text-[44px] font-light leading-[1.0] tracking-[-3px] text-white sm:text-[68px] md:text-[84px] lg:text-[104px] lg:tracking-[-5px]">
                 Industrial Power Factor
                 <br />
                 Correction Solutions
               </h1>
 
+              {/* Frame 15: Action buttons */}
               <div className="mt-6 flex flex-wrap items-center gap-4 lg:mt-8">
                 <Link
                   href="/contact?category=industrial#enquiry-form"
@@ -353,10 +355,10 @@ export function IndustrialEnquirySolutionView() {
                     clipPath:
                       "polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%)",
                   }}
-                  className="inline-flex min-h-[56px] min-w-[274px] items-center justify-between gap-6 bg-[#58C7E8] px-5 py-3 text-[14px] font-semibold leading-[1.2] !text-[#121212] transition hover:-translate-y-0.5 hover:brightness-105"
+                  className="inline-flex h-[56px] w-[200px] items-center justify-between bg-[#58C7E8] px-4 py-3 text-[14px] font-medium leading-[120%] !text-[#020202] transition hover:-translate-y-0.5 hover:brightness-105"
                 >
-                  <span className="!text-[#121212]">Request Power Audit</span>
-                  <ArrowRight size={18} className="!text-[#121212] shrink-0" />
+                  <span className="!text-[#020202]">Request Power Audit</span>
+                  <ArrowRight size={18} className="!text-[#020202] shrink-0" />
                 </Link>
 
                 <Link
@@ -365,7 +367,7 @@ export function IndustrialEnquirySolutionView() {
                     clipPath:
                       "polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%)",
                   }}
-                  className="inline-flex min-h-[56px] min-w-[220px] items-center justify-between gap-4 bg-white px-5 py-3 text-[14px] font-medium leading-[1.2] !text-[#020202] transition hover:bg-[#F2F2F2]"
+                  className="inline-flex h-[56px] w-[200px] items-center justify-between bg-white px-4 py-3 text-[14px] font-medium leading-[120%] !text-[#020202] transition hover:bg-[#F2F2F2]"
                 >
                   <span className="!text-[#020202]">Request Bulk Quote</span>
                   <FileText size={18} className="!text-[#020202] shrink-0" />
@@ -423,62 +425,128 @@ export function IndustrialEnquirySolutionView() {
       </section>
 
       {/* ─────────────────────────────────────────────────────────────
-          2. THE COST OF POOR POWER FACTOR
+          2. THE COST OF POOR POWER FACTOR (Projects List)
          ───────────────────────────────────────────────────────────── */}
-      <section className="bg-white px-6 py-20 lg:px-[60px] lg:py-28">
-        <div className="mx-auto max-w-[1800px]">
-          {/* Eyebrow and Heading Grid */}
-          <div className="grid gap-6 lg:grid-cols-[1fr_560px] lg:items-end">
+      <section className="bg-white px-6 py-20 lg:px-[60px] lg:py-24">
+        <div className="mx-auto max-w-[1920px]">
+          {/* Eyebrow and Heading Grid (Frame 151) */}
+          <div className="grid gap-6 lg:grid-cols-[680px_1fr] lg:items-center lg:justify-between">
             <div>
-              <div className="flex items-center gap-2 text-[13px] font-medium tracking-[-0.5px] text-[#1C1C1C]">
-                <span className="h-[5px] w-[5px] rounded-full bg-[#58C7E8]" />
+              <div className="flex items-center gap-2 text-[14px] font-medium leading-none text-[#020202]">
+                <span className="h-[6px] w-[6px] bg-[#58C7E8]" />
                 THE COST OF POOR POWER FACTOR
               </div>
-              <h2 className="mt-4 text-[36px] font-normal leading-[1.08] tracking-[-2px] text-[#121212] sm:text-[46px] lg:text-[54px] lg:tracking-[-3px]">
-                Are You Paying Penalty Charges for
-                <br />
-                Low Power Factor?
+              <h2 className="mt-4 text-[36px] font-normal leading-[56px] tracking-[-2.88px] text-[#121212] sm:text-[44px] lg:text-[48px]">
+                Are You Paying Penalty Charges for Low Power Factor?
               </h2>
             </div>
-            <p className="text-[16px] leading-[1.5] text-[#555] lg:text-[18px]">
-              Most industrial facilities in India operate at a power factor of 0.75–0.85, well below the 0.95 threshold required by most state electricity boards.
-            </p>
+            <div className="flex justify-end">
+              <p className="max-w-[612px] text-[18px] font-normal leading-[140%] text-[#595959] sm:text-[20px] lg:text-[24px]">
+                Most industrial facilities in India operate at a power factor of 0.75–0.85, well below the 0.95 threshold required by most state electricity boards.
+              </p>
+            </div>
           </div>
 
-          {/* Large Card with Image & Translucent Stat Badge */}
-          <div className="mt-12 overflow-hidden rounded-[24px] border border-[#E5E5E5] bg-[#F7F7F7] shadow-sm lg:mt-16">
-            <div className="relative min-h-[420px] w-full sm:min-h-[540px] lg:min-h-[640px]">
+          {/* Horizontal Scroll Projects List (3 Cards: 1512px x 864px) */}
+          <div
+            ref={projectCardsScrollRef}
+            className="no-scrollbar mt-12 flex snap-x snap-mandatory gap-6 overflow-x-auto scroll-smooth pb-4 lg:mt-16"
+          >
+            {/* Card 1: Power Factor Penalties */}
+            <div className="relative h-[620px] w-[90vw] shrink-0 snap-start overflow-hidden rounded-[32px] bg-[#1A1A1A] sm:h-[720px] md:w-[75vw] lg:h-[864px] lg:w-[1512px]">
               <img
                 src="/figma/solutions/industrial-penalty.png"
-                alt="CAPCO heavy duty metalized capacitor rolls and containerized APFC units"
-                className="h-full w-full object-cover"
+                alt="Power Factor Penalties"
+                className="pointer-events-none absolute inset-0 h-full w-full object-cover"
               />
-              <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[rgba(10,10,10,0.157)] to-[rgba(10,10,10,0.65)]" />
 
-              {/* Bottom Translucent Info Panel */}
-              <div className="absolute bottom-6 left-6 right-6 flex flex-col justify-between gap-6 rounded-[20px] border border-white/20 bg-black/60 p-6 backdrop-blur-md sm:bottom-10 sm:left-10 sm:right-10 sm:flex-row sm:items-end sm:p-8">
-                <div className="flex items-center gap-3 text-white">
-                  <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-white/10 backdrop-blur-sm">
-                    <FileText size={22} className="text-[#58C7E8]" />
-                  </div>
-                  <div>
-                    <span className="font-mono text-[11px] uppercase tracking-wider text-white/60">
-                      DISCOM REGULATION
-                    </span>
-                    <h3 className="text-[20px] font-medium text-white sm:text-[22px]">
-                      Power Factor Penalties
-                    </h3>
-                  </div>
+              {/* Bottom Left Title */}
+              <div className="absolute bottom-10 left-8 flex flex-col gap-3 sm:bottom-14 sm:left-12">
+                <div className="grid h-8 w-8 place-items-center opacity-70">
+                  <FileText size={28} className="text-white" />
                 </div>
+                <h3 className="text-[32px] font-normal tracking-[-2px] text-white sm:text-[40px] lg:text-[48px]">
+                  Power Factor Penalties
+                </h3>
+              </div>
 
-                <div className="max-w-[540px] text-left sm:text-right">
-                  <p className="text-[13px] leading-[1.6] text-white/85 sm:text-[14px]">
-                    Facilities operating below 0.95 power factor face penalty charges of ₹1–3 per KVA of reactive power, adding significant costs to monthly electricity bills.
-                  </p>
-                  <div className="mt-2 text-[26px] font-light tracking-tight text-[#58C7E8] sm:text-[32px]">
-                    ₹5–20 Lakhs Annual Penalty
-                  </div>
+              {/* Bottom Right Glass Card */}
+              <div className="absolute bottom-4 right-4 flex max-w-[560px] flex-col gap-6 rounded-[18px] bg-[rgba(16,16,16,0.42)] p-8 backdrop-blur-[14px] sm:bottom-8 sm:right-8 sm:p-10">
+                <p className="text-[15px] font-normal leading-[140%] text-white/80 sm:text-[16px]">
+                  Facilities operating below 0.95 power factor face penalty charges of ₹1–3 per KVA of reactive power, adding significant costs to monthly electricity bills.
+                </p>
+                <div className="text-[26px] font-normal leading-[140%] text-white/90 sm:text-[32px]">
+                  ₹5–20 Lakhs Annual Penalty
                 </div>
+              </div>
+            </div>
+
+            {/* Card 2: Success Stories */}
+            <div className="relative h-[620px] w-[90vw] shrink-0 snap-start overflow-hidden rounded-[32px] bg-[#1A1A1A] sm:h-[720px] md:w-[75vw] lg:h-[864px] lg:w-[1512px]">
+              <img
+                src="/figma/solutions/946c5.png"
+                alt="Success Stories"
+                className="pointer-events-none absolute inset-0 h-full w-full object-cover"
+              />
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[rgba(10,10,10,0.157)] to-[rgba(10,10,10,0.65)]" />
+
+              {/* Bottom Left Title */}
+              <div className="absolute bottom-10 left-8 flex flex-col gap-3 sm:bottom-14 sm:left-12">
+                <div className="grid h-8 w-8 place-items-center opacity-70">
+                  <TrendingUp size={28} className="text-white" />
+                </div>
+                <h3 className="text-[32px] font-normal tracking-[-2px] text-white sm:text-[40px] lg:text-[48px]">
+                  Success Stories
+                </h3>
+              </div>
+
+              {/* Bottom Right Glass Card */}
+              <div className="absolute bottom-4 right-4 flex max-w-[560px] flex-col gap-6 rounded-[18px] bg-[rgba(16,16,16,0.42)] p-8 backdrop-blur-[14px] sm:bottom-8 sm:right-8 sm:p-10">
+                <p className="text-[15px] font-normal leading-[140%] text-white/80 sm:text-[16px]">
+                  See how OEMs, dealers, and industrial buyers achieved cost savings, efficiency gains, and growth with CAPCO capacitors.
+                </p>
+                <Link
+                  href="/solutions/oem"
+                  className="inline-flex h-[56px] w-[230px] items-center justify-between bg-white px-5 py-3 text-[14px] font-medium leading-[120%] !text-[#020202] transition hover:bg-[#F2F2F2]"
+                >
+                  <span className="!text-[#020202]">View Case Studies</span>
+                  <ArrowRight size={18} className="!text-[#020202]" />
+                </Link>
+              </div>
+            </div>
+
+            {/* Card 3: Industry Trends & Best Practices */}
+            <div className="relative h-[620px] w-[90vw] shrink-0 snap-start overflow-hidden rounded-[32px] bg-[#1A1A1A] sm:h-[720px] md:w-[75vw] lg:h-[864px] lg:w-[1512px]">
+              <img
+                src="/figma/solutions/caf7c.png"
+                alt="Industry Trends & Best Practices"
+                className="pointer-events-none absolute inset-0 h-full w-full object-cover"
+              />
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[rgba(10,10,10,0.157)] to-[rgba(10,10,10,0.65)]" />
+
+              {/* Bottom Left Title */}
+              <div className="absolute bottom-10 left-8 flex flex-col gap-3 sm:bottom-14 sm:left-12">
+                <div className="grid h-8 w-8 place-items-center opacity-70">
+                  <Sparkles size={28} className="text-white" />
+                </div>
+                <h3 className="text-[32px] font-normal tracking-[-2px] text-white sm:text-[40px] lg:text-[48px]">
+                  Industry Trends & Best Practices
+                </h3>
+              </div>
+
+              {/* Bottom Right Glass Card */}
+              <div className="absolute bottom-4 right-4 flex max-w-[560px] flex-col gap-6 rounded-[18px] bg-[rgba(16,16,16,0.42)] p-8 backdrop-blur-[14px] sm:bottom-8 sm:right-8 sm:p-10">
+                <p className="text-[15px] font-normal leading-[140%] text-white/80 sm:text-[16px]">
+                  Power factor correction guides, capacitor selection tips, and updates on Indian electrical manufacturing.
+                </p>
+                <Link
+                  href="/contact"
+                  className="inline-flex h-[56px] w-[230px] items-center justify-between bg-white px-5 py-3 text-[14px] font-medium leading-[120%] !text-[#020202] transition hover:bg-[#F2F2F2]"
+                >
+                  <span className="!text-[#020202]">Read Latest Insights</span>
+                  <ArrowRight size={18} className="!text-[#020202]" />
+                </Link>
               </div>
             </div>
           </div>
@@ -486,18 +554,18 @@ export function IndustrialEnquirySolutionView() {
       </section>
 
       {/* ─────────────────────────────────────────────────────────────
-          3. THREE WAYS CAPCO HELPS INDUSTRIAL BUYERS
+          3. THREE WAYS CAPCO HELPS INDUSTRIAL BUYERS (Frame 31)
          ───────────────────────────────────────────────────────────── */}
-      <section className="border-t border-[#EAEAEA] bg-[#FAFAFA] px-6 py-20 lg:px-[60px] lg:py-28">
+      <section className="bg-[#F5F5F5] px-6 py-20 lg:px-[60px] lg:py-28">
         <div className="mx-auto max-w-[1800px]">
-          {/* Header & CTA */}
+          {/* Header Row */}
           <div className="flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
             <div>
-              <div className="flex items-center gap-2 text-[13px] font-medium tracking-[-0.5px] text-[#1C1C1C]">
-                <span className="h-[5px] w-[5px] rounded-full bg-[#58C7E8]" />
+              <div className="flex items-center gap-2 text-[14px] font-medium leading-none text-[#020202]">
+                <span className="h-[6px] w-[6px] bg-[#58C7E8]" />
                 OUR SOLUTIONS
               </div>
-              <h2 className="mt-4 text-[36px] font-normal leading-[1.08] tracking-[-2px] text-[#121212] sm:text-[46px] lg:text-[54px] lg:tracking-[-3px]">
+              <h2 className="mt-4 text-[36px] font-normal leading-[100%] tracking-[-2px] text-[#020202] sm:text-[44px] lg:text-[48px]">
                 Three Ways Capco Helps
                 <br />
                 Industrial Buyers
@@ -510,68 +578,69 @@ export function IndustrialEnquirySolutionView() {
                 clipPath:
                   "polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%)",
               }}
-              className="inline-flex min-h-[52px] min-w-[220px] items-center justify-between gap-4 bg-[#58C7E8] px-5 py-3 text-[14px] font-semibold text-[#121212] transition hover:-translate-y-0.5 hover:brightness-105"
+              className="inline-flex h-[56px] w-[300px] items-center justify-center bg-[#58C7E8] px-5 py-3 text-[14px] font-medium leading-[120%] !text-[#000000] transition hover:brightness-105"
             >
-              <span>Request Power Audit</span>
-              <ArrowRight size={16} />
+              <span className="!text-[#000000]">Request Power Audit</span>
             </Link>
           </div>
 
-          {/* 3 Interactive Rows / Cards */}
+          {/* 3 Distinct Full-width Rows (Frame 119) */}
           <div className="mt-14 flex flex-col gap-8 lg:mt-16">
-            {waysCapcoHelps.map((way, idx) => {
-              const isActive = activeWayIndex === idx;
+            {waysCapcoHelps.map((way) => {
+              const IconComp = way.icon;
               return (
                 <div
                   key={way.id}
-                  onClick={() => setActiveWayIndex(idx)}
-                  className={`grid cursor-pointer gap-6 rounded-[20px] border p-8 transition-all duration-300 sm:p-10 lg:grid-cols-[380px_1fr] lg:gap-12 ${
-                    isActive
-                      ? "border-[#58C7E8] bg-white shadow-md"
-                      : "border-[#E5E5E5] bg-white/70 hover:border-[#BBB] hover:bg-white"
-                  }`}
+                  className="flex flex-col justify-between gap-6 lg:flex-row lg:items-center"
                 >
-                  {/* Left Tab Title & Rule */}
-                  <div className="flex flex-col justify-between">
-                    <div>
-                      <div className="flex items-center gap-3">
-                        <span className="font-mono text-[12px] uppercase tracking-wider text-[#888]">
-                          {way.tabLabel}
-                        </span>
-                        <div className="h-px flex-1 bg-[#E0E0E0]" />
-                      </div>
-                      <h3
-                        className={`mt-4 text-[26px] font-medium tracking-tight transition sm:text-[30px] ${
-                          isActive ? "text-[#121212]" : "text-[#777]"
-                        }`}
-                      >
-                        {way.title}
-                      </h3>
-                    </div>
+                  {/* Left Label & Divider */}
+                  <div className="flex flex-1 items-center gap-6">
+                    <span className="text-[28px] font-medium uppercase leading-[120%] text-[#595959] sm:text-[32px] lg:text-[36px]">
+                      {way.tabLabel}
+                    </span>
+                    <div className="hidden h-[2px] flex-1 bg-[#DBDBDB] lg:block" />
                   </div>
 
-                  {/* Right Card Content */}
-                  <div className="flex flex-col justify-between">
-                    <p className="text-[15px] leading-[1.7] text-[#555] sm:text-[16px]">
-                      {way.body}
-                    </p>
+                  {/* Right Card (902px x 394px) with Chamfered Bottom-Right Corner */}
+                  <div
+                    style={{
+                      clipPath:
+                        "polygon(0 0, 100% 0, 100% calc(100% - 32px), calc(100% - 32px) 100%, 0 100%)",
+                    }}
+                    className="flex flex-col justify-between bg-white p-8 lg:h-[394px] lg:w-[902px] lg:p-[42px]"
+                  >
+                    <div>
+                      {/* 64px Icon Box */}
+                      <div className="grid h-16 w-16 place-items-center bg-[#DEDEDE]/40">
+                        <IconComp size={28} className="text-[#595959]" />
+                      </div>
 
-                    <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-[#EFEFEF] pt-6">
-                      <Link
-                        href={way.href}
-                        style={{
-                          clipPath:
-                            "polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%)",
-                        }}
-                        className="inline-flex min-h-[46px] items-center gap-3 bg-[#58C7E8] px-5 py-2.5 text-[13px] font-semibold text-[#121212] transition hover:brightness-105"
-                      >
-                        <span>{way.cta}</span>
-                        <ArrowRight size={14} />
-                      </Link>
+                      <h3 className="mt-6 text-[22px] font-normal leading-[120%] text-[#020202] sm:text-[24px] lg:text-[26px]">
+                        {way.title}
+                      </h3>
 
-                      <span className="font-mono text-[11px] font-medium uppercase tracking-wider text-[#666]">
-                        {way.badge}
-                      </span>
+                      <p className="mt-4 text-[16px] font-normal leading-[140%] text-[#595959] lg:text-[18px]">
+                        {way.body}
+                      </p>
+                    </div>
+
+                    <div>
+                      <div className="my-6 h-px w-full bg-[#DBDBDB]" />
+
+                      <div className="flex flex-wrap items-center gap-6">
+                        <Link
+                          href={way.href}
+                          className="inline-flex h-[36px] w-[187px] items-center justify-center bg-[#58C7E8] text-[14px] font-medium leading-[120%] !text-[#020202] transition hover:brightness-105"
+                        >
+                          <span className="!text-[#020202]">{way.cta}</span>
+                        </Link>
+
+                        <div className="hidden h-[26px] w-[1px] bg-[#DBDBDB] sm:block" />
+
+                        <span className="text-[14px] font-medium leading-[120%] text-[#595959]">
+                          {way.badge}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -582,7 +651,7 @@ export function IndustrialEnquirySolutionView() {
       </section>
 
       {/* ─────────────────────────────────────────────────────────────
-          4. CLIENT LOGOS BAR (5-Column Grid with Divider Lines)
+          4. CLIENT LOGOS BAR (Frame 22 - 5 Columns with Dividers)
          ───────────────────────────────────────────────────────────── */}
       <section className="border-y border-[#E4E4E4] bg-white">
         <div className="mx-auto max-w-[1920px]">
@@ -590,7 +659,7 @@ export function IndustrialEnquirySolutionView() {
             {[1, 2, 3, 4, 5].map((item) => (
               <div
                 key={item}
-                className="flex h-[130px] items-center justify-center px-6 transition hover:opacity-80 lg:h-[150px]"
+                className="flex h-[180px] items-center justify-center px-6 transition hover:opacity-80 lg:h-[216px]"
               >
                 <svg
                   width="140"
@@ -623,18 +692,18 @@ export function IndustrialEnquirySolutionView() {
       </section>
 
       {/* ─────────────────────────────────────────────────────────────
-          5. BROWSE BY PRODUCT CATEGORY (6 Bento Grid Cards)
+          5. BROWSE BY PRODUCT CATEGORY (Frame 45 - 6 Bento Grid Cards)
          ───────────────────────────────────────────────────────────── */}
       <section className="bg-white px-6 py-20 lg:px-[60px] lg:py-28">
         <div className="mx-auto max-w-[1800px]">
-          {/* Eyebrow & Title */}
+          {/* Header Row */}
           <div className="flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
             <div>
-              <div className="flex items-center gap-2 text-[13px] font-medium tracking-[-0.5px] text-[#1C1C1C]">
-                <span className="h-[5px] w-[5px] rounded-full bg-[#58C7E8]" />
+              <div className="flex items-center gap-2 text-[14px] font-medium leading-none text-[#020202]">
+                <span className="h-[6px] w-[6px] bg-[#58C7E8]" />
                 COMPLETE CAPACITOR SOLUTIONS
               </div>
-              <h2 className="mt-4 text-[38px] font-normal leading-[1.08] tracking-[-2px] text-[#121212] sm:text-[48px] lg:text-[56px] lg:tracking-[-3px]">
+              <h2 className="mt-4 text-[36px] font-normal leading-[100%] tracking-[-2px] text-[#020202] sm:text-[44px] lg:text-[48px]">
                 Browse by Product Category
               </h2>
             </div>
@@ -646,56 +715,62 @@ export function IndustrialEnquirySolutionView() {
                 clipPath:
                   "polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%)",
               }}
-              className="inline-flex min-h-[52px] min-w-[260px] items-center justify-between gap-4 bg-[#58C7E8] px-5 py-3 text-[14px] font-semibold text-[#121212] transition hover:-translate-y-0.5 hover:brightness-105"
+              className="inline-flex h-[56px] w-[300px] items-center justify-between bg-[#58C7E8] px-5 py-3 text-[14px] font-medium leading-[120%] !text-[#020202] transition hover:brightness-105"
             >
-              <span>Download Complete Catalog (PDF)</span>
-              <Download size={16} />
+              <span className="!text-[#020202]">Download Complete Catalog (PDF)</span>
+              <Download size={18} className="!text-[#020202]" />
             </a>
           </div>
 
-          {/* 6 Grid Cards */}
-          <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {/* 6 Bento Grid Cards (2 Rows of 3, each 572px x 389px) */}
+          <div className="mt-14 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
             {industrialProducts.map((prod) => (
               <div
                 key={prod.code}
-                className="group relative flex flex-col justify-between rounded-[20px] bg-[#F5F5F5] p-8 transition-all duration-300 hover:bg-[#EAEAEA] hover:shadow-md"
+                style={{
+                  clipPath:
+                    "polygon(0 0, 100% 0, 100% calc(100% - 32px), calc(100% - 32px) 100%, 0 100%)",
+                }}
+                className="group relative flex flex-col justify-between bg-[#F5F5F5] p-8 transition-all duration-300 hover:bg-[#EAEAEA] lg:h-[389px]"
               >
                 <div>
-                  <div className="flex items-center justify-between font-mono text-[11px] uppercase tracking-wider">
-                    <span className="rounded bg-black/5 px-2.5 py-1 text-[#444]">
+                  <div className="flex items-center justify-between">
+                    <span className="bg-[#DEDEDE]/40 px-3 py-1.5 text-[14px] font-normal text-[#020202]">
                       {prod.tag}
                     </span>
-                    <span className="text-[#0092CA]">{prod.code}</span>
+                    <span className="text-[18px] font-medium leading-[120%] text-[#58C7E8]">
+                      {prod.code}
+                    </span>
                   </div>
 
-                  <h3 className="mt-5 text-[22px] font-normal tracking-[-0.02em] text-[#121212]">
+                  <h3 className="mt-6 text-[22px] font-normal text-[#020202]">
                     {prod.title}
                   </h3>
 
-                  <p className="mt-3 text-[14px] leading-[1.6] text-[#666]">
+                  <p className="mt-3 text-[14px] leading-[140%] text-[#595959]">
                     {prod.body}
                   </p>
                 </div>
 
-                <div className="mt-8 border-t border-[#DCDCDC] pt-6">
-                  <div className="space-y-1.5 font-mono text-[11px] text-[#555]">
-                    {prod.specs.map(([label, val]) => (
-                      <div key={label} className="flex justify-between">
-                        <span>{label}</span>
-                        <span className="font-semibold text-[#121212]">{val}</span>
-                      </div>
-                    ))}
+                <div>
+                  <div className="my-5 border-t border-[#DCDCDC] pt-4">
+                    <div className="space-y-1.5 text-[12px] text-[#555]">
+                      {prod.specs.map(([label, val]) => (
+                        <div key={label} className="flex justify-between">
+                          <span>{label}</span>
+                          <span className="font-semibold text-[#121212]">{val}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
 
-                  <div className="mt-6">
-                    <Link
-                      href={`/products/${prod.slug}`}
-                      className="inline-flex items-center gap-2 text-[13px] font-medium text-[#121212] transition group-hover:text-[#0092CA]"
-                    >
-                      <span>{prod.cta}</span>
-                      <ArrowRight size={14} className="transition group-hover:translate-x-1" />
-                    </Link>
-                  </div>
+                  <Link
+                    href={`/products/${prod.slug}`}
+                    className="inline-flex items-center gap-2 text-[14px] font-medium text-[#020202] transition hover:text-[#0092CA]"
+                  >
+                    <span>{prod.cta}</span>
+                    <ArrowRight size={14} className="transition group-hover:translate-x-1" />
+                  </Link>
                 </div>
               </div>
             ))}
@@ -704,7 +779,7 @@ export function IndustrialEnquirySolutionView() {
       </section>
 
       {/* ─────────────────────────────────────────────────────────────
-          6. OEM SUCCESS STORIES CAROUSEL
+          6. DEALERSHIP SUCCESS STORIES CAROUSEL
          ───────────────────────────────────────────────────────────── */}
       <section className="bg-white px-6 py-20 lg:px-[60px] lg:py-28">
         <div className="mx-auto max-w-[1920px]">
@@ -715,20 +790,20 @@ export function IndustrialEnquirySolutionView() {
                 <span className="h-[4px] w-[4px] bg-[#00E05C]" />
                 Proven Partnerships
               </div>
-              <h2 className="mt-4 text-[38px] font-normal leading-[1.0] tracking-[-2px] text-[#121212] sm:text-[48px] lg:text-[56px] lg:tracking-[-3px]">
-                OEM Success Stories
+              <h2 className="mt-4 text-[38px] font-normal leading-[56px] tracking-[-2.88px] text-[#121212] sm:text-[48px] lg:text-[56px]">
+                Dealership Success Stories
               </h2>
             </div>
 
             {/* Navigation Arrows */}
             <div className="flex items-center gap-3">
-              <span className="mr-3 font-mono text-[13px] text-[#767676]">
+              <span className="mr-3 font-mono text-[10px] text-[#595959]">
                 0{activeStoryIndex + 1}/0{successStories.length}
               </span>
               <button
                 type="button"
                 onClick={() => scrollToStory(activeStoryIndex - 1)}
-                className="grid h-12 w-12 cursor-pointer place-items-center rounded-full bg-[#F2F2F2] text-[#121212] transition hover:bg-[#E5E5E5]"
+                className="grid h-[52px] w-[52px] cursor-pointer place-items-center rounded-[8px] bg-[#F5F5F5] text-[#121212] transition hover:bg-[#E5E5E5]"
                 aria-label="Previous story"
               >
                 <ArrowLeft size={18} />
@@ -736,7 +811,7 @@ export function IndustrialEnquirySolutionView() {
               <button
                 type="button"
                 onClick={() => scrollToStory(activeStoryIndex + 1)}
-                className="grid h-12 w-12 cursor-pointer place-items-center rounded-full bg-[#F2F2F2] text-[#121212] transition hover:bg-[#E5E5E5]"
+                className="grid h-[52px] w-[52px] cursor-pointer place-items-center rounded-[8px] bg-[#F5F5F5] text-[#121212] transition hover:bg-[#E5E5E5]"
                 aria-label="Next story"
               >
                 <ArrowRight size={18} />
@@ -744,16 +819,16 @@ export function IndustrialEnquirySolutionView() {
             </div>
           </div>
 
-          {/* Cards Carousel */}
+          {/* Cards Carousel (1512px x 864px each) */}
           <div
             ref={storiesScrollRef}
             className="no-scrollbar mt-12 flex snap-x snap-mandatory gap-6 overflow-x-auto scroll-smooth pb-4"
           >
-            {successStories.map((story, idx) => (
+            {successStories.map((story) => (
               <div
                 key={story.title}
                 data-story-card
-                className="relative h-[620px] w-[90vw] shrink-0 snap-start overflow-hidden rounded-[32px] bg-[#1A1A1A] sm:h-[720px] md:w-[75vw] lg:h-[864px] lg:w-[1300px]"
+                className="relative h-[620px] w-[90vw] shrink-0 snap-start overflow-hidden rounded-[32px] bg-[#1A1A1A] sm:h-[720px] md:w-[75vw] lg:h-[864px] lg:w-[1512px]"
               >
                 <img
                   src={story.image}
@@ -843,7 +918,7 @@ export function IndustrialEnquirySolutionView() {
       )}
 
       {/* ─────────────────────────────────────────────────────────────
-          7. EVERYTHING YOU NEED TO KNOW (FAQ Accordion)
+          7. EVERYTHING YOU NEED TO KNOW (Exact 8 FAQ Items)
          ───────────────────────────────────────────────────────────── */}
       <section className="bg-white px-6 py-20 lg:px-[60px] lg:py-28">
         <div className="mx-auto max-w-[1200px]">
@@ -852,12 +927,12 @@ export function IndustrialEnquirySolutionView() {
               <span className="h-[4px] w-[4px] bg-[#58C7E8]" />
               Quick Answers
             </div>
-            <h2 className="mt-4 text-[38px] font-normal leading-[1.0] tracking-[-2px] text-[#121212] sm:text-[48px] lg:text-[56px] lg:tracking-[-3px]">
+            <h2 className="mt-4 text-[38px] font-normal leading-[55px] tracking-[-2.4px] text-[#121212] sm:text-[44px] lg:text-[48px]">
               Everything You Need to Know
             </h2>
           </div>
 
-          <div className="mt-14 space-y-3">
+          <div className="mt-14 space-y-4">
             {faqItems.map((item, idx) => {
               const isOpen = activeFaq === idx;
               return (
@@ -870,7 +945,7 @@ export function IndustrialEnquirySolutionView() {
                     onClick={() => setActiveFaq(isOpen ? null : idx)}
                     className="flex w-full cursor-pointer items-center justify-between p-6 text-left sm:p-7"
                   >
-                    <span className="text-[17px] font-normal text-[#121212] sm:text-[19px]">
+                    <span className="text-[17px] font-normal text-[#121212] sm:text-[18px]">
                       {item.q}
                     </span>
                     <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-black text-white">
@@ -892,14 +967,14 @@ export function IndustrialEnquirySolutionView() {
       {/* ─────────────────────────────────────────────────────────────
           8. WHERE WE OPERATE (Interactive Map Section)
          ───────────────────────────────────────────────────────────── */}
-      <section className="bg-gradient-to-b from-[#6D6D6D] to-[#424242] px-6 py-20 text-white lg:px-[60px] lg:py-28">
+      <section className="relative overflow-hidden bg-gradient-to-b from-[#6D6D6D] to-[#424242] px-6 py-20 text-white lg:px-[60px] lg:py-28">
         <div className="mx-auto max-w-[1800px]">
           <div className="text-center">
-            <div className="inline-flex items-center gap-2 text-[14px] font-medium tracking-[0.02em] text-white">
-              <span className="h-[6px] w-[6px] bg-[#00E05C]" />
+            <div className="inline-flex items-center gap-2 text-[14px] font-medium tracking-[-0.56px] text-white">
+              <span className="h-[4px] w-[4px] bg-[#00E05C]" />
               Global Footprint
             </div>
-            <h2 className="mt-4 text-[42px] font-normal leading-[1.0] tracking-[-2px] text-white sm:text-[52px] lg:text-[60px]">
+            <h2 className="mt-4 text-[42px] font-normal leading-[55px] tracking-[-2.4px] text-white sm:text-[48px]">
               Where We Operate
             </h2>
           </div>
@@ -917,12 +992,9 @@ export function IndustrialEnquirySolutionView() {
                   }`}
                   aria-label={`View ${loc.name}`}
                 >
-                  <img
-                    src={`/figma/solutions/${loc.icon}`}
-                    alt=""
-                    aria-hidden="true"
-                    className="h-8 w-8"
-                  />
+                  <span className="grid h-8 w-8 place-items-center rounded-full border border-white bg-black/60 text-white">
+                    {loc.type === "OPERATING SITE" ? "+" : loc.type === "OFFICE" ? "•" : "○"}
+                  </span>
                 </button>
               ))}
 
@@ -932,18 +1004,19 @@ export function IndustrialEnquirySolutionView() {
                     left: `${Math.min(Math.max(activeLocation.x, 15), 70)}%`,
                     top: `${Math.max(activeLocation.y - 32, 10)}%`,
                   }}
-                  className="pointer-events-none absolute z-30 w-[300px] -translate-x-1/2 rounded-[16px] border border-white/20 bg-black/75 p-5 backdrop-blur-md"
+                  className="pointer-events-none absolute z-30 w-[280px] -translate-x-1/2 rounded-[16px] border border-white/20 bg-black/80 p-5 backdrop-blur-md"
                 >
-                  <span className="text-[11px] font-mono uppercase tracking-[0.1em] text-white/60">
+                  <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-[#B5B5B5]">
                     {activeLocation.type}
                   </span>
-                  <h4 className="mt-1 text-[18px] font-semibold text-white">
+                  <h4 className="mt-1 text-[16px] font-medium text-white">
                     {activeLocation.name}
                   </h4>
-                  <p className="mt-0.5 text-[12px] text-[#58C7E8]">
+                  <p className="mt-0.5 text-[12px] text-[#B5B5B5]">
                     {activeLocation.detail}
                   </p>
-                  <p className="mt-2 text-[12px] leading-relaxed text-white/80">
+                  <div className="my-2 h-px w-full bg-white/12" />
+                  <p className="text-[12px] leading-[19px] text-white/70">
                     {activeLocation.body}
                   </p>
                 </div>
@@ -971,21 +1044,22 @@ export function IndustrialEnquirySolutionView() {
       </section>
 
       {/* ─────────────────────────────────────────────────────────────
-          9. PLANT FACILITIES
+          9. PLANT FACILITIES (Frame 91 - Dark Section with Banner & Contacts)
          ───────────────────────────────────────────────────────────── */}
-      <section className="bg-[#000000] px-6 py-20 text-white lg:px-[60px] lg:py-32">
+      <section className="bg-[#121212] px-6 py-20 text-white lg:px-[60px] lg:py-28">
         <div className="mx-auto max-w-[1800px]">
           <div>
-            <div className="flex items-center gap-2 text-[14px] font-medium tracking-[0.02em] text-[#58C7E8]">
+            <div className="flex items-center gap-2 text-[14px] font-medium leading-none text-[#58C7E8]">
               <span className="h-[6px] w-[6px] bg-[#58C7E8]" />
               LOCATIONS
             </div>
-            <h2 className="mt-4 text-[38px] font-normal leading-[1.0] tracking-[-2px] text-white sm:text-[48px] lg:text-[56px]">
+            <h2 className="mt-4 text-[38px] font-normal leading-[100%] tracking-[-2px] text-white sm:text-[44px] lg:text-[48px]">
               Plant Facilities
             </h2>
           </div>
 
-          <div className="relative mt-12 w-full overflow-hidden rounded-[24px] bg-[#1a1a1a] sm:h-[600px] lg:mt-16 lg:h-[720px]">
+          {/* Large Facility Banner (1800px x 864px in Figma) */}
+          <div className="relative mt-12 w-full overflow-hidden rounded-[32px] bg-[#1a1a1a] sm:h-[600px] lg:mt-16 lg:h-[864px]">
             <img
               src="/figma/solutions/plant-facilities-bg.png"
               alt="DADA Energies CAPCO global manufacturing hub plant facilities"
@@ -993,66 +1067,71 @@ export function IndustrialEnquirySolutionView() {
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
-            <div className="absolute bottom-6 right-6 max-w-[440px] rounded-[16px] border border-white/20 bg-black/75 p-6 backdrop-blur-md sm:bottom-10 sm:right-10 sm:p-8">
-              <p className="text-[13px] leading-[1.6] text-white/90 sm:text-[14px]">
+            {/* Bottom-right Overlay Glass Badge */}
+            <div className="absolute bottom-6 right-6 max-w-[560px] rounded-[18px] bg-[rgba(16,16,16,0.42)] p-8 backdrop-blur-[14px] sm:bottom-10 sm:right-10">
+              <p className="text-[15px] font-normal leading-[140%] text-white/80 sm:text-[16px]">
                 DADA ENERGIES (P) LTD. E54 to E77, TSIIC Automotive Park, Muppireddypally Village, Manoharabad Mandal, Medak District, Hyderabad, Telangana - 502336.
               </p>
-              <div className="mt-5">
+              <div className="mt-6">
                 <a
                   href="https://www.google.com/maps/search/?api=1&query=DADA+ENERGIES+TSIIC+Automotive+Park+Muppireddypally+Telangana+502336"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 rounded bg-white px-4 py-2.5 text-[13px] font-medium !text-[#0A0A0A] transition hover:bg-white/90"
+                  className="inline-flex h-[56px] w-[280px] items-center justify-between bg-white px-5 py-3 text-[14px] font-medium leading-[120%] !text-[#020202] transition hover:bg-[#F2F2F2]"
                 >
-                  <span className="!text-[#0A0A0A]">Get Directions on Google Maps</span>
-                  <ExternalLink size={14} className="!text-[#0A0A0A] shrink-0" />
+                  <span className="!text-[#020202]">Get Directions on Google Maps</span>
+                  <ExternalLink size={18} className="!text-[#020202] shrink-0" />
                 </a>
               </div>
             </div>
           </div>
 
-          <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:mt-14 lg:gap-10">
-            <a
-              href="tel:+919848014000"
-              className="flex items-center gap-5 rounded-[16px] border border-white/10 bg-white/5 p-6 transition hover:bg-white/10 sm:p-8"
-            >
-              <div className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-white/10 text-white">
-                <Headphones size={24} />
-              </div>
-              <div>
-                <span className="block font-mono text-[11px] uppercase tracking-[0.08em] text-[#58C7E8]">
-                  COMMERCIAL DESK PHONE
-                </span>
-                <strong className="mt-1 block text-[20px] font-medium text-white sm:text-[24px]">
+          {/* Contact Circles Row (Frame 150) */}
+          <div className="mt-14 grid gap-8 sm:grid-cols-2 lg:gap-14">
+            {/* Commercial Desk Phone */}
+            <div className="flex flex-col items-start gap-4">
+              <span className="text-[16px] font-normal leading-[120%] text-white/50">
+                COMMERCIAL DESK PHONE
+              </span>
+              <a
+                href="tel:+919848014000"
+                className="group flex flex-col items-start gap-4 transition"
+              >
+                <div className="grid h-[156px] w-[156px] place-items-center rounded-full border border-white/50 transition group-hover:border-white group-hover:bg-white/10">
+                  <Headphones size={38} className="text-white" />
+                </div>
+                <strong className="text-[18px] font-normal leading-[140%] text-white transition group-hover:text-[#58C7E8]">
                   +91 98480 14000
                 </strong>
-              </div>
-            </a>
+              </a>
+            </div>
 
-            <a
-              href="mailto:sales@capcocapacitor.com"
-              className="flex items-center gap-5 rounded-[16px] border border-white/10 bg-white/5 p-6 transition hover:bg-white/10 sm:p-8"
-            >
-              <div className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-white/10 text-white">
-                <Mail size={24} />
-              </div>
-              <div>
-                <span className="block font-mono text-[11px] uppercase tracking-[0.08em] text-[#58C7E8]">
-                  DEPARTMENT EMAIL DESK
-                </span>
-                <strong className="mt-1 block text-[20px] font-medium text-white sm:text-[24px]">
+            {/* Department Email Desk */}
+            <div className="flex flex-col items-start gap-4">
+              <span className="text-[16px] font-normal leading-[120%] text-white/50">
+                DEPARTMENT EMAIL DESK
+              </span>
+              <a
+                href="mailto:sales@capcocapacitor.com"
+                className="group flex flex-col items-start gap-4 transition"
+              >
+                <div className="grid h-[156px] w-[156px] place-items-center rounded-full border border-white/50 transition group-hover:border-white group-hover:bg-white/10">
+                  <Mail size={38} className="text-white" />
+                </div>
+                <strong className="text-[18px] font-normal leading-[140%] text-white transition group-hover:text-[#58C7E8]">
                   sales@capcocapacitor.com
                 </strong>
-              </div>
-            </a>
+              </a>
+            </div>
           </div>
         </div>
       </section>
 
       {/* ─────────────────────────────────────────────────────────────
-          10. JOIN 5,000+ CAPCO DEALERS / INDUSTRIAL CTA SECTION
+          10. JOIN 5,000+ CAPCO DEALERS (CTA Section)
          ───────────────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden bg-[#101010] px-6 py-24 text-white lg:px-[60px] lg:py-36">
+      <section className="relative overflow-hidden bg-[#121212] px-6 py-28 text-white lg:px-[60px] lg:py-36">
+        {/* Radar Rings Background */}
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-25"
@@ -1062,11 +1141,11 @@ export function IndustrialEnquirySolutionView() {
           <div className="absolute h-[140px] w-[140px] rounded-full border border-white/10 sm:h-[220px] sm:w-[220px] lg:h-[320px] lg:w-[320px]" />
         </div>
 
-        <div className="relative z-10 mx-auto max-w-[980px] text-center">
-          <h2 className="text-[36px] font-light leading-[1.1] tracking-[-2px] text-white sm:text-[52px] lg:text-[62px] lg:tracking-[-3px]">
+        <div className="relative z-10 mx-auto max-w-[796px] text-center">
+          <h2 className="text-[36px] font-normal leading-[55px] tracking-[-2.4px] text-white sm:text-[44px] lg:text-[48px]">
             Join 5,000+ Successful CAPCO Dealers
           </h2>
-          <p className="mx-auto mt-6 max-w-[680px] text-[16px] leading-[1.6] text-white/80 sm:text-[18px]">
+          <p className="mx-auto mt-6 max-w-[680px] text-[16px] leading-[140%] text-white/80 sm:text-[18px]">
             Whether you&apos;re a regional distributor or a specialized industrial supplier, Capco Capacitors offers the margins, marketing support, and brand equity to grow your business profitably.
           </p>
 
@@ -1077,7 +1156,7 @@ export function IndustrialEnquirySolutionView() {
                 clipPath:
                   "polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%)",
               }}
-              className="inline-flex min-h-[56px] min-w-[260px] items-center justify-between gap-6 bg-[#4D82F3] px-6 py-3.5 text-[15px] font-medium leading-[1.2] !text-white transition hover:-translate-y-0.5 hover:brightness-105"
+              className="inline-flex min-h-[56px] min-w-[240px] items-center justify-between gap-6 bg-[#4D82F3] px-6 py-3.5 text-[15px] font-medium leading-[1.2] !text-white transition hover:-translate-y-0.5 hover:brightness-105"
             >
               <span className="!text-white">Apply for Dealership</span>
               <ArrowRight size={18} className="!text-white shrink-0" />

@@ -95,6 +95,12 @@ export function PublicNav({
               <Link href="/about#compliance" className="block px-4 py-2.5 text-sm hover:bg-[#F5F5F5]">
                 Certifications &amp; Compliance
               </Link>
+              <Link href="/gallery" className="block px-4 py-2.5 text-sm hover:bg-[#F5F5F5]">
+                Gallery
+              </Link>
+              <Link href="/case-studies" className="block px-4 py-2.5 text-sm hover:bg-[#F5F5F5]">
+                Case Studies
+              </Link>
             </div>
           </div>
 
@@ -117,7 +123,7 @@ export function PublicNav({
                 Dealership Network
               </Link>
               <Link href="/solutions/industrial-enquiry" className="block px-4 py-2.5 text-sm hover:bg-[#F5F5F5]">
-                Industrial Power Factor
+                Industrial Enquiry
               </Link>
             </div>
           </div>
@@ -245,9 +251,11 @@ export function PublicNav({
           {[
             ["Home", "/"],
             ["About CAPCO", "/about"],
+            ["Gallery", "/gallery"],
+            ["Case Studies", "/case-studies"],
             ["OEM Solutions", "/solutions/oem"],
             ["Dealership Solutions", "/solutions/dealership"],
-            ["Industrial Power Factor", "/solutions/industrial-enquiry"],
+            ["Industrial Enquiry", "/solutions/industrial-enquiry"],
             ["Products", "/products"],
             ["Contact", "/contact"],
             ["Dealer Login", "/login"],
@@ -592,7 +600,7 @@ export function PublicFooter({
                   <Link href="/about" className="block hover:text-[#58C7E8]">
                     About
                   </Link>
-                  <Link href="/about#gallery" className="block hover:text-[#58C7E8]">
+                  <Link href="/gallery" className="block hover:text-[#58C7E8]">
                     Gallery
                   </Link>
                   <Link href="/about#awards" className="block hover:text-[#58C7E8]">
