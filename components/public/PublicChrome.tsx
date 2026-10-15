@@ -109,12 +109,15 @@ export function PublicNav({
               Solutions
               <ChevronDown size={15} className="transition-transform duration-200 group-hover:rotate-180" />
             </Link>
-            <div className="invisible absolute left-0 top-full z-40 min-w-[230px] border border-[#E4E4E4] bg-white p-2 text-[#020202] opacity-0 shadow-xl transition group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
+            <div className="invisible absolute left-0 top-full z-40 min-w-[240px] border border-[#E4E4E4] bg-white p-2 text-[#020202] opacity-0 shadow-xl transition group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
               <Link href="/solutions/oem" className="block px-4 py-2.5 text-sm hover:bg-[#F5F5F5]">
                 OEM Solutions
               </Link>
               <Link href="/solutions/dealership" className="block px-4 py-2.5 text-sm hover:bg-[#F5F5F5]">
-                Dealership &amp; Industrial
+                Dealership Network
+              </Link>
+              <Link href="/solutions/industrial-enquiry" className="block px-4 py-2.5 text-sm hover:bg-[#F5F5F5]">
+                Industrial Power Factor
               </Link>
             </div>
           </div>
@@ -243,7 +246,8 @@ export function PublicNav({
             ["Home", "/"],
             ["About CAPCO", "/about"],
             ["OEM Solutions", "/solutions/oem"],
-            ["Dealership / Industrial Solutions", "/solutions/dealership"],
+            ["Dealership Solutions", "/solutions/dealership"],
+            ["Industrial Power Factor", "/solutions/industrial-enquiry"],
             ["Products", "/products"],
             ["Contact", "/contact"],
             ["Dealer Login", "/login"],
@@ -615,7 +619,7 @@ export function PublicFooter({
                   <Link href="/solutions" className="block hover:text-[#58C7E8]">
                     B2D Marketing Landing Page
                   </Link>
-                  <Link href="/contact" className="block hover:text-[#58C7E8]">
+                  <Link href="/solutions/industrial-enquiry" className="block hover:text-[#58C7E8]">
                     Industrial Enquiry
                   </Link>
                 </div>

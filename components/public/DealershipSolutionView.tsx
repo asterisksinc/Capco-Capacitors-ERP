@@ -22,6 +22,7 @@ import {
   PublicFooter,
   PublicNav,
 } from "@/components/public/PublicChrome";
+import { FourStepProcessAndTeamSection } from "@/components/public/FourStepProcessAndTeamSection";
 
 const dealerAdvantages = [
   {
@@ -380,77 +381,17 @@ export function DealershipSolutionView() {
         />
       </section>
 
-      {/* 2. A Brand That Sells Itself (Sticky Stacking Cards Scroll Effect) */}
-      <section id="dealership-overview" className="relative z-10 bg-white px-6 py-20 lg:px-[60px] lg:py-32">
-        <div className="mx-auto max-w-[1800px]">
-          <div className="grid gap-12 lg:grid-cols-[1fr_874px] lg:gap-16">
-            {/* Left Column: Sticky Header & Action Button */}
-            <div className="lg:sticky lg:top-[120px] lg:self-start">
-              <div className="flex items-center gap-2 text-[14px] font-medium tracking-[-0.56px] text-[#1C1C1C]">
-                <span className="h-[4px] w-[4px] bg-[#00E05C]" />
-                30+ Years of Market Trust
-              </div>
-              <h2 className="mt-5 text-[38px] font-normal leading-[1.0] tracking-[-2.88px] text-[#121212] sm:text-[48px] lg:text-[56px]">
-                A Brand That
-                <br />
-                Sells Itself
-              </h2>
-
-              <div className="mt-8">
-                <Link
-                  href="/contact?category=dealership#enquiry-form"
-                  style={{
-                    clipPath:
-                      "polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%)",
-                  }}
-                  className="inline-flex min-h-[56px] min-w-[260px] items-center justify-between gap-6 bg-[#0092CA] px-5 py-3 text-[14px] font-medium leading-[1.2] !text-white transition hover:-translate-y-0.5 hover:brightness-105"
-                >
-                  <span className="!text-white">Download OEM Partnership Guide</span>
-                  <ArrowRight size={16} className="!text-white shrink-0" />
-                </Link>
-              </div>
-            </div>
-
-            {/* Right Column: 4 Step Rows Scrolling beside Sticky Header (as in Video 2) */}
-            <div className="flex flex-col gap-10 lg:gap-14 pb-12">
-              {dealerAdvantages.map((step) => (
-                <div
-                  key={step.num}
-                  className="group flex flex-col gap-1 rounded-[12px] shadow-sm sm:flex-row transition-all duration-300 hover:shadow-md"
-                >
-                  {/* Number Card */}
-                  <div className="relative flex h-[350px] w-full items-center justify-center overflow-hidden rounded-[12px] bg-[#ECECEC] sm:w-[350px] shrink-0">
-                    <img
-                      src={step.dial}
-                      alt=""
-                      aria-hidden="true"
-                      className="pointer-events-none absolute inset-0 m-auto h-[290px] w-[290px] opacity-70 transition-transform duration-700 ease-out group-hover:rotate-45"
-                    />
-                    <span className="relative z-10 font-sans text-[72px] font-normal leading-none tracking-tight text-[#121212]">
-                      {step.num}
-                    </span>
-                  </div>
-
-                  {/* Info Card */}
-                  <div className="flex h-[350px] flex-1 flex-col justify-between rounded-[12px] bg-[#ECECEC] p-8 sm:p-10">
-                    <span className="text-[12px] font-medium uppercase tracking-[0.08em] text-[#595959]">
-                      {step.label}
-                    </span>
-                    <div>
-                      <h3 className="text-[20px] font-normal tracking-[-0.02em] text-[#121212] sm:text-[22px]">
-                        {step.title}
-                      </h3>
-                      <p className="mt-3 text-[14px] leading-[1.5] text-[#595959]">
-                        {step.body}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* 2. Four-Step Process & Deep Operating Experience (Staircase Reveal & Interactive Team Section) */}
+      <FourStepProcessAndTeamSection
+        id="dealership-process-and-team"
+        processEyebrow="How We Work"
+        processHeading="A four-step path from site review to revenue"
+        processCtaText="Apply for Dealership"
+        processCtaHref="/contact?category=dealership#enquiry-form"
+        steps={[...dealerAdvantages]}
+        teamEyebrow="Our People"
+        teamHeading="Deep operating experience across development, delivery and dispatch"
+      />
 
       {/* 3. Where We Operate (Interactive Map Section) */}
       <section className="bg-gradient-to-b from-[#6D6D6D] to-[#424242] px-6 py-20 text-white lg:px-[60px] lg:py-28">
