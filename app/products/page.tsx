@@ -26,14 +26,15 @@ export default function ProductsPage() {
 
       <section className="px-6 pb-16 pt-20 lg:px-[60px] lg:pb-20 lg:pt-[72px]">
         <div className="mx-auto max-w-[1800px] text-center">
-          <h1 className="text-[64px] font-normal leading-none tracking-normal lg:text-[96px]">Our Products</h1>
+          <h1 className="text-[42px] font-normal leading-none tracking-[-0.04em] sm:text-[64px] lg:text-[96px]">Our Products</h1>
           <label className="mx-auto mt-14 flex h-10 max-w-[560px] items-center border-b border-[#d8d8d8] text-left">
             <Search size={16} className="mr-3 text-[#595959]" />
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Search"
-              className="h-full flex-1 bg-transparent text-sm outline-none"
+              aria-label="Search products"
+              className="h-full min-w-0 flex-1 bg-transparent text-base outline-none"
             />
             <span className="text-sm text-[#595959]">[{filteredProducts.length}]</span>
           </label>
@@ -42,7 +43,8 @@ export default function ProductsPage() {
               <button
                 key={item}
                 onClick={() => setCategory(item)}
-                className={`h-8 px-3 ${category === item ? "bg-[#020202] text-white" : "text-[#595959] hover:bg-[#f5f5f5]"}`}
+                aria-pressed={category === item}
+                className={`min-h-11 max-w-full px-3 py-2 ${category === item ? "bg-[#020202] text-white" : "text-[#595959] hover:bg-[#f5f5f5]"}`}
               >
                 {item}
               </button>

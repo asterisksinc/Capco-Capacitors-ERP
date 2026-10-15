@@ -15,10 +15,10 @@ export const publicProducts: PublicProduct[] = [
     date: "08.06.2026",
     category: "Metalized Polypropylene Film [ MPP ]",
     tagLabel: "METALIZED POLYPROPYLENE FILM [ MPP ]",
-    title: "Zinc / Aluminium Alloy Metalised BOPP Film",
+    title: "Zinc/Aluminium Alloy Metalized BOPP Film",
     author: "Russell Gold",
     image: "/figma/products/card-1-bopp.png",
-    summary: "In-house Leybold-metallized BOPP film for self-healing, high-voltage capacitor applications.",
+    summary: "In-house Leybold-metallized BOPP film engineered for self-healing, high-voltage capacitor applications with superior volumetric efficiency.",
   },
   {
     slug: "fan-capacitor",
@@ -28,7 +28,7 @@ export const publicProducts: PublicProduct[] = [
     title: "Fan Capacitor",
     author: "Russell Gold",
     image: "/figma/products/card-2-fan.png",
-    summary: "Compact IS:2993 certified capacitors for fans, HVAC equipment, and appliance assemblies.",
+    summary: "Dry/oil-filled fan capacitors (0.5–10 MFD) designed for stable torque, energy efficiency, and extended motor life in residential and industrial fans.",
   },
   {
     slug: "motor-run-capacitor",
@@ -38,7 +38,7 @@ export const publicProducts: PublicProduct[] = [
     title: "Motor Run Capacitor",
     author: "Dan Barcelo",
     image: "/figma/products/card-3-motor.png",
-    summary: "Reliable motor-run units for continuous duty applications with stable capacitance tolerance.",
+    summary: "Dry-type motor run capacitors (0.5–432 MFD) engineered for sustained torque, energy efficiency, and extended motor lifespan in demanding AC applications.",
   },
   {
     slug: "motor-start-capacitor",
@@ -47,7 +47,7 @@ export const publicProducts: PublicProduct[] = [
     title: "Motor Start Capacitor",
     author: "Dan Barcelo",
     image: "/figma/products/product-4.png",
-    summary: "High-starting-torque capacitors for pumps, compressors, and industrial drives.",
+    summary: "Dry electrolytic motor start capacitors (40–500 MFD) engineered for maximum starting torque, rapid motor ignition, and extended service life in demanding applications.",
   },
   {
     slug: "submersible-panel-capacitor",
@@ -56,7 +56,7 @@ export const publicProducts: PublicProduct[] = [
     title: "Submersible Panel Capacitor",
     author: "Dan Barcelo",
     image: "/figma/products/product-5.png",
-    summary: "Burst-proof capacitor assemblies for borewell and agricultural pump control panels.",
+    summary: "Dry-type submersible panel capacitors (10–120 MFD) engineered for heat resistance, moisture protection, and sustained motor efficiency in underground pump installations.",
   },
   {
     slug: "ac-refrigeration-washing-machine-capacitor",
@@ -65,16 +65,16 @@ export const publicProducts: PublicProduct[] = [
     title: "A.C. / Refrigeration / Washing Machine Capacitor",
     author: "Dan Barcelo",
     image: "/figma/products/product-6.png",
-    summary: "P2 safety capacitors for high-density home appliance integration.",
+    summary: "P2 safety-equipped capacitors for air conditioners, refrigerators, and washing machines—delivering burst-proof reliability, self-healing performance, and enhanced motor efficiency.",
   },
   {
     slug: "lighting-luminaire-capacitor",
     date: "06.18.2026",
     category: "Luminaire Capacitor",
-    title: "Lighting Luminaire Capacitor",
+    title: "Lighting Capacitor",
     author: "CAPCO Team",
     image: "/figma/products/product-7.png",
-    summary: "Inbuilt discharge resistor capacitors for street lights and industrial luminaires.",
+    summary: "Dry-type lighting capacitors (1–45 MFD) with inbuilt discharge resistors, engineered for long-life operation and heat resistance in municipal and industrial lighting applications.",
   },
   {
     slug: "uv-lamp-capacitor",
@@ -83,7 +83,7 @@ export const publicProducts: PublicProduct[] = [
     title: "UV Lamp Capacitor",
     author: "CAPCO Team",
     image: "/figma/products/product-8.png",
-    summary: "High-frequency capacitors for UV curing and coating lines.",
+    summary: "Dry/oil-filled UV lamp capacitors engineered for high-frequency operation, superior heat dissipation, and reliable performance in UV curing systems up to 4000V AC.",
   },
   {
     slug: "pfc-cylindrical-capacitor",
@@ -92,7 +92,7 @@ export const publicProducts: PublicProduct[] = [
     title: "PFC Cylindrical Capacitor",
     author: "CAPCO Team",
     image: "/figma/products/product-9.png",
-    summary: "IS:13340 heavy-duty cells for APFC panels and grid infrastructure.",
+    summary: "P2 safety-equipped cylindrical capacitors (0.5–25 KVAR) designed for burst-proof operation, power factor maintenance, and enhanced electrical system stability in low-tension networks.",
   },
   {
     slug: "capacitor-bank",

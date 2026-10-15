@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { PublicNav } from "@/components/public/PublicChrome";
+import { SiteFooter } from "@/components/public/SiteFooter";
 import { capabilities, industrialFaqs, industrialServices, journeyCards, oemFaqs, processSteps, productCategories, stories } from "@/lib/solutionContent";
 import styles from "./SolutionPage.module.css";
 
@@ -184,7 +185,7 @@ function IndustrialServices() {
 }
 
 const locations = [
-  { name: "Bell Junction", type: "Operating site", detail: "West Texas · ERCOT", body: "Standalone storage dispatching into ERCOT West. Containerized LFP, energized and operated by Anode from first dispatch.", x: 30, y: 56, icon: "6261e.svg" },
+  { name: "Bell Junction", type: "Operating site", detail: "West Texas · ERCOT", body: "Standalone storage dispatching into ERCOT West. Containerized LFP, energized and operated by Capco from first dispatch.", x: 30, y: 56, icon: "6261e.svg" },
   { name: "Cedar Bayou", type: "Operating site", detail: "Site location", body: "Explore the operating network and contact our team for more information.", x: 42, y: 68, icon: "a1758.svg" },
   { name: "Marfa Flats", type: "Operating site", detail: "Site location", body: "Standalone storage on a constrained node, cycling twice daily against congestion.", x: 22, y: 72, icon: "a1758.svg" },
   { name: "Salt Fork", type: "Operating site", detail: "Site location", body: "First fleet site to complete a full augmentation cycle with no measured capacity shortfall.", x: 36, y: 46, icon: "a1758.svg" },
@@ -244,14 +245,14 @@ function SolutionFooter({ industrial }: { industrial: boolean }) {
         <Button href={enquiry(industrial ? "Apply for Dealership" : "Request OEM Pricing")} shape="ad979.svg" icon="24503.svg">{industrial ? "Apply for Dealership" : "Request OEM Pricing"}</Button>
       </div>
     </section>
-    <footer className={styles.footer} style={background("a62f2.png")}>
-      <div className={styles.footerTop}><div className={styles.newsletter}><h3>{industrial ? "Talk with an expert at Anode" : "Join our Newsletter"}</h3>
+    <footer hidden className={styles.footer} style={background("a62f2.png")}>
+      <div className={styles.footerTop}><div className={styles.newsletter}><h3>{industrial ? "Talk with an expert at Capco" : "Join our Newsletter"}</h3>
         <form onSubmit={event => { event.preventDefault(); const form = new FormData(event.currentTarget); window.location.href = `${enquiry("Newsletter enquiry")}&body=${encodeURIComponent(`Please send newsletter information to ${form.get("email")}.`)}`; }}><input type="email" name="email" required aria-label="Email address for newsletter" placeholder="Your email" /><button type="submit">Sign Up</button></form>
       </div><div className={styles.footerLinks}>
         {[
           { title: "Company", links: [["Home", "/"], ["About", "/#why"], ["Gallery", "/#projects"], ["Awards & Achievements", "/#why"], ["Careers", enquiry("Careers")], ["Contact", "#contact"]] },
-          { title: "Solutions", links: [["OEMs", "/solutions/oem"], ["Dealership", "/solutions/dealership"], ["B2D Marketing Landing Page", "/solutions/dealership"], ["Industrial Enquiry", enquiry("Industrial Enquiry")]] },
-          { title: "Global Footprint", links: ["UAE", "USA", "Sri Lanka", "Bangladesh", "Turkey", "African Continent", "Egypt"].map(label => [label, enquiry(`${label} enquiry`)]) },
+          { title: "Solutions", links: [["OEMs", "/solutions/oem"], ["Dealership", "/solutions/dealership"], ["Industrial Enquiry", enquiry("Industrial Enquiry")]] },
+          { title: "Global Footprint", links: ["UAE", "USA", "Sri Lanka", "Bangladesh", "Turkey", "African Continent"].map(label => [label, enquiry(`${label} enquiry`)]) },
           { title: "Media", links: [["Newsroom", "/#projects"], ["Corporate Social Responsibility", "/#why"], ["Awards", "/#why"], ["Certifications", "/#why"]] },
           { title: "Social", links: ["Instagram", "LinkedIn", "Facebook", "YouTube"].map(label => [label, enquiry(`${label} contact`)]) },
           { title: "Contact", links: ["Instagram", "LinkedIn", "Facebook", "YouTube"].map(label => [label, enquiry(`${label} contact`)]) },
@@ -259,6 +260,7 @@ function SolutionFooter({ industrial }: { industrial: boolean }) {
       </div></div>
       <div className={styles.footerBottom}><Link href="/" aria-label="CAPCO home">{industrial ? <Icon name="75083.svg" /> : <Image src={asset("caef4.png")} alt="CAPCO" width={95} height={34} />}</Link><span>©2026 Capco Capacitors</span><div><Link href="/privacy-policy">Privacy Policy</Link><Link href="/terms-and-conditions">Terms &amp; Conditions</Link></div><span>All Rights Reserved. <span>Website by Asterisk.Inc</span></span></div>
     </footer>
+    <SiteFooter />
   </>;
 }
 

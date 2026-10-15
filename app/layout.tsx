@@ -1,17 +1,18 @@
 import type { Metadata, Viewport } from "next";
-import { DM_Sans } from "next/font/google";
+import { Geist } from "next/font/google";
 import { AppProviders } from "@/components/AppProviders";
 import "./globals.css";
 
-const dmSans = DM_Sans({
-  variable: "--font-dm-sans",
+const geist = Geist({
+  variable: "--font-geist",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Capco Capacitors ERP",
-  description: "Supervisor work order management dashboard for Capco.",
+  title: "CAPCO Capacitors | Capacitor Manufacturer in India",
+  description: "CAPCO Capacitors manufactures BIS & CE certified motor run, PFC, lighting and custom capacitors for OEMs, dealers and industrial buyers across India.",
+  keywords: ["capacitor manufacturer India", "CAPCO Capacitors", "BIS certified capacitors", "PFC capacitors", "motor run capacitors"],
 };
 
 export const viewport: Viewport = {
@@ -25,7 +26,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${dmSans.variable} h-full antialiased`}>
+    <html lang="en" data-scroll-behavior="smooth" className={`${geist.variable} h-full antialiased`}>
       <body className="min-h-full">
         <AppProviders>{children}</AppProviders>
       </body>

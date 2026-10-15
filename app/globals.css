@@ -40,7 +40,7 @@ body {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-dm-sans), "DM Sans", "Segoe UI", sans-serif;
+  font-family: var(--font-geist), "Segoe UI", sans-serif;
   overflow-x: hidden;
 }
 
@@ -70,6 +70,61 @@ select {
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-dm-sans);
-  --font-dm-sans: var(--font-dm-sans);
+  --font-sans: var(--font-geist);
+  --font-mono: var(--font-geist);
+  /* Existing dashboard utilities inherit the shared site typography. */
+  --font-dm-sans: var(--font-geist);
+}
+
+html { scroll-behavior: smooth; scroll-padding-top: 96px; }
+:where(section[id]) { scroll-margin-top: 24px; }
+:where(a, button, input, textarea, select):focus-visible {
+  outline: 2px solid #58c7e8;
+  outline-offset: 4px;
+}
+@media (prefers-reduced-motion: reduce) {
+  html, .scroll-smooth { scroll-behavior: auto; }
+}
+
+@media (min-width: 1024px) {
+  .public-nav-inner { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 24px; }
+}
+
+.home-page h2 { letter-spacing: -.04em; }
+.home-page .home-button {
+  display: inline-flex; align-items: flex-end; justify-content: space-between;
+  min-height: 51px; width: fit-content; min-width: 193px; gap: 24px;
+  padding: 22px 12px 12px; font-size: 14px; font-weight: 500; line-height: 1.2;
+  color: #020202; background: #58c7e8;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%);
+  transition: background .25s, transform .25s;
+}
+.home-page .home-button:hover { background: #78d6f1; transform: translateY(-3px); }
+.home-page .home-button--light { background: white; }
+.home-page .home-button--muted { background: #e4e4e4; }
+.home-page .home-button img { flex-shrink: 0; }
+.home-page .feature-row { display: grid; grid-template-columns: 1.413fr 1fr; border-top: 1px solid #e4e4e4; }
+.home-page .feature-image { position: relative; min-height: 440px; }
+.home-page .feature-copy { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 40px; min-width: 0; padding: clamp(32px, 3.125vw, 60px); background: #f5f5f5; }
+.home-page .feature-copy h3 { margin-top: 24px; font-size: clamp(26px, 1.875vw, 36px); line-height: 1.2; letter-spacing: -.055em; font-weight: 400; }
+.home-page .feature-copy p { color: #595959; font-size: clamp(16px, 1.04vw, 20px); line-height: 1.4; }
+.home-page .product-card { clip-path: polygon(0 0, 100% 0, 100% calc(100% - 60px), calc(100% - 60px) 100%, 0 100%); }
+.home-page .product-card h3 { font-weight: 400; letter-spacing: -.025em; }
+.home-page .product-badge { clip-path: polygon(0 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%); }
+.home-page .project-list { scrollbar-width: none; }
+.home-page .project-list::-webkit-scrollbar { display: none; }
+.home-page .project-card { height: clamp(560px, 45vw, 864px); border-radius: 32px; }
+.home-page .project-title { position: absolute; left: 3.17%; bottom: 9%; max-width: 56%; color: white; }
+.home-page .project-title h3 { font-size: clamp(26px, 2.5vw, 48px); line-height: 1; letter-spacing: -.04em; }
+.home-page .project-detail { position: absolute; right: 14px; bottom: 14px; width: 37%; padding: clamp(20px, 1.875vw, 36px); border-radius: 18px; background: #1010106b url('/figma/solutions/9e182.svg') center / cover; color: white; backdrop-filter: blur(14px); }
+@media (min-width: 1600px) { .home-page .feature-image { min-height: 580px; } .home-page .feature-copy { gap: 54px; } }
+@media (max-width: 1023px) {
+  .home-page .feature-row { grid-template-columns: 1fr; }
+  .home-page .feature-image { min-height: 0; aspect-ratio: 1054 / 580; }
+  .home-page .feature-copy { gap: 28px; }
+  .home-page .project-title { left: 24px; bottom: 290px; max-width: calc(100% - 48px); }
+  .home-page .project-detail { left: 14px; width: auto; min-height: 220px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-page *, .home-page *::before, .home-page *::after { animation: none !important; transition-duration: 0s !important; scroll-behavior: auto !important; }
 }
