@@ -21,7 +21,7 @@ const linkGroups = [
   {
     title: "Company",
     links: [
-      ["Home", "/"], ["About", "/about"], ["Gallery", "/#projects"],
+      ["Home", "/"], ["About", "/about"], ["Gallery", "/gallery"],
       ["Awards & Achievements", "/about#compliance"],
       ["Careers", enquiry("Careers")], ["Contact", "/contact"],
     ],
@@ -31,7 +31,7 @@ const linkGroups = [
     links: [
       ["OEMs", "/solutions/oem"],
       ["Dealership", "/contact?category=dealership#enquiry-form"],
-      ["Industrial Enquiry", "/solutions/dealership"],
+      ["Industrial Enquiry", "/solutions/industrial-enquiry"],
     ],
   },
   {

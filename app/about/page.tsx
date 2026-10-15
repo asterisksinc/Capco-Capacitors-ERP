@@ -1,6 +1,7 @@
 "use client";
 
 /* eslint-disable @next/next/no-img-element */
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -51,107 +52,15 @@ const AFFILIATIONS = [
   "GCC Chamber of Commerce Approved",
 ] as const;
 
-const TIMELINE_MILESTONES = [
-  {
-    year: "1994",
-    progress: "3%",
-    title: "Company Founded & MPP Film Baseline Established",
-    badge: "FOUNDING OPERATIONS",
-    body: "Dada Energies launched commercial production in Jeedimetla, Hyderabad with a 50 metric tons/month slitting capability, supplying dielectric film to domestic fan capacitor assemblers.",
-  },
-  {
-    year: "1996",
-    progress: "8%",
-    title: "BIS Shunt Power Certification (IS:2834 / IS:13340)",
-    badge: "STATUTORY MILESTONE",
-    body: "Became one of the earliest indigenous manufacturers in South India granted the Bureau of Indian Standards ISI Mark for industrial power factor improvement capacitors.",
-  },
-  {
-    year: "2005",
-    progress: "15%",
-    title: "Leybold High-Vacuum Metallization Line Commissioned",
-    badge: "CAPITAL INTEGRATION",
-    body: "Invested in German Leybold Optics vacuum deposition technology, bringing film metallization completely in-house, cutting production costs by 30% and securing dielectric uniformity.",
-  },
-  {
-    year: "2012",
-    progress: "28%",
-    title: "Export Division Launch & CE Marking",
-    badge: "GLOBAL FOOTPRINT",
-    body: "Achieved CE compliance under IEC 60252-1 standards. Shipped inaugural multi-container export order of oil-filled motor run capacitors to distributors in the United Arab Emirates.",
-  },
-  {
-    year: "2016",
-    progress: "52%",
-    title: "Dedicated Motor Run Facility at TSIIC Medak",
-    badge: "FACILITY EXPANSION",
-    body: "Commissioned the 50,000 sq ft Mega Plant at Medak Automotive Park featuring 10 Metar Swiss winding lines, scaling motor run manufacturing throughput to 500,000 units per month.",
-  },
-  {
-    year: "2020",
-    progress: "83%",
-    title: "Dual-Facility Integrated Scale: 1M+ Units/Month",
-    badge: "CERTIFICATION EXPANSION",
-    body: "Fully optimized two-plant ecosystem spanning Medak and Jeedimetla. Cross-border delivery to 15+ countries, continuous ₹100+ Crore annual turnover, and an active R&D engineering lab.",
-  },
-  {
-    year: "2024 - Present",
-    progress: "100%",
-    title: "Dual-Facility Integrated Scale: 1M+ Units/Month",
-    badge: "CURRENT CAPABILITY",
-    body: "Fully optimized two-plant ecosystem spanning Medak and Jeedimetla. Cross-border delivery to 15+ countries, continuous ₹100+ Crore annual turnover, and an active R&D engineering lab.",
-  },
-] as const;
-
-const COMPLIANCE_ROWS = [
-  {
-    label: "BIS CERTIFIED",
-    title: "Bureau of Indian Standards",
-    body: "Covers IS:2993 (AC Motor Capacitors), IS:13340 (Shunt Power Capacitors), IS:1709, and IS:1569. Fully registered and verifiable through the official BIS Care App.",
-    cta: "Download License",
-    note: "QCO 2017 MANDATE OK",
-    icon: "badge",
-  },
-  {
-    label: "ISO 9001:2008",
-    title: "Quality Management System",
-    body: "Certified by recognized registrars (TUV / SGS / Bureau Veritas). Comprehensive oversight spanning raw material testing, cleanroom winding, and 100% finished lot verification.",
-    cta: "Download Cert",
-    note: "RE-AUDITED ANNUALLY",
-    icon: "shield",
-  },
-  {
-    label: "CE MARKED",
-    title: "European Conformity",
-    body: "Engineered in complete conformance with Low Voltage Directive (LVD) 2014/35/EU and RoHS regulations. Tested for EU export shipments and GCC regional projects.",
-    cta: "Download DoC",
-    note: "EN 60252-1 COMPLIANT",
-    icon: "globe",
-  },
-  {
-    label: "IEC COMPLIANT",
-    title: "IEC 60252-1 & IEC 60831",
-    body: "Type-tested in third-party NABL-accredited high-power testing labs for 10,000-hour operational life endurance (Class B / Class A) and harmonic load absorption.",
-    cta: "Test Summary",
-    note: "NABL TYPE TESTED",
-    icon: "chart",
-  },
-  {
-    label: "EXPORT STANDARDS",
-    title: "Regional Export Approvals",
-    body: "UL 810 construction file for North American OEM integrations; GSO/ESMA conformity for UAE/Saudi Arabia; SLS (Sri Lanka), BSTI (Bangladesh), and SONCAP (Nigeria).",
-    cta: "Approval Matrix",
-    note: "15+ MARKETS COVERED",
-    icon: "truck",
-  },
-  {
-    label: "FACTORY AUDITED",
-    title: "Third-Party Inspection",
-    body: "Facilities readily opened for pre-shipment customer inspections by SGS, Bureau Veritas, Intertek, and TUV Rheinland for large-format export and utility projects.",
-    cta: "Inspection SOP",
-    note: "ZERO DISCREPANCY",
-    icon: "audit",
-  },
+const TIMELINE_DATA = [
+  { year: "1994", tagline: "The Journey of CAPCO Begins" },
+  { year: "1996", tagline: "BIS Certification for KVAR Capacitors" },
+  { year: "2005", tagline: "In-House Metallization Capability" },
+  { year: "2012", tagline: "Exports to Global Markets" },
+  { year: "2016", tagline: "Dedicated Motor Capacitor Plant" },
+  { year: "2020", tagline: "BIS Certification for Motor Run Capacitors" },
+  { year: "2023", tagline: "Advanced Manufacturing Facility" },
+  { year: "2025", tagline: "Motor Start Capacitor License" },
 ] as const;
 
 const FACILITIES = [
@@ -190,41 +99,6 @@ const FACILITY_KPIS = [
   ["15+", "R&D ENGINEERS"],
   ["25+", "FULL-TIME QC STAFF"],
   ["15%", "EXPORT PRODUCTION"],
-] as const;
-
-const EXPORT_REGIONS = [
-  {
-    code: "REGION 01",
-    name: "Middle East & GCC",
-    body: "Key destinations: United Arab Emirates, Egypt, Turkey, Saudi Arabia. Heavy usage in desert-rated split AC condensing units and agricultural borewells.",
-    compliance: "CE / GSO / ESMA / TSE",
-    port: "Jebel Ali (UAE)",
-    transit: "8–12 Days",
-  },
-  {
-    code: "REGION 02",
-    name: "South Asia Neighbors",
-    body: "Key destinations: Sri Lanka, Bangladesh, Nepal. Integrated into localized domestic ceiling fan manufacturing and municipal pumping systems.",
-    compliance: "SLS / BSTI / BIS",
-    port: "Colombo / Chittagong",
-    transit: "4–7 Days",
-  },
-  {
-    code: "REGION 03",
-    name: "African Continent",
-    body: "Key destinations: Nigeria, Kenya, Tanzania, South Africa. Engineered to handle frequent severe voltage drops and erratic thermal fluctuations.",
-    compliance: "SONCAP / KEBS / CE",
-    port: "Lagos / Mombasa",
-    transit: "18–24 Days",
-  },
-  {
-    code: "REGION 04",
-    name: "North America",
-    body: "Key destinations: United States OEM buyers. Specialized dry and oil-filled motor run capacitors built to customer-specific dimensional drawings.",
-    compliance: "UL 810 Recognized",
-    port: "New York / Long Beach",
-    transit: "28–35 Days",
-  },
 ] as const;
 
 const CSR_PILLARS = [
@@ -281,55 +155,6 @@ const ABOUT_FAQS = [
   },
 ] as const;
 
-function ComplianceIcon({ type }: { type: string }) {
-  return (
-    <div
-      className="grid h-[58px] w-[58px] place-items-center bg-[#F4F4F4] text-[#020202]"
-      style={{
-        clipPath: "polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%)",
-      }}
-    >
-      {type === "badge" && (
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-          <path d="M12 2l2.4 1.8 3-.3 1.2 2.8 2.8 1.2-.3 3L22.9 13l-1.8 2.4.3 3-2.8 1.2-1.2 2.8-3-.3L12 23.9l-2.4-1.8-3 .3-1.2-2.8-2.8-1.2.3-3L1.1 13l1.8-2.4-.3-3 2.8-1.2 1.2-2.8 3 .3L12 2z" />
-          <path d="M9 12l2 2 4-4" />
-        </svg>
-      )}
-      {type === "shield" && (
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-          <path d="M9 12l2 2 4-4" />
-        </svg>
-      )}
-      {type === "globe" && (
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-          <circle cx="12" cy="12" r="9" />
-          <path d="M3.6 9h16.8M3.6 15h16.8M12 3a14 14 0 010 18M12 3a14 14 0 000 18" />
-        </svg>
-      )}
-      {type === "chart" && (
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-          <rect x="3" y="3" width="18" height="18" rx="2" />
-          <path d="M8 16V11M12 16V8M16 16v-3" />
-        </svg>
-      )}
-      {type === "truck" && (
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-          <rect x="1" y="4" width="14" height="12" />
-          <path d="M15 8h4l3 3v5h-7V8z" />
-          <circle cx="5.5" cy="18" r="2" />
-          <circle cx="18.5" cy="18" r="2" />
-        </svg>
-      )}
-      {type === "audit" && (
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-          <path d="M14 4l6 6M4 20h6M5 13l8-8 6 6-8 8H5v-6z" />
-        </svg>
-      )}
-    </div>
-  );
-}
-
 function CsrIcon({ type }: { type: string }) {
   return (
     <div className="text-[#58C7E8]">
@@ -362,7 +187,184 @@ function CsrIcon({ type }: { type: string }) {
   );
 }
 
+function useInView<T extends HTMLElement = HTMLElement>(threshold = 0.15) {
+  const ref = useRef<T | null>(null);
+  const [inView, setInView] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setInView(true);
+        }
+      },
+      { threshold }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [threshold]);
+
+  return [ref, inView] as const;
+}
+
+function ScrollTimelineSection() {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const totalScrollable = rect.height - window.innerHeight;
+      if (totalScrollable <= 0) return;
+
+      const scrolled = -rect.top;
+      const progress = Math.max(0, Math.min(1, scrolled / totalScrollable));
+      const count = TIMELINE_DATA.length;
+      const index = Math.min(count - 1, Math.floor(progress * count));
+      setActiveIndex(index);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const scrollToMilestone = (idx: number) => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const scrollTop = window.scrollY || window.pageYOffset;
+    const containerTop = rect.top + scrollTop;
+    const totalScrollable = rect.height - window.innerHeight;
+    const targetScroll = containerTop + (idx / TIMELINE_DATA.length) * totalScrollable + 50;
+    window.scrollTo({ top: targetScroll, behavior: "smooth" });
+  };
+
+  return (
+    <section
+      id="company-timeline"
+      ref={containerRef}
+      className="relative bg-[#FAFAFA] min-h-[350vh]"
+    >
+      <div className="sticky top-0 flex h-screen w-full flex-col justify-between overflow-hidden px-6 py-8 sm:py-12 lg:px-[80px] lg:py-14">
+        {/* Top Header */}
+        <div className="mx-auto flex w-full max-w-[1800px] flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-[800px]">
+            <p className="inline-flex items-center gap-2 text-[14px] font-medium uppercase tracking-normal text-[#020202]">
+              <span className="h-[6px] w-[6px] bg-[#58C7E8]" />
+              OUR JOURNEY
+            </p>
+            <h2 className="mt-3 text-[32px] font-normal leading-[1.05] tracking-[-0.04em] text-[#020202] sm:text-[40px] lg:text-[48px]">
+              32 Years of Growth, Innovation &amp; Compliance
+            </h2>
+          </div>
+
+          <a
+            href="/catalogs/capco-product-catalog.pdf"
+            download="CAPCO-Company-Timeline.pdf"
+            style={{
+              clipPath:
+                "polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%)",
+            }}
+            className="inline-flex min-h-[50px] w-[300px] shrink-0 items-end justify-between bg-[#58C7E8] px-3.5 pb-2.5 pt-5 text-[13px] font-semibold leading-[1.2] !text-[#121212] transition hover:-translate-y-0.5 hover:brightness-95"
+          >
+            <span className="!text-[#121212]">Download Detailed Timeline (PDF)</span>
+            <img src="/figma/solutions/4e858.svg" alt="" aria-hidden="true" />
+          </a>
+        </div>
+
+        {/* Center Display: Video 1 animation */}
+        <div className="mx-auto my-auto flex w-full max-w-[1400px] items-center justify-center py-6">
+          <div className="flex w-full flex-col items-center justify-center gap-6 sm:gap-10 md:flex-row md:items-center md:justify-center lg:gap-16">
+            
+            {/* Left: Animated Rolling Year Numbers */}
+            <div className="relative h-[80px] w-[200px] overflow-hidden text-center sm:h-[110px] sm:w-[260px] md:text-right lg:h-[140px] lg:w-[320px]">
+              <div
+                className="transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]"
+                style={{
+                  transform: `translateY(-${activeIndex * (100 / TIMELINE_DATA.length)}%)`,
+                  height: `${TIMELINE_DATA.length * 100}%`,
+                }}
+              >
+                {TIMELINE_DATA.map((item, idx) => (
+                  <div
+                    key={item.year}
+                    style={{ height: `${100 / TIMELINE_DATA.length}%` }}
+                    className={`flex items-center justify-center md:justify-end text-[68px] sm:text-[96px] lg:text-[124px] font-light leading-none tracking-[-0.04em] transition-opacity duration-300 ${
+                      idx === activeIndex
+                        ? "text-[#020202] opacity-100"
+                        : "text-[#B0B0B0] opacity-20"
+                    }`}
+                  >
+                    {item.year}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Middle: Horizontal Accent Connector Line (as in Video 1) */}
+            <div className="hidden h-[2px] w-[50px] shrink-0 bg-[#E63946] sm:block md:w-[70px] lg:w-[100px] transition-transform duration-300" />
+
+            {/* Right: Vertical List of Taglines */}
+            <div className="flex max-w-[620px] flex-col gap-3.5 sm:gap-4 lg:gap-5">
+              {TIMELINE_DATA.map((item, idx) => {
+                const isActive = idx === activeIndex;
+                return (
+                  <button
+                    key={item.year}
+                    type="button"
+                    onClick={() => scrollToMilestone(idx)}
+                    className={`group flex items-center text-left transition-all duration-500 cursor-pointer ${
+                      isActive
+                        ? "translate-x-2 text-[#020202] opacity-100"
+                        : "text-[#8C8C8C] opacity-25 hover:opacity-50"
+                    }`}
+                  >
+                    <span
+                      className={`text-[17px] sm:text-[21px] lg:text-[26px] transition-all duration-300 ${
+                        isActive ? "font-normal text-[#020202]" : "font-light text-[#8C8C8C]"
+                      }`}
+                    >
+                      {item.tagline}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Milestone Progress Indicators */}
+        <div className="mx-auto flex w-full max-w-[1800px] items-center justify-between border-t border-[#E5E5E5] pt-4">
+          <span className="text-[12px] uppercase tracking-[0.08em] text-[#595959]">
+            Scroll to explore milestone: {activeIndex + 1} of {TIMELINE_DATA.length} ({TIMELINE_DATA[activeIndex].year})
+          </span>
+          <div className="flex gap-2">
+            {TIMELINE_DATA.map((item, idx) => (
+              <button
+                key={item.year}
+                type="button"
+                onClick={() => scrollToMilestone(idx)}
+                aria-label={`Jump to ${item.year}`}
+                className={`h-2 rounded-full transition-all duration-300 ${
+                  idx === activeIndex
+                    ? "w-8 bg-[#58C7E8]"
+                    : "w-2 bg-[#D9D9D9] hover:bg-[#A0A0A0]"
+                }`}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function AboutPage() {
+  const [journeyRef, isJourneyInView] = useInView<HTMLElement>(0.12);
+
   return (
     <main className="min-h-screen overflow-x-clip bg-white text-[#020202]">
       {/* 1. HERO SECTION — 100vh including Navbar */}
@@ -404,8 +406,8 @@ export default function AboutPage() {
             {/* White Horizontal Rule */}
             <div className="my-5 h-px w-full bg-white/50 lg:my-6 xl:my-8" />
 
-            {/* Main Heading */}
-            <h1 className="max-w-[1281px] text-[38px] font-light leading-[1.02] tracking-[-0.048em] text-white sm:text-[56px] lg:text-[72px] xl:text-[88px] 2xl:text-[104px] lg:leading-[1]">
+            {/* Main Heading - Scaled down for balanced hero layout */}
+            <h1 className="max-w-[1120px] text-[34px] font-light leading-[1.05] tracking-[-0.04em] text-white sm:text-[46px] lg:text-[58px] xl:text-[70px] 2xl:text-[78px] lg:leading-[1.06]">
               32+ Years of Capacitor
               <br />
               Manufacturing Excellence
@@ -419,32 +421,33 @@ export default function AboutPage() {
                   clipPath:
                     "polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%)",
                 }}
-                className="inline-flex min-h-[54px] w-[260px] items-end justify-between bg-[#58C7E8] px-3 pb-3 pt-5 text-[14px] font-medium leading-[1.2] text-[#121212] transition hover:-translate-y-0.5 hover:brightness-95"
+                className="inline-flex min-h-[54px] w-[260px] items-end justify-between bg-[#58C7E8] px-3 pb-3 pt-5 text-[14px] font-semibold leading-[1.2] !text-[#121212] transition hover:-translate-y-0.5 hover:brightness-95"
               >
-                <span>Explore Manufacturing Line</span>
+                <span className="!text-[#121212]">Explore Manufacturing Line</span>
                 <img src="/figma/solutions/24503.svg" alt="" aria-hidden="true" />
               </a>
 
               <a
-                href="#compliance"
+                href="#company-timeline"
                 style={{
                   clipPath:
                     "polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%)",
                 }}
-                className="inline-flex min-h-[54px] w-[208px] items-end justify-between bg-white px-3 pb-3 pt-5 text-[14px] font-medium leading-[1.2] text-[#121212] transition hover:-translate-y-0.5 hover:bg-[#F4F4F4]"
+                className="inline-flex min-h-[54px] w-[218px] items-end justify-between bg-white px-4 pb-3 pt-5 text-[14px] font-semibold leading-[1.2] !text-[#121212] transition hover:-translate-y-0.5 hover:bg-[#F4F4F4]"
               >
-                <span>Verify Certifications</span>
+                <span className="!text-[#121212]">Explore Timeline</span>
                 <svg
-                  width="16"
-                  height="16"
+                  width="18"
+                  height="18"
                   viewBox="0 0 24 24"
                   fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
+                  stroke="#121212"
+                  strokeWidth="2"
                   aria-hidden="true"
+                  className="shrink-0 text-[#121212]"
                 >
-                  <path d="M12 2l2.4 1.8 3-.3 1.2 2.8 2.8 1.2-.3 3L22.9 13l-1.8 2.4.3 3-2.8 1.2-1.2 2.8-3-.3L12 23.9l-2.4-1.8-3 .3-1.2-2.8-2.8-1.2.3-3L1.1 13l1.8-2.4-.3-3 2.8-1.2 1.2-2.8 3 .3L12 2z" />
-                  <path d="M9 12l2 2 4-4" />
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12 6 12 12 16 14" />
                 </svg>
               </a>
             </div>
@@ -452,10 +455,7 @@ export default function AboutPage() {
 
           {/* Bottom-Right Intro Paragraph */}
           <p className="mt-8 max-w-[600px] text-[15px] font-normal leading-[1.28] text-white/95 sm:text-[17px] lg:absolute lg:bottom-[26px] lg:right-[60px] lg:mt-0 lg:text-[18px] xl:bottom-[34px] xl:max-w-[645px] xl:text-[21px] lg:leading-[1.22]">
-            Dada Energies Private Limited (CAPCO Capacitors) is a vertically integrated Indian
-            manufacturer serving high-precision OEMs, over 500 authorized dealers, and heavy
-            industrial buyers across India and 15+ export markets with BIS, UL, and CE-certified
-            dielectric assemblies.
+           CAPCO Capacitors is the flagship capacitor brand of Dada Energies (P) Ltd., a Hyderabad-based manufacturer established in 1994. Dada Energies provides the manufacturing strength and quality systems behind CAPCO’s motor run, PFC, lighting and custom capacitor solutions.
           </p>
         </div>
 
@@ -580,19 +580,37 @@ export default function AboutPage() {
                 clipPath:
                   "polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%)",
               }}
-              className="inline-flex min-h-[56px] w-[280px] items-end justify-between bg-white px-3 pb-3 pt-6 text-[14px] font-medium leading-[1.2] text-[#121212] transition hover:-translate-y-0.5 hover:bg-[#F4F4F4]"
+              className="inline-flex min-h-[56px] w-[280px] items-end justify-between bg-white px-3 pb-3 pt-6 text-[14px] font-semibold leading-[1.2] !text-[#121212] transition hover:-translate-y-0.5 hover:bg-[#F4F4F4]"
             >
-              <span>Download Company Profile (PDF)</span>
-              <img src="/figma/solutions/4e858.svg" alt="" aria-hidden="true" />
+              <span className="!text-[#121212]">Download Company Profile (PDF)</span>
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#121212"
+                strokeWidth="2"
+                aria-hidden="true"
+                className="shrink-0"
+              >
+                <path d="M12 4v12M6 10l6 6 6-6M4 20h16" />
+              </svg>
             </a>
           </div>
         </div>
       </section>
 
       {/* 5. OUR JOURNEY — 500+ DEALERS, 100+ OEM PARTNERS, 15+ EXPORT MARKETS */}
-      <section className="px-6 py-16 lg:px-[60px] lg:py-[100px]">
+      <section ref={journeyRef} className="px-6 py-16 lg:px-[60px] lg:py-[100px]">
         <div className="mx-auto max-w-[1800px]">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div
+            style={{
+              opacity: isJourneyInView ? 1 : 0,
+              transform: isJourneyInView ? "translateY(0)" : "translateY(32px)",
+              transition: "opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1)",
+            }}
+            className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between"
+          >
             <div className="max-w-[680px]">
               <p className="inline-flex items-center gap-2 text-[14px] font-medium uppercase tracking-normal text-[#020202]">
                 <span className="h-[6px] w-[6px] bg-[#58C7E8]" />
@@ -610,18 +628,25 @@ export default function AboutPage() {
             </p>
           </div>
 
-          {/* 3 Stacked Clipped Highlight Cards */}
-          <div className="mx-auto mt-12 flex max-w-[832px] flex-col gap-5 lg:mt-[60px]">
-            {JOURNEY_HIGHLIGHTS.map((card) => (
+          {/* 3 Stacked Clipped Highlight Cards with Scroll Stack-Up Animation */}
+          <div className="relative mx-auto mt-12 flex max-w-[832px] flex-col gap-8 pb-12 lg:mt-[60px] lg:gap-10 lg:pb-24">
+            {JOURNEY_HIGHLIGHTS.map((card, idx) => (
               <article
                 key={card.num}
                 style={{
+                  top: `calc(100px + ${idx * 38}px)`,
+                  zIndex: idx + 1,
                   clipPath:
                     "polygon(0 0, 100% 0, 100% calc(100% - 42px), calc(100% - 42px) 100%, 0 100%)",
                 }}
-                className={`${card.bg} flex min-h-[260px] flex-col justify-between p-7 sm:p-10 lg:min-h-[295px] lg:p-[42px]`}
+                className={`sticky ${card.bg} flex min-h-[260px] flex-col justify-between p-7 sm:p-10 lg:min-h-[295px] lg:p-[42px] transition-all duration-300 shadow-[0_-8px_24px_rgba(0,0,0,0.06),0_16px_36px_rgba(0,0,0,0.08)] border border-black/5 hover:-translate-y-1`}
               >
-                <span className="text-[16px] font-medium text-[#58C7E8]">{card.num}</span>
+                <div className="flex items-center justify-between">
+                  <span className="text-[16px] font-medium text-[#58C7E8]">{card.num}</span>
+                  <span className="text-[12px] font-medium uppercase tracking-[0.08em] text-[#595959]/75 sm:text-[13px]">
+                    {card.stat} • {card.title}
+                  </span>
+                </div>
                 <div className="mt-6">
                   <strong className="block text-[38px] font-medium leading-none tracking-[-0.03em] text-[#020202] lg:text-[48px]">
                     {card.stat}
@@ -693,81 +718,8 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* 7. 32 YEARS OF GROWTH, INNOVATION & COMPLIANCE TIMELINE */}
-      <section className="px-6 py-16 lg:px-[60px] lg:py-[100px]">
-        <div className="mx-auto max-w-[1800px]">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-            <div className="max-w-[900px]">
-              <p className="inline-flex items-center gap-2 text-[14px] font-medium uppercase tracking-normal text-[#020202]">
-                <span className="h-[6px] w-[6px] bg-[#58C7E8]" />
-                OUR JOURNEY
-              </p>
-              <h2 className="mt-5 text-[34px] font-normal leading-[1.05] tracking-[-0.04em] text-[#020202] sm:text-[42px] lg:mt-6 lg:text-[48px]">
-                32 Years of Growth, Innovation &amp; Compliance
-              </h2>
-              <p className="mt-4 max-w-[820px] text-[16px] leading-[1.45] text-[#595959] lg:text-[18px]">
-                Tracing the evolutionary roadmap of Dada Energies from an independent MPP film
-                slitting workshop to one of South Asia&apos;s foremost integrated capacitor
-                manufacturers.
-              </p>
-            </div>
-
-            <a
-              href="/catalogs/capco-product-catalog.pdf"
-              download="CAPCO-Company-Timeline.pdf"
-              style={{
-                clipPath:
-                  "polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%)",
-              }}
-              className="inline-flex min-h-[56px] w-[320px] max-w-full shrink-0 items-end justify-between bg-[#58C7E8] px-3.5 pb-3 pt-6 text-[13px] font-medium leading-[1.2] text-[#121212] transition hover:-translate-y-0.5 hover:brightness-95"
-            >
-              <span>Download Detailed Company Timeline (PDF)</span>
-              <img src="/figma/solutions/4e858.svg" alt="" aria-hidden="true" />
-            </a>
-          </div>
-
-          {/* 7 Timeline Rows */}
-          <div className="mt-12 flex flex-col gap-10 lg:mt-[60px] lg:gap-[48px]">
-            {TIMELINE_MILESTONES.map((item, idx) => (
-              <div
-                key={`${item.year}-${idx}`}
-                className="grid items-center gap-4 lg:grid-cols-[260px_320px_1fr] lg:gap-[40px]"
-              >
-                <div className="text-[28px] font-medium leading-none tracking-[-0.03em] text-[#020202] lg:text-[36px]">
-                  {item.year}
-                </div>
-
-                <div className="relative h-[2px] w-full bg-[#DBDBDB]" aria-hidden="true">
-                  <span
-                    className="absolute inset-y-0 left-0 bg-[#58C7E8]"
-                    style={{ width: item.progress }}
-                  />
-                </div>
-
-                <div>
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <h3 className="text-[20px] font-normal leading-[1.2] tracking-[-0.02em] text-[#020202] lg:text-[24px]">
-                      {item.title}
-                    </h3>
-                    <span
-                      style={{
-                        clipPath:
-                          "polygon(0 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%)",
-                      }}
-                      className="inline-flex h-[32px] items-center bg-[#F4F4F4] px-3 text-[11px] font-medium uppercase tracking-[0.02em] text-[#020202]"
-                    >
-                      {item.badge}
-                    </span>
-                  </div>
-                  <p className="mt-2.5 max-w-[820px] text-[15px] leading-[1.45] text-[#595959] lg:text-[16px]">
-                    {item.body}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* 7. 32 YEARS OF GROWTH, INNOVATION & COMPLIANCE TIMELINE (Interactive Scroll Ticker) */}
+      <ScrollTimelineSection />
 
       {/* 8. LEADERSHIP — DECADES OF EXPERIENCE IN CAPACITOR MANUFACTURING */}
       <section
@@ -972,78 +924,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* 9. COMPLIANCE — BIS, ISO, CE & IEC CERTIFIED MANUFACTURING */}
-      <section id="compliance" className="bg-[#F4F4F4] px-6 py-16 lg:px-[60px] lg:py-[100px]">
-        <div className="mx-auto max-w-[1800px]">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-[680px]">
-              <p className="inline-flex items-center gap-2 text-[14px] font-medium uppercase tracking-normal text-[#020202]">
-                <span className="h-[6px] w-[6px] bg-[#58C7E8]" />
-                COMPLIANCE
-              </p>
-              <h2 className="mt-5 text-[34px] font-normal leading-[1.05] tracking-[-0.04em] text-[#020202] sm:text-[42px] lg:mt-6 lg:text-[48px]">
-                BIS, ISO, CE &amp; IEC Certified
-                <br />
-                Manufacturing
-              </h2>
-            </div>
-            <p className="max-w-[680px] text-[18px] font-normal leading-[1.35] text-[#595959] lg:text-[24px]">
-              CAPCO capacitors are thoroughly evaluated under continuous third-party inspection,
-              complying with mandatory Quality Control Orders (QCO) and international safety norms.
-            </p>
-          </div>
 
-          <div className="mt-12 flex flex-col gap-6 lg:mt-[60px] lg:gap-[20px]">
-            {COMPLIANCE_ROWS.map((row) => (
-              <article
-                key={row.label}
-                className="grid items-start gap-5 lg:grid-cols-[1fr_902px] lg:gap-[42px]"
-              >
-                <div className="flex items-center gap-5 pt-2 text-[24px] font-normal leading-[1.2] text-[#595959] sm:text-[30px] lg:gap-[42px] lg:text-[36px]">
-                  <span className="whitespace-nowrap">{row.label}</span>
-                  <span className="h-[2px] flex-1 bg-[#D9D9D9]" />
-                </div>
-
-                <div
-                  style={{
-                    clipPath:
-                      "polygon(0 0, 100% 0, 100% calc(100% - 42px), calc(100% - 42px) 100%, 0 100%)",
-                  }}
-                  className="flex min-h-[340px] flex-col justify-between bg-white p-7 sm:p-10 lg:min-h-[394px] lg:p-[42px]"
-                >
-                  <div>
-                    <ComplianceIcon type={row.icon} />
-                    <h3 className="mt-8 text-[22px] font-normal leading-[1.2] text-[#020202] lg:text-[26px]">
-                      {row.title}
-                    </h3>
-                    <p className="mt-4 max-w-[780px] text-[16px] leading-[1.45] text-[#595959] lg:text-[18px]">
-                      {row.body}
-                    </p>
-                  </div>
-
-                  <div className="mt-9 flex flex-wrap items-center gap-6 border-t border-[#D9D9D9] pt-8">
-                    <a
-                      href="/catalogs/capco-product-catalog.pdf"
-                      download
-                      style={{
-                        clipPath:
-                          "polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%)",
-                      }}
-                      className="inline-flex h-[36px] min-w-[187px] items-center justify-between bg-[#58C7E8] px-3 text-[13px] font-medium text-[#121212] transition hover:brightness-95"
-                    >
-                      <span>{row.cta}</span>
-                      <img src="/figma/solutions/4e858.svg" alt="" aria-hidden="true" />
-                    </a>
-                    <span className="border-l border-[#D9D9D9] pl-6 text-[13px] uppercase tracking-[0.02em] text-[#595959] lg:text-[14px]">
-                      {row.note}
-                    </span>
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* 10. FACILITIES — TWO STRATEGIC LOCATIONS IN HYDERABAD, TELANGANA */}
       <section className="px-6 py-16 lg:px-[60px] lg:py-[100px]">
@@ -1132,71 +1013,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* 11. EXPORT MARKETS — SERVING OEMS & DISTRIBUTORS IN 15+ COUNTRIES */}
-      <section
-        style={{
-          background: "linear-gradient(180deg, rgba(244, 244, 244, 0) 0%, #EEFAFF 100%)",
-        }}
-        className="px-6 py-16 lg:px-[60px] lg:py-[100px]"
-      >
-        <div className="mx-auto max-w-[1800px]">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-[680px]">
-              <p className="inline-flex items-center gap-2 text-[14px] font-medium uppercase tracking-normal text-[#020202]">
-                <span className="h-[6px] w-[6px] bg-[#58C7E8]" />
-                EXPORT MARKETS
-              </p>
-              <h2 className="mt-5 text-[34px] font-normal leading-[1.05] tracking-[-0.04em] text-[#020202] sm:text-[42px] lg:mt-6 lg:text-[48px]">
-                Serving OEMs &amp; Distributors
-                <br />
-                in 15+ Countries
-              </h2>
-            </div>
-            <p className="max-w-[680px] text-[18px] font-normal leading-[1.35] text-[#595959] lg:text-[24px]">
-              With streamlined multimodal freight lanes originating from Nhava Sheva (JNPT) and
-              Chennai Sea Port, CAPCO delivers export containers with pre-vetted customs clearance
-              packages.
-            </p>
-          </div>
 
-          <div className="mt-12 divide-y divide-[#DBDBDB] lg:mt-[60px]">
-            {EXPORT_REGIONS.map((region) => (
-              <div
-                key={region.code}
-                className="grid items-start gap-6 py-8 first:pt-0 last:pb-0 lg:grid-cols-[310px_1fr_540px] lg:gap-8 lg:py-[36px]"
-              >
-                <div className="text-[22px] font-normal uppercase tracking-[-0.02em] text-[#595959] lg:text-[24px]">
-                  {region.code}
-                </div>
-
-                <div>
-                  <h3 className="text-[22px] font-normal leading-[1.2] text-[#020202] lg:text-[26px]">
-                    {region.name}
-                  </h3>
-                  <p className="mt-3 max-w-[780px] text-[15px] leading-[1.45] text-[#595959] lg:text-[16px]">
-                    {region.body}
-                  </p>
-                </div>
-
-                <div className="flex flex-wrap items-start gap-2.5 lg:justify-start">
-                  <span className="inline-flex items-center gap-1.5 bg-[#F4F4F4] px-3 py-2 text-[12px] leading-none">
-                    <span className="text-[#595959]">COMPLIANCE:</span>
-                    <strong className="font-medium text-[#020202]">{region.compliance}</strong>
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 bg-[#F4F4F4] px-3 py-2 text-[12px] leading-none">
-                    <span className="text-[#595959]">PRIMARY PORT:</span>
-                    <strong className="font-medium text-[#020202]">{region.port}</strong>
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 bg-[#F4F4F4] px-3 py-2 text-[12px] leading-none">
-                    <span className="text-[#595959]">TYPICAL TRANSIT:</span>
-                    <strong className="font-medium text-[#020202]">{region.transit}</strong>
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* 12. RESPONSIBILITY — CORPORATE SOCIAL RESPONSIBILITY & ESG FRAMEWORK */}
       <section
