@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { X } from "lucide-react";
 import { PublicFooter, PublicNav } from "@/components/public/PublicChrome";
@@ -30,18 +30,70 @@ const filters = ["ALL", "CORPORATE SOCIAL RESPONSIBILITY / CSR", "AWARDS", "CERT
 
 export default function GalleryPage() {
   const [activeFilter, setActiveFilter] = useState<(typeof filters)[number]>("ALL");
+  // The filter shown in the grid lags behind the selected one so the old set can fade out first.
+  const [shownFilter, setShownFilter] = useState<(typeof filters)[number]>("ALL");
+  const [gridVisible, setGridVisible] = useState(true);
+  const swapTimer = useRef<number | null>(null);
+
+  // Drawer: keep the item mounted while the closing animation plays.
   const [selectedItem, setSelectedItem] = useState<number | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const closeTimer = useRef<number | null>(null);
+
+  const changeFilter = (filter: (typeof filters)[number]) => {
+    if (filter === activeFilter) return;
+    setActiveFilter(filter);
+    setGridVisible(false);
+    if (swapTimer.current) window.clearTimeout(swapTimer.current);
+    swapTimer.current = window.setTimeout(() => {
+      setShownFilter(filter);
+      setGridVisible(true);
+    }, 220);
+  };
+
+  const openItem = (index: number) => {
+    if (closeTimer.current) window.clearTimeout(closeTimer.current);
+    setSelectedItem(index);
+    // next frame so the panel starts off-screen and slides in
+    requestAnimationFrame(() => requestAnimationFrame(() => setDrawerOpen(true)));
+  };
+
+  const closeItem = () => {
+    setDrawerOpen(false);
+    if (closeTimer.current) window.clearTimeout(closeTimer.current);
+    closeTimer.current = window.setTimeout(() => setSelectedItem(null), 420);
+  };
 
   useEffect(() => {
-    document.body.style.overflow = selectedItem === null ? "" : "hidden";
+    if (selectedItem === null) return;
+    // Lock scroll without the page shifting when the scrollbar disappears.
+    const scrollbar = window.innerWidth - document.documentElement.clientWidth;
+    const { overflow, paddingRight } = document.body.style;
+    document.body.style.overflow = "hidden";
+    if (scrollbar > 0) document.body.style.paddingRight = `${scrollbar}px`;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeItem();
+    };
+    window.addEventListener("keydown", onKey);
     return () => {
-      document.body.style.overflow = "";
+      document.body.style.overflow = overflow;
+      document.body.style.paddingRight = paddingRight;
+      window.removeEventListener("keydown", onKey);
     };
   }, [selectedItem]);
 
+  useEffect(
+    () => () => {
+      if (swapTimer.current) window.clearTimeout(swapTimer.current);
+      if (closeTimer.current) window.clearTimeout(closeTimer.current);
+    },
+    []
+  );
+
   const visibleItems = galleryItems
     .map((item, index) => ({ item, index }))
-    .filter(({ item: [, category] }) => activeFilter === "ALL" || category === activeFilter);
+    .filter(({ item: [, category] }) => shownFilter === "ALL" || category === shownFilter);
+
 
   return (
     <main className="min-h-screen bg-white text-[#020202]">
@@ -58,8 +110,13 @@ export default function GalleryPage() {
                 <button
                   key={filter}
                   type="button"
-                  onClick={() => setActiveFilter(filter)}
-                  className={`rounded-[2px] px-3 py-1 ${activeFilter === filter ? "bg-[#020202] text-white" : "bg-[#F3F3F3]"}`}
+                  onClick={() => changeFilter(filter)}
+                  aria-pressed={activeFilter === filter}
+                  className={`cursor-pointer rounded-[2px] px-3 py-1 transition-colors duration-300 ${
+                    activeFilter === filter
+                      ? "bg-[#020202] text-white"
+                      : "bg-[#F3F3F3] hover:bg-[#E6E6E6] hover:text-[#595959]"
+                  }`}
                 >
                   {filter}
                 </button>
@@ -67,13 +124,19 @@ export default function GalleryPage() {
             </div>
           </header>
 
-          <div className="mt-20 grid gap-x-6 gap-y-12 sm:grid-cols-2 lg:mt-[116px] lg:grid-cols-3 lg:gap-x-8 lg:gap-y-[54px]">
-            {visibleItems.map(({ item: [image, category], index }) => (
+          <div
+            key={shownFilter}
+            className={`gallery-grid mt-20 grid gap-x-6 gap-y-12 transition-opacity duration-200 ease-out sm:grid-cols-2 lg:mt-[116px] lg:grid-cols-3 lg:gap-x-8 lg:gap-y-[54px] ${
+              gridVisible ? "opacity-100" : "opacity-0"
+            }`}
+          >
+            {visibleItems.map(({ item: [image, category], index }, i) => (
               <button
                 key={image}
                 type="button"
-                onClick={() => setSelectedItem(index)}
-                className="min-w-0 text-left"
+                onClick={() => openItem(index)}
+                style={{ animationDelay: `${Math.min(i, 8) * 45}ms` }}
+                className="gallery-card group min-w-0 cursor-pointer text-left"
               >
                 <div className="relative aspect-[1.37] overflow-hidden bg-[#F4F4F4]">
                   <Image
@@ -83,7 +146,7 @@ export default function GalleryPage() {
                     loading="eager"
                     unoptimized
                     sizes="(max-width: 639px) 100vw, (max-width: 1023px) 50vw, 33vw"
-                    className="object-cover"
+                    className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.04]"
                   />
                 </div>
                 <div className="mt-4 text-[10px] leading-none text-[#777777]">
@@ -107,20 +170,26 @@ export default function GalleryPage() {
       <PublicFooter />
 
       {selectedItem !== null && (
-        <div className="fixed inset-0 z-50 bg-black/80" role="dialog" aria-modal="true">
+        <div className="fixed inset-0 z-50" role="dialog" aria-modal="true">
           <button
             type="button"
             aria-label="Close media detail"
-            onClick={() => setSelectedItem(null)}
-            className="absolute inset-0 h-full w-full cursor-default"
+            onClick={closeItem}
+            className={`absolute inset-0 h-full w-full cursor-default bg-black/80 transition-opacity duration-400 ease-out ${
+              drawerOpen ? "opacity-100" : "opacity-0"
+            }`}
           />
-          <aside className="absolute right-0 top-0 h-full w-full overflow-y-auto bg-white sm:max-w-[640px] lg:max-w-[760px]">
+          <aside
+            className={`absolute right-0 top-0 h-full w-full overflow-y-auto bg-white shadow-2xl transition-transform duration-[420ms] ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform sm:max-w-[640px] lg:max-w-[760px] ${
+              drawerOpen ? "translate-x-0" : "translate-x-full"
+            }`}
+          >
             <div className="flex h-[76px] items-center justify-end border-b border-[#E5E5E5] px-8">
               <button
                 type="button"
                 aria-label="Close media detail"
-                onClick={() => setSelectedItem(null)}
-                className="grid h-9 w-9 place-items-center text-[#020202]"
+                onClick={closeItem}
+                className="grid h-9 w-9 cursor-pointer place-items-center text-[#020202] transition hover:rotate-90 hover:text-[#58C7E8]"
               >
                 <X size={26} strokeWidth={1.7} />
               </button>

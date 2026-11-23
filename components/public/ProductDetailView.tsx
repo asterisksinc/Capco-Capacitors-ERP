@@ -10,14 +10,7 @@ import { PublicFaqSection, PublicNav } from "@/components/public/PublicChrome";
 import { SiteFooter } from "@/components/public/SiteFooter";
 import { type PublicProduct, publicProducts } from "@/lib/publicProducts";
 import { productCopy } from "@/lib/productCopy";
-
-const includedItems = [
-  "Vaccum Sealed",
-  "Heavy Edge",
-  "Precisely Slitted",
-  "Superior Quality",
-  "Customizable",
-];
+import { type MapLocation, WhereWeOperateSection } from "@/components/public/WhereWeOperateSection";
 
 const defaultSpecs: [string, string][] = [
   ["Type", "Standard / Customised"],
@@ -72,87 +65,74 @@ const manufacturingPhases = [
   },
 ];
 
-const locations = [
+/**
+ * Export markets shown on product pages (the 7 markers the old map displayed), placed at real positions
+ * on /figma/products/markets-map/world-markets-dots.svg (dot map, equirectangular, lon -130..112.4,
+ * lat 59..-18, 1200x381). Regenerate the map and these numbers together if markets change.
+ */
+const productMarkets: readonly MapLocation[] = [
   {
     name: "UAE",
     type: "Operating site",
-    detail: "West Texas · ERCOT",
-    body: "Standalone storage dispatching into ERCOT West. Containerized LFP, energized and operated by Anode from first dispatch.",
-    x: 30,
-    y: 32.5,
+    detail: "Dubai & Abu Dhabi",
+    body: "Motor Run and PFC Capacitors for GCC markets.",
     icon: "6261e.svg",
+    region: "world",
+    world: { x: 76.1, y: 44.9 },
   },
   {
     name: "USA",
     type: "Operating site",
     detail: "New York, Los Angeles, Houston",
     body: "UL-certified Motor Run and PFC Capacitors for North American OEMs.",
-    x: 22,
-    y: 29,
     icon: "a1758.svg",
+    region: "world",
+    world: { x: 13.2, y: 26 },
   },
   {
     name: "Sri Lanka",
     type: "Operating site",
     detail: "Colombo",
     body: "Submersible Panel and Fan Capacitors for South Asian markets.",
-    x: 67,
-    y: 58,
     icon: "a1758.svg",
+    region: "world",
+    world: { x: 87, y: 66.4 },
   },
   {
     name: "Bangladesh",
     type: "Operating site",
     detail: "Dhaka & Chittagong",
     body: "Motor Start and Fan Capacitors for Bangladesh OEMs.",
-    x: 71,
-    y: 43,
     icon: "a1758.svg",
+    region: "world",
+    world: { x: 90.9, y: 45.8 },
   },
   {
     name: "Turkey",
     type: "Office",
     detail: "Istanbul",
     body: "Lighting and Motor Run Capacitors for Turkey.",
-    x: 53,
-    y: 27,
     icon: "8200f.svg",
+    region: "world",
+    world: { x: 68.1, y: 26 },
   },
   {
     name: "African Continent",
     type: "Office",
     detail: "Lagos, Mombasa, Dar es Salaam",
     body: "PFC Capacitors and Capacitor Banks across Africa.",
-    x: 49,
-    y: 57,
     icon: "8200f.svg",
+    region: "world",
+    world: { x: 62.3, y: 71.4 },
   },
   {
     name: "Egypt",
     type: "In development",
     detail: "Cairo",
     body: "PFC and Motor Run Capacitors for Egypt.",
-    x: 54,
-    y: 39,
     icon: "ab167.svg",
-  },
-  {
-    name: "Adelaide",
-    type: "In development",
-    detail: "Development location",
-    body: "Contact the team for information about this location.",
-    x: 82,
-    y: 43.2,
-    icon: "ab167.svg",
-  },
-  {
-    name: "Santiago",
-    type: "In development",
-    detail: "Development location",
-    body: "Contact the team for information about this location.",
-    x: 62,
-    y: 54,
-    icon: "ab167.svg",
+    region: "world",
+    world: { x: 66.3, y: 41.8 },
   },
 ];
 
@@ -191,7 +171,6 @@ type ProductDetailViewProps = {
 export function ProductDetailView({ product, previous, next }: ProductDetailViewProps) {
   const [activePhase, setActivePhase] = useState(0);
   const [carouselPage, setCarouselPage] = useState(0);
-  const [activeLocation, setActiveLocation] = useState(0);
   const phaseScaleRef = useRef<HTMLDivElement>(null);
   const phaseMarkerRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
@@ -204,7 +183,7 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
   const phaseItems = (copy?.phases ?? manufacturingPhases.map((phase) => ({ category: phase.category, title: phase.title, description: phase.description }))).map((phase, index) => ({
     ...phase,
     phase: `PHASE ${String(index + 1).padStart(2, "0")}`,
-    step: `${String(index + 1).padStart(2, "0")} / 05`,
+    step: `${String(index + 1).padStart(2, "0")} / ${String(copy?.phases.length ?? manufacturingPhases.length).padStart(2, "0")}`,
     nextPreview: index < 4 ? (copy?.phases[index + 1]?.title ?? manufacturingPhases[index + 1]?.title ?? "") : (copy?.phases[0]?.title ?? "Film Procurement"),
   }));
   const phaseData = phaseItems[activePhase];
@@ -215,12 +194,23 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
       container.scrollTo({ left: Math.max(0, marker.offsetLeft - container.clientWidth / 2), behavior: "smooth" });
     }
   }, [activePhase]);
-  const location = locations[activeLocation];
 
   const isBoppFilm = product.slug === "zinc-aluminium-alloy-metalised-bopp-film";
   const displayCategory = isBoppFilm
     ? "Metalized Polypropylene Film (MPP)"
     : product.category;
+
+  // Content for the top of the page (hero → phases) comes from lib/productCopy.ts.
+  const heroTag = copy?.heroTag ?? displayCategory;
+  const heroTitle = copy?.heroTitle ?? product.title;
+  const logoTagline =
+    copy?.logoTagline ?? "Trusted by Leading Capacitor Manufacturers Across India, Middle East & Southeast Asia";
+  const infoTag = copy?.infoTag ?? "Premium-Grade Metallized Dielectric Film";
+  const infoDescription = copy?.description ?? product.summary;
+  const includedTag = copy?.includedTag ?? "Engineered for Reliability";
+  const includedItems = copy?.includedItems ?? [];
+  const processTag = copy?.processTag ?? "End-to-End Control";
+  const processTagline = copy?.processTagline;
 
   return (
     <main className="min-h-screen overflow-x-clip bg-white text-[#020202]">
@@ -259,24 +249,42 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
           <div className="mx-auto mt-6 max-w-[920px] text-center lg:mt-[10px]">
             <p className="inline-flex items-center gap-2.5 text-[13px] font-medium tracking-[-0.02em] text-[#121212]">
               <span className="h-[4px] w-[4px] bg-[#4D65FF]" />
-              {displayCategory}
+              {heroTag}
             </p>
             <h1 className="mt-5 text-[40px] font-normal leading-[1.03] tracking-[-0.04em] text-[#020202] sm:text-[56px] lg:text-[72px]">
               {isBoppFilm ? (
                 <>
-                  Zinc/ Aluminium Alloy
-                  <br />
-                  Metalised BOPP Film
+                  Zinc/Aluminium Alloy
+                  <br className="hidden sm:block" /> Metalized BOPP Film
                 </>
               ) : (
-                product.title
+                heroTitle
               )}
             </h1>
+            {isBoppFilm && (
+              <p className="mt-5 font-mono text-[11px] uppercase tracking-[0.08em] text-[#595959]">
+                {displayCategory}
+              </p>
+            )}
           </div>
         </div>
       </section>
 
-      {/* 3. 2x2 Bordered Specification Grid */}
+      {/* 3. Logo slider: trusted-by tagline + client ticker */}
+      <section aria-label="Trusted by" className="pb-14 lg:pb-[88px]">
+        <div className="mx-auto max-w-[1920px]">
+          <div className="px-6 text-center">
+            <p className="inline-flex max-w-full items-center justify-center rounded-full bg-[#F5F5F5] px-5 py-2.5 font-mono text-[10px] uppercase leading-[1.35] tracking-[0.06em] text-[#595959]">
+              {logoTagline}
+            </p>
+          </div>
+          <div className="mt-6 lg:mt-10">
+            <ClientTicker />
+          </div>
+        </div>
+      </section>
+
+      {/* 4. Product information: description, what's included, drawing & specs */}
       <section className="border-y border-[#E7E7E7]">
         <div className="mx-auto max-w-[1920px]">
           {/* Top Row */}
@@ -284,19 +292,17 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
             {/* Top-Left Cell */}
             <div className="flex flex-col justify-between border-b border-[#E7E7E7] p-6 lg:min-h-[481px] lg:border-b-0 lg:border-r lg:p-[24px]">
               <h2 className="text-[20px] font-normal leading-[1.2] tracking-[-0.03em] text-[#020202] lg:text-[22px]">
-                Premium-Grade Metallized Dielectric Film
+                {infoTag}
               </h2>
-              <p className="mt-16 max-w-[345px] text-[14px] leading-[1.38] tracking-[-0.02em] text-[#404040] lg:mt-0">
-                {isBoppFilm
-                  ? "In-house Leybold-metallized BOPP film engineered for self-healing, high-voltage capacitor applications with superior volumetric efficiency."
-                  : `${product.summary} Engineered with in-house Leybold-metallized BOPP film for self-healing, high-voltage capacitor applications with superior volumetric efficiency.`}
+              <p className="mt-16 max-w-[420px] text-[15px] leading-[1.45] tracking-[-0.02em] text-[#404040] lg:mt-0 lg:text-[16px]">
+                {infoDescription}
               </p>
             </div>
 
             {/* Top-Right Cell */}
             <div className="p-6 lg:min-h-[481px] lg:p-[24px]">
               <h2 className="text-[20px] font-normal leading-[1.2] tracking-[-0.03em] text-[#020202] lg:text-[22px]">
-                Engineered for Reliability
+                Technical Drawing
               </h2>
               <div className="relative mx-auto mt-10 aspect-[759/280] w-full max-w-[759px] lg:mt-[76px]">
                 <Image
@@ -313,11 +319,15 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
           {/* Bottom Row */}
           <div className="grid lg:grid-cols-2">
             {/* Bottom-Left Cell: What's included */}
-            <div className="border-b border-[#E7E7E7] p-6 lg:min-h-[347px] lg:border-b-0 lg:border-r lg:p-[24px]">
-              <h2 className="text-[20px] font-normal leading-[1.2] tracking-[-0.03em] text-[#020202] lg:text-[22px]">
+            <div className="flex flex-col border-b border-[#E7E7E7] p-6 lg:min-h-[347px] lg:border-b-0 lg:border-r lg:p-[24px]">
+              <p className="inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.08em] text-[#595959]">
+                <span className="h-[4px] w-[4px] bg-[#58C7E8]" />
+                {includedTag}
+              </p>
+              <h2 className="mt-3 text-[20px] font-normal leading-[1.2] tracking-[-0.03em] text-[#020202] lg:text-[22px]">
                 What&apos;s included
               </h2>
-              <div className="mt-6 flex flex-col items-start gap-[10px]">
+              <div className="mt-6 flex flex-wrap items-start gap-[10px]">
                 {includedItems.map((item) => (
                   <span
                     key={item}
@@ -326,6 +336,19 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
                     {item}
                   </span>
                 ))}
+              </div>
+              <div className="mt-8 lg:mt-auto lg:pt-8">
+                <a
+                  href="/catalogs/capco-product-catalog.pdf"
+                  download
+                  style={{
+                    clipPath: "polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%)",
+                  }}
+                  className="inline-flex min-h-[48px] w-[260px] max-w-full items-center justify-between gap-4 bg-[#58C7E8] px-4 py-3 text-[13px] font-medium text-[#020202] transition hover:-translate-y-0.5 hover:brightness-95"
+                >
+                  <span>Download Technical Data Sheet</span>
+                  <span aria-hidden="true" className="text-[16px] leading-none">↓</span>
+                </a>
               </div>
             </div>
 
@@ -350,23 +373,11 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
         </div>
       </section>
 
-      {/* 4. Trusted By + Client Ticker + Product Showcase + Interactive Phase Timeline */}
-      <section className="pb-16 pt-16 lg:pb-[100px] lg:pt-[100px]">
+      {/* 5. How we work: product visual + end-to-end process phases */}
+      <section className="pb-16 pt-14 lg:pb-[100px] lg:pt-[88px]">
         <div className="mx-auto max-w-[1920px]">
-          {/* Trusted By Pill */}
-          <div className="px-6 text-center">
-            <p className="inline-flex max-w-full items-center justify-center rounded-full bg-[#F5F5F5] px-5 py-2.5 font-mono text-[10px] uppercase leading-[1.35] tracking-[0.06em] text-[#595959]">
-              TRUSTED BY LEADING CAPACITOR MANUFACTURERS ACROSS INDIA, MIDDLE EAST &amp; SOUTHEAST ASIA
-            </p>
-          </div>
-
-          {/* Animated Client Ticker with Integrated Animated Ruler */}
-          <div className="mt-6 lg:mt-10">
-            <ClientTicker />
-          </div>
-
           {/* Centered Product Visual Showcase */}
-          <div className="relative mx-auto my-12 flex aspect-[16/10] w-full max-w-[620px] items-center justify-center px-6 lg:my-16">
+          <div className="relative mx-auto mb-12 flex aspect-[16/10] w-full max-w-[620px] items-center justify-center px-6 lg:mb-16">
             <div className="relative h-full w-full">
               <Image
                 src={product.image}
@@ -379,8 +390,21 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
             </div>
           </div>
 
+          {/* How We Work header */}
+          <div className="mx-auto max-w-[860px] px-6 text-center">
+            <p className="inline-flex items-center gap-2.5 text-[13px] font-medium tracking-[-0.02em] text-[#121212]">
+              <span className="h-[4px] w-[4px] bg-[#4D65FF]" />
+              {processTag}
+            </p>
+            {processTagline && (
+              <h2 className="mt-5 text-[28px] font-normal leading-[1.12] tracking-[-0.04em] text-[#020202] sm:text-[36px] lg:text-[44px]">
+                {processTagline}
+              </h2>
+            )}
+          </div>
+
           {/* Interactive Phase Timeline */}
-          <div className="mt-8 lg:mt-12">
+          <div className="mt-10 lg:mt-14">
             {/* Phase Header */}
             <div className="px-6 text-center">
               <p className="font-mono text-[11px] uppercase tracking-[0.06em] text-[#121212]">
@@ -445,7 +469,7 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
               {/* Faded Next Phase Preview on Right */}
               <button
                 type="button"
-                onClick={() => setActivePhase((prev) => (prev + 1) % manufacturingPhases.length)}
+                onClick={() => setActivePhase((prev) => (prev + 1) % phaseItems.length)}
                 className="absolute right-[60px] top-[70px] hidden cursor-pointer text-[13px] tracking-[-0.01em] text-[#C8C8C8] transition hover:text-[#595959] xl:block"
               >
                 {phaseData.nextPreview}
@@ -555,92 +579,13 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
         </div>
       </section>
 
-      {/* 7. Global Footprint — "Where We Operate" Interactive Map */}
-      <section
-        aria-label="Global footprint"
-        className="relative h-[570px] w-full overflow-hidden bg-[#9E9E9E] text-white lg:h-[800px]"
-      >
-        <Image
-          src="/figma/home/compliance-world-map.png"
-          alt=""
-          fill
-          sizes="100vw"
-          className="object-cover opacity-80 mix-blend-screen"
-        />
-        <div
-          className=" absolute inset-0"
-          style={{
-            background:
-              "linear-gradient(180deg, rgba(10,10,10,0.62) 0%, rgba(10,10,10,0.12) 30%, rgba(10,10,10,0) 48%), linear-gradient(0deg, rgba(10,10,10,0.55) 0%, rgba(10,10,10,0) 22%), #9E9E9E",
-          }}
-        />
-
-        {/* Map Heading */}
-        <div className="relative pt-[60px] text-center lg:pt-[100px]">
-          <p className="inline-flex items-center justify-center gap-2 text-[13px] font-medium tracking-[-0.02em] text-white">
-            <span className="h-[4px] w-[4px] bg-[#00E05C]" />
-            Global Footprint
-          </p>
-          <h2 className="mt-5 text-[34px] font-normal leading-none tracking-[-0.04em] lg:mt-6 lg:text-[48px]">
-            Where We Operate
-          </h2>
-        </div>
-
-        {/* Interactive Map Markers */}
-        {locations.slice(0, 7).map((item, idx) => (
-          <button
-            type="button"
-            key={item.name}
-            style={{ left: `${item.x}%`, top: `${item.y + 23.5}%` }}
-            aria-label={item.name}
-            aria-pressed={activeLocation === idx}
-            onClick={() => setActiveLocation(idx)}
-            className="absolute z-10 grid h-10 w-10 -translate-x-1/2 -translate-y-1/2 cursor-pointer place-items-center rounded-full bg-transparent"
-          >
-            {activeLocation === idx && (
-              <span className="pointer-events-none absolute inset-[5px] rounded-full border border-[#00E05C]/55" />
-            )}
-            <img src={`/figma/solutions/${item.icon}`} alt="" aria-hidden="true" />
-          </button>
-        ))}
-
-        {/* Active Site Popup Card */}
-        <div
-          aria-live="polite"
-          style={{
-            left: `${Math.min(location.x + 1.35, 70)}%`,
-            top: `${Math.max(location.y + 1.5, 22)}%`,
-            backgroundImage: 'url("/figma/solutions/f9fe0.svg")',
-          }}
-          className="absolute z-10 w-[230px] rounded-[12px] border border-white/10 bg-[#101010]/45 bg-cover bg-center p-[18px] backdrop-blur-md sm:w-[300px] sm:p-[22px]"
-        >
-          <small className="block font-mono text-[9.5px] uppercase tracking-[0.08em] text-[#B5B5B5]">
-            {location.type}
-          </small>
-          <h3 className="mt-2 text-[14px] font-medium text-white">{location.name}</h3>
-          <span className="text-[13px] text-[#B5B5B5]">{location.detail}</span>
-          <p className="mt-3 border-t border-white/15 pt-3 text-[12.3px] leading-[1.4] text-white/75">
-            {location.body}
-          </p>
-        </div>
-
-        {/* Bottom Map Legend */}
-        <div className="absolute inset-x-6 bottom-6 flex items-center justify-between font-mono text-[8px] uppercase tracking-[0.06em] text-white/75 sm:text-[9.5px] lg:inset-x-[56px]">
-          <div className="flex flex-wrap items-center gap-3 sm:gap-[18px]">
-            {[
-              ["501a6.svg", "Operating site"],
-              ["e1fc2.svg", "Office"],
-              ["3e93b.svg", "In development"],
-            ].map(([icon, label]) => (
-              <span key={label} className="inline-flex items-center gap-[7px]">
-                <img src={`/figma/solutions/${icon}`} alt="" aria-hidden="true" />
-                {label}
-              </span>
-            ))}
-          </div>
-          <span>{String(activeLocation + 1).padStart(2, "0")}/07</span>
-        </div>
-      </section>
+      {/* 7. Global Footprint — "Where We Operate" (shared map, product-page markets) */}
+      <WhereWeOperateSection
+        locations={productMarkets}
+        mapSrc="/figma/products/markets-map/world-markets-dots.svg"
+        mapAspect="1200/381"
+        texasInset={null}
+      />
 
       {false && <PublicFaqSection
         eyebrow="Technical Clarity"

@@ -57,7 +57,16 @@
   .line > span { animation: title-enter 1.1s cubic-bezier(.22, 1, .36, 1) both; }
   .line:nth-child(2) > span { animation-delay: .16s; }
   .divider { animation: line-enter 1.2s cubic-bezier(.22, 1, .36, 1) both; }
+  .background { will-change: transform; }
+  .content [data-reveal] { animation: reveal-enter .9s cubic-bezier(.22, 1, .36, 1) both; }
+  .description { animation-delay: .1s !important; }
+  .tags { animation-delay: .2s !important; }
+  .actions { animation-delay: .35s !important; }
+  .credential:nth-child(1) { animation-delay: .45s !important; }
+  .credential:nth-child(2) { animation-delay: .53s !important; }
+  .credential:nth-child(3) { animation-delay: .61s !important; }
 }
+@keyframes reveal-enter { from { opacity: 0; transform: translate3d(0, 24px, 0); } to { opacity: 1; transform: none; } }
 @keyframes title-enter { from { transform: translateY(115%); } to { transform: translateY(0); } }
 @keyframes line-enter { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 @media (min-width: 1600px) { .hero { min-height: 1194px; } }

@@ -52,8 +52,6 @@ export function PublicNav({
   const isAboutActive = pathname.startsWith("/about");
   const isSolutionsActive = pathname.startsWith("/solutions");
   const isProductsActive = pathname.startsWith("/products");
-  const isContactActive = pathname.startsWith("/contact");
-  const isLoginActive = pathname === "/login";
 
   return (
     <header
@@ -156,7 +154,7 @@ export function PublicNav({
                     {label !== "Customized Capacitors" && <span aria-hidden="true" className="ml-4 text-base leading-none">›</span>}
                   </Link>
                   {label === "Metalized Polypropylene Film" && (
-                    <div className="invisible absolute left-full top-0 min-w-[440px] border border-[#E4E4E4] bg-white p-2 opacity-0 shadow-xl transition group-hover/product:visible group-hover/product:opacity-100">
+                    <div className="invisible absolute left-full top-0 w-[300px] border border-[#E4E4E4] bg-white p-2 opacity-0 shadow-xl transition group-hover/product:visible group-hover/product:opacity-100">
                       <Link href="/products/zinc-aluminium-alloy-metalised-bopp-film" className="block px-4 py-3 text-sm hover:bg-[#F5F5F5]">Zinc/ Aluminium Alloy Metalized BOPP Film</Link>
                     </div>
                   )}
@@ -213,13 +211,6 @@ export function PublicNav({
               </Link>
             </div>
           </div>
-
-          <Link
-            href="/contact"
-            className={`transition hover:text-[#58C7E8] ${isContactActive ? activeClass : ""}`}
-          >
-            Contact
-          </Link>
         </nav>
 
         <div className="hidden items-center gap-3.5 lg:flex">
@@ -230,18 +221,6 @@ export function PublicNav({
             <Phone size={15} />
             +91-9848014000
           </a>
-          <Link
-            href="/login"
-            className={`inline-flex h-12 items-center border px-4 text-[13px] font-medium transition hover:border-[#58C7E8] hover:text-[#58C7E8] ${
-              isLoginActive
-                ? "border-[#58C7E8] text-[#58C7E8]"
-                : isDarkHero
-                  ? "border-white/75 text-white"
-                  : "border-[#020202] text-[#020202]"
-            }`}
-          >
-            Dealer Login
-          </Link>
           <Link
             href="/contact?category=oem#enquiry-form"
             className="inline-flex h-12 items-center bg-[#58C7E8] px-4 text-[13px] font-medium text-[#020202] transition hover:bg-[#41b7d9]"
@@ -280,8 +259,6 @@ export function PublicNav({
             ["Dealership Solutions", "/solutions/dealership"],
             ["Industrial Enquiry", "/solutions/industrial-enquiry"],
             ["Products", "/products"],
-            ["Contact", "/contact"],
-            ["Dealer Login", "/login"],
           ].map(([label, href]) => (
             <Link
               key={label}
@@ -366,7 +343,7 @@ export function ReadyToSpecifyCapcoSection() {
       </div>
 
       {/* Foreground Content (z-10) */}
-      <div className="relative z-10 mx-auto flex max-w-[946px] flex-col items-center">
+      <div className="relative z-10 mx-auto flex w-full max-w-[946px] flex-col items-center">
         <p className="inline-flex items-center justify-center gap-2 text-[14px] font-medium uppercase leading-none text-[#020202]">
           <span className="h-[6px] w-[6px] bg-white" />
           READY TO SPECIFY CAPCO?
@@ -384,14 +361,14 @@ export function ReadyToSpecifyCapcoSection() {
         </p>
 
         {/* Action Buttons */}
-        <div className="mt-7 flex flex-wrap items-center justify-center gap-4">
+        <div className="mt-7 flex w-full flex-wrap items-center justify-center gap-4">
           <Link
             href="/contact?category=oem#enquiry-form"
             style={{
               clipPath:
                 "polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%)",
             }}
-            className="inline-flex min-h-[56px] w-[200px] items-end justify-between bg-[#58C7E8] px-3 pb-3 pt-6 text-[14px] font-medium leading-[1.2] text-[#020202] transition hover:-translate-y-0.5 hover:brightness-95"
+            className="inline-flex min-h-[56px] w-[200px] max-w-full items-end justify-between bg-[#58C7E8] px-3 pb-3 pt-6 text-[14px] font-medium leading-[1.2] text-[#020202] transition hover:-translate-y-0.5 hover:brightness-95"
           >
             <span>Request Quote</span>
             <img src="/figma/solutions/24503.svg" alt="" aria-hidden="true" />
@@ -404,7 +381,7 @@ export function ReadyToSpecifyCapcoSection() {
               clipPath:
                 "polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%)",
             }}
-            className="inline-flex min-h-[56px] w-[300px] items-end justify-between bg-white px-3 pb-3 pt-6 text-[14px] font-medium leading-[1.2] text-[#020202] transition hover:-translate-y-0.5 hover:bg-[#F4F4F4]"
+            className="inline-flex min-h-[56px] w-[300px] max-w-full items-end justify-between gap-3 bg-white px-3 pb-3 pt-6 text-[14px] font-medium leading-[1.2] text-[#020202] transition hover:-translate-y-0.5 hover:bg-[#F4F4F4]"
           >
             <span>Download Product Catalog (PDF)</span>
             <img src="/figma/solutions/4e858.svg" alt="" aria-hidden="true" />
@@ -480,24 +457,45 @@ export function PublicFaqSection({
           {items.map((item, idx) => {
             const isOpen = openFaq === idx;
             return (
-              <div key={item.q} className="rounded-[8px] bg-[#F5F5F5] px-6 py-5">
+              <div
+                key={item.q}
+                className={`rounded-[8px] px-6 py-5 transition-colors duration-300 ${isOpen ? "bg-[#EFEFEF]" : "bg-[#F5F5F5] hover:bg-[#F0F0F0]"}`}
+              >
                 <button
                   type="button"
+                  id={`faq-q-${idx}`}
                   aria-expanded={isOpen}
+                  aria-controls={`faq-a-${idx}`}
                   onClick={() => setOpenFaq(isOpen ? null : idx)}
                   className="flex w-full cursor-pointer items-center justify-between gap-4 text-left text-[15px] font-medium leading-[1.4] tracking-[-0.03em] text-[#121212] lg:text-[16px]"
                 >
                   <span>{item.q}</span>
-                  <span className="relative grid h-[28px] w-[28px] shrink-0 place-items-center rounded-[5px] bg-[#292929] text-white">
+                  <span
+                    className={`relative grid h-[28px] w-[28px] shrink-0 place-items-center rounded-[5px] text-white transition-[background-color,transform] duration-500 ease-[cubic-bezier(.22,1,.36,1)] motion-reduce:transition-none ${isOpen ? "rotate-180 bg-[#020202]" : "bg-[#292929]"}`}
+                    aria-hidden="true"
+                  >
                     <span className="h-px w-3 bg-[#AAAAAA]" />
-                    {!isOpen && <span className="absolute h-3 w-px bg-[#AAAAAA]" />}
+                    <span
+                      className={`absolute h-3 w-px bg-[#AAAAAA] transition-transform duration-500 ease-[cubic-bezier(.22,1,.36,1)] motion-reduce:transition-none ${isOpen ? "scale-y-0" : "scale-y-100"}`}
+                    />
                   </span>
                 </button>
-                {isOpen && (
-                  <p className="mt-4 max-w-[92%] text-[14px] leading-[1.55] text-[#595959] lg:text-[15px]">
-                    {item.a}
-                  </p>
-                )}
+                {/* grid-rows 0fr→1fr animates to the answer's real height, no max-height guessing */}
+                <div
+                  id={`faq-a-${idx}`}
+                  role="region"
+                  aria-labelledby={`faq-q-${idx}`}
+                  inert={!isOpen}
+                  className={`grid transition-[grid-template-rows,opacity] duration-500 ease-[cubic-bezier(.22,1,.36,1)] motion-reduce:transition-none ${isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}
+                >
+                  <div className="overflow-hidden">
+                    <p
+                      className={`max-w-[92%] pt-4 text-[14px] leading-[1.55] text-[#595959] transition-transform duration-500 ease-[cubic-bezier(.22,1,.36,1)] motion-reduce:transition-none lg:text-[15px] ${isOpen ? "translate-y-0" : "-translate-y-2"}`}
+                    >
+                      {item.a}
+                    </p>
+                  </div>
+                </div>
               </div>
             );
           })}
@@ -590,25 +588,37 @@ export function PublicFooter({
         className="border-t border-white/10 bg-[#121212] px-6 pb-10 pt-16 text-white lg:px-[60px]"
       >
         <div className="mx-auto max-w-[1800px]">
-          <div className="grid gap-12 lg:grid-cols-[1fr_1040px] lg:gap-[120px]">
+          <div className="grid grid-cols-[minmax(0,1fr)] gap-12 lg:grid-cols-[minmax(300px,1fr)_minmax(0,1040px)] lg:gap-[80px]">
             <div>
-              <h3 className="text-[28px] font-normal tracking-[-0.04em] text-white lg:text-[32px]">
+              <h3 className="text-[28px] font-normal leading-[1.15] tracking-[-0.04em] text-white lg:text-[32px]">
                 Join our Newsletter
               </h3>
-              <form onSubmit={handleNewsletter} className="mt-4 flex max-w-[276px]">
+              <p className="mt-3 max-w-[340px] text-[13px] leading-[1.5] text-white/50">
+                Product launches, certifications and export updates. No spam.
+              </p>
+              <form
+                onSubmit={handleNewsletter}
+                style={{
+                  clipPath:
+                    "polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%)",
+                }}
+                className="mt-5 flex h-12 w-full max-w-[360px] items-stretch bg-white/10 ring-1 ring-inset ring-white/15 transition focus-within:ring-[#58C7E8]"
+              >
                 <input
                   type="email"
                   name="email"
                   required
+                  autoComplete="email"
                   aria-label="Email address for newsletter"
                   placeholder="Your email"
-                  className="h-[40px] w-[70%] min-w-0 bg-white/20 px-3 text-[11px] text-white placeholder:text-white/60 outline-none"
+                  className="min-w-0 flex-1 bg-transparent px-4 text-[14px] leading-none text-white placeholder:text-white/50 outline-none"
                 />
                 <button
                   type="submit"
-                  className="h-[40px] flex-1 cursor-pointer bg-white px-3 text-[11px] font-medium text-[#121212] transition hover:bg-[#58C7E8]"
+                  className="inline-flex shrink-0 cursor-pointer items-center gap-2 whitespace-nowrap bg-[#58C7E8] px-4 text-[13px] font-medium leading-none text-[#020202] transition hover:brightness-110"
                 >
                   Sign Up
+                  <ArrowRight size={15} aria-hidden="true" />
                 </button>
               </form>
             </div>

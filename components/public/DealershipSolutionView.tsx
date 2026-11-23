@@ -2,14 +2,12 @@
 
 /* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
-  Download,
   ExternalLink,
   FileText,
-  Plus,
   Minus,
   X,
   Award,
@@ -23,6 +21,7 @@ import {
   PublicNav,
 } from "@/components/public/PublicChrome";
 import { FourStepProcessAndTeamSection } from "@/components/public/FourStepProcessAndTeamSection";
+import { WhereWeOperateSection } from "@/components/public/WhereWeOperateSection";
 
 const dealerAdvantages = [
   {
@@ -55,89 +54,6 @@ const dealerAdvantages = [
   },
 ] as const;
 
-const locations = [
-  {
-    name: "Bell Junction",
-    type: "Operating site",
-    detail: "West Texas · ERCOT",
-    body: "Standalone storage dispatching into ERCOT West. Containerized LFP, energized and operated by Anode from first dispatch.",
-    x: 30,
-    y: 56,
-    icon: "6261e.svg",
-  },
-  {
-    name: "Cedar Bayou",
-    type: "Operating site",
-    detail: "Site location",
-    body: "Explore the operating network and contact our team for more information.",
-    x: 42,
-    y: 68,
-    icon: "a1758.svg",
-  },
-  {
-    name: "Marfa Flats",
-    type: "Operating site",
-    detail: "Site location",
-    body: "Standalone storage on a constrained node, cycling twice daily against congestion.",
-    x: 22,
-    y: 72,
-    icon: "a1758.svg",
-  },
-  {
-    name: "Salt Fork",
-    type: "Operating site",
-    detail: "Site location",
-    body: "First fleet site to complete a full augmentation cycle with no measured capacity shortfall.",
-    x: 36,
-    y: 46,
-    icon: "a1758.svg",
-  },
-  {
-    name: "Dallas HQ",
-    type: "Office",
-    detail: "Office location",
-    body: "Contact the team for information about this location.",
-    x: 52,
-    y: 58,
-    icon: "8200f.svg",
-  },
-  {
-    name: "Austin",
-    type: "Office",
-    detail: "Office location",
-    body: "Contact the team for information about this location.",
-    x: 47,
-    y: 78,
-    icon: "8200f.svg",
-  },
-  {
-    name: "Rotterdam",
-    type: "In development",
-    detail: "Development location",
-    body: "Contact the team for information about this location.",
-    x: 66,
-    y: 44,
-    icon: "ab167.svg",
-  },
-  {
-    name: "Adelaide",
-    type: "In development",
-    detail: "Development location",
-    body: "Contact the team for information about this location.",
-    x: 82,
-    y: 72,
-    icon: "ab167.svg",
-  },
-  {
-    name: "Santiago",
-    type: "In development",
-    detail: "Development location",
-    body: "Contact the team for information about this location.",
-    x: 62,
-    y: 88,
-    icon: "ab167.svg",
-  },
-] as const;
 
 const successStories = [
   {
@@ -236,11 +152,76 @@ const dealershipFaqs = [
 export function DealershipSolutionView() {
   const [activeStoryIndex, setActiveStoryIndex] = useState(0);
   const [selectedStory, setSelectedStory] = useState<(typeof successStories)[number] | null>(null);
-  const [activeLocationIndex, setActiveLocationIndex] = useState(0);
+  const [storyOpen, setStoryOpen] = useState(false);
+  const storyCloseTimer = useRef<number | null>(null);
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
 
   const storiesScrollRef = useRef<HTMLDivElement | null>(null);
-  const activeLocation = locations[activeLocationIndex];
+
+  const openStory = (story: (typeof successStories)[number]) => {
+    if (storyCloseTimer.current) window.clearTimeout(storyCloseTimer.current);
+    setSelectedStory(story);
+    requestAnimationFrame(() => requestAnimationFrame(() => setStoryOpen(true)));
+  };
+
+  const closeStory = () => {
+    setStoryOpen(false);
+    if (storyCloseTimer.current) window.clearTimeout(storyCloseTimer.current);
+    storyCloseTimer.current = window.setTimeout(() => setSelectedStory(null), 320);
+  };
+
+  // Lock page scroll while the case study is open (without layout shift) and close on Escape.
+  useEffect(() => {
+    if (!selectedStory) return;
+    const scrollbar = window.innerWidth - document.documentElement.clientWidth;
+    const { overflow, paddingRight } = document.body.style;
+    document.body.style.overflow = "hidden";
+    if (scrollbar > 0) document.body.style.paddingRight = `${scrollbar}px`;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeStory();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = overflow;
+      document.body.style.paddingRight = paddingRight;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [selectedStory]);
+
+  useEffect(
+    () => () => {
+      if (storyCloseTimer.current) window.clearTimeout(storyCloseTimer.current);
+    },
+    []
+  );
+
+  // Keep the 0X/0Y counter in sync when the track is swiped or scrolled directly.
+  useEffect(() => {
+    const container = storiesScrollRef.current;
+    if (!container) return;
+    let frame = 0;
+    const onScroll = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const cards = container.querySelectorAll<HTMLElement>("[data-story-card]");
+        let best = 0;
+        let bestDist = Infinity;
+        cards.forEach((card, i) => {
+          const dist = Math.abs(card.offsetLeft - container.offsetLeft - container.scrollLeft);
+          if (dist < bestDist) {
+            bestDist = dist;
+            best = i;
+          }
+        });
+        setActiveStoryIndex(best);
+      });
+    };
+    container.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      cancelAnimationFrame(frame);
+      container.removeEventListener("scroll", onScroll);
+    };
+  }, []);
 
   const scrollToStory = (index: number) => {
     const nextIdx = (index + successStories.length) % successStories.length;
@@ -311,7 +292,7 @@ export function DealershipSolutionView() {
                     clipPath:
                       "polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%)",
                   }}
-                  className="inline-flex min-h-[56px] min-w-[274px] items-center justify-between gap-6 bg-[#58C7E8] px-4 py-3 text-[14px] font-semibold leading-[1.2] !text-[#121212] transition hover:-translate-y-0.5 hover:brightness-105"
+                  className="inline-flex min-h-[56px] min-w-[274px] max-w-full items-center justify-between gap-6 bg-[#58C7E8] px-4 py-3 text-[14px] font-semibold leading-[1.2] !text-[#121212] transition hover:-translate-y-0.5 hover:brightness-105"
                 >
                   <span className="!text-[#121212]">Apply for Dealership</span>
                   <ArrowRight size={18} className="!text-[#121212] shrink-0" />
@@ -324,7 +305,7 @@ export function DealershipSolutionView() {
                     clipPath:
                       "polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%)",
                   }}
-                  className="inline-flex min-h-[56px] min-w-[200px] items-center justify-between gap-4 bg-white px-4 py-3 text-[14px] font-medium leading-[1.2] !text-[#020202] transition hover:bg-[#F2F2F2]"
+                  className="inline-flex min-h-[56px] min-w-[200px] max-w-full items-center justify-between gap-4 bg-white px-4 py-3 text-[14px] font-medium leading-[1.2] !text-[#020202] transition hover:bg-[#F2F2F2]"
                 >
                   <span className="!text-[#020202]">View Dealership</span>
                   <FileText size={18} className="!text-[#020202] shrink-0" />
@@ -391,88 +372,8 @@ export function DealershipSolutionView() {
         steps={[...dealerAdvantages]}
       />
 
-      {/* 3. Where We Operate (Interactive Map Section) */}
-      <section className="bg-gradient-to-b from-[#6D6D6D] to-[#424242] px-6 py-20 text-white lg:px-[60px] lg:py-28">
-        <div className="mx-auto max-w-[1800px]">
-          {/* Eyebrow & Title */}
-          <div className="text-center">
-            <div className="inline-flex items-center gap-2 text-[14px] font-medium tracking-[0.02em] text-white">
-              <span className="h-[6px] w-[6px] bg-[#00E05C]" />
-              Global Footprint
-            </div>
-            <h2 className="mt-4 text-[42px] font-normal leading-[1.0] tracking-[-2px] text-white sm:text-[52px] lg:text-[60px]">
-              Where We Operate
-            </h2>
-          </div>
-
-          {/* Interactive World / Region Area */}
-          <div className="relative mt-12 min-h-[520px] w-full overflow-hidden rounded-[24px] bg-black/20 p-8">
-            <div className="relative h-[440px] w-full">
-              {locations.map((loc, idx) => (
-                <button
-                  key={loc.name}
-                  type="button"
-                  onClick={() => setActiveLocationIndex(idx)}
-                  style={{ left: `${loc.x}%`, top: `${loc.y}%` }}
-                  className={`absolute -translate-x-1/2 -translate-y-1/2 cursor-pointer transition ${
-                    activeLocationIndex === idx ? "scale-125 z-20" : "opacity-80 hover:scale-110 z-10"
-                  }`}
-                  aria-label={`View ${loc.name}`}
-                >
-                  <img
-                    src={`/figma/solutions/${loc.icon}`}
-                    alt=""
-                    aria-hidden="true"
-                    className="h-8 w-8"
-                  />
-                </button>
-              ))}
-
-              {/* Active Site Popup Card */}
-              {activeLocation && (
-                <div
-                  style={{
-                    left: `${Math.min(Math.max(activeLocation.x, 15), 70)}%`,
-                    top: `${Math.max(activeLocation.y - 32, 10)}%`,
-                  }}
-                  className="pointer-events-none absolute z-30 w-[300px] -translate-x-1/2 rounded-[16px] border border-white/20 bg-black/75 p-5 backdrop-blur-md"
-                >
-                  <span className="text-[11px] font-mono uppercase tracking-[0.1em] text-white/60">
-                    {activeLocation.type}
-                  </span>
-                  <h4 className="mt-1 text-[18px] font-semibold text-white">
-                    {activeLocation.name}
-                  </h4>
-                  <p className="mt-0.5 text-[12px] text-[#58C7E8]">
-                    {activeLocation.detail}
-                  </p>
-                  <p className="mt-2 text-[12px] leading-relaxed text-white/80">
-                    {activeLocation.body}
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* Bottom Legend */}
-            <div className="mt-6 flex flex-wrap items-center justify-between border-t border-white/20 pt-4 text-[13px] text-white/80">
-              <div className="flex flex-wrap items-center gap-6">
-                <span className="flex items-center gap-2">
-                  <span className="text-[16px]">+</span> OPERATING SITE
-                </span>
-                <span className="flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-white" /> OFFICE
-                </span>
-                <span className="flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full border border-white" /> IN DEVELOPMENT
-                </span>
-              </div>
-              <span className="font-mono text-[13px]">
-                0{activeLocationIndex + 1}/0{locations.length}
-              </span>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* 3. Where We Operate */}
+      <WhereWeOperateSection />
 
       {/* 4. Plant Facilities */}
       <section className="bg-[#000000] px-6 py-20 text-white lg:px-[60px] lg:py-32">
@@ -492,12 +393,12 @@ export function DealershipSolutionView() {
             <img
               src="/figma/solutions/plant-facilities-bg.png"
               alt="DADA Energies CAPCO global manufacturing hub plant facilities"
-              className="h-full w-full object-cover"
+              className="h-[260px] w-full object-cover sm:h-full"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+            <div className="pointer-events-none absolute inset-0 hidden bg-gradient-to-t from-black/60 via-transparent to-transparent sm:block" />
 
-            {/* Address Badge at Bottom Right */}
-            <div className="absolute bottom-6 right-6 max-w-[440px] rounded-[16px] border border-white/20 bg-black/75 p-6 backdrop-blur-md sm:bottom-10 sm:right-10 sm:p-8">
+            {/* Address badge: below the photo on phones, floating bottom-right from sm up */}
+            <div className="relative border-t border-white/10 bg-black/75 p-5 sm:absolute sm:bottom-10 sm:right-10 sm:max-w-[440px] sm:rounded-[16px] sm:border sm:border-white/20 sm:p-8 sm:backdrop-blur-md">
               <p className="text-[13px] leading-[1.6] text-white/90 sm:text-[14px]">
                 DADA ENERGIES (P) LTD. E54 to E77, TSIIC Automotive Park, Muppireddypally Village, Manoharabad Mandal, Medak District, Hyderabad, Telangana - 502336.
               </p>
@@ -519,16 +420,16 @@ export function DealershipSolutionView() {
           <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:mt-14 lg:gap-10">
             <a
               href="tel:+919848014000"
-              className="flex items-center gap-5 rounded-[16px] border border-white/10 bg-white/5 p-6 transition hover:bg-white/10 sm:p-8"
+              className="flex min-w-0 items-center gap-3 rounded-[16px] border border-white/10 bg-white/5 p-4 transition hover:bg-white/10 min-[380px]:gap-4 min-[380px]:p-5 sm:gap-5 sm:p-8"
             >
-              <div className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-white/10 text-white">
-                <Headphones size={24} />
+              <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white/10 text-white min-[380px]:h-14 min-[380px]:w-14">
+                <Headphones size={20} />
               </div>
-              <div>
+              <div className="min-w-0">
                 <span className="block font-mono text-[11px] uppercase tracking-[0.08em] text-[#58C7E8]">
                   COMMERCIAL DESK PHONE
                 </span>
-                <strong className="mt-1 block text-[20px] font-medium text-white sm:text-[24px]">
+                <strong className="mt-1 block break-words text-[15px] font-medium text-white min-[380px]:text-[18px] sm:text-[24px]">
                   +91-9848014000
                 </strong>
               </div>
@@ -536,16 +437,16 @@ export function DealershipSolutionView() {
 
             <a
               href="mailto:info@capcocapacitor.com"
-              className="flex items-center gap-5 rounded-[16px] border border-white/10 bg-white/5 p-6 transition hover:bg-white/10 sm:p-8"
+              className="flex min-w-0 items-center gap-3 rounded-[16px] border border-white/10 bg-white/5 p-4 transition hover:bg-white/10 min-[380px]:gap-4 min-[380px]:p-5 sm:gap-5 sm:p-8"
             >
-              <div className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-white/10 text-white">
-                <Mail size={24} />
+              <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white/10 text-white min-[380px]:h-14 min-[380px]:w-14">
+                <Mail size={20} />
               </div>
-              <div>
+              <div className="min-w-0">
                 <span className="block font-mono text-[11px] uppercase tracking-[0.08em] text-[#58C7E8]">
                   DEPARTMENT EMAIL DESK
                 </span>
-                <strong className="mt-1 block text-[20px] font-medium text-white sm:text-[24px]">
+                <strong className="mt-1 block break-words text-[15px] font-medium text-white min-[380px]:text-[18px] sm:text-[24px]">
                   info@capcocapacitor.com
                 </strong>
               </div>
@@ -571,13 +472,13 @@ export function DealershipSolutionView() {
 
             {/* Navigation Controls */}
             <div className="flex items-center gap-4">
-              <span className="text-[14px] font-mono text-[#8C8C8C]">
+              <span className="text-[14px] font-mono tabular-nums text-[#8C8C8C]" aria-live="polite">
                 0{activeStoryIndex + 1}/0{successStories.length}
               </span>
               <button
                 type="button"
                 onClick={() => scrollToStory(activeStoryIndex - 1)}
-                className="grid h-11 w-11 place-items-center rounded-full border border-[#E5E5E5] bg-white text-[#020202] transition hover:bg-[#020202] hover:text-white"
+                className="grid h-11 w-11 cursor-pointer place-items-center rounded-full border border-[#E5E5E5] bg-white text-[#020202] transition hover:bg-[#020202] hover:text-white"
                 aria-label="Previous story"
               >
                 <ArrowLeft size={18} />
@@ -585,7 +486,7 @@ export function DealershipSolutionView() {
               <button
                 type="button"
                 onClick={() => scrollToStory(activeStoryIndex + 1)}
-                className="grid h-11 w-11 place-items-center rounded-full border border-[#E5E5E5] bg-white text-[#020202] transition hover:bg-[#020202] hover:text-white"
+                className="grid h-11 w-11 cursor-pointer place-items-center rounded-full border border-[#E5E5E5] bg-white text-[#020202] transition hover:bg-[#020202] hover:text-white"
                 aria-label="Next story"
               >
                 <ArrowRight size={18} />
@@ -596,22 +497,31 @@ export function DealershipSolutionView() {
           {/* Stories Track */}
           <div
             ref={storiesScrollRef}
-            className="mt-12 flex gap-6 overflow-x-auto pb-4 scrollbar-none"
+            className="mt-12 flex gap-6 overflow-x-auto overscroll-x-contain pb-4 scrollbar-none"
             style={{ scrollSnapType: "x mandatory" }}
           >
             {successStories.map((story) => (
               <div
                 key={story.title}
                 data-story-card
-                onClick={() => setSelectedStory(story)}
+                onClick={() => openStory(story)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    openStory(story);
+                  }
+                }}
+                role="button"
+                tabIndex={0}
+                aria-label={`Read case study: ${story.title}`}
                 style={{ scrollSnapAlign: "start" }}
-                className="group relative h-[560px] w-[88vw] max-w-[1512px] shrink-0 cursor-pointer overflow-hidden rounded-[32px] bg-[#1A1A1A] transition-all duration-300 hover:shadow-2xl lg:h-[864px] lg:w-[1512px]"
+                className="group relative h-[560px] w-[88vw] max-w-[1512px] shrink-0 cursor-pointer overflow-hidden rounded-[32px] bg-[#1A1A1A] transition-shadow duration-300 hover:shadow-2xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#58C7E8] lg:h-[864px] lg:w-[1512px]"
               >
                 {/* Background Image */}
                 <img
                   src={story.image}
                   alt={story.title}
-                  className="pointer-events-none absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  className="pointer-events-none absolute inset-0 h-full w-full object-cover transition-transform duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-105"
                 />
 
                 {/* Figma Gradient: linear-gradient(180deg, rgba(10, 10, 10, 0.157) 0%, rgba(10, 10, 10, 0.45) 100%) */}
@@ -672,13 +582,26 @@ export function DealershipSolutionView() {
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
+          aria-label={selectedStory.title}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
         >
-          <div className="relative max-h-[90vh] w-full max-w-[760px] overflow-y-auto rounded-[24px] bg-[#121212] p-8 text-white sm:p-10">
+          <button
+            type="button"
+            aria-label="Close dialog"
+            onClick={closeStory}
+            className={`absolute inset-0 h-full w-full cursor-default bg-black/80 backdrop-blur-sm transition-opacity duration-300 ease-out ${
+              storyOpen ? "opacity-100" : "opacity-0"
+            }`}
+          />
+          <div
+            className={`relative max-h-[90vh] w-full max-w-[760px] overflow-y-auto overscroll-contain rounded-[24px] bg-[#121212] p-6 text-white transition-[opacity,translate,scale] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] sm:p-10 ${
+              storyOpen ? "translate-y-0 scale-100 opacity-100" : "translate-y-4 scale-[0.97] opacity-0"
+            }`}
+          >
             <button
               type="button"
-              onClick={() => setSelectedStory(null)}
-              className="absolute right-6 top-6 grid h-10 w-10 place-items-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
+              onClick={closeStory}
+              className="absolute right-4 top-4 grid h-10 w-10 cursor-pointer place-items-center rounded-full bg-white/10 text-white transition hover:rotate-90 hover:bg-white/20 sm:right-6 sm:top-6"
               aria-label="Close dialog"
             >
               <X size={20} />
@@ -686,14 +609,14 @@ export function DealershipSolutionView() {
             <span className="text-[13px] font-medium uppercase tracking-[0.1em] text-[#58C7E8]">
               {selectedStory.clientTag}
             </span>
-            <h3 className="mt-3 text-[28px] font-normal leading-snug sm:text-[32px]">
+            <h3 className="mt-3 pr-10 text-[24px] font-normal leading-snug sm:text-[32px]">
               {selectedStory.title}
             </h3>
-            <div className="my-6 grid grid-cols-3 gap-4 rounded-[16px] bg-white/5 p-4">
+            <div className="my-6 grid grid-cols-3 gap-3 rounded-[16px] bg-white/5 p-4 sm:gap-4">
               {selectedStory.stats.map((stat) => (
                 <div key={stat.label}>
                   <span className="text-[11px] font-mono text-white/50">{stat.label}</span>
-                  <div className="mt-1 text-[22px] font-bold text-white sm:text-[26px]">
+                  <div className="mt-1 text-[18px] font-bold text-white sm:text-[26px]">
                     {stat.value}
                   </div>
                 </div>
@@ -705,8 +628,8 @@ export function DealershipSolutionView() {
             <div className="mt-8 flex justify-end">
               <button
                 type="button"
-                onClick={() => setSelectedStory(null)}
-                className="rounded-full bg-[#58C7E8] px-6 py-2.5 text-[14px] font-semibold text-black transition hover:brightness-105"
+                onClick={closeStory}
+                className="cursor-pointer rounded-full bg-[#58C7E8] px-6 py-2.5 text-[14px] font-semibold text-black transition hover:brightness-105"
               >
                 Close Case Study
               </button>
@@ -736,25 +659,37 @@ export function DealershipSolutionView() {
               return (
                 <div
                   key={faq.q}
-                  className="rounded-[16px] bg-[#F5F5F5] p-6 transition sm:p-7"
+                  className={`rounded-[16px] p-6 transition-colors duration-300 sm:p-7 ${isOpen ? "bg-[#EEFAFF]" : "bg-[#F5F5F5] hover:bg-[#EFEFEF]"}`}
                 >
                   <button
                     type="button"
                     onClick={() => setActiveFaq(isOpen ? null : idx)}
+                    aria-expanded={isOpen}
+                    aria-controls={`dealer-faq-${idx}`}
                     className="flex w-full cursor-pointer items-center justify-between gap-4 text-left"
                   >
                     <span className="text-[17px] font-medium text-[#020202] sm:text-[19px]">
                       {faq.q}
                     </span>
-                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-[8px] bg-[#222222] text-white transition hover:bg-black">
-                      {isOpen ? <Minus size={16} /> : <Plus size={16} />}
+                    <span className="relative grid h-9 w-9 shrink-0 place-items-center rounded-[8px] bg-[#222222] text-white transition-colors hover:bg-black">
+                      <Minus size={16} className="absolute" />
+                      <Minus
+                        size={16}
+                        className={`absolute transition-transform duration-300 ease-out ${isOpen ? "rotate-0" : "rotate-90"}`}
+                      />
                     </span>
                   </button>
-                  {isOpen && (
-                    <p className="mt-4 text-[15px] leading-relaxed text-[#595959]">
-                      {faq.a}
-                    </p>
-                  )}
+                  <div
+                    id={`dealer-faq-${idx}`}
+                    inert={!isOpen}
+                    className={`grid transition-[grid-template-rows,opacity] duration-300 ease-out ${
+                      isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+                    }`}
+                  >
+                    <div className="overflow-hidden">
+                      <p className="pt-4 text-[15px] leading-relaxed text-[#595959]">{faq.a}</p>
+                    </div>
+                  </div>
                 </div>
               );
             })}

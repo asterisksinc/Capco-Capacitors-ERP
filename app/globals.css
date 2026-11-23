@@ -131,6 +131,111 @@ html { scroll-behavior: smooth; scroll-padding-top: 96px; }
   .home-page .project-title { left: 24px; bottom: 290px; max-width: calc(100% - 48px); }
   .home-page .project-detail { left: 14px; width: auto; min-height: 220px; }
 }
+/* Scroll reveal (driven by components/public/HomeMotion.tsx) */
+.home-page [data-motion] {
+  transition: opacity .9s cubic-bezier(.22, 1, .36, 1), transform .9s cubic-bezier(.22, 1, .36, 1);
+}
+.home-page [data-motion="hidden"] { opacity: 0; transform: translate3d(0, 32px, 0); }
+.home-page [data-motion="shown"] { opacity: 1; transform: none; }
+
+/* Content swap for tabs / steppers / testimonials (re-keyed on change) */
+@keyframes home-swap-in {
+  from { opacity: 0; transform: translate3d(0, 14px, 0); }
+  to { opacity: 1; transform: none; }
+}
+.home-page .home-swap { animation: home-swap-in .55s cubic-bezier(.22, 1, .36, 1) both; }
+.home-page .home-swap--delay { animation-delay: .08s; }
+
+/* Crossfade slider (components/public/CrossFade.tsx) */
+.crossfade { overflow-x: clip; }
+.crossfade-slide {
+  transition: opacity .6s cubic-bezier(.22, 1, .36, 1), transform .7s cubic-bezier(.22, 1, .36, 1), visibility 0s linear 0s;
+  will-change: opacity, transform;
+}
+.crossfade-slide[data-slide="active"] { opacity: 1; transform: none; z-index: 1; transition-delay: .08s, .08s, 0s; }
+.crossfade-slide[data-slide="before"] { opacity: 0; transform: translate3d(-40px, 0, 0); visibility: hidden; pointer-events: none; transition-delay: 0s, 0s, .7s; }
+.crossfade-slide[data-slide="after"] { opacity: 0; transform: translate3d(40px, 0, 0); visibility: hidden; pointer-events: none; transition-delay: 0s, 0s, .7s; }
+
+/* Industry tabs: colour fade + sliding underline */
+.home-page .industry-tab { transition: color .3s ease; }
+.home-page .industry-indicator { transition: transform .5s cubic-bezier(.22, 1, .36, 1), width .5s cubic-bezier(.22, 1, .36, 1); }
+
 @media (prefers-reduced-motion: reduce) {
+  .home-page [data-motion="hidden"] { opacity: 1; transform: none; }
+  .crossfade-slide { transition: none !important; transform: none !important; }
   .home-page *, .home-page *::before, .home-page *::after { animation: none !important; transition-duration: 0s !important; scroll-behavior: auto !important; }
+}
+
+/* Where We Operate - dotted world map */
+.world-map { background-image: radial-gradient(ellipse at 65% 40%, rgba(88, 199, 232, .14), transparent 60%); }
+.world-map-pulse { opacity: 0; }
+.world-map-pin.is-active .world-map-pulse { animation: world-map-pulse 1.8s cubic-bezier(.22, 1, .36, 1) infinite; }
+@keyframes world-map-pulse { 0% { opacity: .55; transform: scale(.4); } 100% { opacity: 0; transform: scale(1.9); } }
+.world-map-dot { transition: transform .3s cubic-bezier(.22, 1, .36, 1); }
+.world-map-pin.is-active .world-map-dot, .world-map-pin:hover .world-map-dot { transform: scale(1.35); }
+/* Country name only appears on hover / keyboard focus */
+.world-map-label { opacity: 0; transform: translateY(4px); transition: opacity .25s ease, transform .25s ease; }
+.world-map-pin:hover .world-map-label, .world-map-pin:focus-visible .world-map-label { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  .world-map-pin.is-active .world-map-pulse { animation: none; }
+}
+
+/* About — circuit timeline (components/public/JourneyRoadmap.tsx) */
+.journey-circuit {
+  background-image:
+    linear-gradient(rgba(88, 199, 232, .045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(88, 199, 232, .045) 1px, transparent 1px),
+    radial-gradient(ellipse at 50% 55%, rgba(88, 199, 232, .10), transparent 65%);
+  background-size: 40px 40px, 40px 40px, 100% 100%;
+}
+.journey-spark { animation: journey-spark 1.8s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes journey-spark { 0%, 100% { transform: scale(.7); opacity: .25; } 50% { transform: scale(1.3); opacity: .08; } }
+.journey-pad-ring { animation: journey-ring 1.8s cubic-bezier(.22, 1, .36, 1) infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes journey-ring { 0% { transform: scale(.6); opacity: .8; } 100% { transform: scale(1.6); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .journey-spark, .journey-pad-ring { animation: none; }
+}
+
+/* Gallery: staggered fade-up when the filtered set changes */
+@keyframes gallery-card-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 14px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.gallery-card {
+  animation: gallery-card-in 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .gallery-card {
+    animation: none;
+  }
+  .gallery-grid,
+  .gallery-grid * {
+    transition: none !important;
+  }
+}
+
+/* OEM page: location details crossfade when a new pin is chosen */
+@keyframes oem-location-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 6px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.oem-location-card {
+  animation: oem-location-in 380ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .oem-location-card {
+    animation: none;
+  }
 }

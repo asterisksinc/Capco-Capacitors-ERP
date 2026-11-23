@@ -172,9 +172,9 @@ export function FourStepProcessAndTeamSection({
          ───────────────────────────────────────────────────────────── */}
       <div className="px-6 py-20 lg:px-[60px] lg:py-32 border-b border-[#EFEFEF]">
         <div className="mx-auto max-w-[1800px]">
-          <div className="grid gap-12 lg:grid-cols-[1fr_880px] xl:grid-cols-[1fr_980px] lg:gap-16">
+          <div className="grid grid-cols-[minmax(0,1fr)] gap-12 lg:gap-16 min-[1380px]:grid-cols-[minmax(0,1fr)_880px] min-[1600px]:grid-cols-[minmax(0,1fr)_980px]">
             {/* Left Sticky Header */}
-            <div className="lg:sticky lg:top-[120px] lg:self-start">
+            <div className="min-[1380px]:sticky min-[1380px]:top-[120px] min-[1380px]:self-start">
               <div className="flex items-center gap-2 text-[14px] font-medium tracking-[-0.56px] text-[#1C1C1C]">
                 <span className="h-[6px] w-[6px] rounded-full bg-[#00E05C]" />
                 {processEyebrow}
@@ -190,7 +190,7 @@ export function FourStepProcessAndTeamSection({
                     clipPath:
                       "polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%)",
                   }}
-                  className="inline-flex min-h-[56px] min-w-[240px] items-center justify-between gap-6 bg-[#0092CA] px-5 py-3 text-[14px] font-medium leading-[1.2] !text-white transition hover:-translate-y-0.5 hover:brightness-105"
+                  className="inline-flex min-h-[56px] min-w-[240px] max-w-full items-center justify-between gap-6 bg-[#0092CA] px-5 py-3 text-[14px] font-medium leading-[1.2] !text-white transition hover:-translate-y-0.5 hover:brightness-105"
                 >
                   <span className="!text-white">{processCtaText}</span>
                   <ArrowRight size={16} className="!text-white shrink-0" />
@@ -201,7 +201,7 @@ export function FourStepProcessAndTeamSection({
             {/* Right Column: 4 Staggered Staircase Cards with Cascading Reveal */}
             <div
               ref={stepsContainerRef}
-              className="flex flex-col gap-8 sm:gap-10 pb-8"
+              className="flex w-full max-w-[980px] flex-col gap-8 pb-8 sm:gap-10"
             >
               {steps.map((step, idx) => {
                 // Indent progressively to create the staggered staircase layout shown in the video:

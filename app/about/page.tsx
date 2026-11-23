@@ -10,6 +10,9 @@ import {
   PublicNav,
   ReadyToSpecifyCapcoSection,
 } from "@/components/public/PublicChrome";
+import JourneyRoadmap from "@/components/public/JourneyRoadmap";
+import ComplianceSection from "@/components/public/ComplianceSection";
+import ExportMarketsSection from "@/components/public/ExportMarketsSection";
 
 const HERO_STATS = [
   ["IS:2993 / IS:13340", "BIS Certified"],
@@ -53,14 +56,14 @@ const AFFILIATIONS = [
 ] as const;
 
 const TIMELINE_DATA = [
-  { year: "1994", tagline: "The Journey of CAPCO Begins" },
-  { year: "1996", tagline: "BIS Certification for KVAR Capacitors" },
-  { year: "2005", tagline: "In-House Metallization Capability" },
-  { year: "2012", tagline: "Exports to Global Markets" },
-  { year: "2016", tagline: "Dedicated Motor Capacitor Plant" },
-  { year: "2020", tagline: "BIS Certification for Motor Run Capacitors" },
-  { year: "2023", tagline: "Advanced Manufacturing Facility" },
-  { year: "2025", tagline: "Motor Start Capacitor License" },
+  { year: "1994", tag: "Founded", tagline: "The Journey of CAPCO Begins" },
+  { year: "1996", tag: "Certification", tagline: "BIS Certification for KVAR Capacitors" },
+  { year: "2005", tag: "Capability", tagline: "In-House Metallization Capability" },
+  { year: "2012", tag: "Export", tagline: "Exports to Global Markets" },
+  { year: "2016", tag: "Facility", tagline: "Dedicated Motor Capacitor Plant" },
+  { year: "2020", tag: "Certification", tagline: "BIS Certification for Motor Run Capacitors" },
+  { year: "2023", tag: "Facility", tagline: "Advanced Manufacturing Facility" },
+  { year: "2025", tag: "License", tagline: "Motor Start Capacitor License" },
 ] as const;
 
 const FACILITIES = [
@@ -209,159 +212,6 @@ function useInView<T extends HTMLElement = HTMLElement>(threshold = 0.15) {
   return [ref, inView] as const;
 }
 
-function ScrollTimelineSection() {
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const [activeIndex, setActiveIndex] = useState(0);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      if (!containerRef.current) return;
-      const rect = containerRef.current.getBoundingClientRect();
-      const totalScrollable = rect.height - window.innerHeight;
-      if (totalScrollable <= 0) return;
-
-      const scrolled = -rect.top;
-      const progress = Math.max(0, Math.min(1, scrolled / totalScrollable));
-      const count = TIMELINE_DATA.length;
-      const index = Math.min(count - 1, Math.floor(progress * count));
-      setActiveIndex(index);
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll();
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  const scrollToMilestone = (idx: number) => {
-    if (!containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    const scrollTop = window.scrollY || window.pageYOffset;
-    const containerTop = rect.top + scrollTop;
-    const totalScrollable = rect.height - window.innerHeight;
-    const targetScroll = containerTop + (idx / TIMELINE_DATA.length) * totalScrollable + 50;
-    window.scrollTo({ top: targetScroll, behavior: "smooth" });
-  };
-
-  return (
-    <section
-      id="company-timeline"
-      ref={containerRef}
-      className="relative bg-[#FAFAFA] min-h-[350vh]"
-    >
-      <div className="sticky top-0 flex h-screen w-full flex-col justify-between overflow-hidden px-6 py-8 sm:py-12 lg:px-[80px] lg:py-14">
-        {/* Top Header */}
-        <div className="mx-auto flex w-full max-w-[1800px] flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-[800px]">
-            <p className="inline-flex items-center gap-2 text-[14px] font-medium uppercase tracking-normal text-[#020202]">
-              <span className="h-[6px] w-[6px] bg-[#58C7E8]" />
-              OUR JOURNEY
-            </p>
-            <h2 className="mt-3 text-[32px] font-normal leading-[1.05] tracking-[-0.04em] text-[#020202] sm:text-[40px] lg:text-[48px]">
-              32 Years of Growth, Innovation &amp; Compliance
-            </h2>
-          </div>
-
-          <a
-            href="/catalogs/capco-product-catalog.pdf"
-            download="CAPCO-Company-Timeline.pdf"
-            style={{
-              clipPath:
-                "polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%)",
-            }}
-            className="inline-flex min-h-[50px] w-[300px] shrink-0 items-end justify-between bg-[#58C7E8] px-3.5 pb-2.5 pt-5 text-[13px] font-semibold leading-[1.2] !text-[#121212] transition hover:-translate-y-0.5 hover:brightness-95"
-          >
-            <span className="!text-[#121212]">Download Detailed Timeline (PDF)</span>
-            <img src="/figma/solutions/4e858.svg" alt="" aria-hidden="true" />
-          </a>
-        </div>
-
-        {/* Center Display: Video 1 animation */}
-        <div className="mx-auto my-auto flex w-full max-w-[1400px] items-center justify-center py-6">
-          <div className="flex w-full flex-col items-center justify-center gap-6 sm:gap-10 md:flex-row md:items-center md:justify-center lg:gap-16">
-            
-            {/* Left: Animated Rolling Year Numbers */}
-            <div className="relative h-[80px] w-[200px] overflow-hidden text-center sm:h-[110px] sm:w-[260px] md:text-right lg:h-[140px] lg:w-[320px]">
-              <div
-                className="transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]"
-                style={{
-                  transform: `translateY(-${activeIndex * (100 / TIMELINE_DATA.length)}%)`,
-                  height: `${TIMELINE_DATA.length * 100}%`,
-                }}
-              >
-                {TIMELINE_DATA.map((item, idx) => (
-                  <div
-                    key={item.year}
-                    style={{ height: `${100 / TIMELINE_DATA.length}%` }}
-                    className={`flex items-center justify-center md:justify-end text-[68px] sm:text-[96px] lg:text-[124px] font-light leading-none tracking-[-0.04em] transition-opacity duration-300 ${
-                      idx === activeIndex
-                        ? "text-[#020202] opacity-100"
-                        : "text-[#B0B0B0] opacity-20"
-                    }`}
-                  >
-                    {item.year}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Middle: Horizontal Accent Connector Line (as in Video 1) */}
-            <div className="hidden h-[2px] w-[50px] shrink-0 bg-[#E63946] sm:block md:w-[70px] lg:w-[100px] transition-transform duration-300" />
-
-            {/* Right: Vertical List of Taglines */}
-            <div className="flex max-w-[620px] flex-col gap-3.5 sm:gap-4 lg:gap-5">
-              {TIMELINE_DATA.map((item, idx) => {
-                const isActive = idx === activeIndex;
-                return (
-                  <button
-                    key={item.year}
-                    type="button"
-                    onClick={() => scrollToMilestone(idx)}
-                    className={`group flex items-center text-left transition-all duration-500 cursor-pointer ${
-                      isActive
-                        ? "translate-x-2 text-[#020202] opacity-100"
-                        : "text-[#8C8C8C] opacity-25 hover:opacity-50"
-                    }`}
-                  >
-                    <span
-                      className={`text-[17px] sm:text-[21px] lg:text-[26px] transition-all duration-300 ${
-                        isActive ? "font-normal text-[#020202]" : "font-light text-[#8C8C8C]"
-                      }`}
-                    >
-                      {item.tagline}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom Milestone Progress Indicators */}
-        <div className="mx-auto flex w-full max-w-[1800px] items-center justify-between border-t border-[#E5E5E5] pt-4">
-          <span className="text-[12px] uppercase tracking-[0.08em] text-[#595959]">
-            Scroll to explore milestone: {activeIndex + 1} of {TIMELINE_DATA.length} ({TIMELINE_DATA[activeIndex].year})
-          </span>
-          <div className="flex gap-2">
-            {TIMELINE_DATA.map((item, idx) => (
-              <button
-                key={item.year}
-                type="button"
-                onClick={() => scrollToMilestone(idx)}
-                aria-label={`Jump to ${item.year}`}
-                className={`h-2 rounded-full transition-all duration-300 ${
-                  idx === activeIndex
-                    ? "w-8 bg-[#58C7E8]"
-                    : "w-2 bg-[#D9D9D9] hover:bg-[#A0A0A0]"
-                }`}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
 export default function AboutPage() {
   const [journeyRef, isJourneyInView] = useInView<HTMLElement>(0.12);
 
@@ -413,8 +263,11 @@ export default function AboutPage() {
               Manufacturing Excellence
             </h1>
 
+            {/* Buttons (left) + intro paragraph (right) share one row so the
+                paragraph always sits above the angled white cutout */}
+            <div className="mt-6 flex flex-col gap-8 lg:mt-8 lg:flex-row lg:items-end lg:justify-between lg:gap-10 xl:mt-10">
             {/* Hero Action Buttons */}
-            <div className="mt-6 flex flex-wrap items-center gap-4 lg:mt-8 xl:mt-10">
+            <div className="flex shrink-0 flex-wrap items-center gap-4">
               <a
                 href="#manufacturing-line"
                 style={{
@@ -451,12 +304,13 @@ export default function AboutPage() {
                 </svg>
               </a>
             </div>
-          </div>
 
-          {/* Bottom-Right Intro Paragraph */}
-          <p className="mt-8 max-w-[600px] text-[15px] font-normal leading-[1.28] text-white/95 sm:text-[17px] lg:absolute lg:bottom-[26px] lg:right-[60px] lg:mt-0 lg:text-[18px] xl:bottom-[34px] xl:max-w-[645px] xl:text-[21px] lg:leading-[1.22]">
-           CAPCO Capacitors is the flagship capacitor brand of Dada Energies (P) Ltd., a Hyderabad-based manufacturer established in 1994. Dada Energies provides the manufacturing strength and quality systems behind CAPCO’s motor run, PFC, lighting and custom capacitor solutions.
-          </p>
+            {/* Intro Paragraph */}
+            <p className="max-w-[600px] text-[15px] font-normal leading-[1.28] text-white/95 sm:text-[17px] lg:min-w-0 lg:max-w-[560px] lg:flex-1 lg:text-[17px] lg:leading-[1.3] xl:max-w-[645px] xl:text-[20px]">
+              CAPCO Capacitors is the flagship capacitor brand of Dada Energies (P) Ltd., a Hyderabad-based manufacturer established in 1994. Dada Energies provides the manufacturing strength and quality systems behind CAPCO’s motor run, PFC, lighting and custom capacitor solutions.
+            </p>
+            </div>
+          </div>
         </div>
 
         {/* Bottom-Left Angled White Cutout */}
@@ -504,7 +358,7 @@ export default function AboutPage() {
       </section>
 
       {/* 4. SPLIT "WHO WE ARE" SECTION */}
-      <section className="mx-auto grid max-w-[1920px] lg:min-h-[673px] lg:grid-cols-[930fr_990fr]">
+      <section className="mx-auto grid max-w-[1920px] grid-cols-[minmax(0,1fr)] lg:min-h-[673px] lg:grid-cols-[930fr_990fr]">
         {/* Left Hydroelectric Dam Image */}
         <div className="relative min-h-[360px] w-full overflow-hidden bg-[#1A1A1A] sm:min-h-[480px] lg:min-h-[673px]">
           <Image
@@ -567,7 +421,7 @@ export default function AboutPage() {
                 clipPath:
                   "polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%)",
               }}
-              className="inline-flex min-h-[56px] w-[218px] items-end justify-between bg-[#58C7E8] px-3 pb-3 pt-6 text-[14px] font-medium leading-[1.2] text-[#121212] transition hover:-translate-y-0.5 hover:brightness-95"
+              className="inline-flex min-h-[56px] w-[218px] max-w-full items-end justify-between bg-[#58C7E8] px-3 pb-3 pt-6 text-[14px] font-medium leading-[1.2] text-[#121212] transition hover:-translate-y-0.5 hover:brightness-95"
             >
               <span>Explore Our Products</span>
               <img src="/figma/solutions/24503.svg" alt="" aria-hidden="true" />
@@ -580,7 +434,7 @@ export default function AboutPage() {
                 clipPath:
                   "polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%)",
               }}
-              className="inline-flex min-h-[56px] w-[280px] items-end justify-between bg-white px-3 pb-3 pt-6 text-[14px] font-semibold leading-[1.2] !text-[#121212] transition hover:-translate-y-0.5 hover:bg-[#F4F4F4]"
+              className="inline-flex min-h-[56px] w-[280px] max-w-full items-end justify-between gap-3 bg-white px-3 pb-3 pt-6 text-[14px] font-semibold leading-[1.2] !text-[#121212] transition hover:-translate-y-0.5 hover:bg-[#F4F4F4]"
             >
               <span className="!text-[#121212]">Download Company Profile (PDF)</span>
               <svg
@@ -719,7 +573,7 @@ export default function AboutPage() {
       </section>
 
       {/* 7. 32 YEARS OF GROWTH, INNOVATION & COMPLIANCE TIMELINE (Interactive Scroll Ticker) */}
-      <ScrollTimelineSection />
+      <JourneyRoadmap milestones={TIMELINE_DATA} />
 
       {/* 8. LEADERSHIP — DECADES OF EXPERIENCE IN CAPACITOR MANUFACTURING */}
       <section
@@ -924,7 +778,8 @@ export default function AboutPage() {
         </div>
       </section>
 
-
+      {/* 9. COMPLIANCE — BIS, ISO, CE & IEC CERTIFIED MANUFACTURING */}
+      <ComplianceSection />
 
       {/* 10. FACILITIES — TWO STRATEGIC LOCATIONS IN HYDERABAD, TELANGANA */}
       <section className="px-6 py-16 lg:px-[60px] lg:py-[100px]">
@@ -1013,7 +868,8 @@ export default function AboutPage() {
         </div>
       </section>
 
-
+      {/* 11b. EXPORT MARKETS */}
+      <ExportMarketsSection />
 
       {/* 12. RESPONSIBILITY — CORPORATE SOCIAL RESPONSIBILITY & ESG FRAMEWORK */}
       <section

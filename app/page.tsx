@@ -7,21 +7,36 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import HomeHero from "@/components/public/HomeHero";
 import HomeMotion from "@/components/public/HomeMotion";
 import ClientTicker from "@/components/public/ClientTicker";
+import CrossFade from "@/components/public/CrossFade";
 import {
   PublicFaqSection,
   ReadyToSpecifyCapcoSection,
 } from "@/components/public/PublicChrome";
 import { SiteFooter } from "@/components/public/SiteFooter";
+import { publicProducts } from "@/lib/publicProducts";
 
 const productLinks = [
   "/products?category=Metalized%20Polypropylene%20Film%20%5B%20MPP%20%5D", "/products?category=Fan%20Capacitors",
   "/products?category=Power%20Factor%20Capacitors", "/products?category=Luminaire%20Capacitor",
   "/products?category=Luminaire%20Capacitor", "/products",
 ];
+
+/** Card images come from the shared product catalogue so Home and /products stay in sync. */
+const productImageSlugs = [
+  "zinc-aluminium-alloy-metalised-bopp-film",
+  "fan-capacitor",
+  "pfc-cylindrical-capacitor",
+  "lighting-luminaire-capacitor",
+  "uv-lamp-capacitor",
+  "customized-capacitor",
+];
+const productImages = productImageSlugs.map(
+  (slug) => publicProducts.find((product) => product.slug === slug)?.image ?? "/figma/products/product-11.png",
+);
 
 const products = [
   ["BOPP Substrate", "CAT: MPP-01", "Metalized Polypropylene Film (MPP)", "In-house Leybold-metallized BOPP film for self-healing, high-voltage capacitor applications.", "THICKNESS: 3.5-14 Micron", "VOLTAGE: Up to 4000V AC", "Explore MPP Film"],
@@ -199,14 +214,26 @@ const certifications = [
 ] as const;
 
 const globalMarkets = [
-  { name: "UAE", region: "Middle East", detail: "Dubai & Abu Dhabi · Motor Run and PFC Capacitors", x: 57, y: 34, href: "/regions/middle-east" },
-  { name: "USA", region: "North America", detail: "UL-certified Motor Run and PFC Capacitors", x: 22, y: 29, href: "/regions/usa" },
-  { name: "Sri Lanka", region: "South Asia", detail: "Submersible Panel and Fan Capacitors", x: 67, y: 58, href: "/regions/south-asia" },
-  { name: "Bangladesh", region: "South Asia", detail: "Motor Start and Fan Capacitors", x: 71, y: 43, href: "/regions/south-asia" },
-  { name: "Turkey", region: "Middle East", detail: "Lighting and Motor Run Capacitors", x: 53, y: 27, href: "/regions/middle-east" },
-  { name: "African Continent", region: "Africa", detail: "PFC Capacitors and Capacitor Banks", x: 49, y: 57, href: "/regions/africa" },
-  { name: "Egypt", region: "Middle East", detail: "PFC and Motor Run Capacitors", x: 54, y: 39, href: "/regions/middle-east" },
+  { name: "UAE", region: "Middle East", detail: "Dubai & Abu Dhabi · Motor Run and PFC Capacitors", lat: 24.4, lon: 54.4, href: "/regions/middle-east" },
+  { name: "USA", region: "North America", detail: "UL-certified Motor Run and PFC Capacitors", lat: 39, lon: -98, href: "/regions/usa" },
+  { name: "Sri Lanka", region: "South Asia", detail: "Submersible Panel and Fan Capacitors", lat: 7.9, lon: 80.8, href: "/regions/south-asia" },
+  { name: "Bangladesh", region: "South Asia", detail: "Motor Start and Fan Capacitors", lat: 23.7, lon: 90.4, href: "/regions/south-asia" },
+  { name: "Turkey", region: "Middle East", detail: "Lighting and Motor Run Capacitors", lat: 39, lon: 35, href: "/regions/middle-east" },
+  { name: "African Continent", region: "Africa", detail: "PFC Capacitors and Capacitor Banks", lat: 4, lon: 21, href: "/regions/africa" },
+  { name: "Egypt", region: "Middle East", detail: "PFC and Motor Run Capacitors", lat: 26.8, lon: 30.8, href: "/regions/middle-east" },
 ] as const;
+
+/**
+ * Matches the equirectangular projection used to generate
+ * /figma/home/world-dot-map.svg (lon -180..180, lat 75..-56, 1200x437).
+ */
+const MAP_W = 1200;
+const MAP_H = 437;
+const projectToMap = (lat: number, lon: number) => ({
+  x: ((lon + 180) / 360) * MAP_W,
+  y: ((75 - lat) / (75 - -56)) * MAP_H,
+});
+const mapPins = globalMarkets.map((market) => ({ ...market, ...projectToMap(market.lat, market.lon) }));
 
 const regionalBreakdown = [
   { title: "Middle East", countries: "UAE, Egypt, Turkey", cities: "Dubai, Abu Dhabi, Cairo, Istanbul", products: "Motor Run Capacitors, PFC Capacitors, Lighting Capacitors", standards: "CE, GSO, ESMA, TSE, EOS", ports: "Jebel Ali, Alexandria, Istanbul ports", freight: "7–14 days sea freight from Chennai", href: "/regions/middle-east" },
@@ -220,30 +247,45 @@ const regionalBreakdown = [
 const manufacturingSteps = [
   {
     num: "01",
+    image: "", // add image path later, e.g. "/figma/process/step-01.jpg"
+    imageAlt: "Rolls of BOPP capacitor film",
+    imagePosition: "50% 85%",
     title: "Raw Film Procurement",
     subtitle: "Certified BOPP Film",
     body: "Sourced from trusted suppliers with strict dielectric strength tolerances (>600 V/micron).",
   },
   {
     num: "02",
+    image: "", // add image path later, e.g. "/figma/process/step-01.jpg"
+    imageAlt: "Leybold vacuum metallization chamber",
+    imagePosition: "50% 20%",
     title: "In-House Metallization",
     subtitle: "In-House Alloy Deposition",
     body: "Zinc/Aluminium layers vacuum-deposited via Leybold (Germany) for uniform surface resistivity (6–9 Ω/sq).",
   },
   {
     num: "03",
+    image: "", // add image path later, e.g. "/figma/process/step-01.jpg"
+    imageAlt: "Metar automatic winding line",
+    imagePosition: "50% 20%",
     title: "Metar Automatic Winding",
     subtitle: "Precision Non-Inductive Winding",
     body: "Metar (Switzerland) high-speed winding ensures <±5% capacitance tolerance and minimal internal losses.",
   },
   {
     num: "04",
+    image: "", // add image path later, e.g. "/figma/process/step-01.jpg"
+    imageAlt: "Automated capacitor encapsulation and packing line",
+    imagePosition: "50% 20%",
     title: "Encapsulation & Safety",
     subtitle: "Dry & Oil Encapsulation",
     body: "Resin- or oil-filled housing with application-specific P2 over-pressure disconnectors for thermal and electrical stress protection.",
   },
   {
     num: "05",
+    image: "", // add image path later, e.g. "/figma/process/step-01.jpg"
+    imageAlt: "In-house capacitor testing laboratory",
+    imagePosition: "50% 20%",
     title: "Testing & Dispatch",
     subtitle: "BIS-Certified Batch Release",
     body: "100% tested for capacitance, voltage endurance, and insulation resistance before vacuum-sealed packaging.",
@@ -310,13 +352,26 @@ export default function Home() {
   const [industryIndex, setIndustryIndex] = useState(0);
   const [processIndex, setProcessIndex] = useState(0);
   const [testimonialIndex, setTestimonialIndex] = useState(0);
+  const testimonialTouchX = useRef<number | null>(null);
+  const stepTestimonial = (dir: 1 | -1) =>
+    setTestimonialIndex((prev) => (prev + testimonials.length + dir) % testimonials.length);
   const [projectIndex, setProjectIndex] = useState(0);
   const [activeMarket, setActiveMarket] = useState(0);
   const projectsContainerRef = useRef<HTMLDivElement | null>(null);
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const [indicator, setIndicator] = useState({ left: 0, width: 0 });
 
-  const activeIndustry = industries[industryIndex];
+  useLayoutEffect(() => {
+    const measure = () => {
+      const tab = tabRefs.current[industryIndex];
+      if (tab) setIndicator({ left: tab.offsetLeft, width: tab.offsetWidth });
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [industryIndex]);
+
   const activeProcess = manufacturingSteps[processIndex];
-  const activeTestimonial = testimonials[testimonialIndex];
 
   const scrollToProject = (targetIdx: number) => {
     const normalized = (targetIdx + projects.length) % projects.length;
@@ -391,8 +446,17 @@ export default function Home() {
           </div>
           <div className="mt-[60px] grid gap-[42px] md:grid-cols-2 xl:grid-cols-3">
             {products.map(([badge, code, productTitle, productBody, specA, specB, cta], index) => (
-              <article key={productTitle} className="product-card flex min-h-[389px] flex-col justify-between gap-9 bg-[#f5f5f5] p-8">
+              <article key={productTitle} className="product-card group flex min-h-[389px] flex-col justify-between gap-9 bg-[#f5f5f5] p-8">
                 <div>
+                  <div className="product-card-media relative -mx-8 -mt-8 mb-8 aspect-[16/10] overflow-hidden bg-[#e9e9e9]">
+                    <Image
+                      src={productImages[index]}
+                      alt={productTitle}
+                      fill
+                      sizes="(min-width: 1280px) 31vw, (min-width: 768px) 48vw, 100vw"
+                      className="object-cover transition-transform duration-700 ease-[cubic-bezier(.22,1,.36,1)] group-hover:scale-[1.04]"
+                    />
+                  </div>
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <span className="product-badge bg-white px-3 py-2 text-sm">{badge}</span>
                     <span className="text-sm font-medium text-[#58c7e8]">{code}</span>
@@ -422,25 +486,31 @@ export default function Home() {
 
           {/* 6-Tab Selector Bar */}
           <div className="mt-10 overflow-x-auto border-b border-[#DBDBDB] lg:mt-[56px]">
-            <div className="flex min-w-[980px] items-center justify-between">
+            <div className="relative flex min-w-[980px] items-center justify-between">
               {industries.map((industry, index) => {
                 const isActive = industryIndex === index;
                 return (
                   <button
                     key={industry.tab}
+                    ref={(el) => { tabRefs.current[index] = el; }}
                     type="button"
                     aria-pressed={isActive}
                     onClick={() => setIndustryIndex(index)}
-                    className={`relative cursor-pointer px-4 pb-5 pt-2 text-center text-[16px] transition lg:text-[18px] ${
+                    className={`industry-tab relative cursor-pointer px-4 pb-5 pt-2 text-center text-[16px] lg:text-[18px] ${
                       isActive
-                        ? "border-b-2 border-[#020202] font-medium text-[#020202]"
-                        : "border-b-2 border-transparent font-normal text-[#595959] hover:text-[#020202]"
+                        ? "text-[#020202]"
+                        : "text-[#595959] hover:text-[#020202]"
                     }`}
                   >
                     {industry.tab}
                   </button>
                 );
               })}
+              <span
+                aria-hidden="true"
+                className="industry-indicator pointer-events-none absolute bottom-0 left-0 h-[2px] bg-[#020202]"
+                style={{ width: indicator.width, transform: `translateX(${indicator.left}px)` }}
+              />
             </div>
           </div>
 
@@ -453,21 +523,27 @@ export default function Home() {
             className="mt-8 grid items-center gap-10 bg-white p-8 sm:p-10 lg:mt-[42px] lg:min-h-[540px] lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:p-[60px]"
           >
             {/* Left Column: Sector Copy, Clipped Tag Pills & CTA Button */}
-            <div className="flex h-full flex-col justify-between">
+            <CrossFade
+              items={industries}
+              activeIndex={industryIndex}
+              className="h-full"
+              slideClassName="flex h-full flex-col justify-between"
+              render={(ind) => (
+                <>
               <div>
                 <p className="text-[16px] font-normal uppercase tracking-normal text-[#58C7E8] lg:text-[18px]">
-                  {activeIndustry.sector}
+                  {ind.sector}
                 </p>
                 <h3 className="mt-3 text-[28px] font-normal leading-[1.15] tracking-[-0.03em] text-[#020202] lg:text-[36px]">
-                  {activeIndustry.title}
+                  {ind.title}
                 </h3>
                 <p className="mt-6 max-w-[780px] text-[16px] leading-[1.48] text-[#595959] lg:text-[18px]">
-                  {activeIndustry.body}
+                  {ind.body}
                 </p>
 
                 {/* 2 Clipped Grey Tag Pills */}
                 <div className="mt-7 flex flex-wrap gap-3">
-                  {activeIndustry.tags.map((tag) => (
+                  {ind.tags.map((tag) => (
                     <span
                       key={tag}
                       style={{
@@ -485,36 +561,43 @@ export default function Home() {
               {/* Bottom-Left Clipped Cyan CTA Button */}
               <div className="mt-10 lg:mt-12">
                 <Link
-                  href={activeIndustry.href}
+                  href={ind.href}
                   style={{
                     clipPath:
                       "polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%)",
                   }}
                   className="inline-flex min-h-[56px] min-w-[228px] items-end justify-between gap-6 bg-[#58C7E8] px-3.5 pb-3 pt-6 text-[13px] font-medium leading-[1.2] text-[#020202] transition hover:-translate-y-0.5 hover:brightness-95"
                 >
-                  <span>{activeIndustry.cta}</span>
+                  <span>{ind.cta}</span>
                   <img src="/figma/solutions/24503.svg" alt="" aria-hidden="true" />
                 </Link>
               </div>
-            </div>
+                </>
+              )}
+            />
 
             {/* Right Column: Clipped Light Cyan Key Specifications Box */}
+            <CrossFade
+              items={industries}
+              activeIndex={industryIndex}
+              className="h-full"
+              render={(ind) => (
             <aside
               style={{
                 clipPath:
                   "polygon(0 0, 100% 0, 100% calc(100% - 62px), calc(100% - 62px) 100%, 0 100%)",
               }}
-              className="flex min-h-[380px] flex-col justify-between bg-[#DFF4FC] p-7 sm:p-9 lg:min-h-[416px] lg:p-10"
+              className="flex h-full min-h-[380px] flex-col justify-between bg-[#DFF4FC] p-7 sm:p-9 lg:min-h-[416px] lg:p-10"
             >
               <div>
                 <p className="text-[12px] font-normal text-[#595959]">Key Specifications</p>
                 <h4 className="mt-1.5 text-[20px] font-medium leading-[1.2] tracking-[-0.02em] text-[#020202] lg:text-[22px]">
-                  {activeIndustry.specHeading}
+                  {ind.specHeading}
                 </h4>
-                {activeIndustry.specBody && <p className="mt-4 text-sm leading-[1.4] text-[#595959]">{activeIndustry.specBody}</p>}
+                {ind.specBody && <p className="mt-4 text-sm leading-[1.4] text-[#595959]">{ind.specBody}</p>}
 
                 <ul className="mt-6 space-y-3.5 text-[14px] leading-[1.35] text-[#020202]">
-                  {activeIndustry.specs.map((spec) => (
+                  {ind.specs.map((spec) => (
                     <li key={spec} className="flex items-start gap-2">
                       <span className="mt-[2px] text-[#020202]">•</span>
                       <span>{spec}</span>
@@ -527,21 +610,23 @@ export default function Home() {
                 <div className="my-7 h-px w-full bg-[#BCEAF8]" />
                 <div className="flex flex-wrap items-center gap-4 text-[12px] uppercase tracking-[0.02em]">
                   <span className="inline-flex items-center gap-1.5">
-                    <span className="text-[#595959]">{activeIndustry.metaLeft[0]}</span>
+                    <span className="text-[#595959]">{ind.metaLeft[0]}</span>
                     <strong className="font-semibold text-[#020202]">
-                      {activeIndustry.metaLeft[1]}
+                      {ind.metaLeft[1]}
                     </strong>
                   </span>
                   <span className="h-3.5 w-px bg-[#BCEAF8]" aria-hidden="true" />
                   <span className="inline-flex items-center gap-1.5">
-                    <span className="text-[#595959]">{activeIndustry.metaRight[0]}</span>
+                    <span className="text-[#595959]">{ind.metaRight[0]}</span>
                     <strong className="font-semibold text-[#020202]">
-                      {activeIndustry.metaRight[1]}
+                      {ind.metaRight[1]}
                     </strong>
                   </span>
                 </div>
               </div>
             </aside>
+              )}
+            />
           </div>
         </div>
       </section>
@@ -556,7 +641,37 @@ export default function Home() {
             CAPCO&apos;s vertically integrated manufacturing ensures complete quality control, cost efficiency, and supply chain reliability—from BOPP film procurement to final testing.
           </p>
           <div className="mt-12 grid gap-12 lg:grid-cols-[0.95fr_1fr] lg:mt-[60px]">
-          <div className="order-2 flex flex-col justify-end gap-8 lg:order-1">
+          <div className="flex flex-col gap-6">
+            <CrossFade
+              items={manufacturingSteps}
+              activeIndex={processIndex}
+              className="w-full"
+              render={(step) => (
+                <figure
+                  style={{
+                    clipPath:
+                      "polygon(0 0, 100% 0, 100% calc(100% - 28px), calc(100% - 28px) 100%, 0 100%)",
+                  }}
+                  className="relative aspect-[16/10] w-full overflow-hidden bg-[#F4F4F4]"
+                >
+                  {step.image ? (
+                    <img
+                      src={step.image}
+                      alt={step.imageAlt}
+                      loading="lazy"
+                      style={{ objectPosition: step.imagePosition }}
+                      className="h-full w-full scale-[1.06] object-cover"
+                    />
+                  ) : (
+                    <div className="h-full w-full" aria-hidden="true" />
+                  )}
+                  <figcaption className="absolute left-4 top-4 inline-flex items-center gap-2 bg-white/90 px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.06em] text-[#020202] backdrop-blur-sm">
+                    <span className="h-1.5 w-1.5 bg-[#58C7E8]" />
+                    Step {step.num} · {step.title}
+                  </figcaption>
+                </figure>
+              )}
+            />
             <div className="flex items-center gap-4">
               <span className="font-mono text-xs text-[#595959]" aria-live="polite">
                 {activeProcess.num}/05
@@ -584,16 +699,21 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="order-1 border-l border-[#E4E4E4] pl-8 lg:order-2 lg:pl-12">
+          <div className="border-l border-[#E4E4E4] pl-8 lg:pl-12">
+            <CrossFade
+              items={manufacturingSteps}
+              activeIndex={processIndex}
+              render={(step) => (
+                <>
             <div className="product-badge flex h-16 w-16 items-center justify-center bg-[#F4F4F4] text-2xl font-normal text-[#595959]">
-              {activeProcess.num}
+              {step.num}
             </div>
             <h3 className="mt-6 text-3xl font-normal tracking-[-0.03em] text-[#020202] lg:text-[36px]">
-              {activeProcess.title}
+              {step.title}
             </h3>
-            <p className="mt-3 text-lg font-medium text-[#58C7E8]">{activeProcess.subtitle}</p>
+            <p className="mt-3 text-lg font-medium text-[#58C7E8]">{step.subtitle}</p>
             <p className="mt-7 max-w-2xl text-lg leading-[1.48] text-[#595959] lg:text-xl">
-              {activeProcess.body}
+              {step.body}
             </p>
             <div className="mt-9">
               <Link
@@ -608,6 +728,9 @@ export default function Home() {
                 <img src="/figma/solutions/24503.svg" alt="" aria-hidden="true" />
               </Link>
             </div>
+                </>
+              )}
+            />
           </div>
         </div>
         </div>
@@ -682,79 +805,114 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="px-6 py-20 lg:min-h-[661px] lg:px-[60px] lg:py-[100px]">
+      <section id="testimonials" className="px-6 py-16 lg:min-h-[661px] lg:px-[60px] lg:py-[100px]">
         <div className="mx-auto max-w-[1800px]">
           <div className="flex min-h-[86px] flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
             <div>
               <Eyebrow>Trusted By Industry Leaders</Eyebrow>
-              <h2 className="mt-6 text-4xl font-normal tracking-normal lg:text-5xl">Testimonials</h2>
+              <h2 className="mt-4 text-[34px] font-normal tracking-normal sm:text-4xl lg:mt-6 lg:text-5xl">Testimonials</h2>
             </div>
             <ButtonLink href="#projects">Read More Case Studies</ButtonLink>
           </div>
-          <div className="relative mt-[60px] flex min-h-[340px] flex-col items-center justify-center bg-white px-6 py-12 lg:px-[152px]">
+          <div
+            onTouchStart={(e) => {
+              testimonialTouchX.current = e.touches[0].clientX;
+            }}
+            onTouchEnd={(e) => {
+              const startX = testimonialTouchX.current;
+              testimonialTouchX.current = null;
+              if (startX === null) return;
+              const dx = e.changedTouches[0].clientX - startX;
+              if (Math.abs(dx) > 40) stepTestimonial(dx < 0 ? 1 : -1);
+            }}
+            className="relative mt-8 flex flex-col bg-white py-8 sm:px-8 lg:mt-[60px] lg:min-h-[340px] lg:items-center lg:justify-center lg:px-[152px] lg:py-12"
+          >
             <button
               type="button"
-              onClick={() =>
-                setTestimonialIndex(
-                  (prev) => (prev + testimonials.length - 1) % testimonials.length
-                )
-              }
+              onClick={() => stepTestimonial(-1)}
               className="absolute left-5 top-1/2 hidden -translate-y-1/2 cursor-pointer rounded-[8px] bg-[#F4F4F4] p-3.5 transition hover:bg-[#E8E8E8] lg:block"
               aria-label="Previous testimonial"
             >
               <ArrowLeft size={20} />
             </button>
-            <div className="mx-auto max-w-[1284px] text-center">
-              <div className="inline-flex items-center gap-3 text-sm text-[#595959]">
-                <span className="bg-[#f5f5f5] px-3 py-2">{activeTestimonial.badge}</span>
-                <span>{activeTestimonial.sector}</span>
-                <span className="font-mono text-xs text-[#8C8C8C]">
-                  {String(testimonialIndex + 1).padStart(2, "0")}/
+            <div className="w-full max-w-[1284px] lg:mx-auto lg:text-center">
+              <CrossFade
+                items={testimonials}
+                activeIndex={testimonialIndex}
+                render={(t, i) => (
+                  <>
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-[13px] text-[#595959] lg:inline-flex lg:text-sm">
+                <span className="bg-[#f5f5f5] px-2.5 py-1.5 lg:px-3 lg:py-2">{t.badge}</span>
+                <span>{t.sector}</span>
+                <span className="hidden font-mono text-xs text-[#8C8C8C] lg:inline">
+                  {String(i + 1).padStart(2, "0")}/
                   {String(testimonials.length).padStart(2, "0")}
                 </span>
               </div>
-              <blockquote className="mt-5 text-2xl font-normal leading-[1.4] text-[#595959] lg:text-[38px]">
-                {activeTestimonial.quote}
+              <span aria-hidden="true" className="mt-6 block font-serif text-[56px] leading-[0.5] text-[#58C7E8] lg:hidden">
+                &ldquo;
+              </span>
+              <blockquote className="mt-4 text-[19px] font-normal leading-[1.5] tracking-[-0.01em] text-[#3F3F3F] sm:text-[22px] lg:mt-5 lg:text-[38px] lg:leading-[1.4] lg:tracking-normal lg:text-[#595959]">
+                {t.quote}
               </blockquote>
-              <div className="mt-10 flex items-center justify-center gap-5">
-                <div className="flex h-[62px] w-[62px] items-center justify-center bg-[#eefaff] text-[28px] font-medium text-[#58c7e8]">
-                  {activeTestimonial.initials}
+              <div className="mt-8 flex items-center gap-4 lg:mt-10 lg:justify-center lg:gap-5">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center bg-[#eefaff] text-[20px] font-medium text-[#58c7e8] lg:h-[62px] lg:w-[62px] lg:text-[28px]">
+                  {t.initials}
                 </div>
-                <div className="text-left">
-                  <p className="font-semibold">{activeTestimonial.name}</p>
-                  <p className="mt-1 text-sm text-[#595959]">{activeTestimonial.role}</p>
+                <div className="min-w-0 text-left">
+                  <p className="font-semibold">{t.name}</p>
+                  <p className="mt-0.5 text-[13px] leading-[1.4] text-[#595959] lg:mt-1 lg:text-sm">{t.role}</p>
                 </div>
               </div>
-              <div className="mt-8 flex items-center justify-center gap-3 lg:hidden">
-                <button
-                  type="button"
-                  onClick={() =>
-                    setTestimonialIndex(
-                      (prev) => (prev + testimonials.length - 1) % testimonials.length
-                    )
-                  }
-                  className="cursor-pointer rounded-[8px] bg-[#F4F4F4] p-3 transition hover:bg-[#E8E8E8]"
-                  aria-label="Previous testimonial"
-                >
-                  <ArrowLeft size={20} />
-                </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setTestimonialIndex((prev) => (prev + 1) % testimonials.length)
-                  }
-                  className="cursor-pointer rounded-[8px] bg-[#F4F4F4] p-3 transition hover:bg-[#E8E8E8]"
-                  aria-label="Next testimonial"
-                >
-                  <ArrowRight size={20} />
-                </button>
+                  </>
+                )}
+              />
+              <div className="mt-8 flex items-center justify-between border-t border-[#E8E8E8] pt-5 lg:hidden">
+                <div className="flex items-center gap-2" role="tablist" aria-label="Choose testimonial">
+                  {testimonials.map((t, i) => (
+                    <button
+                      key={t.name}
+                      type="button"
+                      role="tab"
+                      aria-selected={i === testimonialIndex}
+                      aria-label={`Testimonial ${i + 1}`}
+                      onClick={() => setTestimonialIndex(i)}
+                      className="grid h-6 cursor-pointer place-items-center"
+                    >
+                      <span
+                        className={`block h-[3px] transition-all duration-300 ${
+                          i === testimonialIndex ? "w-8 bg-[#58C7E8]" : "w-4 bg-[#D9D9D9]"
+                        }`}
+                      />
+                    </button>
+                  ))}
+                  <span className="ml-2 font-mono text-xs text-[#8C8C8C]">
+                    {String(testimonialIndex + 1).padStart(2, "0")}/{String(testimonials.length).padStart(2, "0")}
+                  </span>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => stepTestimonial(-1)}
+                    className="grid h-11 w-11 cursor-pointer place-items-center rounded-[8px] bg-[#F4F4F4] transition hover:bg-[#E8E8E8]"
+                    aria-label="Previous testimonial"
+                  >
+                    <ArrowLeft size={18} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => stepTestimonial(1)}
+                    className="grid h-11 w-11 cursor-pointer place-items-center rounded-[8px] bg-[#F4F4F4] transition hover:bg-[#E8E8E8]"
+                    aria-label="Next testimonial"
+                  >
+                    <ArrowRight size={18} />
+                  </button>
+                </div>
               </div>
             </div>
             <button
               type="button"
-              onClick={() =>
-                setTestimonialIndex((prev) => (prev + 1) % testimonials.length)
-              }
+              onClick={() => stepTestimonial(1)}
               className="absolute right-5 top-1/2 hidden -translate-y-1/2 cursor-pointer rounded-[8px] bg-[#F4F4F4] p-3.5 transition hover:bg-[#E8E8E8] lg:block"
               aria-label="Next testimonial"
             >
@@ -841,12 +999,55 @@ export default function Home() {
       <section id="global-footprint" aria-label="Global footprint" className="relative overflow-hidden bg-[#303030] px-6 py-20 text-white lg:px-[60px] lg:py-[100px]">
         <div className="mx-auto max-w-[1800px]">
           <div className="text-center"><Eyebrow>Global Footprint</Eyebrow><h2 className="mt-5 text-4xl font-normal tracking-[-0.04em] lg:text-5xl">Where We Operate</h2></div>
-          <div className="relative mt-12 min-h-[430px] overflow-hidden rounded-[20px] bg-[#818181] lg:min-h-[560px]">
-            <Image src="/figma/home/compliance-world-map.png" alt="World map showing CAPCO markets" fill sizes="100vw" className="object-cover opacity-80 mix-blend-screen" />
-            <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-transparent to-black/65" />
-            {globalMarkets.map((market, index) => <Link key={market.name} href={market.href} style={{ left: `${market.x}%`, top: `${market.y}%` }} onMouseEnter={() => setActiveMarket(index)} onFocus={() => setActiveMarket(index)} className="absolute z-10 -translate-x-1/2 -translate-y-1/2" aria-label={`View ${market.name} regional solutions`}><span className={`block h-4 w-4 rounded-full border-2 border-[#58C7E8] bg-[#58C7E8] shadow-[0_0_0_5px_rgba(88,199,232,.22)] transition ${activeMarket === index ? "scale-125" : ""}`} /></Link>)}
-            <div className="absolute left-6 top-6 z-10 max-w-[330px] rounded-xl border border-white/20 bg-black/45 p-5 backdrop-blur-md lg:left-10 lg:top-10"><p className="text-[10px] uppercase tracking-[0.16em] text-[#58C7E8]">{globalMarkets[activeMarket].region}</p><h3 className="mt-2 text-xl">{globalMarkets[activeMarket].name}</h3><p className="mt-3 text-sm leading-6 text-white/75">{globalMarkets[activeMarket].detail}</p><Link href={globalMarkets[activeMarket].href} className="mt-4 inline-block text-sm font-medium text-[#58C7E8]">View regional solutions →</Link></div>
-            <div className="absolute inset-x-6 bottom-5 z-10 flex flex-wrap gap-x-5 gap-y-2 text-[10px] uppercase tracking-wider text-white/70 lg:inset-x-10">{globalMarkets.map((market, index) => <button key={market.name} type="button" onClick={() => setActiveMarket(index)} className="inline-flex items-center gap-2 hover:text-white"><span className="h-2 w-2 rounded-full bg-[#58C7E8]" />{market.name}</button>)}</div>
+          <div className="world-map relative mt-12 overflow-hidden rounded-[20px] bg-[#0B1722] px-4 pb-6 pt-8 text-white sm:px-8 lg:px-12 lg:pb-10 lg:pt-14">
+            <div className="relative mx-auto aspect-[1200/437] w-full max-w-[1500px]">
+              <img src="/figma/home/world-dot-map.svg?v=2" alt="" aria-hidden="true" className="absolute inset-0 h-full w-full select-none" draggable={false} />
+
+              {mapPins.map((pin, index) => {
+                const isActive = activeMarket === index;
+                return (
+                  <Link
+                    key={pin.name}
+                    href={pin.href}
+                    style={{ left: `${(pin.x / MAP_W) * 100}%`, top: `${(pin.y / MAP_H) * 100}%` }}
+                    onMouseEnter={() => setActiveMarket(index)}
+                    onFocus={() => setActiveMarket(index)}
+                    className={`world-map-pin absolute z-20 grid h-8 w-8 -translate-x-1/2 -translate-y-1/2 place-items-center ${isActive ? "is-active" : ""}`}
+                    aria-label={`View ${pin.name} regional solutions`}
+                  >
+                    <span className="world-map-pulse absolute inset-1 rounded-full bg-[#58C7E8]" aria-hidden="true" />
+                    <span className="world-map-dot relative block h-3 w-3 rounded-full border-2 border-[#0B1722] bg-[#58C7E8] lg:h-3.5 lg:w-3.5" aria-hidden="true" />
+                    <span className="world-map-label pointer-events-none absolute bottom-full mb-1.5 whitespace-nowrap rounded bg-white px-2 py-1 text-[11px] font-medium text-[#020202]">
+                      {pin.name}
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+
+            <div className="relative mt-6 lg:absolute lg:bottom-20 lg:left-12 lg:z-30 lg:mt-0 lg:w-[300px]">
+              <div key={activeMarket} className="home-swap rounded-xl border border-white/15 bg-white/[0.06] p-5 backdrop-blur-md">
+                <p className="text-[10px] uppercase tracking-[0.16em] text-[#58C7E8]">{globalMarkets[activeMarket].region}</p>
+                <h3 className="mt-2 text-xl">{globalMarkets[activeMarket].name}</h3>
+                <p className="mt-3 text-sm leading-6 text-white/75">{globalMarkets[activeMarket].detail}</p>
+                <Link href={globalMarkets[activeMarket].href} className="mt-4 inline-block text-sm font-medium text-[#58C7E8]">View regional solutions →</Link>
+              </div>
+            </div>
+
+            <div className="relative mt-6 flex flex-wrap justify-center gap-x-5 gap-y-2 text-[10px] uppercase tracking-wider lg:mt-8">
+              {globalMarkets.map((market, index) => (
+                <button
+                  key={market.name}
+                  type="button"
+                  onClick={() => setActiveMarket(index)}
+                  aria-pressed={activeMarket === index}
+                  className={`inline-flex items-center gap-2 transition-colors ${activeMarket === index ? "text-white" : "text-white/60 hover:text-white"}`}
+                >
+                  <span className="h-2 w-2 rounded-full bg-[#58C7E8]" />
+                  {market.name}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </section>

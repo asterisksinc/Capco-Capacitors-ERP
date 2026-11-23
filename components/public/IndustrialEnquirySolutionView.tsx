@@ -2,6 +2,8 @@
 
 /* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
+import Image from "next/image";
+import { publicProducts } from "@/lib/publicProducts";
 import { useRef, useState } from "react";
 import {
   ArrowLeft,
@@ -9,7 +11,6 @@ import {
   Download,
   ExternalLink,
   FileText,
-  Plus,
   Minus,
   X,
   Award,
@@ -17,7 +18,6 @@ import {
   CheckCircle2,
   Headphones,
   Mail,
-  Zap,
   Cpu,
   Layers,
   Sparkles,
@@ -61,10 +61,15 @@ const waysCapcoHelps = [
   },
 ] as const;
 
+/** Category image from the shared product catalogue (same photos as the home page category cards). */
+const categoryImage = (slug: string) =>
+  publicProducts.find((product) => product.slug === slug)?.image ?? "/figma/products/product-11.png";
+
 const industrialProducts = [
   {
     tag: "BOPP Substrate",
     code: "CAT: MPP-01",
+    imageSlug: "zinc-aluminium-alloy-metalised-bopp-film",
     title: "Metalized Polypropylene Film (MPP)",
     body: "In-house Leybold-metallized BOPP film for self-healing, high-voltage capacitor applications.",
     specs: [
@@ -77,6 +82,7 @@ const industrialProducts = [
   {
     tag: "IS:2993 Certified",
     code: "CAT: MOT-RUN",
+    imageSlug: "fan-capacitor",
     title: "Fan & Motor Capacitors",
     body: "Motor run, motor start, fan, and submersible panel capacitors for HVAC, pumps, and appliances.",
     specs: [
@@ -89,6 +95,7 @@ const industrialProducts = [
   {
     tag: "IS:13340 Heavy Duty",
     code: "CAT: PFC-CELL",
+    imageSlug: "pfc-cylindrical-capacitor",
     title: "Power Factor Correction (PFC)",
     body: "Cylindrical, box type, and capacitor banks (up to 150 KVAR) for industrial APFC panels.",
     specs: [
@@ -101,6 +108,7 @@ const industrialProducts = [
   {
     tag: "IS:1569 Standard",
     code: "CAT: LUM-RES",
+    imageSlug: "lighting-luminaire-capacitor",
     title: "Luminaire Capacitors",
     body: "Lighting capacitors with inbuilt discharge resistors for street lights and industrial luminaires.",
     specs: [
@@ -113,6 +121,7 @@ const industrialProducts = [
   {
     tag: "High Frequency",
     code: "CAT: UV-CUR",
+    imageSlug: "uv-lamp-capacitor",
     title: "UV Lamp Capacitors",
     body: "High-frequency capacitors for UV curing systems in printing, coating, and industrial manufacturing.",
     specs: [
@@ -125,6 +134,7 @@ const industrialProducts = [
   {
     tag: "OEM Co-Engineering",
     code: "CAT: CUST-ENG",
+    imageSlug: "customized-capacitor",
     title: "Customized Capacitors",
     body: "Co-engineered capacitors tailored to your electrical, thermal, and mechanical requirements.",
     specs: [
@@ -715,7 +725,7 @@ export function IndustrialEnquirySolutionView() {
                 clipPath:
                   "polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%)",
               }}
-              className="inline-flex h-[56px] w-[300px] items-center justify-between bg-[#58C7E8] px-5 py-3 text-[14px] font-medium leading-[120%] !text-[#020202] transition hover:brightness-105"
+              className="inline-flex h-[56px] w-[300px] max-w-full items-center justify-between gap-3 bg-[#58C7E8] px-5 py-3 text-[14px] font-medium leading-[120%] !text-[#020202] transition hover:brightness-105"
             >
               <span className="!text-[#020202]">Download Complete Catalog (PDF)</span>
               <Download size={18} className="!text-[#020202]" />
@@ -731,10 +741,19 @@ export function IndustrialEnquirySolutionView() {
                   clipPath:
                     "polygon(0 0, 100% 0, 100% calc(100% - 32px), calc(100% - 32px) 100%, 0 100%)",
                 }}
-                className="group relative flex flex-col justify-between bg-[#F5F5F5] p-8 transition-all duration-300 hover:bg-[#EAEAEA] lg:h-[389px]"
+                className="group relative flex flex-col justify-between bg-[#F5F5F5] p-8 transition-colors duration-300 hover:bg-[#EAEAEA]"
               >
                 <div>
-                  <div className="flex items-center justify-between">
+                  <div className="relative -mx-8 -mt-8 mb-7 aspect-[16/10] overflow-hidden bg-[#E9E9E9]">
+                    <Image
+                      src={categoryImage(prod.imageSlug)}
+                      alt={prod.title}
+                      fill
+                      sizes="(min-width: 1024px) 31vw, (min-width: 640px) 48vw, 100vw"
+                      className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.04]"
+                    />
+                  </div>
+                  <div className="flex flex-wrap items-center justify-between gap-3">
                     <span className="bg-[#DEDEDE]/40 px-3 py-1.5 text-[14px] font-normal text-[#020202]">
                       {prod.tag}
                     </span>
@@ -938,25 +957,37 @@ export function IndustrialEnquirySolutionView() {
               return (
                 <div
                   key={item.q}
-                  className="rounded-[16px] bg-[#F7F7F7] transition hover:bg-[#F2F2F2]"
+                  className={`rounded-[16px] transition-colors duration-300 ${isOpen ? "bg-[#EEFAFF]" : "bg-[#F7F7F7] hover:bg-[#F2F2F2]"}`}
                 >
                   <button
                     type="button"
                     onClick={() => setActiveFaq(isOpen ? null : idx)}
-                    className="flex w-full cursor-pointer items-center justify-between p-6 text-left sm:p-7"
+                    aria-expanded={isOpen}
+                    aria-controls={`industrial-faq-${idx}`}
+                    className="flex w-full cursor-pointer items-center justify-between gap-4 p-6 text-left sm:p-7"
                   >
                     <span className="text-[17px] font-normal text-[#121212] sm:text-[18px]">
                       {item.q}
                     </span>
-                    <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-black text-white">
-                      {isOpen ? <Minus size={14} /> : <Plus size={14} />}
+                    <span className="relative grid h-8 w-8 shrink-0 place-items-center rounded-full bg-black text-white">
+                      <Minus size={14} className="absolute" />
+                      <Minus
+                        size={14}
+                        className={`absolute transition-transform duration-300 ease-out ${isOpen ? "rotate-0" : "rotate-90"}`}
+                      />
                     </span>
                   </button>
-                  {isOpen && (
-                    <div className="px-6 pb-6 pt-0 text-[15px] leading-[1.7] text-[#555] sm:px-7 sm:pb-7">
-                      {item.a}
+                  <div
+                    id={`industrial-faq-${idx}`}
+                    inert={!isOpen}
+                    className={`grid transition-[grid-template-rows,opacity] duration-300 ease-out ${
+                      isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+                    }`}
+                  >
+                    <div className="overflow-hidden">
+                      <div className="px-6 pb-6 text-[15px] leading-[1.7] text-[#555] sm:px-7 sm:pb-7">{item.a}</div>
                     </div>
-                  )}
+                  </div>
                 </div>
               );
             })}
