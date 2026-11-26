@@ -12,6 +12,7 @@ import HomeHero from "@/components/public/HomeHero";
 import HomeMotion from "@/components/public/HomeMotion";
 import ClientTicker from "@/components/public/ClientTicker";
 import CrossFade from "@/components/public/CrossFade";
+import { exportMarkets, WhereWeOperateSection } from "@/components/public/WhereWeOperateSection";
 import {
   PublicFaqSection,
   ReadyToSpecifyCapcoSection,
@@ -177,7 +178,7 @@ const industries: readonly IndustrySolution[] = [
 const whyFeatures = [
   ["In-House Metallization & Winding", "Leybold (Germany) BOPP film metallization + Metar (Switzerland) automatic winding = Better pricing, faster delivery, zero supply disruptions.", "Learn About Our Technology"],
   ["BIS, ISO & CE Certified", "Every product meets IS:2993, IS:13340, IEC 60252-1 standards—qualified for government tenders, OEM specs, and export markets.", "View Certifications"],
-  ["500+ Authorized Dealers, JIT Delivery", "From Hyderabad to Guwahati, our dealer network ensures local availability, technical support, and just-in-time replenishment for OEMs.", "Find a Dealer Near You"],
+  ["5,000+ Authorized Dealers, JIT Delivery", "From Hyderabad to Guwahati, our dealer network ensures local availability, technical support, and just-in-time replenishment for OEMs.", "Find a Dealer Near You"],
 ];
 
 const certifications = [
@@ -212,37 +213,6 @@ const certifications = [
     icon: "/figma/home/3f482.svg",
   },
 ] as const;
-
-const globalMarkets = [
-  { name: "UAE", region: "Middle East", detail: "Dubai & Abu Dhabi · Motor Run and PFC Capacitors", lat: 24.4, lon: 54.4, href: "/regions/middle-east" },
-  { name: "USA", region: "North America", detail: "UL-certified Motor Run and PFC Capacitors", lat: 39, lon: -98, href: "/regions/usa" },
-  { name: "Sri Lanka", region: "South Asia", detail: "Submersible Panel and Fan Capacitors", lat: 7.9, lon: 80.8, href: "/regions/south-asia" },
-  { name: "Bangladesh", region: "South Asia", detail: "Motor Start and Fan Capacitors", lat: 23.7, lon: 90.4, href: "/regions/south-asia" },
-  { name: "Turkey", region: "Middle East", detail: "Lighting and Motor Run Capacitors", lat: 39, lon: 35, href: "/regions/middle-east" },
-  { name: "African Continent", region: "Africa", detail: "PFC Capacitors and Capacitor Banks", lat: 4, lon: 21, href: "/regions/africa" },
-  { name: "Egypt", region: "Middle East", detail: "PFC and Motor Run Capacitors", lat: 26.8, lon: 30.8, href: "/regions/middle-east" },
-] as const;
-
-/**
- * Matches the equirectangular projection used to generate
- * /figma/home/world-dot-map.svg (lon -180..180, lat 75..-56, 1200x437).
- */
-const MAP_W = 1200;
-const MAP_H = 437;
-const projectToMap = (lat: number, lon: number) => ({
-  x: ((lon + 180) / 360) * MAP_W,
-  y: ((75 - lat) / (75 - -56)) * MAP_H,
-});
-const mapPins = globalMarkets.map((market) => ({ ...market, ...projectToMap(market.lat, market.lon) }));
-
-const regionalBreakdown = [
-  { title: "Middle East", countries: "UAE, Egypt, Turkey", cities: "Dubai, Abu Dhabi, Cairo, Istanbul", products: "Motor Run Capacitors, PFC Capacitors, Lighting Capacitors", standards: "CE, GSO, ESMA, TSE, EOS", ports: "Jebel Ali, Alexandria, Istanbul ports", freight: "7–14 days sea freight from Chennai", href: "/regions/middle-east" },
-  { title: "South Asia", countries: "Sri Lanka, Bangladesh", cities: "Colombo, Dhaka, Chittagong", products: "Submersible Panel Capacitors, Motor Start Capacitors, Fan Capacitors", standards: "SLS, BSTI, CE", ports: "Colombo, Chittagong ports", freight: "3–7 days sea freight from Chennai", href: "/regions/south-asia" },
-  { title: "Africa", countries: "Nigeria, Kenya, Tanzania", cities: "Lagos, Mombasa, Dar es Salaam", products: "PFC Capacitors, Capacitor Banks, Motor Run Capacitors", standards: "SONCAP, PVOC, COC, CE", ports: "Lagos, Mombasa ports", freight: "14–21 days sea freight from Chennai", href: "/regions/africa" },
-  { title: "North America", countries: "USA", cities: "New York, Los Angeles, Houston", products: "UL-Certified Motor Run Capacitors, PFC Capacitors", standards: "UL 810, CSA, NEC", ports: "New York, LA/Long Beach ports", freight: "25–30 days sea freight / 5–7 days air", href: "/regions/usa" },
-] as const;
-
-
 
 const manufacturingSteps = [
   {
@@ -286,39 +256,9 @@ const manufacturingSteps = [
     image: "", // add image path later, e.g. "/figma/process/step-01.jpg"
     imageAlt: "In-house capacitor testing laboratory",
     imagePosition: "50% 20%",
-    title: "Testing & Dispatch",
+    title: "Testing & Quality Check",
     subtitle: "BIS-Certified Batch Release",
     body: "100% tested for capacitance, voltage endurance, and insulation resistance before vacuum-sealed packaging.",
-  },
-] as const;
-
-const testimonials = [
-  {
-    badge: "OEM",
-    sector: "HVAC Manufacturing, Pune",
-    quote:
-      "CAPCO's vertically integrated manufacturing helped us reduce capacitor costs by 28% while improving lead times from 12 weeks to 10 days. Their co-engineering support was critical for our new AC product line.",
-    initials: "RK",
-    name: "Rajesh Kumar",
-    role: "Head of Procurement · Leading HVAC Manufacturer",
-  },
-  {
-    badge: "Dealer",
-    sector: "Electrical Distribution, Vijayawada",
-    quote:
-      "From a single store in Vijayawada to 5 outlets, CAPCO's dealer program transformed our business. MDF-funded local advertising and OEM partnerships drove 8x growth in 6 years.",
-    initials: "SR",
-    name: "Suresh Reddy",
-    role: "Owner · Sri Venkateswara Electricals",
-  },
-  {
-    badge: "Industrial Buyer",
-    sector: "Automotive Components, Chennai",
-    quote:
-      "We replaced imported PFC capacitors with CAPCO's 25 KVAR cylindrical units. Power factor improved from 0.78 to 0.95, cutting our electricity demand charges by 40%.",
-    initials: "AM",
-    name: "Amit Sharma",
-    role: "Plant Maintenance Head · Automotive Components Manufacturer",
   },
 ] as const;
 
@@ -351,12 +291,7 @@ function ButtonLink({ children, href = "/contact", light = false, muted = false,
 export default function Home() {
   const [industryIndex, setIndustryIndex] = useState(0);
   const [processIndex, setProcessIndex] = useState(0);
-  const [testimonialIndex, setTestimonialIndex] = useState(0);
-  const testimonialTouchX = useRef<number | null>(null);
-  const stepTestimonial = (dir: 1 | -1) =>
-    setTestimonialIndex((prev) => (prev + testimonials.length + dir) % testimonials.length);
   const [projectIndex, setProjectIndex] = useState(0);
-  const [activeMarket, setActiveMarket] = useState(0);
   const projectsContainerRef = useRef<HTMLDivElement | null>(null);
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const [indicator, setIndicator] = useState({ left: 0, width: 0 });
@@ -394,10 +329,10 @@ export default function Home() {
       <HomeHero />
 
       <section className="grid border-b border-[#e4e4e4] bg-[#f5f5f5] md:grid-cols-3">
-        {[["32+ Years", "In Manufacturing"], ["500+", "Authorized Dealers"], ["15+", "Export Countries"]].map(([value, label]) => (
-          <div key={label} className="flex min-h-[156px] flex-col items-center justify-center border-[#e4e4e4] py-10 md:min-h-[296px] md:border-r">
-            <strong className="text-4xl font-normal leading-none md:text-[56px]">{value}</strong>
-            <span className="mt-4 text-base text-[#595959] md:text-lg">{label}</span>
+        {[["32+ Years", "In Manufacturing"], ["5,000+", "Authorized Dealers"], ["15+", "Export Countries"]].map(([value, label]) => (
+          <div key={label} className="flex min-h-[124px] flex-col items-center justify-center border-[#e4e4e4] py-8 md:min-h-[200px] md:border-r">
+            <strong className="text-[30px] font-normal leading-none tracking-[-0.03em] md:text-[40px]">{value}</strong>
+            <span className="mt-3 text-[15px] text-[#595959] md:text-base">{label}</span>
           </div>
         ))}
       </section>
@@ -409,9 +344,9 @@ export default function Home() {
           <div className="grid gap-10 lg:grid-cols-[minmax(0,680fr)_minmax(0,612fr)]">
             <div>
               <Eyebrow>Why CAPCO?</Eyebrow>
-              <h2 className="mt-6 text-4xl font-normal leading-tight tracking-normal lg:text-5xl">Engineered for Reliability, Backed by Compliance</h2>
+              <h2 className="type-h2 mt-6 font-normal">Engineered for Reliability, Backed by Compliance</h2>
             </div>
-            <p className="self-center text-xl leading-[1.45] text-[#595959] lg:justify-self-end lg:max-w-[612px] lg:text-2xl">
+            <p className="type-lead self-center text-[#595959] lg:justify-self-end lg:max-w-[520px]">
               Industrial precision achieved through single-roof production, autonomous machinery, and stringent dielectric verification.
             </p>
           </div>
@@ -440,7 +375,7 @@ export default function Home() {
           <div className="flex min-h-[86px] flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
             <div>
               <Eyebrow>Complete Capacitor Solutions</Eyebrow>
-              <h2 className="mt-6 text-4xl font-normal tracking-normal lg:text-5xl">Browse by Product Category</h2>
+              <h2 className="type-h2 mt-6 font-normal">Browse by Product Category</h2>
             </div>
             <ButtonLink href="/catalogs/capco-product-catalog.pdf" download>Download Complete Catalog (PDF)</ButtonLink>
           </div>
@@ -461,8 +396,8 @@ export default function Home() {
                     <span className="product-badge bg-white px-3 py-2 text-sm">{badge}</span>
                     <span className="text-sm font-medium text-[#58c7e8]">{code}</span>
                   </div>
-                  <h3 className="mt-8 text-2xl font-medium">{productTitle}</h3>
-                  <p className="mt-4 text-base leading-[1.45] text-[#595959]">{productBody}</p>
+                  <h3 className="type-h3 mt-8 font-medium">{productTitle}</h3>
+                  <p className="type-body mt-4 text-[#595959]">{productBody}</p>
                 </div>
                 <div>
                   <div className="mb-9 flex flex-wrap gap-x-6 gap-y-2 text-sm">
@@ -480,7 +415,7 @@ export default function Home() {
       <section id="industries" className="bg-[#F4F4F4] px-6 py-20 lg:px-[60px] lg:py-[100px]">
         <div className="mx-auto max-w-[1800px]">
           <Eyebrow>Application-Specific Expertise</Eyebrow>
-          <h2 className="mt-5 text-[34px] font-normal leading-[1.05] tracking-[-0.04em] text-[#020202] sm:text-[42px] lg:mt-6 lg:text-[48px]">
+          <h2 className="type-h2 mt-5 font-normal text-[#020202] lg:mt-6">
             Capacitor Solutions by Industry
           </h2>
 
@@ -531,13 +466,13 @@ export default function Home() {
               render={(ind) => (
                 <>
               <div>
-                <p className="text-[16px] font-normal uppercase tracking-normal text-[#58C7E8] lg:text-[18px]">
+                <p className="type-small font-medium uppercase tracking-normal text-[#58C7E8]">
                   {ind.sector}
                 </p>
-                <h3 className="mt-3 text-[28px] font-normal leading-[1.15] tracking-[-0.03em] text-[#020202] lg:text-[36px]">
+                <h3 className="type-h3-lg mt-3 font-normal text-[#020202]">
                   {ind.title}
                 </h3>
-                <p className="mt-6 max-w-[780px] text-[16px] leading-[1.48] text-[#595959] lg:text-[18px]">
+                <p className="type-lead mt-6 max-w-[780px] text-[#595959]">
                   {ind.body}
                 </p>
 
@@ -590,11 +525,11 @@ export default function Home() {
               className="flex h-full min-h-[380px] flex-col justify-between bg-[#DFF4FC] p-7 sm:p-9 lg:min-h-[416px] lg:p-10"
             >
               <div>
-                <p className="text-[12px] font-normal text-[#595959]">Key Specifications</p>
-                <h4 className="mt-1.5 text-[20px] font-medium leading-[1.2] tracking-[-0.02em] text-[#020202] lg:text-[22px]">
+                <p className="type-caption font-normal text-[#595959]">Key Specifications</p>
+                <h4 className="type-h4 mt-1.5 font-medium text-[#020202]">
                   {ind.specHeading}
                 </h4>
-                {ind.specBody && <p className="mt-4 text-sm leading-[1.4] text-[#595959]">{ind.specBody}</p>}
+                {ind.specBody && <p className="type-small mt-4 leading-[1.4] text-[#595959]">{ind.specBody}</p>}
 
                 <ul className="mt-6 space-y-3.5 text-[14px] leading-[1.35] text-[#020202]">
                   {ind.specs.map((spec) => (
@@ -634,10 +569,10 @@ export default function Home() {
       <section id="process" aria-label="Manufacturing process" className="bg-white px-6 py-24 lg:min-h-[600px] lg:px-[60px] lg:py-[100px]">
         <div className="mx-auto max-w-[1800px]">
           <Eyebrow>End-to-End Control</Eyebrow>
-          <h2 className="mt-5 max-w-[760px] text-[34px] font-normal leading-[1.05] tracking-[-0.04em] sm:text-[42px] lg:mt-6 lg:text-[48px]">
+          <h2 className="type-h2 mt-5 max-w-[760px] font-normal lg:mt-6">
             From Raw Film to Final Capacitor
           </h2>
-          <p className="mt-5 max-w-[820px] text-lg leading-[1.48] text-[#595959]">
+          <p className="type-lead mt-5 max-w-[820px] text-[#595959]">
             CAPCO&apos;s vertically integrated manufacturing ensures complete quality control, cost efficiency, and supply chain reliability—from BOPP film procurement to final testing.
           </p>
           <div className="mt-12 grid gap-12 lg:grid-cols-[0.95fr_1fr] lg:mt-[60px]">
@@ -665,7 +600,7 @@ export default function Home() {
                   ) : (
                     <div className="h-full w-full" aria-hidden="true" />
                   )}
-                  <figcaption className="absolute left-4 top-4 inline-flex items-center gap-2 bg-white/90 px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.06em] text-[#020202] backdrop-blur-sm">
+                  <figcaption className="absolute left-4 top-4 inline-flex items-center gap-2 bg-white/90 px-3 py-1.5 font-mono text-[12px] uppercase tracking-[0.06em] text-[#020202] backdrop-blur-sm">
                     <span className="h-1.5 w-1.5 bg-[#58C7E8]" />
                     Step {step.num} · {step.title}
                   </figcaption>
@@ -708,11 +643,11 @@ export default function Home() {
             <div className="product-badge flex h-16 w-16 items-center justify-center bg-[#F4F4F4] text-2xl font-normal text-[#595959]">
               {step.num}
             </div>
-            <h3 className="mt-6 text-3xl font-normal tracking-[-0.03em] text-[#020202] lg:text-[36px]">
+            <h3 className="type-h3-lg mt-6 font-normal text-[#020202]">
               {step.title}
             </h3>
-            <p className="mt-3 text-lg font-medium text-[#58C7E8]">{step.subtitle}</p>
-            <p className="mt-7 max-w-2xl text-lg leading-[1.48] text-[#595959] lg:text-xl">
+            <p className="type-lead mt-3 font-medium text-[#58C7E8]">{step.subtitle}</p>
+            <p className="type-lead mt-7 max-w-2xl text-[#595959]">
               {step.body}
             </p>
             <div className="mt-9">
@@ -742,14 +677,14 @@ export default function Home() {
         <div className="relative z-10 mx-auto max-w-[1800px]">
           <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <div className="flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.02em] text-[#020202]">
+              <div className="flex items-center gap-2 text-[14px] font-medium uppercase tracking-[0.02em] text-[#020202]">
                 <span className="h-1.5 w-1.5 bg-[#58C7E8]" />
                 TRUST THROUGH COMPLIANCE
               </div>
-              <h2 className="mt-4 text-[36px] font-normal leading-[1.08] tracking-[-0.04em] text-[#020202] sm:text-[42px] lg:text-[48px]">
+              <h2 className="type-h2 mt-4 font-normal text-[#020202]">
                 Certified for Quality, Safety &amp; Export
               </h2>
-              <p className="mt-4 max-w-[960px] text-[15px] leading-[1.5] text-[#595959] lg:text-[17px]">
+              <p className="type-lead mt-4 max-w-[960px] text-[#595959]">
                 All CAPCO capacitors are manufactured under ISO 9001:2008 QMS and comply with BIS, CE, and IEC standards—qualified for Indian government tenders, OEM specifications, and export to Middle East, Africa, and Southeast Asia.
               </p>
             </div>
@@ -788,14 +723,14 @@ export default function Home() {
                       className="max-w-none"
                     />
                   </div>
-                  <h3 className="mt-[42px] text-[20px] font-medium leading-[1.2] text-[#020202] lg:text-[24px]">
+                  <h3 className="type-h3 mt-[42px] font-medium text-[#020202]">
                     {cert.title}
                   </h3>
                   <div className="my-3 h-px w-[80px] bg-[#58c7e8]" />
-                  <p className="text-[15px] font-normal leading-[1.35] text-[#020202] lg:text-[16px]">
+                  <p className="type-body font-normal text-[#020202]">
                     {cert.sub1}
                   </p>
-                  <p className="mt-1.5 text-[13px] font-normal leading-[1.35] text-[#595959]">
+                  <p className="type-small mt-1.5 font-normal leading-[1.35] text-[#595959]">
                     {cert.sub2}
                   </p>
                 </article>
@@ -805,132 +740,15 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="testimonials" className="px-6 py-16 lg:min-h-[661px] lg:px-[60px] lg:py-[100px]">
-        <div className="mx-auto max-w-[1800px]">
-          <div className="flex min-h-[86px] flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
-            <div>
-              <Eyebrow>Trusted By Industry Leaders</Eyebrow>
-              <h2 className="mt-4 text-[34px] font-normal tracking-normal sm:text-4xl lg:mt-6 lg:text-5xl">Testimonials</h2>
-            </div>
-            <ButtonLink href="#projects">Read More Case Studies</ButtonLink>
-          </div>
-          <div
-            onTouchStart={(e) => {
-              testimonialTouchX.current = e.touches[0].clientX;
-            }}
-            onTouchEnd={(e) => {
-              const startX = testimonialTouchX.current;
-              testimonialTouchX.current = null;
-              if (startX === null) return;
-              const dx = e.changedTouches[0].clientX - startX;
-              if (Math.abs(dx) > 40) stepTestimonial(dx < 0 ? 1 : -1);
-            }}
-            className="relative mt-8 flex flex-col bg-white py-8 sm:px-8 lg:mt-[60px] lg:min-h-[340px] lg:items-center lg:justify-center lg:px-[152px] lg:py-12"
-          >
-            <button
-              type="button"
-              onClick={() => stepTestimonial(-1)}
-              className="absolute left-5 top-1/2 hidden -translate-y-1/2 cursor-pointer rounded-[8px] bg-[#F4F4F4] p-3.5 transition hover:bg-[#E8E8E8] lg:block"
-              aria-label="Previous testimonial"
-            >
-              <ArrowLeft size={20} />
-            </button>
-            <div className="w-full max-w-[1284px] lg:mx-auto lg:text-center">
-              <CrossFade
-                items={testimonials}
-                activeIndex={testimonialIndex}
-                render={(t, i) => (
-                  <>
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-[13px] text-[#595959] lg:inline-flex lg:text-sm">
-                <span className="bg-[#f5f5f5] px-2.5 py-1.5 lg:px-3 lg:py-2">{t.badge}</span>
-                <span>{t.sector}</span>
-                <span className="hidden font-mono text-xs text-[#8C8C8C] lg:inline">
-                  {String(i + 1).padStart(2, "0")}/
-                  {String(testimonials.length).padStart(2, "0")}
-                </span>
-              </div>
-              <span aria-hidden="true" className="mt-6 block font-serif text-[56px] leading-[0.5] text-[#58C7E8] lg:hidden">
-                &ldquo;
-              </span>
-              <blockquote className="mt-4 text-[19px] font-normal leading-[1.5] tracking-[-0.01em] text-[#3F3F3F] sm:text-[22px] lg:mt-5 lg:text-[38px] lg:leading-[1.4] lg:tracking-normal lg:text-[#595959]">
-                {t.quote}
-              </blockquote>
-              <div className="mt-8 flex items-center gap-4 lg:mt-10 lg:justify-center lg:gap-5">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center bg-[#eefaff] text-[20px] font-medium text-[#58c7e8] lg:h-[62px] lg:w-[62px] lg:text-[28px]">
-                  {t.initials}
-                </div>
-                <div className="min-w-0 text-left">
-                  <p className="font-semibold">{t.name}</p>
-                  <p className="mt-0.5 text-[13px] leading-[1.4] text-[#595959] lg:mt-1 lg:text-sm">{t.role}</p>
-                </div>
-              </div>
-                  </>
-                )}
-              />
-              <div className="mt-8 flex items-center justify-between border-t border-[#E8E8E8] pt-5 lg:hidden">
-                <div className="flex items-center gap-2" role="tablist" aria-label="Choose testimonial">
-                  {testimonials.map((t, i) => (
-                    <button
-                      key={t.name}
-                      type="button"
-                      role="tab"
-                      aria-selected={i === testimonialIndex}
-                      aria-label={`Testimonial ${i + 1}`}
-                      onClick={() => setTestimonialIndex(i)}
-                      className="grid h-6 cursor-pointer place-items-center"
-                    >
-                      <span
-                        className={`block h-[3px] transition-all duration-300 ${
-                          i === testimonialIndex ? "w-8 bg-[#58C7E8]" : "w-4 bg-[#D9D9D9]"
-                        }`}
-                      />
-                    </button>
-                  ))}
-                  <span className="ml-2 font-mono text-xs text-[#8C8C8C]">
-                    {String(testimonialIndex + 1).padStart(2, "0")}/{String(testimonials.length).padStart(2, "0")}
-                  </span>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => stepTestimonial(-1)}
-                    className="grid h-11 w-11 cursor-pointer place-items-center rounded-[8px] bg-[#F4F4F4] transition hover:bg-[#E8E8E8]"
-                    aria-label="Previous testimonial"
-                  >
-                    <ArrowLeft size={18} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => stepTestimonial(1)}
-                    className="grid h-11 w-11 cursor-pointer place-items-center rounded-[8px] bg-[#F4F4F4] transition hover:bg-[#E8E8E8]"
-                    aria-label="Next testimonial"
-                  >
-                    <ArrowRight size={18} />
-                  </button>
-                </div>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => stepTestimonial(1)}
-              className="absolute right-5 top-1/2 hidden -translate-y-1/2 cursor-pointer rounded-[8px] bg-[#F4F4F4] p-3.5 transition hover:bg-[#E8E8E8] lg:block"
-              aria-label="Next testimonial"
-            >
-              <ArrowRight size={20} />
-            </button>
-          </div>
-        </div>
-      </section>
-
       <section id="projects" className="bg-white px-6 py-20 lg:px-[60px] lg:py-[100px]">
         <div className="mx-auto max-w-[1800px]">
           <div className="flex items-end justify-between gap-4">
             <div>
               <Eyebrow>Knowledge Hub</Eyebrow>
-              <h2 className="mt-6 text-4xl font-normal tracking-normal lg:text-5xl">Technical Resources &amp; Insights</h2>
+              <h2 className="type-h2 mt-6 font-normal">Technical Resources &amp; Insights</h2>
             </div>
             <div className="text-right">
-              <p className="font-mono text-sm text-[#595959]" aria-live="polite">
+              <p className="type-small font-mono text-[#595959]" aria-live="polite">
                 {String(projectIndex + 1).padStart(2, "0")}/
                 {String(projects.length).padStart(2, "0")}
               </p>
@@ -984,10 +802,10 @@ export default function Home() {
                 <div className="absolute inset-0 bg-gradient-to-b from-black/10 to-black/48" />
                 <div className="project-title">
                   <img src={["/figma/solutions/1856e.svg", "/figma/solutions/cbe03.svg", "/figma/solutions/10f24.svg"][index]} alt="" />
-                  <h3 className="mt-4 text-3xl font-normal tracking-normal lg:text-5xl">{projectTitle}</h3>
+                  <h3 className="type-h3-lg mt-4 font-normal">{projectTitle}</h3>
                 </div>
                 <div className="project-detail">
-                  <p className="text-base leading-[1.4] opacity-80">{projectBody}</p>
+                  <p className="type-body opacity-80">{projectBody}</p>
                   <div className="mt-8"><ButtonLink light href={["/catalogs/capco-product-catalog.pdf", "/solutions/oem", "/about#manufacturing-line"][index]} download={index === 0}>{cta}</ButtonLink></div>
                 </div>
               </article>
@@ -996,65 +814,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="global-footprint" aria-label="Global footprint" className="relative overflow-hidden bg-[#303030] px-6 py-20 text-white lg:px-[60px] lg:py-[100px]">
-        <div className="mx-auto max-w-[1800px]">
-          <div className="text-center"><Eyebrow>Global Footprint</Eyebrow><h2 className="mt-5 text-4xl font-normal tracking-[-0.04em] lg:text-5xl">Where We Operate</h2></div>
-          <div className="world-map relative mt-12 overflow-hidden rounded-[20px] bg-[#0B1722] px-4 pb-6 pt-8 text-white sm:px-8 lg:px-12 lg:pb-10 lg:pt-14">
-            <div className="relative mx-auto aspect-[1200/437] w-full max-w-[1500px]">
-              <img src="/figma/home/world-dot-map.svg?v=2" alt="" aria-hidden="true" className="absolute inset-0 h-full w-full select-none" draggable={false} />
-
-              {mapPins.map((pin, index) => {
-                const isActive = activeMarket === index;
-                return (
-                  <Link
-                    key={pin.name}
-                    href={pin.href}
-                    style={{ left: `${(pin.x / MAP_W) * 100}%`, top: `${(pin.y / MAP_H) * 100}%` }}
-                    onMouseEnter={() => setActiveMarket(index)}
-                    onFocus={() => setActiveMarket(index)}
-                    className={`world-map-pin absolute z-20 grid h-8 w-8 -translate-x-1/2 -translate-y-1/2 place-items-center ${isActive ? "is-active" : ""}`}
-                    aria-label={`View ${pin.name} regional solutions`}
-                  >
-                    <span className="world-map-pulse absolute inset-1 rounded-full bg-[#58C7E8]" aria-hidden="true" />
-                    <span className="world-map-dot relative block h-3 w-3 rounded-full border-2 border-[#0B1722] bg-[#58C7E8] lg:h-3.5 lg:w-3.5" aria-hidden="true" />
-                    <span className="world-map-label pointer-events-none absolute bottom-full mb-1.5 whitespace-nowrap rounded bg-white px-2 py-1 text-[11px] font-medium text-[#020202]">
-                      {pin.name}
-                    </span>
-                  </Link>
-                );
-              })}
-            </div>
-
-            <div className="relative mt-6 lg:absolute lg:bottom-20 lg:left-12 lg:z-30 lg:mt-0 lg:w-[300px]">
-              <div key={activeMarket} className="home-swap rounded-xl border border-white/15 bg-white/[0.06] p-5 backdrop-blur-md">
-                <p className="text-[10px] uppercase tracking-[0.16em] text-[#58C7E8]">{globalMarkets[activeMarket].region}</p>
-                <h3 className="mt-2 text-xl">{globalMarkets[activeMarket].name}</h3>
-                <p className="mt-3 text-sm leading-6 text-white/75">{globalMarkets[activeMarket].detail}</p>
-                <Link href={globalMarkets[activeMarket].href} className="mt-4 inline-block text-sm font-medium text-[#58C7E8]">View regional solutions →</Link>
-              </div>
-            </div>
-
-            <div className="relative mt-6 flex flex-wrap justify-center gap-x-5 gap-y-2 text-[10px] uppercase tracking-wider lg:mt-8">
-              {globalMarkets.map((market, index) => (
-                <button
-                  key={market.name}
-                  type="button"
-                  onClick={() => setActiveMarket(index)}
-                  aria-pressed={activeMarket === index}
-                  className={`inline-flex items-center gap-2 transition-colors ${activeMarket === index ? "text-white" : "text-white/60 hover:text-white"}`}
-                >
-                  <span className="h-2 w-2 rounded-full bg-[#58C7E8]" />
-                  {market.name}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section aria-label="Regional export solutions" className="bg-[#F4F4F4] px-6 py-20 lg:px-[60px] lg:py-[100px]">
-        <div className="mx-auto max-w-[1800px]"><Eyebrow>Regional Breakdown</Eyebrow><h2 className="mt-5 text-4xl font-normal tracking-[-0.04em] lg:text-5xl">Export solutions by market</h2><div className="mt-12 grid gap-4 md:grid-cols-2">{regionalBreakdown.map((region) => <article key={region.title} className="bg-white p-6 lg:p-8"><div className="flex items-start justify-between gap-4"><div><h3 className="text-2xl font-normal">{region.title}</h3><p className="mt-1 text-sm text-[#58C7E8]">{region.countries}</p></div><span className="font-mono text-xs text-[#999]">EXPORT PROGRAM</span></div><dl className="mt-7 grid gap-4 text-sm sm:grid-cols-2"><div><dt className="text-[#999]">Markets</dt><dd className="mt-1">{region.cities}</dd></div><div><dt className="text-[#999]">Products</dt><dd className="mt-1">{region.products}</dd></div><div><dt className="text-[#999]">Standards</dt><dd className="mt-1">{region.standards}</dd></div><div><dt className="text-[#999]">Ports</dt><dd className="mt-1">{region.ports}</dd></div></dl><p className="mt-6 border-t border-[#E5E5E5] pt-4 text-sm text-[#595959]">{region.freight}</p><Link href={region.href} className="mt-5 inline-block text-sm font-medium text-[#020202] hover:text-[#58C7E8]">View {region.title} OEM Solutions →</Link></article>)}</div></div>
-      </section>
+      <WhereWeOperateSection locations={exportMarkets} />
 
       <ReadyToSpecifyCapcoSection />
 

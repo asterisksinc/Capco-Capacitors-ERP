@@ -75,13 +75,13 @@ export function LegalPage({ type }: { type: keyof typeof documents }) {
       <section className="mx-auto max-w-[1800px] px-6 py-24 lg:px-[120px] lg:py-40">
         <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_220px]">
           <div>
-            <h1 className="text-[38px] font-normal leading-tight tracking-[-0.04em] sm:text-[56px] lg:text-[72px]">{page.title}</h1>
+            <h1 className="type-display font-normal">{page.title}</h1>
             {page.meta.length > 0 && <div className="mt-8 grid gap-1 text-sm leading-[1.5] text-[#595959]">{page.meta.map((line) => <p key={line}>{line}</p>)}</div>}
           </div>
           <div aria-hidden="true" />
         </div>
         <article className="mt-16 max-w-[980px] space-y-12 lg:mt-24">
-          {page.sections.map((section) => <section key={section.heading}><h2 className="text-2xl font-medium tracking-[-0.02em] lg:text-3xl">{section.heading}</h2>{section.paragraphs?.map((paragraph) => <p key={paragraph} className="mt-4 whitespace-pre-line text-[15px] leading-[1.7] text-[#404040]">{paragraph}</p>)}{section.items && <ul className="mt-4 list-disc space-y-2 pl-6 text-[15px] leading-[1.6] text-[#404040]">{section.items.map((item) => <li key={item}>{item}</li>)}</ul>}</section>)}
+          {page.sections.map((section) => <section key={section.heading}><h2 className="type-h3-lg font-medium">{section.heading}</h2>{section.paragraphs?.map((paragraph) => <p key={paragraph} className="type-body mt-4 whitespace-pre-line text-[#404040]">{paragraph}</p>)}{section.items && <ul className="mt-4 list-disc space-y-2 pl-6 text-[15px] leading-[1.6] text-[#404040]">{section.items.map((item) => <li key={item}>{item}</li>)}</ul>}</section>)}
         </article>
       </section>
       <PublicFooter ctaTitle="Ready to build?" ctaButton="Start a Project" />

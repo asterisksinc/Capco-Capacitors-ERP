@@ -2,23 +2,19 @@
 
 /* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
+import HomeHero from "@/components/public/HomeHero";
 import { useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
   ExternalLink,
-  FileText,
   Minus,
   X,
-  Award,
-  ShieldCheck,
-  CheckCircle2,
   Headphones,
   Mail,
 } from "lucide-react";
 import {
   PublicFooter,
-  PublicNav,
 } from "@/components/public/PublicChrome";
 import { FourStepProcessAndTeamSection } from "@/components/public/FourStepProcessAndTeamSection";
 import { WhereWeOperateSection } from "@/components/public/WhereWeOperateSection";
@@ -240,127 +236,18 @@ export function DealershipSolutionView() {
 
   return (
     <main className="min-h-screen overflow-x-clip bg-white text-[#020202]">
-      {/* 1. Hero Section (Strictly 100vh on Desktop including Navbar) */}
-      <section className="relative flex h-screen min-h-[720px] max-h-[1194px] flex-col justify-between overflow-hidden bg-[#101010] text-white">
-        <img
-          src="/figma/solutions/22cfa.png"
-          alt="Power transmission grid infrastructure across landscape"
-          className="pointer-events-none absolute inset-0 h-full w-full object-cover object-center"
-        />
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/55 via-black/25 to-black/85" />
-
-        {/* Global Standard Public Navigation */}
-        <PublicNav variant="overlay" logoSrc="/figma/solutions/caef4.png" className="relative z-30 shrink-0" />
-
-        {/* Hero Main Content */}
-        <div className="relative z-10 mx-auto flex w-full max-w-[1920px] flex-1 flex-col justify-end px-6 pb-20 pt-4 lg:px-[60px] lg:pb-[95px]">
-          {/* Top Description on Right (Desktop) */}
-          <div className="mb-6 flex justify-end lg:mb-8">
-            <p className="max-w-[518px] text-left text-[18px] font-normal leading-[1.25] text-white sm:text-[20px] lg:text-[22px] [text-shadow:0px_0px_28px_rgba(255,255,255,0.25)]">
-              Join India&apos;s most trusted capacitor dealer network: competitive margins, co-branded marketing support, and 30+ years of brand equity behind every sale.
-            </p>
-          </div>
-
-          {/* Eyebrows Row */}
-          <div className="flex flex-wrap items-center gap-6 text-[15px] font-medium tracking-[0.02em] text-white sm:text-[16px]">
-            <span className="inline-flex items-center gap-2">
-              <span className="h-[6px] w-[6px] bg-[#58C7E8]" />
-              5,000+ AUTHORISED DEALERS
-            </span>
-            <span className="inline-flex items-center gap-2">
-              <span className="h-[6px] w-[6px] bg-[#58C7E8]" />
-              20+ STATES COVERED
-            </span>
-          </div>
-
-          {/* Thin White Rule */}
-          <div className="my-5 h-px w-full bg-white/30" />
-
-          {/* Heading and Action Buttons Grid */}
-          <div className="relative">
-            <div className="lg:max-w-[70%]">
-              <h1 className="max-w-[1281px] text-[44px] font-light leading-[1.0] tracking-[-3px] text-white sm:text-[68px] md:text-[84px] lg:text-[92px] lg:tracking-[-5px]">
-                Grow Your Business
-                <br />
-                with Capco Capacitors
-              </h1>
-
-              <div className="mt-6 flex flex-wrap items-center gap-4 lg:mt-8">
-                <Link
-                  href="/contact?category=dealership#enquiry-form"
-                  style={{
-                    clipPath:
-                      "polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%)",
-                  }}
-                  className="inline-flex min-h-[56px] min-w-[274px] max-w-full items-center justify-between gap-6 bg-[#58C7E8] px-4 py-3 text-[14px] font-semibold leading-[1.2] !text-[#121212] transition hover:-translate-y-0.5 hover:brightness-105"
-                >
-                  <span className="!text-[#121212]">Apply for Dealership</span>
-                  <ArrowRight size={18} className="!text-[#121212] shrink-0" />
-                </Link>
-
-                <a
-                  href="/catalogs/capco-product-catalog.pdf"
-                  download="CAPCO-Dealership-Solutions.pdf"
-                  style={{
-                    clipPath:
-                      "polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%)",
-                  }}
-                  className="inline-flex min-h-[56px] min-w-[200px] max-w-full items-center justify-between gap-4 bg-white px-4 py-3 text-[14px] font-medium leading-[1.2] !text-[#020202] transition hover:bg-[#F2F2F2]"
-                >
-                  <span className="!text-[#020202]">View Dealership</span>
-                  <FileText size={18} className="!text-[#020202] shrink-0" />
-                </a>
-              </div>
-            </div>
-
-            {/* Bottom-Right Compliance Badges */}
-            <div className="mt-8 flex flex-wrap items-center gap-6 lg:absolute lg:bottom-0 lg:right-0 lg:mt-0 lg:max-w-[48%] lg:justify-end lg:gap-8">
-              {[
-                {
-                  title: "BIS Mark",
-                  sub: "IS:2993 / IS:13340",
-                  icon: <ShieldCheck size={20} className="text-white" />,
-                },
-                {
-                  title: "ISO Quality",
-                  sub: "9001:2008 Certified",
-                  icon: <Award size={20} className="text-white" />,
-                },
-                {
-                  title: "CE Approved",
-                  sub: "EU Export Standard",
-                  icon: <CheckCircle2 size={20} className="text-white" />,
-                },
-              ].map((badge) => (
-                <div key={badge.title} className="flex items-center gap-3">
-                  <span
-                    style={{
-                      clipPath:
-                        "polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%)",
-                    }}
-                    className="grid h-[44px] w-[44px] place-items-center bg-white/40"
-                  >
-                    {badge.icon}
-                  </span>
-                  <div className="flex flex-col">
-                    <span className="text-[16px] font-medium leading-none text-white">{badge.title}</span>
-                    <span className="mt-1 text-[18px] font-medium leading-none text-white">{badge.sub}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom-Left Angled White Cutout (Identical to About Page Hero) */}
-        <div
-          aria-hidden="true"
-          style={{
-            clipPath: "polygon(0 0, calc(100% - 48px) 0, 100% 100%, 0 100%)",
-          }}
-          className="pointer-events-none absolute bottom-0 left-0 z-10 hidden h-[48px] w-[58%] bg-white lg:block xl:h-[56px] xl:w-[62%]"
-        />
-      </section>
+      {/* 1. Hero (shared with the home page) */}
+      <HomeHero
+        id="dealership-hero-title"
+        image="/figma/solutions/22cfa.png"
+        imageAlt="Power transmission grid infrastructure across landscape"
+        description={<>Join India&apos;s most trusted capacitor dealer network: competitive margins, co-branded marketing support, and 30+ years of brand equity behind every sale.</>}
+        tags={["5,000+ Authorised Dealers", "20+ States Covered"]}
+        title={["Grow Your Business", "with Capco Capacitors"]}
+        primary={{ label: "Apply for Dealership", href: "/contact?category=dealership#enquiry-form" }}
+        secondary={{ label: "View Dealership", href: "/catalogs/capco-product-catalog.pdf", download: "CAPCO-Dealership-Solutions.pdf" }}
+        cutColor="#ffffff"
+      />
 
       {/* 2. Four-Step Process & Deep Operating Experience (Staircase Reveal & Interactive Team Section) */}
       <FourStepProcessAndTeamSection
@@ -383,7 +270,7 @@ export function DealershipSolutionView() {
               <span className="h-[6px] w-[6px] bg-[#58C7E8]" />
               LOCATIONS
             </div>
-            <h2 className="mt-4 text-[38px] font-normal leading-[1.0] tracking-[-2px] text-white sm:text-[48px] lg:text-[56px]">
+            <h2 className="type-h2 mt-4 font-normal text-white">
               Plant Facilities
             </h2>
           </div>
@@ -399,7 +286,7 @@ export function DealershipSolutionView() {
 
             {/* Address badge: below the photo on phones, floating bottom-right from sm up */}
             <div className="relative border-t border-white/10 bg-black/75 p-5 sm:absolute sm:bottom-10 sm:right-10 sm:max-w-[440px] sm:rounded-[16px] sm:border sm:border-white/20 sm:p-8 sm:backdrop-blur-md">
-              <p className="text-[13px] leading-[1.6] text-white/90 sm:text-[14px]">
+              <p className="type-small leading-[1.6] text-white/90">
                 DADA ENERGIES (P) LTD. E54 to E77, TSIIC Automotive Park, Muppireddypally Village, Manoharabad Mandal, Medak District, Hyderabad, Telangana - 502336.
               </p>
               <div className="mt-5">
@@ -465,7 +352,7 @@ export function DealershipSolutionView() {
                 <span className="h-[6px] w-[6px] bg-[#00E05C]" />
                 Proven Partnerships
               </div>
-              <h2 className="mt-4 text-[38px] font-normal leading-[1.0] tracking-[-2px] text-[#020202] sm:text-[48px] lg:text-[56px]">
+              <h2 className="type-h2 mt-4 font-normal text-[#020202]">
                 OEM Success Stories
               </h2>
             </div>
@@ -543,7 +430,7 @@ export function DealershipSolutionView() {
                         {story.clientTag ? `[${story.clientTag.toUpperCase()}]` : "[CASE STUDY]"}
                       </span>
                       {/* Title: 48px / 53px / -1.44px */}
-                      <h3 className="font-sans text-[28px] font-normal leading-[1.1] tracking-[-1.44px] text-white sm:text-[38px] lg:text-[48px] lg:leading-[53px]">
+                      <h3 className="type-h3-lg font-sans font-normal text-white">
                         {story.title}
                       </h3>
                     </div>
@@ -565,7 +452,7 @@ export function DealershipSolutionView() {
                       </div>
 
                       {/* Summary Paragraph: width: 488px; font-size: 15px; line-height: 22px; letter-spacing: -0.15px; color: rgba(255, 255, 255, 0.82) */}
-                      <p className="mt-4 max-w-[488px] font-sans text-[14px] font-normal leading-[22px] tracking-[-0.15px] text-white/80 lg:mt-0 lg:text-[15px]">
+                      <p className="type-body mt-4 max-w-[488px] font-sans font-normal text-white/80 lg:mt-0">
                         {story.summary}
                       </p>
                     </div>
@@ -609,7 +496,7 @@ export function DealershipSolutionView() {
             <span className="text-[13px] font-medium uppercase tracking-[0.1em] text-[#58C7E8]">
               {selectedStory.clientTag}
             </span>
-            <h3 className="mt-3 pr-10 text-[24px] font-normal leading-snug sm:text-[32px]">
+            <h3 className="type-h3-lg mt-3 pr-10 font-normal">
               {selectedStory.title}
             </h3>
             <div className="my-6 grid grid-cols-3 gap-3 rounded-[16px] bg-white/5 p-4 sm:gap-4">
@@ -622,7 +509,7 @@ export function DealershipSolutionView() {
                 </div>
               ))}
             </div>
-            <p className="text-[15px] leading-relaxed text-white/80">
+            <p className="type-body text-white/80">
               {selectedStory.fullText}
             </p>
             <div className="mt-8 flex justify-end">
@@ -647,7 +534,7 @@ export function DealershipSolutionView() {
               <span className="h-[6px] w-[6px] bg-[#58C7E8]" />
               Quick Answers
             </div>
-            <h2 className="mt-4 text-[38px] font-normal leading-[1.0] tracking-[-2px] text-[#020202] sm:text-[48px] lg:text-[56px]">
+            <h2 className="type-h2 mt-4 font-normal text-[#020202]">
               Everything You Need to Know
             </h2>
           </div>
@@ -687,7 +574,7 @@ export function DealershipSolutionView() {
                     }`}
                   >
                     <div className="overflow-hidden">
-                      <p className="pt-4 text-[15px] leading-relaxed text-[#595959]">{faq.a}</p>
+                      <p className="type-body pt-4 text-[#595959]">{faq.a}</p>
                     </div>
                   </div>
                 </div>
@@ -718,10 +605,10 @@ export function DealershipSolutionView() {
         </div>
 
         <div className="relative z-10 mx-auto max-w-[800px]">
-          <h2 className="text-[44px] font-light leading-[1.05] tracking-tight text-white sm:text-[56px] lg:text-[64px]">
+          <h2 className="type-h2 font-light text-white">
             Join 5,000+ Successful CAPCO Dealers
           </h2>
-          <p className="mx-auto mt-5 max-w-[680px] text-[16px] leading-relaxed text-[#A1A1A1] sm:text-[18px]">
+          <p className="type-lead mx-auto mt-5 max-w-[680px] text-[#A1A1A1]">
             Whether you&apos;re a regional distributor or a specialized industrial supplier, Capco Capacitors offers the margins, marketing support, and brand equity to grow your business profitably.
           </p>
           <div className="mt-10 flex justify-center">

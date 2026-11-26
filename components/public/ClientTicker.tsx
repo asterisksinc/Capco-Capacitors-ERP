@@ -33,7 +33,7 @@ export default function ClientTicker() {
                       alt={copy === 0 ? logo.alt : ""}
                       width={logo.width}
                       height={logo.height}
-                      sizes="168px"
+                      sizes="120px"
                       loading="eager"
                       unoptimized={logo.src.endsWith(".gif")}
                     />

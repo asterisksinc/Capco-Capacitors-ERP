@@ -2,6 +2,7 @@
 
 /* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
+import HomeHero from "@/components/public/HomeHero";
 import Image from "next/image";
 import { publicProducts } from "@/lib/publicProducts";
 import { useRef, useState } from "react";
@@ -13,9 +14,7 @@ import {
   FileText,
   Minus,
   X,
-  Award,
   ShieldCheck,
-  CheckCircle2,
   Headphones,
   Mail,
   Cpu,
@@ -25,7 +24,6 @@ import {
 } from "lucide-react";
 import {
   PublicFooter,
-  PublicNav,
 } from "@/components/public/PublicChrome";
 
 const waysCapcoHelps = [
@@ -313,126 +311,18 @@ export function IndustrialEnquirySolutionView() {
       {/* ─────────────────────────────────────────────────────────────
           1. HERO SECTION (Frame 2 - 100vh on Desktop with Angled Cutout)
          ───────────────────────────────────────────────────────────── */}
-      <section className="relative flex min-h-[720px] lg:h-[1194px] lg:max-h-[100vh] flex-col justify-between overflow-hidden bg-[#101010] text-white">
-        <img
-          src="/figma/solutions/22cfa.png"
-          alt="Power transmission grid infrastructure across landscape"
-          className="pointer-events-none absolute inset-0 h-full w-full object-cover object-center"
-        />
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/55 via-black/25 to-black/85" />
-
-        {/* Global Standard Public Navigation */}
-        <PublicNav variant="overlay" logoSrc="/figma/solutions/caef4.png" className="relative z-30 shrink-0" />
-
-        {/* Hero Main Content */}
-        <div className="relative z-10 mx-auto flex w-full max-w-[1920px] flex-1 flex-col justify-end px-6 pb-16 pt-4 lg:px-[60px] lg:pb-[75px]">
-          {/* Top Description on Right (Desktop) */}
-          <div className="mb-8 flex justify-end lg:mb-10">
-            <p className="max-w-[518px] text-left text-[18px] font-normal leading-[120%] text-white [text-shadow:0px_0px_28.2px_rgba(255,255,255,0.25)] sm:text-[20px] lg:text-[22px]">
-              CAPCO provides power factor audits, APFC panel integration support, and bulk capacitor supply (0.5–25 KVAR, up to 150 KVAR banks) for industrial buyers seeking to reduce electricity demand charges, improve voltage stability, and minimize equipment downtime.
-            </p>
-          </div>
-
-          {/* Eyebrows Row (Frame 14) */}
-          <div className="flex flex-wrap items-center gap-6 text-[15px] font-medium tracking-[0.02em] text-white sm:text-[16px]">
-            <span className="inline-flex items-center gap-2">
-              <span className="h-[6px] w-[6px] bg-[#58C7E8]" />
-              REDUCE ENERGY COSTS
-            </span>
-            <span className="inline-flex items-center gap-2">
-              <span className="h-[6px] w-[6px] bg-[#58C7E8]" />
-              IMPROVE POWER QUALITY
-            </span>
-          </div>
-
-          {/* Thin White Rule */}
-          <div className="my-5 h-px w-full bg-white/50" />
-
-          {/* Heading and Action Buttons Grid */}
-          <div className="relative">
-            <div className="lg:max-w-[70%]">
-              <h1 className="max-w-[1281px] text-[44px] font-light leading-[1.0] tracking-[-3px] text-white sm:text-[68px] md:text-[84px] lg:text-[104px] lg:tracking-[-5px]">
-                Industrial Power Factor
-                <br />
-                Correction Solutions
-              </h1>
-
-              {/* Frame 15: Action buttons */}
-              <div className="mt-6 flex flex-wrap items-center gap-4 lg:mt-8">
-                <Link
-                  href="/contact?category=industrial#enquiry-form"
-                  style={{
-                    clipPath:
-                      "polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%)",
-                  }}
-                  className="inline-flex h-[56px] w-[200px] items-center justify-between bg-[#58C7E8] px-4 py-3 text-[14px] font-medium leading-[120%] !text-[#020202] transition hover:-translate-y-0.5 hover:brightness-105"
-                >
-                  <span className="!text-[#020202]">Request Power Audit</span>
-                  <ArrowRight size={18} className="!text-[#020202] shrink-0" />
-                </Link>
-
-                <Link
-                  href="/contact?category=bulk#enquiry-form"
-                  style={{
-                    clipPath:
-                      "polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%)",
-                  }}
-                  className="inline-flex h-[56px] w-[200px] items-center justify-between bg-white px-4 py-3 text-[14px] font-medium leading-[120%] !text-[#020202] transition hover:bg-[#F2F2F2]"
-                >
-                  <span className="!text-[#020202]">Request Bulk Quote</span>
-                  <FileText size={18} className="!text-[#020202] shrink-0" />
-                </Link>
-              </div>
-            </div>
-
-            {/* Bottom-Right Compliance Badges */}
-            <div className="mt-8 flex flex-wrap items-center gap-6 lg:absolute lg:bottom-0 lg:right-0 lg:mt-0 lg:max-w-[48%] lg:justify-end lg:gap-8">
-              {[
-                {
-                  title: "BIS Mark",
-                  sub: "IS:2993 / IS:13340",
-                  icon: <ShieldCheck size={20} className="text-white" />,
-                },
-                {
-                  title: "ISO Quality",
-                  sub: "9001:2008 Certified",
-                  icon: <Award size={20} className="text-white" />,
-                },
-                {
-                  title: "CE Approved",
-                  sub: "EU Export Standard",
-                  icon: <CheckCircle2 size={20} className="text-white" />,
-                },
-              ].map((badge) => (
-                <div key={badge.title} className="flex items-center gap-3">
-                  <span
-                    style={{
-                      clipPath:
-                        "polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%)",
-                    }}
-                    className="grid h-[44px] w-[44px] place-items-center bg-white/40"
-                  >
-                    {badge.icon}
-                  </span>
-                  <div className="flex flex-col">
-                    <span className="text-[16px] font-medium leading-none text-white">{badge.title}</span>
-                    <span className="mt-1 text-[18px] font-medium leading-none text-white">{badge.sub}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom-Left Angled White Cutout */}
-        <div
-          aria-hidden="true"
-          style={{
-            clipPath: "polygon(0 0, calc(100% - 48px) 0, 100% 100%, 0 100%)",
-          }}
-          className="pointer-events-none absolute bottom-0 left-0 z-10 hidden h-[48px] w-[58%] bg-white lg:block xl:h-[56px] xl:w-[62%]"
-        />
-      </section>
+      {/* 1. Hero (shared with the home page) */}
+      <HomeHero
+        id="industrial-hero-title"
+        image="/figma/solutions/22cfa.png"
+        imageAlt="Power transmission grid infrastructure across landscape"
+        description={<>CAPCO provides power factor audits, APFC panel integration support, and bulk capacitor supply (0.5–25 KVAR, up to 150 KVAR banks) for industrial buyers seeking to reduce electricity demand charges, improve voltage stability, and minimize equipment downtime.</>}
+        tags={["Reduce Energy Costs", "Improve Power Quality"]}
+        title={["Industrial Power Factor", "Correction Solutions"]}
+        primary={{ label: "Request Power Audit", href: "/contact?category=industrial#enquiry-form" }}
+        secondary={{ label: "Request Bulk Quote", href: "/contact?category=bulk#enquiry-form" }}
+        cutColor="#ffffff"
+      />
 
       {/* ─────────────────────────────────────────────────────────────
           2. THE COST OF POOR POWER FACTOR (Projects List)
@@ -446,12 +336,12 @@ export function IndustrialEnquirySolutionView() {
                 <span className="h-[6px] w-[6px] bg-[#58C7E8]" />
                 THE COST OF POOR POWER FACTOR
               </div>
-              <h2 className="mt-4 text-[36px] font-normal leading-[56px] tracking-[-2.88px] text-[#121212] sm:text-[44px] lg:text-[48px]">
+              <h2 className="type-h2 mt-4 font-normal text-[#121212]">
                 Are You Paying Penalty Charges for Low Power Factor?
               </h2>
             </div>
             <div className="flex justify-end">
-              <p className="max-w-[612px] text-[18px] font-normal leading-[140%] text-[#595959] sm:text-[20px] lg:text-[24px]">
+              <p className="type-lead max-w-[612px] font-normal text-[#595959]">
                 Most industrial facilities in India operate at a power factor of 0.75–0.85, well below the 0.95 threshold required by most state electricity boards.
               </p>
             </div>
@@ -476,14 +366,14 @@ export function IndustrialEnquirySolutionView() {
                 <div className="grid h-8 w-8 place-items-center opacity-70">
                   <FileText size={28} className="text-white" />
                 </div>
-                <h3 className="text-[32px] font-normal tracking-[-2px] text-white sm:text-[40px] lg:text-[48px]">
+                <h3 className="type-h3-lg font-normal text-white">
                   Power Factor Penalties
                 </h3>
               </div>
 
               {/* Bottom Right Glass Card */}
               <div className="absolute bottom-4 right-4 flex max-w-[560px] flex-col gap-6 rounded-[18px] bg-[rgba(16,16,16,0.42)] p-8 backdrop-blur-[14px] sm:bottom-8 sm:right-8 sm:p-10">
-                <p className="text-[15px] font-normal leading-[140%] text-white/80 sm:text-[16px]">
+                <p className="type-body font-normal text-white/80">
                   Facilities operating below 0.95 power factor face penalty charges of ₹1–3 per KVA of reactive power, adding significant costs to monthly electricity bills.
                 </p>
                 <div className="text-[26px] font-normal leading-[140%] text-white/90 sm:text-[32px]">
@@ -506,14 +396,14 @@ export function IndustrialEnquirySolutionView() {
                 <div className="grid h-8 w-8 place-items-center opacity-70">
                   <TrendingUp size={28} className="text-white" />
                 </div>
-                <h3 className="text-[32px] font-normal tracking-[-2px] text-white sm:text-[40px] lg:text-[48px]">
+                <h3 className="type-h3-lg font-normal text-white">
                   Success Stories
                 </h3>
               </div>
 
               {/* Bottom Right Glass Card */}
               <div className="absolute bottom-4 right-4 flex max-w-[560px] flex-col gap-6 rounded-[18px] bg-[rgba(16,16,16,0.42)] p-8 backdrop-blur-[14px] sm:bottom-8 sm:right-8 sm:p-10">
-                <p className="text-[15px] font-normal leading-[140%] text-white/80 sm:text-[16px]">
+                <p className="type-body font-normal text-white/80">
                   See how OEMs, dealers, and industrial buyers achieved cost savings, efficiency gains, and growth with CAPCO capacitors.
                 </p>
                 <Link
@@ -540,14 +430,14 @@ export function IndustrialEnquirySolutionView() {
                 <div className="grid h-8 w-8 place-items-center opacity-70">
                   <Sparkles size={28} className="text-white" />
                 </div>
-                <h3 className="text-[32px] font-normal tracking-[-2px] text-white sm:text-[40px] lg:text-[48px]">
+                <h3 className="type-h3-lg font-normal text-white">
                   Industry Trends & Best Practices
                 </h3>
               </div>
 
               {/* Bottom Right Glass Card */}
               <div className="absolute bottom-4 right-4 flex max-w-[560px] flex-col gap-6 rounded-[18px] bg-[rgba(16,16,16,0.42)] p-8 backdrop-blur-[14px] sm:bottom-8 sm:right-8 sm:p-10">
-                <p className="text-[15px] font-normal leading-[140%] text-white/80 sm:text-[16px]">
+                <p className="type-body font-normal text-white/80">
                   Power factor correction guides, capacitor selection tips, and updates on Indian electrical manufacturing.
                 </p>
                 <Link
@@ -575,7 +465,7 @@ export function IndustrialEnquirySolutionView() {
                 <span className="h-[6px] w-[6px] bg-[#58C7E8]" />
                 OUR SOLUTIONS
               </div>
-              <h2 className="mt-4 text-[36px] font-normal leading-[100%] tracking-[-2px] text-[#020202] sm:text-[44px] lg:text-[48px]">
+              <h2 className="type-h2 mt-4 font-normal text-[#020202]">
                 Three Ways Capco Helps
                 <br />
                 Industrial Buyers
@@ -625,11 +515,11 @@ export function IndustrialEnquirySolutionView() {
                         <IconComp size={28} className="text-[#595959]" />
                       </div>
 
-                      <h3 className="mt-6 text-[22px] font-normal leading-[120%] text-[#020202] sm:text-[24px] lg:text-[26px]">
+                      <h3 className="type-h3-lg mt-6 font-normal text-[#020202]">
                         {way.title}
                       </h3>
 
-                      <p className="mt-4 text-[16px] font-normal leading-[140%] text-[#595959] lg:text-[18px]">
+                      <p className="type-lead mt-4 font-normal text-[#595959]">
                         {way.body}
                       </p>
                     </div>
@@ -713,7 +603,7 @@ export function IndustrialEnquirySolutionView() {
                 <span className="h-[6px] w-[6px] bg-[#58C7E8]" />
                 COMPLETE CAPACITOR SOLUTIONS
               </div>
-              <h2 className="mt-4 text-[36px] font-normal leading-[100%] tracking-[-2px] text-[#020202] sm:text-[44px] lg:text-[48px]">
+              <h2 className="type-h2 mt-4 font-normal text-[#020202]">
                 Browse by Product Category
               </h2>
             </div>
@@ -762,11 +652,11 @@ export function IndustrialEnquirySolutionView() {
                     </span>
                   </div>
 
-                  <h3 className="mt-6 text-[22px] font-normal text-[#020202]">
+                  <h3 className="type-h3 mt-6 font-normal text-[#020202]">
                     {prod.title}
                   </h3>
 
-                  <p className="mt-3 text-[14px] leading-[140%] text-[#595959]">
+                  <p className="type-small mt-3 leading-[140%] text-[#595959]">
                     {prod.body}
                   </p>
                 </div>
@@ -809,7 +699,7 @@ export function IndustrialEnquirySolutionView() {
                 <span className="h-[4px] w-[4px] bg-[#00E05C]" />
                 Proven Partnerships
               </div>
-              <h2 className="mt-4 text-[38px] font-normal leading-[56px] tracking-[-2.88px] text-[#121212] sm:text-[48px] lg:text-[56px]">
+              <h2 className="type-h2 mt-4 font-normal text-[#121212]">
                 Dealership Success Stories
               </h2>
             </div>
@@ -862,10 +752,10 @@ export function IndustrialEnquirySolutionView() {
                       <span className="font-mono text-[11px] tracking-[1.1px] text-white/70">
                         [2025]
                       </span>
-                      <h3 className="mt-3 text-[32px] font-normal leading-[1.1] tracking-[-1.44px] text-white sm:text-[42px] lg:text-[48px]">
+                      <h3 className="type-h3-lg mt-3 font-normal text-white">
                         {story.title}
                       </h3>
-                      <p className="mt-4 max-w-[620px] text-[15px] leading-[1.6] text-white/80">
+                      <p className="type-body mt-4 max-w-[620px] text-white/80">
                         {story.summary}
                       </p>
                     </div>
@@ -920,7 +810,7 @@ export function IndustrialEnquirySolutionView() {
               <X size={18} />
             </button>
             <span className="font-mono text-[11px] text-[#58C7E8]">{selectedStory.clientTag}</span>
-            <h3 className="mt-3 text-[28px] font-light leading-snug tracking-tight sm:text-[34px]">
+            <h3 className="type-h3-lg mt-3 font-light">
               {selectedStory.title}
             </h3>
             <div className="my-6 grid grid-cols-3 gap-4 border-y border-white/10 py-4">
@@ -931,7 +821,7 @@ export function IndustrialEnquirySolutionView() {
                 </div>
               ))}
             </div>
-            <p className="text-[15px] leading-[1.8] text-white/85">{selectedStory.fullText}</p>
+            <p className="type-body text-white/85">{selectedStory.fullText}</p>
           </div>
         </div>
       )}
@@ -946,7 +836,7 @@ export function IndustrialEnquirySolutionView() {
               <span className="h-[4px] w-[4px] bg-[#58C7E8]" />
               Quick Answers
             </div>
-            <h2 className="mt-4 text-[38px] font-normal leading-[55px] tracking-[-2.4px] text-[#121212] sm:text-[44px] lg:text-[48px]">
+            <h2 className="type-h2 mt-4 font-normal text-[#121212]">
               Everything You Need to Know
             </h2>
           </div>
@@ -1005,7 +895,7 @@ export function IndustrialEnquirySolutionView() {
               <span className="h-[4px] w-[4px] bg-[#00E05C]" />
               Global Footprint
             </div>
-            <h2 className="mt-4 text-[42px] font-normal leading-[55px] tracking-[-2.4px] text-white sm:text-[48px]">
+            <h2 className="type-h2 mt-4 font-normal text-white">
               Where We Operate
             </h2>
           </div>
@@ -1040,14 +930,14 @@ export function IndustrialEnquirySolutionView() {
                   <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-[#B5B5B5]">
                     {activeLocation.type}
                   </span>
-                  <h4 className="mt-1 text-[16px] font-medium text-white">
+                  <h4 className="type-h4 mt-1 font-medium text-white">
                     {activeLocation.name}
                   </h4>
-                  <p className="mt-0.5 text-[12px] text-[#B5B5B5]">
+                  <p className="type-caption mt-0.5 text-[#B5B5B5]">
                     {activeLocation.detail}
                   </p>
                   <div className="my-2 h-px w-full bg-white/12" />
-                  <p className="text-[12px] leading-[19px] text-white/70">
+                  <p className="type-caption leading-[19px] text-white/70">
                     {activeLocation.body}
                   </p>
                 </div>
@@ -1084,7 +974,7 @@ export function IndustrialEnquirySolutionView() {
               <span className="h-[6px] w-[6px] bg-[#58C7E8]" />
               LOCATIONS
             </div>
-            <h2 className="mt-4 text-[38px] font-normal leading-[100%] tracking-[-2px] text-white sm:text-[44px] lg:text-[48px]">
+            <h2 className="type-h2 mt-4 font-normal text-white">
               Plant Facilities
             </h2>
           </div>
@@ -1100,7 +990,7 @@ export function IndustrialEnquirySolutionView() {
 
             {/* Bottom-right Overlay Glass Badge */}
             <div className="absolute bottom-6 right-6 max-w-[560px] rounded-[18px] bg-[rgba(16,16,16,0.42)] p-8 backdrop-blur-[14px] sm:bottom-10 sm:right-10">
-              <p className="text-[15px] font-normal leading-[140%] text-white/80 sm:text-[16px]">
+              <p className="type-body font-normal text-white/80">
                 DADA ENERGIES (P) LTD. E54 to E77, TSIIC Automotive Park, Muppireddypally Village, Manoharabad Mandal, Medak District, Hyderabad, Telangana - 502336.
               </p>
               <div className="mt-6">
@@ -1173,10 +1063,10 @@ export function IndustrialEnquirySolutionView() {
         </div>
 
         <div className="relative z-10 mx-auto max-w-[796px] text-center">
-          <h2 className="text-[36px] font-normal leading-[55px] tracking-[-2.4px] text-white sm:text-[44px] lg:text-[48px]">
+          <h2 className="type-h2 font-normal text-white">
             Join 5,000+ Successful CAPCO Dealers
           </h2>
-          <p className="mx-auto mt-6 max-w-[680px] text-[16px] leading-[140%] text-white/80 sm:text-[18px]">
+          <p className="type-lead mx-auto mt-6 max-w-[680px] text-white/80">
             Whether you&apos;re a regional distributor or a specialized industrial supplier, Capco Capacitors offers the margins, marketing support, and brand equity to grow your business profitably.
           </p>
 

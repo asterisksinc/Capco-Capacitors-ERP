@@ -61,7 +61,7 @@ export default function CaseStudyDetailPage() {
                 LOREM IPSUM DOLOR
               </span>
             </div>
-            <h1 className="mt-5 text-[32px] font-normal leading-[120%] text-[#020202] sm:text-[40px] lg:text-[48px]">
+            <h1 className="type-display mt-5 font-normal text-[#020202]">
               Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed
             </h1>
           </div>
@@ -109,7 +109,7 @@ export default function CaseStudyDetailPage() {
               MARKET EXPERTISE
             </div>
 
-            <p className="max-w-[612px] text-[16px] font-normal leading-[120%] text-[#121212]">
+            <p className="type-body max-w-[612px] font-normal text-[#121212]">
               Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
             </p>
           </div>
@@ -135,7 +135,7 @@ export default function CaseStudyDetailPage() {
             <div className="flex w-full max-w-[560px] flex-col gap-10">
               {/* Block 1 */}
               <div className="flex flex-col gap-4">
-                <h2 className="text-[28px] font-medium leading-[120%] text-[#020202] sm:text-[32px]">
+                <h2 className="type-h3-lg font-medium text-[#020202]">
                   Lorem ipsum dolor sit amet
                 </h2>
                 <div className="flex flex-col gap-3.5 text-[16px] font-normal leading-[120%] text-[#121212]">
@@ -150,30 +150,30 @@ export default function CaseStudyDetailPage() {
 
               {/* Block 2 */}
               <div className="flex flex-col gap-4">
-                <h2 className="text-[28px] font-medium leading-[120%] text-[#020202] sm:text-[32px]">
+                <h2 className="type-h3-lg font-medium text-[#020202]">
                   Lorem ipsum dolor sit amet
                 </h2>
-                <p className="text-[16px] font-normal leading-[120%] text-[#121212]">
+                <p className="type-body font-normal text-[#121212]">
                   Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
                 </p>
               </div>
 
               {/* Block 3 */}
               <div className="flex flex-col gap-4">
-                <h2 className="text-[28px] font-medium leading-[120%] text-[#020202] sm:text-[32px]">
+                <h2 className="type-h3-lg font-medium text-[#020202]">
                   Lorem ipsum dolor sit amet
                 </h2>
-                <p className="text-[16px] font-normal leading-[120%] text-[#121212]">
+                <p className="type-body font-normal text-[#121212]">
                   Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
                 </p>
               </div>
 
               {/* Block 4 */}
               <div className="flex flex-col gap-4">
-                <h2 className="text-[28px] font-medium leading-[120%] text-[#020202] sm:text-[32px]">
+                <h2 className="type-h3-lg font-medium text-[#020202]">
                   Lorem ipsum dolor sit amet
                 </h2>
-                <p className="text-[16px] font-normal leading-[120%] text-[#121212]">
+                <p className="type-body font-normal text-[#121212]">
                   Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
                 </p>
               </div>
@@ -187,7 +187,7 @@ export default function CaseStudyDetailPage() {
          ───────────────────────────────────────────────────────────── */}
       <section className="border-t border-[#EAEAEA] bg-white px-6 py-20 lg:px-[60px] lg:py-28">
         <div className="mx-auto max-w-[1800px]">
-          <h2 className="text-[32px] font-medium leading-[120%] text-[#020202] sm:text-[38px] lg:text-[42px]">
+          <h2 className="type-h2 font-medium text-[#020202]">
             Lorem ipsum dolor sit amet
           </h2>
 
@@ -216,7 +216,7 @@ export default function CaseStudyDetailPage() {
                     <span className="text-[#B8B8B8]">{card.author}</span>
                   </div>
 
-                  <h3 className="text-[18px] font-medium leading-[120%] text-[#020202] transition group-hover:text-[#58C7E8]">
+                  <h3 className="type-h4 font-medium text-[#020202] transition group-hover:text-[#58C7E8]">
                     {card.title}
                   </h3>
 
@@ -255,10 +255,10 @@ export default function CaseStudyDetailPage() {
         </div>
 
         <div className="relative z-10 mx-auto max-w-[901px]">
-          <h2 className="text-[36px] font-normal leading-[55px] tracking-[-2.4px] text-white sm:text-[44px] lg:text-[48px]">
+          <h2 className="type-h2 font-normal text-white">
             Ready to Partner?
           </h2>
-          <p className="mx-auto mt-4 max-w-[901px] text-[16px] font-medium leading-[22px] tracking-[-0.72px] text-white sm:text-[18px]">
+          <p className="type-lead mx-auto mt-4 max-w-[901px] font-medium text-white">
             Whether you need a single custom capacitor or a complete supply chain partnership, our OEM team is ready to support your requirements with technical expertise, competitive pricing, and reliable delivery.
           </p>
 

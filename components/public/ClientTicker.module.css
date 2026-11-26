@@ -28,14 +28,14 @@
   display: flex;
   flex: none;
   align-items: center;
-  gap: 32px;
-  padding-right: 32px;
+  gap: 28px;
+  padding-right: 28px;
 }
 
 .logoFrame {
   flex: none;
-  width: 168px;
-  height: 96px;
+  width: 100px;
+  height: 54px;
 }
 
 .logoFrame img {
@@ -146,8 +146,13 @@
   }
 
   .logoGroup {
-    gap: 72px;
-    padding-right: 72px;
+    gap: 64px;
+    padding-right: 64px;
+  }
+
+  .logoFrame {
+    width: 120px;
+    height: 64px;
   }
 
   .control {

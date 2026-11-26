@@ -123,17 +123,17 @@ export default function JourneyRoadmap({ milestones }: { milestones: readonly Mi
         {/* Header */}
         <div className="relative mx-auto flex w-full max-w-[1800px] flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-[800px]">
-            <p className="inline-flex items-center gap-2 text-[14px] font-medium uppercase tracking-normal text-white">
+            <p className="type-small inline-flex items-center gap-2 font-medium uppercase tracking-normal text-white">
               <span className="h-[6px] w-[6px] bg-[#58C7E8]" />
               OUR JOURNEY
             </p>
-            <h2 className="mt-3 text-[32px] font-normal leading-[1.05] tracking-[-0.04em] text-white sm:text-[40px] lg:text-[48px]">
+            <h2 className="type-h2 mt-3 font-normal text-white">
               32 Years of Growth, Innovation &amp; Compliance
             </h2>
           </div>
 
           <div className="flex w-full flex-col items-start gap-4 lg:w-auto lg:items-end">
-            <p className="hidden whitespace-nowrap font-mono text-[11px] uppercase tracking-[0.18em] text-[#6E8A9A] lg:block">
+            <p className="type-caption hidden whitespace-nowrap font-mono uppercase tracking-[0.18em] text-[#6E8A9A] lg:block">
               Ref. CAPCO-TL-{milestones[0].year}/{milestones[count - 1].year} · {pad(count)} Milestones
             </p>
             <a
@@ -322,12 +322,12 @@ export default function JourneyRoadmap({ milestones }: { milestones: readonly Mi
                 <span className="block h-[2px] w-4 bg-[#58C7E8]" />
               </span>
               <div>
-                <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#58C7E8]">
+                <p className="type-caption font-mono uppercase tracking-[0.16em] text-[#58C7E8]">
                   M/{pad(i + 1)}
                   {m.tag ? ` · ${m.tag}` : ""}
                 </p>
                 <p className="mt-1 text-[34px] font-light leading-none tracking-[-0.04em] text-white">{m.year}</p>
-                <p className="mt-2 text-[15px] leading-[1.4] text-[#A9BCC7]">{m.tagline}</p>
+                <p className="type-body mt-2 text-[#A9BCC7]">{m.tagline}</p>
               </div>
             </li>
           ))}

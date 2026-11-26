@@ -639,7 +639,7 @@ export default function ContactPage() {
                 CONTACT
               </span>
             </div>
-            <h1 className="max-w-[1458px] text-[38px] font-normal leading-[1.02] tracking-[-0.048em] text-[#020202] sm:text-[60px] md:text-[78px] xl:text-[104px] xl:leading-[1]">
+            <h1 className="type-display max-w-[1458px] font-normal text-[#020202]">
               Engineering Support, Dealership Onboarding &amp; Global Supply
             </h1>
           </div>
@@ -712,10 +712,10 @@ export default function ContactPage() {
                       </div>
 
                       <div className="flex flex-col gap-2">
-                        <h2 className="text-[22px] font-normal leading-[1.2] text-[#020202] sm:text-[26px]">
+                        <h2 className="type-h3-lg font-normal text-[#020202]">
                           General Enquiry
                         </h2>
-                        <p className="max-w-[1051px] text-[15px] font-normal leading-[1.4] text-[#595959] sm:text-[18px]">
+                        <p className="type-lead max-w-[1051px] font-normal text-[#595959]">
                           Have a question about our capacitor lines, test compliance certificates, or
                           batch stock? Our commercial support engineering team responds within 24
                           hours.
@@ -729,10 +729,10 @@ export default function ContactPage() {
                           <span className="h-2 w-2 bg-[#58C7E8]" />
                           Enquiry Logged • REF: GEN-Q24
                         </div>
-                        <h3 className="mt-3 text-xl font-medium text-[#020202]">
+                        <h3 className="type-h3 mt-3 font-medium text-[#020202]">
                           Thank you, {generalForm.fullName}. Your technical enquiry has been received.
                         </h3>
-                        <p className="mt-2 text-sm leading-relaxed text-[#595959]">
+                        <p className="type-small mt-2 leading-relaxed text-[#595959]">
                           Our commercial support engineering desk will review your parameters and
                           respond to <strong>{generalForm.businessEmail}</strong> within 24 working
                           hours.
@@ -1017,7 +1017,7 @@ export default function ContactPage() {
                         </label>
 
                         {generalError && (
-                          <p role="alert" className="text-sm font-medium text-red-600">
+                          <p role="alert" className="type-small font-medium text-red-600">
                             {generalError}
                           </p>
                         )}
@@ -1118,11 +1118,11 @@ export default function ContactPage() {
                       </div>
 
                       <div className="flex flex-col gap-2">
-                        <h2 className="text-[22px] font-normal leading-[1.2] text-[#020202] sm:text-[26px]">
+                        <h2 className="type-h3-lg font-normal text-[#020202]">
                           Dealership &amp; Distribution Onboarding
                         </h2>
-                        <p className="max-w-[1051px] text-[15px] font-normal leading-[1.4] text-[#595959] sm:text-[18px]">
-                          Join 500+ authorized dealers across India. Fill out this registration
+                        <p className="type-lead max-w-[1051px] font-normal text-[#595959]">
+                          Join 5,000+ authorized dealers across India. Fill out this registration
                           module to start your dealership review. Our channel sales executive will
                           initiate evaluation within 3 working days.
                         </p>
@@ -1135,10 +1135,10 @@ export default function ContactPage() {
                           <span className="h-2 w-2 bg-[#58C7E8]" />
                           Application Logged • REF: DLR-REG-IND
                         </div>
-                        <h3 className="mt-3 text-xl font-medium text-[#020202]">
+                        <h3 className="type-h3 mt-3 font-medium text-[#020202]">
                           Dealership onboarding application received for {dealerForm.firmName}.
                         </h3>
-                        <p className="mt-2 text-sm leading-relaxed text-[#595959]">
+                        <p className="type-small mt-2 leading-relaxed text-[#595959]">
                           Our channel sales executive will review your GSTIN (
                           <strong>{dealerForm.gstin}</strong>) and territory details and contact{" "}
                           <strong>{dealerForm.contactPerson}</strong> within 3 working days.
@@ -1611,7 +1611,7 @@ export default function ContactPage() {
                         </label>
 
                         {dealerError && (
-                          <p role="alert" className="text-sm font-medium text-red-600">
+                          <p role="alert" className="type-small font-medium text-red-600">
                             {dealerError}
                           </p>
                         )}
@@ -1705,10 +1705,10 @@ export default function ContactPage() {
                       </div>
 
                       <div className="flex flex-col gap-2">
-                        <h2 className="text-[22px] font-normal leading-[1.2] text-[#020202] sm:text-[26px]">
+                        <h2 className="type-h3-lg font-normal text-[#020202]">
                           Request OEM Pricing / Custom Solution
                         </h2>
-                        <p className="max-w-[1051px] text-[15px] font-normal leading-[1.4] text-[#595959] sm:text-[18px]">
+                        <p className="type-lead max-w-[1051px] font-normal text-[#595959]">
                           Direct conduit to CAPCO&apos;s research engineers. Specify your capacitor
                           tolerances, mechanical form factors, and safety interlocks for customized
                           OEM batches.
@@ -1722,10 +1722,10 @@ export default function ContactPage() {
                           <span className="h-2 w-2 bg-[#58C7E8]" />
                           OEM RFQ Logged • REF: OEM-SPEC-ENGINE
                         </div>
-                        <h3 className="mt-3 text-xl font-medium text-[#020202]">
+                        <h3 className="type-h3 mt-3 font-medium text-[#020202]">
                           Custom OEM quotation request received for {oemForm.enterpriseBrand}.
                         </h3>
-                        <p className="mt-2 text-sm leading-relaxed text-[#595959]">
+                        <p className="type-small mt-2 leading-relaxed text-[#595959]">
                           Our R&amp;D and OEM application engineering desk will evaluate your{" "}
                           <strong>{oemForm.rating}</strong> ({oemForm.ratedVoltage}) specification
                           and contact <strong>{oemForm.engineeringLead}</strong> at{" "}
@@ -2184,7 +2184,7 @@ export default function ContactPage() {
                         </label>
 
                         {oemError && (
-                          <p role="alert" className="text-sm font-medium text-red-600">
+                          <p role="alert" className="type-small font-medium text-red-600">
                             {oemError}
                           </p>
                         )}
@@ -2278,10 +2278,10 @@ export default function ContactPage() {
                       </div>
 
                       <div className="flex flex-col gap-2">
-                        <h2 className="text-[22px] font-normal leading-[1.2] text-[#020202] sm:text-[26px]">
+                        <h2 className="type-h3-lg font-normal text-[#020202]">
                           Request Export Pricing / Samples
                         </h2>
-                        <p className="max-w-[1051px] text-[15px] font-normal leading-[1.4] text-[#595959] sm:text-[18px]">
+                        <p className="type-lead max-w-[1051px] font-normal text-[#595959]">
                           Direct export routing serving 15+ destination countries across Middle East,
                           Africa, ASEAN, and Europe. Request FOB/CIF pricing with verified
                           certificate of origin.
@@ -2295,10 +2295,10 @@ export default function ContactPage() {
                           <span className="h-2 w-2 bg-[#58C7E8]" />
                           Export Proforma Logged • REF: EXP-GLOB-PORT
                         </div>
-                        <h3 className="mt-3 text-xl font-medium text-[#020202]">
+                        <h3 className="type-h3 mt-3 font-medium text-[#020202]">
                           Export proforma inquiry received for {exportForm.importerFirm}.
                         </h3>
-                        <p className="mt-2 text-sm leading-relaxed text-[#595959]">
+                        <p className="type-small mt-2 leading-relaxed text-[#595959]">
                           Our international export cell will prepare your{" "}
                           <strong>{exportForm.incoterm}</strong> quotation for{" "}
                           <strong>{exportForm.portOfDischarge}</strong> (
@@ -2653,7 +2653,7 @@ export default function ContactPage() {
                         </label>
 
                         {exportError && (
-                          <p role="alert" className="text-sm font-medium text-red-600">
+                          <p role="alert" className="type-small font-medium text-red-600">
                             {exportError}
                           </p>
                         )}
@@ -2698,7 +2698,7 @@ export default function ContactPage() {
                 LOCATIONS
               </span>
             </div>
-            <h2 className="text-[34px] font-normal leading-none tracking-[-0.04em] text-white sm:text-[42px] lg:text-[48px]">
+            <h2 className="type-h2 font-normal text-white">
               Plant Facilities
             </h2>
           </div>
@@ -2729,7 +2729,7 @@ export default function ContactPage() {
                 backgroundSize: "cover",
               }}
             >
-              <p className="max-w-[488px] text-[14px] font-normal leading-[1.4] text-white/80 sm:text-[16px]">
+              <p className="type-body max-w-[488px] font-normal text-white/80">
                 DADA ENERGIES (P) LTD. E54 to E77, TSIIC Automotive Park, Muppireddypally Village,
                 Manoharabad Mandal, Medak District, Hyderabad, Telangana - 502336.
               </p>
@@ -2809,7 +2809,7 @@ export default function ContactPage() {
           <div className="flex flex-col justify-between gap-12 xl:flex-row xl:items-start xl:gap-[80px]">
             {/* Newsletter */}
             <div className="w-full max-w-[680px]">
-              <h3 className="text-[28px] font-normal leading-[1.15] tracking-[-0.04em] text-white sm:text-[32px]">
+              <h3 className="type-h3-lg font-normal text-white">
                 Join our Newsletter
               </h3>
               <form
@@ -2838,7 +2838,7 @@ export default function ContactPage() {
                 </button>
               </form>
               {newsletterSubscribed && (
-                <p className="mt-2 text-xs text-[#58C7E8]">
+                <p className="type-caption mt-2 text-[#58C7E8]">
                   Thank you for subscribing to our newsletter.
                 </p>
               )}
@@ -2880,8 +2880,6 @@ export default function ContactPage() {
                 {
                   title: "Media",
                   links: [
-                    ["Newsroom", "/#projects"],
-                    ["Corporate Social Responsibility", "/#why"],
                     ["Awards", "/#why"],
                     ["Certifications", "/#why"],
                   ],
@@ -2902,7 +2900,7 @@ export default function ContactPage() {
                 },
               ].map((group) => (
                 <div key={group.title} className="flex flex-col gap-4">
-                  <p className="text-[14px] font-medium leading-[1.2] tracking-[-0.04em] text-[#595959]">
+                  <p className="type-small font-medium leading-[1.2] tracking-[-0.04em] text-[#595959]">
                     {group.title}
                   </p>
                   <div className="flex flex-col gap-[2px]">

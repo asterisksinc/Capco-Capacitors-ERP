@@ -67,16 +67,16 @@ export default function ExportMarketsSection() {
         {/* Header */}
         <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between lg:gap-16">
           <div className="max-w-[900px]">
-            <p className="inline-flex items-center gap-2 text-[14px] font-medium uppercase tracking-normal text-[#020202]">
+            <p className="type-small inline-flex items-center gap-2 font-medium uppercase tracking-normal text-[#020202]">
               <span className="h-[6px] w-[6px] bg-[#58C7E8]" />
               Export Markets
             </p>
-            <h2 className="mt-5 text-[30px] font-normal leading-[1.08] tracking-[-0.04em] text-[#020202] sm:text-[36px] lg:text-[42px]">
+            <h2 className="type-h2 mt-5 font-normal text-[#020202]">
               Serving OEMs &amp; Distributors
               <br className="hidden sm:block" /> in 15+ Countries
             </h2>
           </div>
-          <p className="max-w-[620px] text-[15px] leading-[1.5] text-[#595959] lg:pt-6 lg:text-[16px]">
+          <p className="type-body max-w-[620px] text-[#595959] lg:pt-6">
             With manufacturing built to Indian and international standards, CAPCO ships capacitors
             with the certification and documentation each market requires, backed by export-grade
             packaging and dependable lead times.
@@ -120,10 +120,10 @@ export default function ExportMarketsSection() {
                 Region / {code}
               </span>
 
-              <h3 className="mt-6 text-[22px] font-normal leading-[1.15] tracking-[-0.02em] text-[#020202] lg:text-[24px]">
+              <h3 className="type-h3 mt-6 font-normal text-[#020202]">
                 {name}
               </h3>
-              <p className="mt-3 text-[14px] leading-[1.55] text-[#595959]">{summary}</p>
+              <p className="type-small mt-3 leading-[1.55] text-[#595959]">{summary}</p>
 
               <ul className="mt-5 flex flex-wrap gap-2">
                 {countries.map((c) => (

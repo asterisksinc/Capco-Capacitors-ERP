@@ -162,6 +162,37 @@ export function FourStepProcessAndTeamSection({
     return () => observer.disconnect();
   }, [steps]);
 
+  // Desktop stacking (>=1380px): mark a card "covered" while the next card overlaps it,
+  // so its copy fades out and never shows through the gap between the next card's two panels.
+  useEffect(() => {
+    const container = stepsContainerRef.current;
+    if (!container) return;
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const cards = [...container.querySelectorAll<HTMLElement>("[data-process-card]")];
+      const stacking = window.innerWidth >= 1380;
+      cards.forEach((card, i) => {
+        const next = cards[i + 1];
+        // covered as soon as the next card starts sliding over this one
+        const covered =
+          stacking && !!next && next.getBoundingClientRect().top < card.getBoundingClientRect().bottom - 24;
+        if (card.dataset.covered !== String(covered)) card.dataset.covered = String(covered);
+      });
+    };
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      if (frame) cancelAnimationFrame(frame);
+    };
+  }, [steps]);
+
   const activeMember = teamMembers[activeTeamIndex] || teamMembers[0];
 
   return (
@@ -179,7 +210,7 @@ export function FourStepProcessAndTeamSection({
                 <span className="h-[6px] w-[6px] rounded-full bg-[#00E05C]" />
                 {processEyebrow}
               </div>
-              <h2 className="mt-5 max-w-[460px] text-[38px] font-normal leading-[1.05] tracking-[-2px] text-[#121212] sm:text-[48px] lg:text-[56px] lg:tracking-[-3px]">
+              <h2 className="type-h2 mt-5 max-w-[460px] font-normal text-[#121212]">
                 {processHeading}
               </h2>
 
@@ -220,6 +251,12 @@ export function FourStepProcessAndTeamSection({
                     key={step.num}
                     data-process-card={idx}
                     style={{
+                      // Two-column desktop: each card pins a step lower than the one before,
+                      // so scrolling stacks them into a staircase beside the sticky heading.
+                      // applied only where the cards are sticky (see min-[1380px]:top-[var(--stair-top)])
+                      ["--stair-top" as string]: `${120 + idx * 32}px`,
+                      // keeps each card's sticky range ending a step above the next, so the stack stays staggered
+                      ["--stair-end" as string]: `${(steps.length - 1 - idx) * 32}px`,
                       transition:
                         "opacity 800ms cubic-bezier(0.22, 1, 0.36, 1), transform 800ms cubic-bezier(0.22, 1, 0.36, 1)",
                       transitionDelay: `${idx * 140}ms`,
@@ -228,10 +265,10 @@ export function FourStepProcessAndTeamSection({
                         ? "translateY(0px) scale(1)"
                         : "translateY(24px) scale(0.99)",
                     }}
-                    className={`group flex flex-col gap-1 rounded-[16px] transition-shadow duration-300 sm:flex-row hover:shadow-lg ${staircaseIndentClass}`}
+                    className={`group flex flex-col gap-1 relative rounded-[16px] transition-shadow duration-300 sm:flex-row min-[1380px]:sticky min-[1380px]:top-[var(--stair-top)] min-[1380px]:mb-[var(--stair-end)] min-[1380px]:gap-2 ${staircaseIndentClass}`}
                   >
                     {/* Square Number Card with Circular Dial Pattern */}
-                    <div className="relative flex h-[280px] w-full items-center justify-center overflow-hidden rounded-[16px] bg-[#ECECEC] sm:h-[320px] sm:w-[320px] shrink-0">
+                    <div className="relative flex h-[280px] w-full items-center justify-center overflow-hidden rounded-[16px] bg-[#ECECEC] sm:h-[320px] sm:w-[320px] shrink-0 min-[1380px]:shadow-[0_-10px_28px_-14px_rgba(0,0,0,0.28)]">
                       {step.dial ? (
                         <img
                           src={step.dial}
@@ -248,19 +285,19 @@ export function FourStepProcessAndTeamSection({
                     </div>
 
                     {/* Rectangular Content Card aligned toward right */}
-                    <div className="flex min-h-[280px] flex-1 flex-col justify-between rounded-[16px] bg-[#ECECEC] p-8 sm:min-h-[320px] sm:p-10">
-                      <span className="font-mono text-[12px] font-medium uppercase tracking-[0.12em] text-[#737373]">
+                    <div className="flex min-h-[280px] flex-1 flex-col justify-between rounded-[16px] bg-[#ECECEC] p-8 sm:min-h-[320px] sm:p-10 min-[1380px]:shadow-[0_-10px_28px_-14px_rgba(0,0,0,0.28)]">
+                      <span className="font-mono text-[12px] font-medium uppercase tracking-[0.12em] text-[#737373] transition-opacity duration-300 group-data-[covered=true]:opacity-0">
                         {step.label}
                       </span>
-                      <div className="my-auto pt-4">
-                        <h3 className="text-[22px] font-normal tracking-[-0.03em] text-[#121212] sm:text-[25px]">
+                      <div className="my-auto pt-4 transition-opacity duration-300 group-data-[covered=true]:opacity-0">
+                        <h3 className="type-h3 font-normal text-[#121212]">
                           {step.title}
                         </h3>
-                        <p className="mt-3 text-[14px] leading-[1.6] text-[#595959]">
+                        <p className="type-small mt-3 leading-[1.6] text-[#595959]">
                           {step.body}
                         </p>
                       </div>
-                      <div className="flex items-center gap-2 pt-2 text-[12px] font-medium text-[#121212]/60 transition group-hover:text-[#121212]">
+                      <div className="flex items-center gap-2 pt-2 text-[12px] font-medium text-[#121212]/60 transition group-hover:text-[#121212] group-data-[covered=true]:opacity-0">
                         <span>Phase Specification Locked</span>
                         <ChevronRight size={14} />
                       </div>

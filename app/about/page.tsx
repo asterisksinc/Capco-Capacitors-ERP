@@ -7,19 +7,18 @@ import Link from "next/link";
 import {
   PublicFaqSection,
   PublicFooter,
-  PublicNav,
   ReadyToSpecifyCapcoSection,
 } from "@/components/public/PublicChrome";
 import JourneyRoadmap from "@/components/public/JourneyRoadmap";
-import ComplianceSection from "@/components/public/ComplianceSection";
 import ExportMarketsSection from "@/components/public/ExportMarketsSection";
+import HomeHero from "@/components/public/HomeHero";
 
 const HERO_STATS = [
   ["IS:2993 / IS:13340", "BIS Certified"],
   ["ISO 9001:2008", "TUV/5GS Audited"],
   ["IEC 60252-1", "EU Directives"],
   ["IEC 60831-1/2", "Self-Healing Dry"],
-  ["500+ Dealers", "Pan-India Stock"],
+  ["5,000+ Dealers", "Pan-India Stock"],
   ["15+ Nations", "Direct Exporter"],
   ["32+ Years", "Est. 1994"],
 ] as const;
@@ -27,13 +26,15 @@ const HERO_STATS = [
 const JOURNEY_HIGHLIGHTS = [
   {
     num: "/001",
-    stat: "500+",
+    tag: "Dealer Network",
+    stat: "5,000+",
     title: "Authorized Distributors",
     body: "Spanning 20+ states with assured depot inventory, rapid logistics, zero margin undercutting, and full dealer replacement warranty guarantee.",
     bg: "bg-[#EEFAFF]",
   },
   {
     num: "/002",
+    tag: "OEM Programme",
     stat: "100+",
     title: "Tier-1 OEM Partnerships",
     body: "Direct vendor code approval with leading air conditioning, submersible pump, industrial motor, and ballast assembly manufacturers.",
@@ -41,6 +42,7 @@ const JOURNEY_HIGHLIGHTS = [
   },
   {
     num: "/003",
+    tag: "Track Record",
     stat: "32+",
     title: "Years In Industrial Market",
     body: "Uninterrupted field longevity. Continuous manufacturing reliability with failure rates under 15 PPM across heavy duty switching cycles.",
@@ -56,14 +58,14 @@ const AFFILIATIONS = [
 ] as const;
 
 const TIMELINE_DATA = [
-  { year: "1994", tag: "Founded", tagline: "The Journey of CAPCO Begins" },
-  { year: "1996", tag: "Certification", tagline: "BIS Certification for KVAR Capacitors" },
-  { year: "2005", tag: "Capability", tagline: "In-House Metallization Capability" },
-  { year: "2012", tag: "Export", tagline: "Exports to Global Markets" },
-  { year: "2016", tag: "Facility", tagline: "Dedicated Motor Capacitor Plant" },
-  { year: "2020", tag: "Certification", tagline: "BIS Certification for Motor Run Capacitors" },
-  { year: "2023", tag: "Facility", tagline: "Advanced Manufacturing Facility" },
-  { year: "2025", tag: "License", tagline: "Motor Start Capacitor License" },
+  { year: "1994", tag: "Founded", tagline: "The journey of CAPCO Capacitors began." },
+  { year: "1996", tag: "Certification", tagline: "Obtained BIS certification for KVAR manufacturing, IS: 2834 (now IS: 13340)." },
+  { year: "2005", tag: "Capability", tagline: "Integrated an in-house BOPP film metallization plant from LEYBOLD, Germany, with slitting lines for precision metallized film slitting." },
+  { year: "2012", tag: "Export", tagline: "Began exporting capacitors to the Middle East & South East Asia." },
+  { year: "2016", tag: "Facility", tagline: "New plant dedicated to fan & other motor run capacitors." },
+  { year: "2020", tag: "Certification", tagline: "Obtained BIS certification for motor run capacitor manufacturing, IS: 2993." },
+  { year: "2023", tag: "Facility", tagline: "Commissioned a state-of-the-art, fully integrated capacitor manufacturing facility in Industrial Park, Medak, Hyderabad." },
+  { year: "2025", tag: "License", tagline: "Obtained license for motor start capacitor manufacturing." },
 ] as const;
 
 const FACILITIES = [
@@ -78,19 +80,6 @@ const FACILITIES = [
       ["Automated Winding Lines", "10x Metar Swiss Stations"],
       ["Encapsulation Facilities", "5x Automated Stations"],
       ["Test Lab Level", "NABL Calibrated"],
-    ],
-  },
-  {
-    tag: "PLANT 02 — INDUSTRIAL PARK",
-    title: "Jeedimetla Industrial Estate, Hyderabad",
-    badge: "300K UNITS / MO",
-    body: "Our historical operating facility established in 1994. Reconfigured for custom engineered runs, rapid turnaround OEM prototype lots, and lighting capacitor manufacturing.",
-    specs: [
-      ["Built-up Industrial Footprint", "30,000 Sq Ft"],
-      ["Core Focus", "Lighting & APFC Modules"],
-      ["Automated Winding Lines", "5x Metar Swiss Stations"],
-      ["Encapsulation Facilities", "3x Encapsulation Units"],
-      ["Quality Control Station", "Internal Verification Bay"],
     ],
   },
 ] as const;
@@ -212,119 +201,78 @@ function useInView<T extends HTMLElement = HTMLElement>(threshold = 0.15) {
   return [ref, inView] as const;
 }
 
+/**
+ * Scroll-linked stacking: as the container scrolls through the viewport each card rises and
+ * settles onto the one before it (card i starts a little after card i-1). Reverses on scroll up.
+ */
+function useScrollStack(count: number) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let frame = 0;
+
+    const update = () => {
+      frame = 0;
+      const vh = window.innerHeight;
+      const rect = container.getBoundingClientRect();
+      // 0 when the stack's top reaches 95% of the viewport, 1 once ~70% of it has scrolled into view
+      const progress = Math.min(1, Math.max(0, (vh * 0.95 - rect.top) / (rect.height * 0.7 + vh * 0.25)));
+      const lift = window.innerWidth >= 1024 ? 160 : 90;
+      cardRefs.current.forEach((card, i) => {
+        if (!card) return;
+        const start = i * (0.55 / Math.max(1, count - 1));
+        const t = reduce ? 1 : Math.min(1, Math.max(0, (progress - start) / 0.45));
+        const e = 1 - Math.pow(1 - t, 3); // ease-out
+        card.style.transform = `translate3d(${(1 - e) * -28}px, ${(1 - e) * lift}px, 0) scale(${0.94 + 0.06 * e})`;
+        card.style.opacity = String(0.15 + 0.85 * e);
+      });
+    };
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      if (frame) cancelAnimationFrame(frame);
+    };
+  }, [count]);
+
+  const setCardRef = (i: number) => (el: HTMLDivElement | null) => {
+    cardRefs.current[i] = el;
+  };
+  return [containerRef, setCardRef] as const;
+}
+
 export default function AboutPage() {
   const [journeyRef, isJourneyInView] = useInView<HTMLElement>(0.12);
+  const [journeyStackRef, setJourneyCardRef] = useScrollStack(JOURNEY_HIGHLIGHTS.length);
 
   return (
     <main className="min-h-screen overflow-x-clip bg-white text-[#020202]">
-      {/* 1. HERO SECTION — 100vh including Navbar */}
-      <section className="relative flex min-h-[700px] flex-col justify-between overflow-hidden bg-[#101010] text-white lg:h-screen lg:max-h-screen">
-        <Image
-          src="/figma/about/hero-bg.jpg"
-          alt="CAPCO cleanroom capacitor manufacturing line"
-          fill
-          priority
-          unoptimized
-          quality={100}
-          sizes="100vw"
-          className="object-cover object-center"
-        />
-        <div
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background:
-              "linear-gradient(0deg, rgba(0, 0, 0, 0.78) 0%, rgba(0, 0, 0, 0.2) 50%, rgba(0, 0, 0, 0.12) 100%)",
-          }}
-        />
+      {/* 1. Hero (shared with the home and Solutions pages) */}
+      <HomeHero
+        id="about-hero-title"
+        image="/figma/about/hero-bg.jpg"
+        imageAlt="CAPCO cleanroom capacitor manufacturing line"
+        description={<>CAPCO Capacitors is the flagship capacitor brand of Dada Energies (P) Ltd., a Hyderabad-based manufacturer established in 1994. Dada Energies provides the manufacturing strength and quality systems behind CAPCO&rsquo;s motor run, PFC, lighting and custom capacitor solutions.</>}
+        tags={["Since 1994 | HYD-PLANT-01 6 02", "Make in India"]}
+        title={["32+ Years of Capacitor", "Manufacturing Excellence"]}
+        primary={{ label: "Explore Manufacturing Line", href: "#manufacturing-line" }}
+        secondary={{ label: "Explore Timeline", href: "#company-timeline" }}
+        cutColor="#ffffff"
+        overlay
+      />
 
-        <PublicNav variant="overlay" className="relative z-20 shrink-0" />
-
-        <div className="relative z-10 mx-auto mt-auto w-full max-w-[1920px] px-6 pb-16 pt-8 lg:px-[60px] lg:pb-[108px] xl:pb-[124px]">
-          <div className="max-w-[1800px]">
-            {/* Eyebrows */}
-            <div className="flex flex-wrap items-center gap-6">
-              <span className="inline-flex items-center gap-2 text-[13px] font-medium uppercase tracking-normal text-white sm:text-[15px]">
-                <span className="h-[6px] w-[6px] bg-[#58C7E8]" />
-                SINCE 1994 | HYD-PLANT-01 6 02
-              </span>
-              <span className="inline-flex items-center gap-2 text-[13px] font-medium uppercase tracking-normal text-white sm:text-[15px]">
-                <span className="h-[6px] w-[6px] bg-[#58C7E8]" />
-                MAKE IN INDIA
-              </span>
-            </div>
-
-            {/* White Horizontal Rule */}
-            <div className="my-5 h-px w-full bg-white/50 lg:my-6 xl:my-8" />
-
-            {/* Main Heading - Scaled down for balanced hero layout */}
-            <h1 className="max-w-[1120px] text-[34px] font-light leading-[1.05] tracking-[-0.04em] text-white sm:text-[46px] lg:text-[58px] xl:text-[70px] 2xl:text-[78px] lg:leading-[1.06]">
-              32+ Years of Capacitor
-              <br />
-              Manufacturing Excellence
-            </h1>
-
-            {/* Buttons (left) + intro paragraph (right) share one row so the
-                paragraph always sits above the angled white cutout */}
-            <div className="mt-6 flex flex-col gap-8 lg:mt-8 lg:flex-row lg:items-end lg:justify-between lg:gap-10 xl:mt-10">
-            {/* Hero Action Buttons */}
-            <div className="flex shrink-0 flex-wrap items-center gap-4">
-              <a
-                href="#manufacturing-line"
-                style={{
-                  clipPath:
-                    "polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%)",
-                }}
-                className="inline-flex min-h-[54px] w-[260px] items-end justify-between bg-[#58C7E8] px-3 pb-3 pt-5 text-[14px] font-semibold leading-[1.2] !text-[#121212] transition hover:-translate-y-0.5 hover:brightness-95"
-              >
-                <span className="!text-[#121212]">Explore Manufacturing Line</span>
-                <img src="/figma/solutions/24503.svg" alt="" aria-hidden="true" />
-              </a>
-
-              <a
-                href="#company-timeline"
-                style={{
-                  clipPath:
-                    "polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%)",
-                }}
-                className="inline-flex min-h-[54px] w-[218px] items-end justify-between bg-white px-4 pb-3 pt-5 text-[14px] font-semibold leading-[1.2] !text-[#121212] transition hover:-translate-y-0.5 hover:bg-[#F4F4F4]"
-              >
-                <span className="!text-[#121212]">Explore Timeline</span>
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="#121212"
-                  strokeWidth="2"
-                  aria-hidden="true"
-                  className="shrink-0 text-[#121212]"
-                >
-                  <circle cx="12" cy="12" r="10" />
-                  <polyline points="12 6 12 12 16 14" />
-                </svg>
-              </a>
-            </div>
-
-            {/* Intro Paragraph */}
-            <p className="max-w-[600px] text-[15px] font-normal leading-[1.28] text-white/95 sm:text-[17px] lg:min-w-0 lg:max-w-[560px] lg:flex-1 lg:text-[17px] lg:leading-[1.3] xl:max-w-[645px] xl:text-[20px]">
-              CAPCO Capacitors is the flagship capacitor brand of Dada Energies (P) Ltd., a Hyderabad-based manufacturer established in 1994. Dada Energies provides the manufacturing strength and quality systems behind CAPCO’s motor run, PFC, lighting and custom capacitor solutions.
-            </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom-Left Angled White Cutout */}
-        <div
-          aria-hidden="true"
-          style={{
-            clipPath: "polygon(0 0, calc(100% - 48px) 0, 100% 100%, 0 100%)",
-          }}
-          className="pointer-events-none absolute bottom-0 left-0 z-10 hidden h-[48px] w-[58%] bg-white lg:block xl:h-[56px] xl:w-[62%]"
-        />
-      </section>
-
-      {/* 2. 7-COLUMN CERTIFICATIONS & METRICS BAR */}
-      <section className="mt-8 border-y border-[#DBDBDB] bg-white py-6 lg:mt-[60px] lg:py-[40px]">
+      {/* 2. 7-COLUMN CERTIFICATIONS & METRICS BAR (also the #compliance anchor for nav / footer links) */}
+      <section id="compliance" className="mt-8 border-y border-[#DBDBDB] bg-white py-6 lg:mt-[60px] lg:py-[40px]">
         <div className="mx-auto grid max-w-[1920px] grid-cols-2 sm:grid-cols-3 lg:grid-cols-7">
           {HERO_STATS.map(([title, subtitle], idx) => (
             <div
@@ -379,17 +327,17 @@ export default function AboutPage() {
           className="flex flex-col justify-between bg-[#020202] px-6 py-12 text-white sm:px-10 lg:px-[60px] lg:py-[72px]"
         >
           <div>
-            <p className="inline-flex items-center gap-2 text-[14px] font-medium uppercase tracking-normal text-white">
+            <p className="type-small inline-flex items-center gap-2 font-medium uppercase tracking-normal text-white">
               <span className="h-[6px] w-[6px] bg-[#58C7E8]" />
               WHO WE ARE
             </p>
-            <h2 className="mt-5 max-w-[680px] text-[30px] font-normal leading-[1.14] tracking-[-0.03em] text-white sm:text-[38px] lg:mt-6 lg:text-[42px]">
+            <h2 className="type-h2 mt-5 max-w-[680px] font-normal text-white lg:mt-6">
               Vertically Integrated. Compliance-
               <br />
               Backed. Export-Ready.
             </h2>
 
-            <div className="mt-7 max-w-[840px] space-y-4 text-[14px] font-normal leading-[1.48] text-white/85 lg:mt-8 lg:text-[15px]">
+            <div className="type-body mt-7 max-w-[840px] space-y-4 font-normal text-white/85 lg:mt-8">
               <p>
                 Established in 1994, Dada Energies Private Limited engineers high-integrity
                 dielectric film capacitors under the trusted flagship brand CAPCO. Operating across
@@ -406,7 +354,7 @@ export default function AboutPage() {
               <p>
                 Today, CAPCO serves three balanced commercial vectors: large-scale original
                 equipment manufacturers (OEMs) in HVAC and water pumping, a protected distributor
-                ecosystem of 500+ dealers with guaranteed 12-25% operational margin stability, and
+                ecosystem of 5,000+ dealers with guaranteed 12-25% operational margin stability, and
                 major utility/industrial APFC panel contractors. Through our international logistics
                 division, we ship regularly to the UAE, Sri Lanka, Bangladesh, Turkey, Egypt, and
                 North America.
@@ -454,7 +402,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* 5. OUR JOURNEY — 500+ DEALERS, 100+ OEM PARTNERS, 15+ EXPORT MARKETS */}
+      {/* 5. OUR JOURNEY — 5,000+ DEALERS, 100+ OEM PARTNERS, 15+ EXPORT MARKETS */}
       <section ref={journeyRef} className="px-6 py-16 lg:px-[60px] lg:py-[100px]">
         <div className="mx-auto max-w-[1800px]">
           <div
@@ -465,54 +413,61 @@ export default function AboutPage() {
             }}
             className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between"
           >
-            <div className="max-w-[680px]">
-              <p className="inline-flex items-center gap-2 text-[14px] font-medium uppercase tracking-normal text-[#020202]">
+            <div className="max-w-[860px]">
+              <p className="type-small inline-flex items-center gap-2 font-medium uppercase tracking-normal text-[#020202]">
                 <span className="h-[6px] w-[6px] bg-[#58C7E8]" />
                 OUR JOURNEY
               </p>
-              <h2 className="mt-5 text-[34px] font-normal leading-[1.05] tracking-[-0.04em] text-[#020202] sm:text-[42px] lg:mt-6 lg:text-[48px]">
-                500+ Dealers, 100+ OEM Partners,
-                <br />
+              <h2 className="type-h2 mt-5 font-normal text-[#020202] lg:mt-6">
+                5,000+ Dealers, 100+ OEM Partners,
+                <br className="hidden lg:block" />{" "}
                 15+ Export Markets
               </h2>
             </div>
-            <p className="max-w-[612px] text-[18px] font-normal leading-[1.35] text-[#595959] lg:text-[24px]">
+            <p className="type-lead max-w-[520px] font-light text-[#4F4F4F] lg:pb-1.5">
               Supplying primary electrical power units to Tier-1 white goods manufacturers and
               critical sub-station grid installations nationwide.
             </p>
           </div>
 
-          {/* 3 Stacked Clipped Highlight Cards with Scroll Stack-Up Animation */}
-          <div className="relative mx-auto mt-12 flex max-w-[832px] flex-col gap-8 pb-12 lg:mt-[60px] lg:gap-10 lg:pb-24">
+          {/* 3 highlight cards cascading diagonally: each sits right of and slightly over the previous */}
+          <div ref={journeyStackRef} className="relative mx-auto mt-12 max-w-[1080px] pb-4 lg:mt-[72px] lg:pb-8">
             {JOURNEY_HIGHLIGHTS.map((card, idx) => (
-              <article
+              <div
                 key={card.num}
+                ref={setJourneyCardRef(idx)}
                 style={{
-                  top: `calc(100px + ${idx * 38}px)`,
                   zIndex: idx + 1,
-                  clipPath:
-                    "polygon(0 0, 100% 0, 100% calc(100% - 42px), calc(100% - 42px) 100%, 0 100%)",
+                  filter: "drop-shadow(0 18px 28px rgba(0,0,0,0.10)) drop-shadow(0 -6px 16px rgba(0,0,0,0.05))",
+                  ["--stack-x" as string]: `${idx * 16}px`,
+                  ["--stack-x-lg" as string]: `${idx * 21}%`,
+                  transformOrigin: "left top",
+                  willChange: "transform, opacity",
                 }}
-                className={`sticky ${card.bg} flex min-h-[260px] flex-col justify-between p-7 sm:p-10 lg:min-h-[295px] lg:p-[42px] transition-all duration-300 shadow-[0_-8px_24px_rgba(0,0,0,0.06),0_16px_36px_rgba(0,0,0,0.08)] border border-black/5 hover:-translate-y-1`}
+                className={`relative ${idx > 0 ? "mt-5 lg:-mt-10" : ""} ml-[var(--stack-x)] w-[calc(100%-32px)] lg:ml-[var(--stack-x-lg)] lg:w-[58%]`}
               >
-                <div className="flex items-center justify-between">
-                  <span className="text-[16px] font-medium text-[#58C7E8]">{card.num}</span>
-                  <span className="text-[12px] font-medium uppercase tracking-[0.08em] text-[#595959]/75 sm:text-[13px]">
-                    {card.stat} • {card.title}
-                  </span>
+              <article
+                style={{ clipPath: "polygon(0 0, 100% 0, 100% calc(100% - 42px), calc(100% - 42px) 100%, 0 100%)" }}
+                className={`${card.bg} flex min-h-[220px] flex-col justify-between p-6 sm:p-8 lg:min-h-[240px] lg:p-[34px]`}
+              >
+                <div className="type-caption flex items-center gap-3 font-medium uppercase tracking-[0.1em] text-[#595959]">
+                  <span className="text-[#58C7E8]">{card.num}</span>
+                  <span className="h-px w-6 bg-[#595959]/30" aria-hidden="true" />
+                  <span>{card.tag}</span>
                 </div>
                 <div className="mt-6">
-                  <strong className="block text-[38px] font-medium leading-none tracking-[-0.03em] text-[#020202] lg:text-[48px]">
+                  <strong className="block text-[40px] font-light leading-none tracking-[-0.04em] text-[#020202] lg:text-[48px]">
                     {card.stat}
                   </strong>
-                  <h3 className="mt-4 text-[20px] font-normal leading-[1.2] text-[#020202] lg:text-[24px]">
+                  <h3 className="type-h4 mt-3 font-medium text-[#020202]">
                     {card.title}
                   </h3>
-                  <p className="mt-3 max-w-[645px] text-[15px] leading-[1.42] text-[#595959] lg:text-[16px]">
+                  <p className="type-small mt-2 max-w-[520px] font-light leading-[1.55] text-[#4F4F4F] lg:text-[15px]">
                     {card.body}
                   </p>
                 </div>
               </article>
+              </div>
             ))}
           </div>
         </div>
@@ -521,7 +476,7 @@ export default function AboutPage() {
       {/* 6. ENGINEERING SUPPLIER LOGOS & INDUSTRY AFFILIATIONS */}
       <section className="bg-[#F4F4F4] px-6 py-16 lg:px-[60px] lg:py-[72px]">
         <div className="mx-auto max-w-[1800px] text-center">
-          <p className="inline-flex items-center justify-center gap-2 text-[12px] font-semibold uppercase tracking-[0.02em] text-[#020202]">
+          <p className="type-caption inline-flex items-center justify-center gap-2 font-semibold uppercase tracking-[0.02em] text-[#020202]">
             <span className="h-[5px] w-[5px] bg-[#58C7E8]" />
             ENGINEERING SUPPLIER TO NATIONWIDE LEADERS &amp; GLOBAL DISTRIBUTORS
           </p>
@@ -582,34 +537,34 @@ export default function AboutPage() {
       >
         <div className="mx-auto max-w-[1800px]">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-[680px]">
-              <p className="inline-flex items-center gap-2 text-[14px] font-medium uppercase tracking-normal text-[#020202]">
+            <div className="max-w-[900px]">
+              <p className="type-small inline-flex items-center gap-2 font-medium uppercase tracking-normal text-[#020202]">
                 <span className="h-[6px] w-[6px] bg-[#58C7E8]" />
                 LEADERSHIP
               </p>
-              <h2 className="mt-5 text-[34px] font-normal leading-[1.05] tracking-[-0.04em] text-[#020202] sm:text-[42px] lg:mt-6 lg:text-[48px]">
+              <h2 className="type-h2 mt-5 font-normal text-[#020202] lg:mt-6">
                 Decades of Experience in Capacitor
-                <br />
+                <br className="hidden lg:block" />{" "}
                 Manufacturing
               </h2>
             </div>
-            <p className="max-w-[612px] text-[18px] font-normal leading-[1.35] text-[#595959] lg:text-[24px]">
+            <p className="type-lead max-w-[500px] font-light text-[#4F4F4F] lg:pb-1.5">
               Unlike assemblers who buy pre-metallized rolls of indeterminate origin, CAPCO controls
               all 4 stages of the capacitor manufacturing lifecycle.
             </p>
           </div>
 
           {/* 2x4 Manufacturing Lifecycle Bento Grid */}
-          <div className="mt-12 grid gap-4 md:grid-cols-2 lg:mt-[60px] lg:grid-cols-[1.34fr_1fr_1fr_1.34fr] lg:gap-y-8">
+          <div className="mt-12 grid gap-4 md:grid-cols-2 lg:mt-[60px] lg:grid-cols-[1.34fr_1fr_1fr_1.34fr] lg:gap-5">
             {/* Row 1, Col 1: /001 BOPP Film Sourcing */}
-            <article className="flex min-h-[341px] flex-col justify-between rounded-[16px] bg-white p-7 shadow-[0_2px_12px_rgba(0,0,0,0.03)] lg:p-8">
+            <article className="flex min-h-[320px] flex-col justify-between rounded-[16px] bg-white p-6 shadow-[0_2px_12px_rgba(0,0,0,0.03)] lg:p-7">
               <div className="flex items-center justify-between border-b border-[#E5E5E5] pb-5">
-                <span className="text-[18px] font-medium text-[#020202]">/001</span>
-                <span className="text-[13px] uppercase text-[#595959]">DIELECTRIC BASELINE</span>
+                <span className="type-caption font-medium tracking-[0.08em] text-[#58C7E8]">/001</span>
+                <span className="type-caption uppercase tracking-[0.1em] text-[#595959]">DIELECTRIC BASELINE</span>
               </div>
-              <div className="my-6">
-                <h3 className="text-[18px] font-medium text-[#020202]">BOPP Film Sourcing</h3>
-                <p className="mt-3 text-[14px] leading-[1.48] text-[#595959]">
+              <div className="my-5">
+                <h3 className="type-h4 font-medium text-[#020202]">BOPP Film Sourcing</h3>
+                <p className="mt-2.5 text-[13px] font-light leading-[1.55] text-[#4F4F4F]">
                   Direct procurement of electrical-grade biaxially-oriented polypropylene. Incoming
                   raw film inspected for uniform thickness, pinhole count, and &gt;600 V/micron
                   dielectric strength.
@@ -627,38 +582,44 @@ export default function AboutPage() {
             </article>
 
             {/* Row 1, Col 2: Photo 01. LEYBOLD CHAMBER (MEDAK) */}
-            <div className="relative min-h-[341px] overflow-hidden rounded-[16px] bg-[#D9E6EC]">
+            <figure className="relative m-0 min-h-[280px] overflow-hidden rounded-[16px] bg-[#D9E6EC] md:min-h-[320px]">
               <Image
-                src="/figma/about/leybold-chamber.png"
+                src="/figma/about/leybold-chamber-photo.jpg"
                 alt="01. Leybold Chamber (Medak)"
                 fill
-                sizes="(min-width: 1024px) 22vw, 92vw"
-                className="object-cover"
+                sizes="(min-width: 1024px) 22vw, (min-width: 768px) 46vw, 92vw"
+                className="object-cover transition-transform duration-700 ease-out hover:scale-[1.04]"
               />
-            </div>
+              <figcaption className="type-caption pointer-events-none absolute inset-x-3 bottom-3 rounded-[10px] bg-[#1A1A1A]/55 px-4 py-3 font-medium uppercase tracking-[0.08em] text-white backdrop-blur-md">
+                01. Leybold Chamber (Medak)
+              </figcaption>
+            </figure>
 
             {/* Row 1, Col 3: Photo 02. METAR AUTOMATED LINE */}
-            <div className="relative min-h-[341px] overflow-hidden rounded-[16px] bg-[#D9E6EC]">
+            <figure className="relative m-0 min-h-[280px] overflow-hidden rounded-[16px] bg-[#D9E6EC] md:min-h-[320px]">
               <Image
-                src="/figma/about/metar-line.png"
+                src="/figma/about/metar-line-photo.jpg"
                 alt="02. Metar Automated Line"
                 fill
-                sizes="(min-width: 1024px) 22vw, 92vw"
-                className="object-cover"
+                sizes="(min-width: 1024px) 22vw, (min-width: 768px) 46vw, 92vw"
+                className="object-cover transition-transform duration-700 ease-out hover:scale-[1.04]"
               />
-            </div>
+              <figcaption className="type-caption pointer-events-none absolute inset-x-3 bottom-3 rounded-[10px] bg-[#1A1A1A]/55 px-4 py-3 font-medium uppercase tracking-[0.08em] text-white backdrop-blur-md">
+                02. Metar Automated Line
+              </figcaption>
+            </figure>
 
             {/* Row 1, Col 4: /003 Automated High-Speed Winding */}
-            <article className="flex min-h-[341px] flex-col justify-between rounded-[16px] bg-white p-7 shadow-[0_2px_12px_rgba(0,0,0,0.03)] lg:p-8">
+            <article className="flex min-h-[320px] flex-col justify-between rounded-[16px] bg-white p-6 shadow-[0_2px_12px_rgba(0,0,0,0.03)] lg:p-7">
               <div className="flex items-center justify-between border-b border-[#E5E5E5] pb-5">
-                <span className="text-[18px] font-medium text-[#020202]">/003</span>
-                <span className="text-[13px] uppercase text-[#595959]">METAR SWITZERLAND</span>
+                <span className="type-caption font-medium tracking-[0.08em] text-[#58C7E8]">/003</span>
+                <span className="type-caption uppercase tracking-[0.1em] text-[#595959]">METAR SWITZERLAND</span>
               </div>
-              <div className="my-6">
-                <h3 className="text-[18px] font-medium text-[#020202]">
+              <div className="my-5">
+                <h3 className="type-h4 font-medium text-[#020202]">
                   Automated High-Speed Winding
                 </h3>
-                <p className="mt-3 text-[14px] leading-[1.48] text-[#595959]">
+                <p className="mt-2.5 text-[13px] font-light leading-[1.55] text-[#4F4F4F]">
                   Swiss Metar non-inductive precision winders maintain strict tension control,
                   preventing micro-creasing and internal partial discharge. Capacitance held
                   precisely within ±5%.
@@ -676,14 +637,14 @@ export default function AboutPage() {
             </article>
 
             {/* Row 2, Col 1: /002 Vacuum Metallization */}
-            <article className="flex min-h-[341px] flex-col justify-between rounded-[16px] bg-white p-7 shadow-[0_2px_12px_rgba(0,0,0,0.03)] lg:p-8">
+            <article className="flex min-h-[320px] flex-col justify-between rounded-[16px] bg-white p-6 shadow-[0_2px_12px_rgba(0,0,0,0.03)] lg:p-7">
               <div className="flex items-center justify-between border-b border-[#E5E5E5] pb-5">
-                <span className="text-[18px] font-medium text-[#020202]">/002</span>
-                <span className="text-[13px] uppercase text-[#595959]">LEYBOLD HIGH-VACUUM</span>
+                <span className="type-caption font-medium tracking-[0.08em] text-[#58C7E8]">/002</span>
+                <span className="type-caption uppercase tracking-[0.1em] text-[#595959]">LEYBOLD HIGH-VACUUM</span>
               </div>
-              <div className="my-6">
-                <h3 className="text-[18px] font-medium text-[#020202]">Vacuum Metallization</h3>
-                <p className="mt-3 text-[14px] leading-[1.48] text-[#595959]">
+              <div className="my-5">
+                <h3 className="type-h4 font-medium text-[#020202]">Vacuum Metallization</h3>
+                <p className="mt-2.5 text-[13px] font-light leading-[1.55] text-[#4F4F4F]">
                   Zinc/Aluminium alloy vapor deposition executed inside Leybold Optics chambers.
                   Graded resistivity profile (6–9 Ω/sq) ensures optimum self-healing behavior under
                   voltage spikes.
@@ -701,38 +662,44 @@ export default function AboutPage() {
             </article>
 
             {/* Row 2, Col 2: Photo 03. NABL IN-HOUSE LAB */}
-            <div className="relative min-h-[341px] overflow-hidden rounded-[16px] bg-[#D9E6EC]">
+            <figure className="relative m-0 min-h-[280px] overflow-hidden rounded-[16px] bg-[#D9E6EC] md:min-h-[320px]">
               <Image
-                src="/figma/about/nabl-lab.png"
+                src="/figma/about/nabl-lab-photo.jpg"
                 alt="03. NABL In-House Lab"
                 fill
-                sizes="(min-width: 1024px) 22vw, 92vw"
-                className="object-cover"
+                sizes="(min-width: 1024px) 22vw, (min-width: 768px) 46vw, 92vw"
+                className="object-cover transition-transform duration-700 ease-out hover:scale-[1.04]"
               />
-            </div>
+              <figcaption className="type-caption pointer-events-none absolute inset-x-3 bottom-3 rounded-[10px] bg-[#1A1A1A]/55 px-4 py-3 font-medium uppercase tracking-[0.08em] text-white backdrop-blur-md">
+                03. NABL In-House Lab
+              </figcaption>
+            </figure>
 
             {/* Row 2, Col 3: Photo 04. AUTOMATED EXPORT PACKING */}
-            <div className="relative min-h-[341px] overflow-hidden rounded-[16px] bg-[#D9E6EC]">
+            <figure className="relative m-0 min-h-[280px] overflow-hidden rounded-[16px] bg-[#D9E6EC] md:min-h-[320px]">
               <Image
-                src="/figma/about/export-packing.png"
+                src="/figma/about/export-packing-photo.jpg"
                 alt="04. Automated Export Packing"
                 fill
-                sizes="(min-width: 1024px) 22vw, 92vw"
-                className="object-cover"
+                sizes="(min-width: 1024px) 22vw, (min-width: 768px) 46vw, 92vw"
+                className="object-cover transition-transform duration-700 ease-out hover:scale-[1.04]"
               />
-            </div>
+              <figcaption className="type-caption pointer-events-none absolute inset-x-3 bottom-3 rounded-[10px] bg-[#1A1A1A]/55 px-4 py-3 font-medium uppercase tracking-[0.08em] text-white backdrop-blur-md">
+                04. Automated Export Packing
+              </figcaption>
+            </figure>
 
             {/* Row 2, Col 4: /004 Encapsulation & Testing */}
-            <article className="flex min-h-[341px] flex-col justify-between rounded-[16px] bg-white p-7 shadow-[0_2px_12px_rgba(0,0,0,0.03)] lg:p-8">
+            <article className="flex min-h-[320px] flex-col justify-between rounded-[16px] bg-white p-6 shadow-[0_2px_12px_rgba(0,0,0,0.03)] lg:p-7">
               <div className="flex items-center justify-between border-b border-[#E5E5E5] pb-5">
-                <span className="text-[18px] font-medium text-[#020202]">/004</span>
-                <span className="text-[13px] uppercase text-[#595959]">100% ASSURANCE</span>
+                <span className="type-caption font-medium tracking-[0.08em] text-[#58C7E8]">/004</span>
+                <span className="type-caption uppercase tracking-[0.1em] text-[#595959]">100% ASSURANCE</span>
               </div>
-              <div className="my-6">
-                <h3 className="text-[18px] font-medium text-[#020202]">
+              <div className="my-5">
+                <h3 className="type-h4 font-medium text-[#020202]">
                   Encapsulation &amp; Testing
                 </h3>
-                <p className="mt-3 text-[14px] leading-[1.48] text-[#595959]">
+                <p className="mt-2.5 text-[13px] font-light leading-[1.55] text-[#4F4F4F]">
                   Resin-casting or environmentally sealed non-PCB oil impregnation. Integrated P2
                   over-pressure safety disconnectors followed by automated 100% high-voltage
                   withstand testing.
@@ -779,31 +746,56 @@ export default function AboutPage() {
       </section>
 
       {/* 9. COMPLIANCE — BIS, ISO, CE & IEC CERTIFIED MANUFACTURING */}
-      <ComplianceSection />
 
       {/* 10. FACILITIES — TWO STRATEGIC LOCATIONS IN HYDERABAD, TELANGANA */}
       <section className="px-6 py-16 lg:px-[60px] lg:py-[100px]">
         <div className="mx-auto max-w-[1800px]">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-[680px]">
-              <p className="inline-flex items-center gap-2 text-[14px] font-medium uppercase tracking-normal text-[#020202]">
+              <p className="type-small inline-flex items-center gap-2 font-medium uppercase tracking-normal text-[#020202]">
                 <span className="h-[6px] w-[6px] bg-[#58C7E8]" />
                 FACILITIES
               </p>
-              <h2 className="mt-5 text-[34px] font-normal leading-[1.05] tracking-[-0.04em] text-[#020202] sm:text-[42px] lg:mt-6 lg:text-[48px]">
+              <h2 className="type-h2 mt-5 font-normal text-[#020202] lg:mt-6">
                 Two Strategic Locations in
                 <br />
                 Hyderabad, Telangana
               </h2>
             </div>
-            <p className="max-w-[612px] text-[18px] font-normal leading-[1.35] text-[#595959] lg:text-[24px]">
+            <p className="type-lead max-w-[612px] font-normal text-[#595959]">
               Combining high-volume automated production at our primary Mega Plant with flexible
               custom-batch winding at our legacy facility.
             </p>
           </div>
 
-          {/* 2 Plant Cards */}
+          {/* Map (left, same card shape) + plant card (right) */}
           <div className="mt-12 grid gap-6 lg:mt-[60px] lg:grid-cols-2 lg:gap-[32px]">
+            <div
+              style={{
+                clipPath:
+                  "polygon(0 0, 100% 0, 100% calc(100% - 42px), calc(100% - 42px) 100%, 0 100%)",
+              }}
+              className="relative min-h-[320px] overflow-hidden bg-[#F4F4F4] lg:min-h-[399px]"
+            >
+              <iframe
+                title="Map: DADA ENERGIES (P) LTD., Medak, Telangana"
+                src="https://www.google.com/maps?q=17.7359222,78.4825576&z=15&output=embed"
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                className="absolute inset-0 h-full w-full border-0"
+              />
+              <a
+                href="https://maps.app.goo.gl/iCLxR4jT38AWZDBQ7"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="type-caption absolute right-4 top-4 inline-flex items-center gap-2 bg-white px-3 py-2 font-medium uppercase tracking-[0.08em] text-[#020202] shadow-[0_4px_14px_rgba(0,0,0,0.12)] transition hover:bg-[#58C7E8]"
+              >
+                Open in Google Maps
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                  <path d="M7 17L17 7M9 7h8v8" />
+                </svg>
+              </a>
+            </div>
             {FACILITIES.map((plant) => (
               <article
                 key={plant.title}
@@ -816,8 +808,8 @@ export default function AboutPage() {
                 <div>
                   <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>
-                      <p className="text-[13px] uppercase text-[#595959]">{plant.tag}</p>
-                      <h3 className="mt-1.5 text-[22px] font-medium leading-[1.2] text-[#020202] lg:text-[24px]">
+                      <p className="type-small uppercase text-[#595959]">{plant.tag}</p>
+                      <h3 className="type-h3 mt-1.5 font-medium text-[#020202]">
                         {plant.title}
                       </h3>
                     </div>
@@ -832,7 +824,7 @@ export default function AboutPage() {
                     </span>
                   </div>
 
-                  <p className="mt-5 text-[15px] leading-[1.45] text-[#595959]">{plant.body}</p>
+                  <p className="type-body mt-5 text-[#595959]">{plant.body}</p>
                 </div>
 
                 <div className="mt-7 border-t border-[#58C7E8]/45 pt-6">
@@ -881,17 +873,17 @@ export default function AboutPage() {
         <div className="mx-auto max-w-[1800px]">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-[680px]">
-              <p className="inline-flex items-center gap-2 text-[14px] font-medium uppercase tracking-normal text-[#020202]">
+              <p className="type-small inline-flex items-center gap-2 font-medium uppercase tracking-normal text-[#020202]">
                 <span className="h-[6px] w-[6px] bg-[#58C7E8]" />
                 RESPONSIBILITY
               </p>
-              <h2 className="mt-5 text-[34px] font-normal leading-[1.05] tracking-[-0.04em] text-[#020202] sm:text-[42px] lg:mt-6 lg:text-[48px]">
+              <h2 className="type-h2 mt-5 font-normal text-[#020202] lg:mt-6">
                 Corporate Social Responsibility
                 <br />
                 &amp; ESG Framework
               </h2>
             </div>
-            <p className="max-w-[612px] text-[18px] font-normal leading-[1.35] text-[#595959] lg:text-[24px]">
+            <p className="type-lead max-w-[612px] font-normal text-[#595959]">
               Sustainable, human-centered industrial stewardship woven directly into our daily plant
               operations.
             </p>
@@ -900,16 +892,16 @@ export default function AboutPage() {
           <div className="mt-12 grid gap-8 sm:grid-cols-2 lg:mt-[60px] lg:grid-cols-4 lg:gap-[32px]">
             {CSR_PILLARS.map((pillar) => (
               <article key={pillar.title} className="flex flex-col">
-                <p className="border-b border-[#DBDBDB] pb-4 text-[13px] font-normal uppercase tracking-[0.02em] text-[#595959]">
+                <p className="type-small border-b border-[#DBDBDB] pb-4 font-normal uppercase tracking-[0.02em] text-[#595959]">
                   {pillar.eyebrow}
                 </p>
                 <div className="mt-7">
                   <CsrIcon type={pillar.icon} />
                 </div>
-                <h3 className="mt-5 text-[18px] font-medium leading-[1.2] text-[#020202]">
+                <h3 className="type-h4 mt-5 font-medium text-[#020202]">
                   {pillar.title}
                 </h3>
-                <p className="mt-3 text-[14px] leading-[1.48] text-[#595959]">{pillar.body}</p>
+                <p className="type-small mt-3 leading-[1.48] text-[#595959]">{pillar.body}</p>
               </article>
             ))}
           </div>

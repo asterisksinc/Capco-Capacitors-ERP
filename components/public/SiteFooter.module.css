@@ -47,39 +47,39 @@
 }
 
 .form input {
-  width: 190px;
+  width: 220px;
   min-width: 0;
-  height: 40px;
+  height: 44px;
   padding: 13px;
   border: 0;
   background: rgb(227 227 227 / 20%);
   backdrop-filter: blur(2.5px);
   color: white;
-  font-size: 11px;
+  font-size: 14px;
 }
 
 .form input::placeholder { color: #c9c9c9; }
 
 .form button {
   flex: none;
-  width: 85px;
-  height: 40px;
+  width: 96px;
+  height: 44px;
   padding: 0 12px;
   border: 0;
   border-radius: 2px;
   background: white;
   color: #121212;
-  font-size: 11px;
+  font-size: 14px;
   cursor: pointer;
 }
 
 .form button:hover { background: #58c7e8; }
 
-.contactCard { margin-top: 38px; max-width: 300px; color: #d0d0d0; font-size: 12px; line-height: 1.7; }
+.contactCard { margin-top: 38px; max-width: 320px; color: #d0d0d0; font-size: 15px; line-height: 1.6; }
 .contactCard p { margin: 0 0 18px; }
-.contactHeading { color: #58c7e8; font-size: 16px; font-weight: 500; letter-spacing: -.02em; }
+.contactHeading { color: #58c7e8; font-size: 18px; font-weight: 500; letter-spacing: -.02em; }
 .socialRow { display: flex; flex-wrap: wrap; gap: 14px; border-top: 1px solid rgb(255 255 255 / 20%); padding-top: 14px; }
-.socialRow a { color: white; font-size: 12px; }
+.socialRow a { color: white; font-size: 14px; }
 
 .links {
   display: grid;
@@ -88,16 +88,16 @@
 }
 
 .footer .group h3 {
-  margin: 0 0 16px;
-  font-size: 14px;
+  margin: 0 0 18px;
+  font-size: 16px;
   font-weight: 500;
-  line-height: 17px;
-  color: #595959;
+  line-height: 20px;
+  color: #8a8a8a;
 }
 
 .group ul {
   display: grid;
-  gap: 2px;
+  gap: 8px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -106,10 +106,10 @@
 .group a {
   display: block;
   width: fit-content;
-  min-height: 16px;
+  min-height: 20px;
   padding-inline: 2px;
-  font-size: 12px;
-  line-height: 16px;
+  font-size: 15px;
+  line-height: 20px;
 }
 
 .footer a:hover { color: #58c7e8; }
@@ -126,8 +126,8 @@
   justify-content: space-between;
   gap: 24px;
   margin-top: 120px;
-  font-size: 12px;
-  line-height: 16px;
+  font-size: 14px;
+  line-height: 18px;
   color: #b8b8b8;
 }
 

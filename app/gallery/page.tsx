@@ -102,7 +102,7 @@ export default function GalleryPage() {
       <section className="px-6 pb-24 pt-20 lg:px-[60px] lg:pb-[150px] lg:pt-[112px]">
         <div className="mx-auto max-w-[1800px]">
           <header className="text-center">
-            <h1 className="text-[48px] font-normal leading-none tracking-[-0.06em] sm:text-[64px] lg:text-[76px]">
+            <h1 className="type-display font-normal">
               Media &amp; Gallery
             </h1>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-2 text-[9px] uppercase tracking-[-0.02em] text-[#A2A2A2] sm:text-[10px]">
@@ -155,10 +155,10 @@ export default function GalleryPage() {
                   <span>By </span>
                   <span className="text-[#020202]">CAPCO</span>
                 </div>
-                <h2 className="mt-3 text-[15px] font-medium leading-[1.15] tracking-[-0.02em] text-[#020202] sm:text-[16px]">
+                <h2 className="type-h4 mt-3 font-medium text-[#020202]">
                   Lorem ipsum dolor sit amet
                 </h2>
-                <p className="mt-3 inline-block bg-[#F3F3F3] px-2 py-1 text-[8px] uppercase leading-none tracking-[0.02em] text-[#8A8A8A]">
+                <p className="type-caption mt-3 inline-block bg-[#F3F3F3] px-2 py-1 uppercase leading-none tracking-[0.02em] text-[#8A8A8A]">
                   {category}
                 </p>
               </button>
@@ -206,15 +206,15 @@ export default function GalleryPage() {
                 />
               </div>
               <div className="mt-6 flex items-center justify-between gap-4 text-[12px] text-[#777777]">
-                <h2 className="text-[25px] font-medium leading-[1.1] tracking-[-0.04em] text-[#020202] sm:text-[30px]">
+                <h2 className="type-h3-lg font-medium text-[#020202]">
                   Lorem ipsum dolor sit amet
                 </h2>
                 <span className="shrink-0">08.06.2026&nbsp; • &nbsp;By <span className="text-[#020202]">logo ipsum</span></span>
               </div>
-              <p className="mt-5 inline-block bg-[#F3F3F3] px-3 py-2 text-[10px] uppercase text-[#777777]">
+              <p className="type-caption mt-5 inline-block bg-[#F3F3F3] px-3 py-2 uppercase text-[#777777]">
                 {galleryItems[selectedItem][1]}
               </p>
-              <p className="mt-8 max-w-[640px] text-[16px] leading-[1.45] text-[#595959]">
+              <p className="type-body mt-8 max-w-[640px] text-[#595959]">
                 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
               </p>
             </div>

@@ -52,6 +52,7 @@ export function PublicNav({
   const isAboutActive = pathname.startsWith("/about");
   const isSolutionsActive = pathname.startsWith("/solutions");
   const isProductsActive = pathname.startsWith("/products");
+  const isRegionsActive = pathname.startsWith("/regions");
 
   return (
     <header
@@ -65,40 +66,34 @@ export function PublicNav({
     >
       <div className="mx-auto flex h-[86px] max-w-[1920px] items-center justify-between px-6 lg:px-[60px]">
         <Link href="/" aria-label="CAPCO home" className="inline-flex shrink-0 items-center">
-          <Image src={logoSrc} alt="CAPCO Capacitors" width={127} height={47} priority />
+          <Image src={logoSrc} alt="CAPCO Capacitors" width={127} height={47} priority className="h-auto w-[127px]" />
         </Link>
 
-        <nav className="hidden items-center gap-8 text-[15px] font-normal lg:flex">
+        <nav className="hidden items-center gap-6 text-[15px] font-normal lg:flex xl:gap-8">
           {/* Company Dropdown */}
           <div className="group relative py-2">
             <Link
               href="/about"
-              className={`inline-flex items-center gap-1.5 transition hover:text-[#58C7E8] ${
+              className={`inline-flex items-center gap-1.5 whitespace-nowrap transition hover:text-[#58C7E8] ${
                 isAboutActive ? activeClass : ""
               }`}
             >
               Company
               <ChevronDown size={15} className="transition-transform duration-200 group-hover:rotate-180" />
             </Link>
-            <div className="invisible absolute left-0 top-full z-40 min-w-[230px] border border-[#E4E4E4] bg-white p-2 text-[#020202] opacity-0 shadow-xl transition group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
+            <div className="invisible absolute left-0 top-full z-40 min-w-[220px] border border-[#E4E4E4] bg-white p-2 text-[#020202] opacity-0 shadow-xl transition group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
               <Link href="/about" className="block px-4 py-2.5 text-sm hover:bg-[#F5F5F5]">
-                About CAPCO
-              </Link>
-              <Link href="/about#manufacturing-line" className="block px-4 py-2.5 text-sm hover:bg-[#F5F5F5]">
-                Manufacturing Line
-              </Link>
-              <Link href="/about#facilities" className="block px-4 py-2.5 text-sm hover:bg-[#F5F5F5]">
-                Plant Locations
-              </Link>
-              <Link href="/about#compliance" className="block px-4 py-2.5 text-sm hover:bg-[#F5F5F5]">
-                Certifications &amp; Compliance
+                About
               </Link>
               <Link href="/gallery" className="block px-4 py-2.5 text-sm hover:bg-[#F5F5F5]">
                 Gallery
               </Link>
-              <Link href="/case-studies" className="block px-4 py-2.5 text-sm hover:bg-[#F5F5F5]">
-                Case Studies
+              <Link href="/about#compliance" className="block px-4 py-2.5 text-sm hover:bg-[#F5F5F5]">
+                Certifications
               </Link>
+              <a href="mailto:info@capcocapacitor.com?subject=Careers" className="block px-4 py-2.5 text-sm hover:bg-[#F5F5F5]">
+                Careers
+              </a>
             </div>
           </div>
 
@@ -106,19 +101,19 @@ export function PublicNav({
           <div className="group relative py-2">
             <Link
               href="/solutions/oem"
-              className={`inline-flex items-center gap-1.5 transition hover:text-[#58C7E8] ${
+              className={`inline-flex items-center gap-1.5 whitespace-nowrap transition hover:text-[#58C7E8] ${
                 isSolutionsActive ? activeClass : ""
               }`}
             >
               Solutions
               <ChevronDown size={15} className="transition-transform duration-200 group-hover:rotate-180" />
             </Link>
-            <div className="invisible absolute left-0 top-full z-40 min-w-[240px] border border-[#E4E4E4] bg-white p-2 text-[#020202] opacity-0 shadow-xl transition group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
+            <div className="invisible absolute left-0 top-full z-40 min-w-[220px] border border-[#E4E4E4] bg-white p-2 text-[#020202] opacity-0 shadow-xl transition group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
               <Link href="/solutions/oem" className="block px-4 py-2.5 text-sm hover:bg-[#F5F5F5]">
-                OEM Solutions
+                OEMs
               </Link>
               <Link href="/solutions/dealership" className="block px-4 py-2.5 text-sm hover:bg-[#F5F5F5]">
-                Dealership Network
+                Dealerships
               </Link>
               <Link href="/solutions/industrial-enquiry" className="block px-4 py-2.5 text-sm hover:bg-[#F5F5F5]">
                 Industrial Enquiry
@@ -185,45 +180,66 @@ export function PublicNav({
             </div>
           </div>
 
-          {/* Resources Dropdown */}
+          {/* Recognition Dropdown */}
           <div className="group relative py-2">
-            <a
-              href="/catalogs/capco-product-catalog.pdf"
-              download="CAPCO-Product-Catalog.pdf"
-              className="inline-flex items-center gap-1.5 transition hover:text-[#58C7E8]"
+            <Link
+              href="/about#compliance"
+              className={`inline-flex items-center gap-1.5 whitespace-nowrap transition hover:text-[#58C7E8]`}
             >
-              Resources
+              Recognition
               <ChevronDown size={15} className="transition-transform duration-200 group-hover:rotate-180" />
-            </a>
+            </Link>
             <div className="invisible absolute left-0 top-full z-40 min-w-[240px] border border-[#E4E4E4] bg-white p-2 text-[#020202] opacity-0 shadow-xl transition group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
-              <a
-                href="/catalogs/capco-product-catalog.pdf"
-                download="CAPCO-Product-Catalog.pdf"
-                className="block px-4 py-2.5 text-sm hover:bg-[#F5F5F5]"
-              >
-                Download Product Catalog (PDF)
-              </a>
               <Link href="/about#compliance" className="block px-4 py-2.5 text-sm hover:bg-[#F5F5F5]">
-                BIS / ISO / CE Certificates
+                Awards &amp; Achievements
               </Link>
-              <Link href="/about#faq" className="block px-4 py-2.5 text-sm hover:bg-[#F5F5F5]">
-                Frequently Asked Questions
+            </div>
+          </div>
+
+          {/* Global Footprint Dropdown */}
+          <div className="group relative py-2">
+            <Link
+              href="/#global-footprint"
+              className={`inline-flex items-center gap-1.5 whitespace-nowrap transition hover:text-[#58C7E8] ${
+                isRegionsActive ? activeClass : ""
+              }`}
+            >
+              Global Footprint
+              <ChevronDown size={15} className="transition-transform duration-200 group-hover:rotate-180" />
+            </Link>
+            <div className="invisible absolute left-0 top-full z-40 min-w-[220px] border border-[#E4E4E4] bg-white p-2 text-[#020202] opacity-0 shadow-xl transition group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
+              <Link href="/#global-footprint" className="block px-4 py-2.5 text-sm hover:bg-[#F5F5F5]">
+                Where We Operate
+              </Link>
+              <Link href="/regions/middle-east" className="block px-4 py-2.5 text-sm hover:bg-[#F5F5F5]">
+                Middle East
+              </Link>
+              <Link href="/regions/south-asia" className="block px-4 py-2.5 text-sm hover:bg-[#F5F5F5]">
+                South Asia
+              </Link>
+              <Link href="/regions/africa" className="block px-4 py-2.5 text-sm hover:bg-[#F5F5F5]">
+                Africa
+              </Link>
+              <Link href="/regions/usa" className="block px-4 py-2.5 text-sm hover:bg-[#F5F5F5]">
+                USA
               </Link>
             </div>
           </div>
         </nav>
 
-        <div className="hidden items-center gap-3.5 lg:flex">
+        <div className="hidden shrink-0 items-center gap-2 lg:flex xl:gap-3.5">
           <a
             href="tel:+919848014000"
-            className="inline-flex h-12 items-center gap-2 px-3 text-[13px] font-medium transition hover:text-[#58C7E8]"
+            aria-label="Call +91-9848014000"
+            className="inline-flex h-12 items-center gap-2 whitespace-nowrap px-2 text-[13px] font-medium transition hover:text-[#58C7E8] xl:px-3"
           >
             <Phone size={15} />
-            +91-9848014000
+            {/* number only where there is room; icon alone on small laptops (1024-1279px) */}
+            <span className="hidden xl:inline">+91-9848014000</span>
           </a>
           <Link
             href="/contact?category=oem#enquiry-form"
-            className="inline-flex h-12 items-center bg-[#58C7E8] px-4 text-[13px] font-medium text-[#020202] transition hover:bg-[#41b7d9]"
+            className="inline-flex h-12 items-center whitespace-nowrap bg-[#58C7E8] px-4 text-[13px] font-medium text-[#020202] transition hover:bg-[#41b7d9]"
           >
             Request Quote
           </Link>
@@ -250,24 +266,28 @@ export function PublicNav({
             if (event.key === "Escape") setMobileOpen(false);
           }}
         >
-          {[
-            ["Home", "/"],
-            ["About CAPCO", "/about"],
-            ["Gallery", "/gallery"],
-            ["Case Studies", "/case-studies"],
-            ["OEM Solutions", "/solutions/oem"],
-            ["Dealership Solutions", "/solutions/dealership"],
-            ["Industrial Enquiry", "/solutions/industrial-enquiry"],
-            ["Products", "/products"],
-          ].map(([label, href]) => (
-            <Link
-              key={label}
-              href={href}
-              onClick={() => setMobileOpen(false)}
-              className="block border-b border-black/10 py-3 text-base"
-            >
-              {label}
-            </Link>
+          <Link href="/" onClick={() => setMobileOpen(false)} className="block border-b border-black/10 py-3 text-base">
+            Home
+          </Link>
+          {([
+            ["Company", [["About", "/about"], ["Gallery", "/gallery"], ["Certifications", "/about#compliance"], ["Careers", "mailto:info@capcocapacitor.com?subject=Careers"]]],
+            ["Solutions", [["OEMs", "/solutions/oem"], ["Dealerships", "/solutions/dealership"], ["Industrial Enquiry", "/solutions/industrial-enquiry"]]],
+            ["Products", [["All Products", "/products"]]],
+            ["Recognition", [["Awards & Achievements", "/about#compliance"]]],
+            ["Global Footprint", [["Where We Operate", "/#global-footprint"], ["Middle East", "/regions/middle-east"], ["South Asia", "/regions/south-asia"], ["Africa", "/regions/africa"], ["USA", "/regions/usa"]]],
+          ] as const).map(([group, links]) => (
+            <div key={group} className="border-b border-black/10 py-3">
+              <p className="type-caption font-medium uppercase tracking-[0.08em] text-[#8A8A8A]">{group}</p>
+              <div className="mt-1 grid grid-cols-2 gap-x-4">
+                {links.map(([label, href]) =>
+                  href.startsWith("mailto:") ? (
+                    <a key={label} href={href} className="block py-2 text-base">{label}</a>
+                  ) : (
+                    <Link key={label} href={href} onClick={() => setMobileOpen(false)} className="block py-2 text-base">{label}</Link>
+                  ),
+                )}
+              </div>
+            </div>
           ))}
         </nav>
       )}
@@ -344,18 +364,18 @@ export function ReadyToSpecifyCapcoSection() {
 
       {/* Foreground Content (z-10) */}
       <div className="relative z-10 mx-auto flex w-full max-w-[946px] flex-col items-center">
-        <p className="inline-flex items-center justify-center gap-2 text-[14px] font-medium uppercase leading-none text-[#020202]">
+        <p className="type-small inline-flex items-center justify-center gap-2 font-medium uppercase leading-none text-[#020202]">
           <span className="h-[6px] w-[6px] bg-white" />
           READY TO SPECIFY CAPCO?
         </p>
 
-        <h2 className="mt-6 text-[32px] font-normal leading-[1.2] tracking-[-0.04em] text-[#020202] sm:text-[42px] lg:text-[48px]">
+        <h2 className="type-h2 mt-6 font-normal text-[#020202]">
           Get Technical Support, Competitive Pricing &amp;
           <br />
           BIS-Certified Quality
         </h2>
 
-        <p className="mx-auto mt-6 max-w-[698px] text-[16px] leading-[1.4] text-[#595959] lg:text-[18px]">
+        <p className="type-lead mx-auto mt-6 max-w-[698px] text-[#595959]">
           Whether you need a single custom capacitor or a complete supply chain partnership,
           <br className="hidden sm:inline" /> our team is ready to support your requirements.
         </p>
@@ -445,11 +465,11 @@ export function PublicFaqSection({
   return (
     <section id="faq" className="bg-white px-6 py-20 text-center lg:px-[60px] lg:py-[160px]">
       <div className="mx-auto max-w-[1800px]">
-        <p className="inline-flex items-center justify-center gap-2 text-[13px] font-medium tracking-[-0.02em] text-[#121212]">
+        <p className="type-small inline-flex items-center justify-center gap-2 font-medium tracking-[-0.02em] text-[#121212]">
           <span className="h-[4px] w-[4px] bg-[#4D65FF]" />
           {eyebrow}
         </p>
-        <h2 className="mt-5 text-[34px] font-normal leading-none tracking-[-0.04em] text-[#020202] sm:text-[42px] lg:mt-6 lg:text-[48px]">
+        <h2 className="type-h2 mt-5 font-normal text-[#020202] lg:mt-6">
           {title}
         </h2>
 
@@ -490,7 +510,7 @@ export function PublicFaqSection({
                 >
                   <div className="overflow-hidden">
                     <p
-                      className={`max-w-[92%] pt-4 text-[14px] leading-[1.55] text-[#595959] transition-transform duration-500 ease-[cubic-bezier(.22,1,.36,1)] motion-reduce:transition-none lg:text-[15px] ${isOpen ? "translate-y-0" : "-translate-y-2"}`}
+                      className={`type-body max-w-[92%] pt-4 text-[#595959] transition-transform duration-500 ease-[cubic-bezier(.22,1,.36,1)] motion-reduce:transition-none ${isOpen ? "translate-y-0" : "-translate-y-2"}`}
                     >
                       {item.a}
                     </p>
@@ -555,11 +575,11 @@ export function PublicFooter({
           </div>
 
           <div className="relative z-10 mx-auto max-w-[860px] text-center">
-            <h2 className="text-[36px] font-normal leading-[1.15] tracking-[-0.05em] text-white sm:text-[42px] lg:text-[48px]">
+            <h2 className="type-h2 font-normal text-white">
               {ctaTitle}
             </h2>
             {ctaBody ? (
-              <p className="mx-auto mt-6 max-w-[860px] text-[16px] leading-[1.42] tracking-[-0.03em] text-white/90 lg:mt-8 lg:text-[18px]">
+              <p className="type-lead mx-auto mt-6 max-w-[860px] text-white/90 lg:mt-8">
                 {ctaBody}
               </p>
             ) : null}
@@ -590,10 +610,10 @@ export function PublicFooter({
         <div className="mx-auto max-w-[1800px]">
           <div className="grid grid-cols-[minmax(0,1fr)] gap-12 lg:grid-cols-[minmax(300px,1fr)_minmax(0,1040px)] lg:gap-[80px]">
             <div>
-              <h3 className="text-[28px] font-normal leading-[1.15] tracking-[-0.04em] text-white lg:text-[32px]">
+              <h3 className="type-h3-lg font-normal text-white">
                 Join our Newsletter
               </h3>
-              <p className="mt-3 max-w-[340px] text-[13px] leading-[1.5] text-white/50">
+              <p className="type-body mt-3 max-w-[340px] text-white/60">
                 Product launches, certifications and export updates. No spam.
               </p>
               <form
@@ -611,11 +631,11 @@ export function PublicFooter({
                   autoComplete="email"
                   aria-label="Email address for newsletter"
                   placeholder="Your email"
-                  className="min-w-0 flex-1 bg-transparent px-4 text-[14px] leading-none text-white placeholder:text-white/50 outline-none"
+                  className="min-w-0 flex-1 bg-transparent px-4 text-[15px] leading-none text-white placeholder:text-white/50 outline-none"
                 />
                 <button
                   type="submit"
-                  className="inline-flex shrink-0 cursor-pointer items-center gap-2 whitespace-nowrap bg-[#58C7E8] px-4 text-[13px] font-medium leading-none text-[#020202] transition hover:brightness-110"
+                  className="inline-flex shrink-0 cursor-pointer items-center gap-2 whitespace-nowrap bg-[#58C7E8] px-4 text-[14px] font-medium leading-none text-[#020202] transition hover:brightness-110"
                 >
                   Sign Up
                   <ArrowRight size={15} aria-hidden="true" />
@@ -625,8 +645,8 @@ export function PublicFooter({
 
             <div className="grid grid-cols-2 gap-x-8 gap-y-12 sm:grid-cols-3 lg:gap-y-[60px]">
               <div>
-                <p className="mb-4 text-[14px] text-white/40">Company</p>
-                <div className="space-y-1.5 text-[12px]">
+                <p className="type-body mb-4 text-white/50">Company</p>
+                <div className="space-y-2.5 text-[15px] leading-[1.35]">
                   <Link href="/" className="block hover:text-[#58C7E8]">
                     Home
                   </Link>
@@ -649,16 +669,13 @@ export function PublicFooter({
               </div>
 
               <div>
-                <p className="mb-4 text-[14px] text-white/40">Solutions</p>
-                <div className="space-y-1.5 text-[12px]">
+                <p className="type-body mb-4 text-white/50">Solutions</p>
+                <div className="space-y-2.5 text-[15px] leading-[1.35]">
                   <Link href="/solutions/oem" className="block hover:text-[#58C7E8]">
                     OEMs
                   </Link>
                   <Link href="/solutions/dealership" className="block hover:text-[#58C7E8]">
                     Dealership
-                  </Link>
-                  <Link href="/solutions" className="block hover:text-[#58C7E8]">
-                    B2D Marketing Landing Page
                   </Link>
                   <Link href="/solutions/industrial-enquiry" className="block hover:text-[#58C7E8]">
                     Industrial Enquiry
@@ -667,8 +684,8 @@ export function PublicFooter({
               </div>
 
               <div>
-                <p className="mb-4 text-[14px] text-white/40">Global Footprint</p>
-                <div className="space-y-1.5 text-[12px]">
+                <p className="type-body mb-4 text-white/50">Global Footprint</p>
+                <div className="space-y-2.5 text-[15px] leading-[1.35]">
                   <span className="block text-white/80">UAE</span>
                   <span className="block text-white/80">USA</span>
                   <span className="block text-white/80">Sri Lanka</span>
@@ -680,14 +697,8 @@ export function PublicFooter({
               </div>
 
               <div>
-                <p className="mb-4 text-[14px] text-white/40">Media</p>
-                <div className="space-y-1.5 text-[12px]">
-                  <Link href="/about#compliance" className="block hover:text-[#58C7E8]">
-                    Newsroom
-                  </Link>
-                  <Link href="/about" className="block hover:text-[#58C7E8]">
-                    Corporate Social Responsibility
-                  </Link>
+                <p className="type-body mb-4 text-white/50">Media</p>
+                <div className="space-y-2.5 text-[15px] leading-[1.35]">
                   <Link href="/about#awards" className="block hover:text-[#58C7E8]">
                     Awards
                   </Link>
@@ -698,8 +709,8 @@ export function PublicFooter({
               </div>
 
               <div>
-                <p className="mb-4 text-[14px] text-white/40">Social</p>
-                <div className="space-y-1.5 text-[12px]">
+                <p className="type-body mb-4 text-white/50">Social</p>
+                <div className="space-y-2.5 text-[15px] leading-[1.35]">
                   <a
                     href="https://instagram.com"
                     target="_blank"
@@ -735,49 +746,30 @@ export function PublicFooter({
                 </div>
               </div>
 
-              <div>
-                <p className="mb-4 text-[14px] text-white/40">Contact</p>
-                <div className="space-y-1.5 text-[12px]">
-                  <a
-                    href="https://instagram.com"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="block hover:text-[#58C7E8]"
-                  >
-                    Instagram
+              <div className="col-span-2 sm:col-span-1">
+                <p className="type-body mb-4 text-white/50">Contact</p>
+                <div className="space-y-2.5 text-[15px] leading-[1.35]">
+                  <a href="tel:+919848014000" className="block hover:text-[#58C7E8]">
+                    +91 9848014000
                   </a>
-                  <a
-                    href="https://linkedin.com"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="block hover:text-[#58C7E8]"
-                  >
-                    LinkedIn
+                  <a href="mailto:info@capcocapacitor.com" className="block break-words hover:text-[#58C7E8]">
+                    info@capcocapacitor.com
                   </a>
-                  <a
-                    href="https://facebook.com"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="block hover:text-[#58C7E8]"
-                  >
-                    Facebook
-                  </a>
-                  <a
-                    href="https://youtube.com"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="block hover:text-[#58C7E8]"
-                  >
-                    YouTube
-                  </a>
+                  <address className="not-italic leading-[1.5] text-white/80">
+                    Dada Energies Pvt. Ltd.,
+                    <br />
+                    Medak District, Hyderabad,
+                    <br />
+                    Telangana - 502336
+                  </address>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="mt-16 flex flex-wrap items-center justify-between gap-6 text-[12px] text-white/55 lg:mt-[100px]">
+          <div className="mt-16 flex flex-wrap items-center justify-between gap-6 text-[14px] text-white/55 lg:mt-[100px]">
             <Link href="/" aria-label="CAPCO home">
-              <Image src="/figma/solutions/caef4.png" alt="CAPCO Capacitors" width={127} height={47} />
+              <Image src="/figma/solutions/caef4.png" alt="CAPCO Capacitors" width={127} height={47} className="h-auto w-[127px]" />
             </Link>
             <span>©2026 Capco Capacitors</span>
             <div className="flex gap-6 text-white/80">

@@ -79,16 +79,16 @@ export default function ComplianceSection() {
         {/* Header */}
         <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between lg:gap-16">
           <div className="max-w-[900px]">
-            <p className="inline-flex items-center gap-2 text-[14px] font-medium uppercase tracking-normal text-[#020202]">
+            <p className="type-small inline-flex items-center gap-2 font-medium uppercase tracking-normal text-[#020202]">
               <span className="h-[6px] w-[6px] bg-[#58C7E8]" />
               Compliance
             </p>
-            <h2 className="mt-5 text-[30px] font-normal leading-[1.08] tracking-[-0.04em] text-[#020202] sm:text-[36px] lg:mt-5 lg:text-[42px]">
+            <h2 className="type-h2 mt-5 font-normal text-[#020202] lg:mt-5">
               BIS, ISO, CE &amp; IEC Certified
               <br className="hidden sm:block" /> Manufacturing
             </h2>
           </div>
-          <p className="max-w-[620px] text-[15px] leading-[1.5] text-[#595959] lg:pt-6 lg:text-[16px]">
+          <p className="type-body max-w-[620px] text-[#595959] lg:pt-6">
             CAPCO capacitors are certified to Indian and international standards, backed by
             third-party inspection and compliance with Quality Control Orders (QCO) and international
             safety norms.
@@ -113,11 +113,11 @@ export default function ComplianceSection() {
                   <div style={clip(10)} className="grid h-12 w-12 shrink-0 place-items-center bg-[#DEDEDE]/40">
                   <Icon size={22} strokeWidth={1.6} className="text-[#595959]" aria-hidden="true" />
                   </div>
-                  <h3 className="text-[19px] font-normal leading-[1.2] tracking-[-0.02em] text-[#020202] lg:text-[22px]">
+                  <h3 className="type-h3 font-normal text-[#020202]">
                     {title}
                   </h3>
                 </div>
-                <p className="mt-4 max-w-[680px] text-[14px] leading-[1.55] text-[#595959] lg:text-[15px]">{body}</p>
+                <p className="type-body mt-4 max-w-[680px] text-[#595959]">{body}</p>
 
                 <div className="my-5 h-px w-full bg-[#DBDBDB] lg:my-6" />
 

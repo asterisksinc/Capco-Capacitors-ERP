@@ -31,7 +31,7 @@ export default function ProductsPage() {
 
       <section className="px-6 pb-16 pt-20 lg:px-[60px] lg:pb-20 lg:pt-[72px]">
         <div className="mx-auto max-w-[1800px] text-center">
-          <h1 className="text-[42px] font-normal leading-none tracking-[-0.04em] sm:text-[64px] lg:text-[96px]">Our Products</h1>
+          <h1 className="type-display font-normal">Our Products</h1>
           <label className="mx-auto mt-14 flex h-10 max-w-[560px] items-center border-b border-[#d8d8d8] text-left">
             <Search size={16} className="mr-3 text-[#595959]" />
             <input
@@ -66,13 +66,13 @@ export default function ProductsPage() {
                 <Image src={product.image} alt="" fill sizes="(min-width: 1280px) 31vw, (min-width: 768px) 47vw, 94vw" className="object-cover transition duration-500 group-hover:scale-105" />
               </div>
               <div className="mt-5 max-w-[535px]">
-                <p className="flex flex-wrap items-center gap-3 text-xs text-[#666]">
+                <p className="type-caption flex flex-wrap items-center gap-3 text-[#666]">
                   <span>{product.date}</span>
                   <span className="h-[3px] w-[3px] rounded-full bg-[#666]" />
                   <span>{product.category}</span>
                 </p>
-                <h2 className="mt-3 text-2xl font-medium leading-tight">{product.title}</h2>
-                <p className="mt-5 inline-flex text-sm font-medium">Know more</p>
+                <h2 className="type-h3 mt-3 font-medium">{product.title}</h2>
+                <p className="type-small mt-5 inline-flex font-medium">Know more</p>
               </div>
             </Link>
           ))}

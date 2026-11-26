@@ -10,7 +10,7 @@ import { PublicFaqSection, PublicNav } from "@/components/public/PublicChrome";
 import { SiteFooter } from "@/components/public/SiteFooter";
 import { type PublicProduct, publicProducts } from "@/lib/publicProducts";
 import { productCopy } from "@/lib/productCopy";
-import { type MapLocation, WhereWeOperateSection } from "@/components/public/WhereWeOperateSection";
+import { exportMarkets, WhereWeOperateSection } from "@/components/public/WhereWeOperateSection";
 
 const defaultSpecs: [string, string][] = [
   ["Type", "Standard / Customised"],
@@ -62,77 +62,6 @@ const manufacturingPhases = [
     title: "100% Dielectric & BIS Testing",
     description: "Self-healing clearing tests, capacitance verification, and vacuum-sealed moisture packaging.",
     nextPreview: "Film Procure",
-  },
-];
-
-/**
- * Export markets shown on product pages (the 7 markers the old map displayed), placed at real positions
- * on /figma/products/markets-map/world-markets-dots.svg (dot map, equirectangular, lon -130..112.4,
- * lat 59..-18, 1200x381). Regenerate the map and these numbers together if markets change.
- */
-const productMarkets: readonly MapLocation[] = [
-  {
-    name: "UAE",
-    type: "Operating site",
-    detail: "Dubai & Abu Dhabi",
-    body: "Motor Run and PFC Capacitors for GCC markets.",
-    icon: "6261e.svg",
-    region: "world",
-    world: { x: 76.1, y: 44.9 },
-  },
-  {
-    name: "USA",
-    type: "Operating site",
-    detail: "New York, Los Angeles, Houston",
-    body: "UL-certified Motor Run and PFC Capacitors for North American OEMs.",
-    icon: "a1758.svg",
-    region: "world",
-    world: { x: 13.2, y: 26 },
-  },
-  {
-    name: "Sri Lanka",
-    type: "Operating site",
-    detail: "Colombo",
-    body: "Submersible Panel and Fan Capacitors for South Asian markets.",
-    icon: "a1758.svg",
-    region: "world",
-    world: { x: 87, y: 66.4 },
-  },
-  {
-    name: "Bangladesh",
-    type: "Operating site",
-    detail: "Dhaka & Chittagong",
-    body: "Motor Start and Fan Capacitors for Bangladesh OEMs.",
-    icon: "a1758.svg",
-    region: "world",
-    world: { x: 90.9, y: 45.8 },
-  },
-  {
-    name: "Turkey",
-    type: "Office",
-    detail: "Istanbul",
-    body: "Lighting and Motor Run Capacitors for Turkey.",
-    icon: "8200f.svg",
-    region: "world",
-    world: { x: 68.1, y: 26 },
-  },
-  {
-    name: "African Continent",
-    type: "Office",
-    detail: "Lagos, Mombasa, Dar es Salaam",
-    body: "PFC Capacitors and Capacitor Banks across Africa.",
-    icon: "8200f.svg",
-    region: "world",
-    world: { x: 62.3, y: 71.4 },
-  },
-  {
-    name: "Egypt",
-    type: "In development",
-    detail: "Cairo",
-    body: "PFC and Motor Run Capacitors for Egypt.",
-    icon: "ab167.svg",
-    region: "world",
-    world: { x: 66.3, y: 41.8 },
   },
 ];
 
@@ -247,11 +176,11 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
           </div>
 
           <div className="mx-auto mt-6 max-w-[920px] text-center lg:mt-[10px]">
-            <p className="inline-flex items-center gap-2.5 text-[13px] font-medium tracking-[-0.02em] text-[#121212]">
+            <p className="type-small inline-flex items-center gap-2.5 font-medium tracking-[-0.02em] text-[#121212]">
               <span className="h-[4px] w-[4px] bg-[#4D65FF]" />
               {heroTag}
             </p>
-            <h1 className="mt-5 text-[40px] font-normal leading-[1.03] tracking-[-0.04em] text-[#020202] sm:text-[56px] lg:text-[72px]">
+            <h1 className="type-display mt-5 font-normal text-[#020202]">
               {isBoppFilm ? (
                 <>
                   Zinc/Aluminium Alloy
@@ -262,7 +191,7 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
               )}
             </h1>
             {isBoppFilm && (
-              <p className="mt-5 font-mono text-[11px] uppercase tracking-[0.08em] text-[#595959]">
+              <p className="type-caption mt-5 font-mono uppercase tracking-[0.08em] text-[#595959]">
                 {displayCategory}
               </p>
             )}
@@ -274,7 +203,7 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
       <section aria-label="Trusted by" className="pb-14 lg:pb-[88px]">
         <div className="mx-auto max-w-[1920px]">
           <div className="px-6 text-center">
-            <p className="inline-flex max-w-full items-center justify-center rounded-full bg-[#F5F5F5] px-5 py-2.5 font-mono text-[10px] uppercase leading-[1.35] tracking-[0.06em] text-[#595959]">
+            <p className="type-caption inline-flex max-w-full items-center justify-center rounded-full bg-[#F5F5F5] px-5 py-2.5 font-mono uppercase leading-[1.35] tracking-[0.06em] text-[#595959]">
               {logoTagline}
             </p>
           </div>
@@ -291,17 +220,17 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
           <div className="grid border-b border-[#E7E7E7] lg:grid-cols-2">
             {/* Top-Left Cell */}
             <div className="flex flex-col justify-between border-b border-[#E7E7E7] p-6 lg:min-h-[481px] lg:border-b-0 lg:border-r lg:p-[24px]">
-              <h2 className="text-[20px] font-normal leading-[1.2] tracking-[-0.03em] text-[#020202] lg:text-[22px]">
+              <h2 className="type-h3 font-normal text-[#020202]">
                 {infoTag}
               </h2>
-              <p className="mt-16 max-w-[420px] text-[15px] leading-[1.45] tracking-[-0.02em] text-[#404040] lg:mt-0 lg:text-[16px]">
+              <p className="type-body mt-16 max-w-[420px] text-[#404040] lg:mt-0">
                 {infoDescription}
               </p>
             </div>
 
             {/* Top-Right Cell */}
             <div className="p-6 lg:min-h-[481px] lg:p-[24px]">
-              <h2 className="text-[20px] font-normal leading-[1.2] tracking-[-0.03em] text-[#020202] lg:text-[22px]">
+              <h2 className="type-h3 font-normal text-[#020202]">
                 Technical Drawing
               </h2>
               <div className="relative mx-auto mt-10 aspect-[759/280] w-full max-w-[759px] lg:mt-[76px]">
@@ -320,11 +249,11 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
           <div className="grid lg:grid-cols-2">
             {/* Bottom-Left Cell: What's included */}
             <div className="flex flex-col border-b border-[#E7E7E7] p-6 lg:min-h-[347px] lg:border-b-0 lg:border-r lg:p-[24px]">
-              <p className="inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.08em] text-[#595959]">
+              <p className="type-caption inline-flex items-center gap-2 font-mono uppercase tracking-[0.08em] text-[#595959]">
                 <span className="h-[4px] w-[4px] bg-[#58C7E8]" />
                 {includedTag}
               </p>
-              <h2 className="mt-3 text-[20px] font-normal leading-[1.2] tracking-[-0.03em] text-[#020202] lg:text-[22px]">
+              <h2 className="type-h3 mt-3 font-normal text-[#020202]">
                 What&apos;s included
               </h2>
               <div className="mt-6 flex flex-wrap items-start gap-[10px]">
@@ -354,7 +283,7 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
 
             {/* Bottom-Right Cell: Specs */}
             <div className="p-6 lg:min-h-[347px] lg:p-[24px]">
-              <h2 className="text-[20px] font-normal leading-[1.2] tracking-[-0.03em] text-[#020202] lg:text-[22px]">
+              <h2 className="type-h3 font-normal text-[#020202]">
                 Specs
               </h2>
               <div className="mt-5">
@@ -392,12 +321,12 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
 
           {/* How We Work header */}
           <div className="mx-auto max-w-[860px] px-6 text-center">
-            <p className="inline-flex items-center gap-2.5 text-[13px] font-medium tracking-[-0.02em] text-[#121212]">
+            <p className="type-small inline-flex items-center gap-2.5 font-medium tracking-[-0.02em] text-[#121212]">
               <span className="h-[4px] w-[4px] bg-[#4D65FF]" />
               {processTag}
             </p>
             {processTagline && (
-              <h2 className="mt-5 text-[28px] font-normal leading-[1.12] tracking-[-0.04em] text-[#020202] sm:text-[36px] lg:text-[44px]">
+              <h2 className="type-h2 mt-5 font-normal text-[#020202]">
                 {processTagline}
               </h2>
             )}
@@ -407,10 +336,10 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
           <div className="mt-10 lg:mt-14">
             {/* Phase Header */}
             <div className="px-6 text-center">
-              <p className="font-mono text-[11px] uppercase tracking-[0.06em] text-[#121212]">
+              <p className="type-caption font-mono uppercase tracking-[0.06em] text-[#121212]">
                 {phaseData.phase}
               </p>
-              <p className="mt-1 font-mono text-[12px] text-[#595959]">{phaseData.category}</p>
+              <p className="type-caption mt-1 font-mono text-[#595959]">{phaseData.category}</p>
             </div>
 
             {/* Scrollable phase scale with the selected marker centered on the green guide */}
@@ -455,13 +384,13 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
                   className="pointer-events-none absolute bottom-0 right-0 h-[10px] w-[10px] border-b border-r border-[#767676]"
                 />
 
-                <p className="font-mono text-[11px] tracking-[0.08em] text-[#595959]">
+                <p className="type-caption font-mono tracking-[0.08em] text-[#595959]">
                   {phaseData.step}
                 </p>
-                <h3 className="mt-3 text-[24px] font-normal tracking-[-0.03em] text-[#121212] lg:text-[28px]">
+                <h3 className="type-h3-lg mt-3 font-normal text-[#121212]">
                   {phaseData.title}
                 </h3>
-                <p className="mt-3 max-w-[520px] text-[13px] leading-[1.45] tracking-[-0.01em] text-[#595959]">
+                <p className="type-small mt-3 max-w-[520px] leading-[1.45] tracking-[-0.01em] text-[#595959]">
                   {phaseData.description}
                 </p>
               </div>
@@ -486,14 +415,14 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
           <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <div className="flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.02em]"><span className="h-1.5 w-1.5 bg-[#58C7E8]" /> TRUST THROUGH COMPLIANCE</div>
-              <h2 className="mt-4 text-[36px] font-normal leading-[1.08] tracking-[-0.04em] sm:text-[42px] lg:text-[48px]">Certified for Quality, Safety &amp; Export</h2>
-              <p className="mt-4 max-w-[960px] text-[15px] leading-[1.5] text-[#595959] lg:text-[17px]">Industrial precision achieved through single-roof production, autonomous machinery, and stringent dielectric verification.</p>
+              <h2 className="type-h2 mt-4 font-normal">Certified for Quality, Safety &amp; Export</h2>
+              <p className="type-lead mt-4 max-w-[960px] text-[#595959]">Industrial precision achieved through single-roof production, autonomous machinery, and stringent dielectric verification.</p>
             </div>
             <a href="/catalogs/capco-product-catalog.pdf" download className="inline-flex min-h-[56px] w-full max-w-[320px] shrink-0 items-end justify-between gap-4 bg-[#58C7E8] px-4 pb-3 pt-6 text-[13px] font-medium text-[#020202]">Download Compliance Certificates (PDF)<span aria-hidden="true" className="text-xl">↓</span></a>
           </div>
           <div className="mt-12 rounded-[20px] bg-white px-4 py-8 shadow-[0_14px_44px_rgba(88,199,232,0.14)] lg:mt-[52px] lg:px-6 lg:py-[42px]">
             <div className="grid grid-cols-1 divide-y divide-[#EAEAEA] sm:grid-cols-2 sm:divide-y-0 lg:grid-cols-5 lg:divide-x lg:divide-[#EAEAEA]">
-              {certifications.map(([icon, title, sub1, sub2]) => <article key={title} className="flex flex-col items-center px-6 py-6 text-center lg:py-2"><div className="flex h-[68px] w-[68px] items-center justify-center bg-[#EEFAFF]"><img src={icon} alt={title} className="max-h-12 max-w-12" /></div><h3 className="mt-8 text-[19px] font-medium">{title}</h3><div className="my-3 h-px w-[64px] bg-[#58C7E8]" /><p className="text-[14px]">{sub1}</p><p className="mt-1 text-[12px] text-[#595959]">{sub2}</p></article>)}
+              {certifications.map(([icon, title, sub1, sub2]) => <article key={title} className="flex flex-col items-center px-6 py-6 text-center lg:py-2"><div className="flex h-[68px] w-[68px] items-center justify-center bg-[#EEFAFF]"><img src={icon} alt={title} className="max-h-12 max-w-12" /></div><h3 className="type-h4 mt-8 font-medium">{title}</h3><div className="my-3 h-px w-[64px] bg-[#58C7E8]" /><p className="type-small">{sub1}</p><p className="type-caption mt-1 text-[#595959]">{sub2}</p></article>)}
             </div>
           </div>
         </div>
@@ -505,11 +434,11 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
           {/* Section Header */}
           <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="inline-flex items-center gap-2.5 text-[13px] font-medium tracking-[-0.02em] text-[#121212]">
+              <p className="type-small inline-flex items-center gap-2.5 font-medium tracking-[-0.02em] text-[#121212]">
                 <span className="h-[4px] w-[4px] bg-[#4D65FF]" />
                 Complete Capacitors Solutions
               </p>
-              <h2 className="mt-5 text-[36px] font-normal leading-[1.02] tracking-[-0.04em] text-[#020202] sm:text-[48px] lg:mt-6 lg:text-[56px]">
+              <h2 className="type-h2 mt-5 font-normal text-[#020202] lg:mt-6">
                 Explore our full
                 <br />
                 range of capacitors.
@@ -559,14 +488,14 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
                   />
                 </div>
                 <div className="mt-[18px]">
-                  <p className="flex flex-wrap items-center gap-2.5 text-[11px] tracking-[-0.01em] text-[#121212]">
+                  <p className="type-caption flex flex-wrap items-center gap-2.5 tracking-[-0.01em] text-[#121212]">
                     <span className="font-medium">{item.date}</span>
                     <span>•</span>
                     <span>
                       Posted by <span className="text-[#999999]">{item.author}</span>
                     </span>
                   </p>
-                  <h3 className="mt-3 text-[18px] font-medium leading-[1.25] tracking-[-0.02em] text-[#020202]">
+                  <h3 className="type-h4 mt-3 font-medium text-[#020202]">
                     {item.title}
                   </h3>
                   <span className="mt-4 inline-flex items-center rounded-[4px] bg-[#F4F4F4] px-2.5 py-1.5 font-mono text-[10px] uppercase leading-none tracking-[0.04em] text-[#404040]">
@@ -580,12 +509,7 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
       </section>
 
       {/* 7. Global Footprint — "Where We Operate" (shared map, product-page markets) */}
-      <WhereWeOperateSection
-        locations={productMarkets}
-        mapSrc="/figma/products/markets-map/world-markets-dots.svg"
-        mapAspect="1200/381"
-        texasInset={null}
-      />
+      <WhereWeOperateSection locations={exportMarkets} />
 
       {false && <PublicFaqSection
         eyebrow="Technical Clarity"
@@ -601,11 +525,11 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
       {/* 8. Ready to Partner? — "Start Your OEM Journey with Capco Capacitors" */}
       <section className="bg-[#121212] px-6 py-16 text-white lg:px-[60px] lg:py-[160px]">
         <div className="mx-auto max-w-[1800px]">
-          <p className="inline-flex items-center gap-2.5 text-[13px] font-medium tracking-[-0.02em] text-white">
+          <p className="type-small inline-flex items-center gap-2.5 font-medium tracking-[-0.02em] text-white">
             <span className="h-[5px] w-[5px] bg-[#4D65FF]" />
             Ready to Partner?
           </p>
-          <h2 className="mt-6 text-[36px] font-normal leading-[1.02] tracking-[-0.05em] text-white sm:text-[52px] lg:mt-[32px] lg:text-[72px]">
+          <h2 className="type-h2 mt-6 font-normal text-white lg:mt-[32px]">
             Start Your OEM Journey
             <br />
             with Capco Capacitors
@@ -624,10 +548,10 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
                     className="object-cover"
                   />
                 </div>
-                <h3 className="mt-6 text-[14px] font-medium leading-[1.2] text-white">
+                <h3 className="type-h4 mt-6 font-medium text-white">
                   {card.title}
                 </h3>
-                <p className="mt-3.5 max-w-[400px] text-[12px] leading-[1.35] text-white/72">
+                <p className="type-small mt-3.5 max-w-[400px] leading-[1.5] text-white/72">
                   {card.body}
                 </p>
               </article>
@@ -674,8 +598,8 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
           <span className="absolute bottom-[18%] right-[15.9%] hidden h-[10px] w-[10px] border-b border-r border-white/30 lg:block" />
         </div>
         <div className="relative z-10 mx-auto max-w-[860px] text-center">
-          <h2 className="text-[36px] font-normal leading-[1.15] tracking-[-0.05em] text-white sm:text-[42px] lg:text-[48px]">Ready to Partner?</h2>
-          <p className="mx-auto mt-6 max-w-[860px] text-[16px] leading-[1.42] tracking-[-0.03em] text-white/90 lg:mt-8 lg:text-[18px]">Whether you need a single custom capacitor or a complete supply chain partnership, our OEM team is ready to support your requirements with technical expertise, competitive pricing, and reliable delivery.</p>
+          <h2 className="type-h2 font-normal text-white">Ready to Partner?</h2>
+          <p className="type-lead mx-auto mt-6 max-w-[860px] text-white/90 lg:mt-8">Whether you need a single custom capacitor or a complete supply chain partnership, our OEM team is ready to support your requirements with technical expertise, competitive pricing, and reliable delivery.</p>
           <div className="mt-8"><Link href="/contact?category=oem#enquiry-form" className="inline-flex min-h-[56px] min-w-[200px] items-end justify-between gap-4 bg-[#4E76F5] px-4 pb-3 pt-6 text-[14px] font-semibold leading-[1.2] text-white transition hover:-translate-y-0.5 hover:brightness-105" style={{ clipPath: "polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%)" }}><span>Request OEM Pricing</span><ArrowRight size={16} /></Link></div>
         </div>
       </section>
