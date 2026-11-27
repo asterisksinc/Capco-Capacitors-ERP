@@ -3,9 +3,10 @@
 /* eslint-disable @next/next/no-img-element */
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import ClientTicker from "@/components/public/ClientTicker";
+import { PhaseTimeline } from "@/components/public/PhaseTimeline";
+import { ArrowRight } from "lucide-react";
 import { PublicFaqSection, PublicNav } from "@/components/public/PublicChrome";
 import { SiteFooter } from "@/components/public/SiteFooter";
 import { type PublicProduct, publicProducts } from "@/lib/publicProducts";
@@ -98,10 +99,7 @@ type ProductDetailViewProps = {
 };
 
 export function ProductDetailView({ product, previous, next }: ProductDetailViewProps) {
-  const [activePhase, setActivePhase] = useState(0);
   const [carouselPage, setCarouselPage] = useState(0);
-  const phaseScaleRef = useRef<HTMLDivElement>(null);
-  const phaseMarkerRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   const totalPages = 4;
   const visibleProducts = [0, 1, 2].map(
@@ -115,14 +113,6 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
     step: `${String(index + 1).padStart(2, "0")} / ${String(copy?.phases.length ?? manufacturingPhases.length).padStart(2, "0")}`,
     nextPreview: index < 4 ? (copy?.phases[index + 1]?.title ?? manufacturingPhases[index + 1]?.title ?? "") : (copy?.phases[0]?.title ?? "Film Procurement"),
   }));
-  const phaseData = phaseItems[activePhase];
-  useEffect(() => {
-    const container = phaseScaleRef.current;
-    const marker = phaseMarkerRefs.current[activePhase];
-    if (container && marker) {
-      container.scrollTo({ left: Math.max(0, marker.offsetLeft - container.clientWidth / 2), behavior: "smooth" });
-    }
-  }, [activePhase]);
 
   const isBoppFilm = product.slug === "zinc-aluminium-alloy-metalised-bopp-film";
   const displayCategory = isBoppFilm
@@ -138,8 +128,6 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
   const infoDescription = copy?.description ?? product.summary;
   const includedTag = copy?.includedTag ?? "Engineered for Reliability";
   const includedItems = copy?.includedItems ?? [];
-  const processTag = copy?.processTag ?? "End-to-End Control";
-  const processTagline = copy?.processTagline;
 
   return (
     <main className="min-h-screen overflow-x-clip bg-white text-[#020202]">
@@ -195,20 +183,6 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
                 {displayCategory}
               </p>
             )}
-          </div>
-        </div>
-      </section>
-
-      {/* 3. Logo slider: trusted-by tagline + client ticker */}
-      <section aria-label="Trusted by" className="pb-14 lg:pb-[88px]">
-        <div className="mx-auto max-w-[1920px]">
-          <div className="px-6 text-center">
-            <p className="type-caption inline-flex max-w-full items-center justify-center rounded-full bg-[#F5F5F5] px-5 py-2.5 font-mono uppercase leading-[1.35] tracking-[0.06em] text-[#595959]">
-              {logoTagline}
-            </p>
-          </div>
-          <div className="mt-6 lg:mt-10">
-            <ClientTicker />
           </div>
         </div>
       </section>
@@ -275,7 +249,7 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
                   }}
                   className="inline-flex min-h-[48px] w-[260px] max-w-full items-center justify-between gap-4 bg-[#58C7E8] px-4 py-3 text-[13px] font-medium text-[#020202] transition hover:-translate-y-0.5 hover:brightness-95"
                 >
-                  <span>Download Technical Data Sheet</span>
+                  <span>{copy?.infoCta ?? "Download Technical Data Sheet"}</span>
                   <span aria-hidden="true" className="text-[16px] leading-none">↓</span>
                 </a>
               </div>
@@ -302,109 +276,25 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
         </div>
       </section>
 
-      {/* 5. How we work: product visual + end-to-end process phases */}
+      {/* 4b. Logo slider (below the product information, as in the design) */}
+      <section aria-label="Trusted by" className="pb-14 pt-12 lg:pb-[88px] lg:pt-[64px]">
+        <div className="mx-auto max-w-[1920px]">
+          <div className="px-6 text-center">
+            <p className="type-caption inline-flex max-w-full items-center justify-center rounded-full bg-[#F5F5F5] px-5 py-2.5 font-mono uppercase leading-[1.35] tracking-[0.06em] text-[#595959]">
+              {logoTagline}
+            </p>
+          </div>
+          <div className="mt-6 lg:mt-10">
+            <ClientTicker />
+          </div>
+        </div>
+      </section>
+
+      {/* 5. How we work: scroll-driven process phases */}
       <section className="pb-16 pt-14 lg:pb-[100px] lg:pt-[88px]">
         <div className="mx-auto max-w-[1920px]">
-          {/* Centered Product Visual Showcase */}
-          <div className="relative mx-auto mb-12 flex aspect-[16/10] w-full max-w-[620px] items-center justify-center px-6 lg:mb-16">
-            <div className="relative h-full w-full">
-              <Image
-                src={product.image}
-                alt={product.title}
-                fill
-                priority
-                sizes="(min-width: 1024px) 620px, 92vw"
-                className="object-contain"
-              />
-            </div>
-          </div>
-
-          {/* How We Work header */}
-          <div className="mx-auto max-w-[860px] px-6 text-center">
-            <p className="type-small inline-flex items-center gap-2.5 font-medium tracking-[-0.02em] text-[#121212]">
-              <span className="h-[4px] w-[4px] bg-[#4D65FF]" />
-              {processTag}
-            </p>
-            {processTagline && (
-              <h2 className="type-h2 mt-5 font-normal text-[#020202]">
-                {processTagline}
-              </h2>
-            )}
-          </div>
-
-          {/* Interactive Phase Timeline */}
-          <div className="mt-10 lg:mt-14">
-            {/* Phase Header */}
-            <div className="px-6 text-center">
-              <p className="type-caption font-mono uppercase tracking-[0.06em] text-[#121212]">
-                {phaseData.phase}
-              </p>
-              <p className="type-caption mt-1 font-mono text-[#595959]">{phaseData.category}</p>
-            </div>
-
-            {/* Scrollable phase scale with the selected marker centered on the green guide */}
-            <div ref={phaseScaleRef} onWheel={(event) => { if (phaseScaleRef.current && Math.abs(event.deltaY) > Math.abs(event.deltaX)) { event.preventDefault(); phaseScaleRef.current.scrollBy({ left: event.deltaY, behavior: "smooth" }); } }} className="hide-scrollbar relative mx-auto mt-3 max-w-[1800px] overflow-x-auto overscroll-x-contain px-6 lg:px-[60px]" aria-label="Scrollable phase scale">
-              <div className="relative h-[150px] min-w-[1200px] border-t border-[#DFDFDF] lg:min-w-[2200px]">
-                <div className="pointer-events-none absolute left-1/2 top-0 z-10 h-[140px] w-px -translate-x-1/2 bg-gradient-to-b from-[#00E05C] via-[#00E05C]/65 to-transparent" aria-hidden="true" />
-                <span className="pointer-events-none absolute left-1/2 -top-[5px] z-20 h-[7px] w-[7px] -translate-x-1/2 bg-[#4D65FF]" aria-hidden="true" />
-                {Array.from({ length: Math.max(phaseItems.length * 6, 6) }, (_, idx) => <span key={idx} className="absolute top-0 h-[7px] w-px bg-[#DFDFDF]" style={{ left: `${(idx / Math.max(phaseItems.length * 6 - 1, 1)) * 100}%` }} aria-hidden="true" />)}
-                {phaseItems.map((phase, index) => (
-                  <button
-                    ref={(node) => { phaseMarkerRefs.current[index] = node; }}
-                    type="button"
-                    key={phase.step}
-                    onClick={() => setActivePhase(index)}
-                    style={{ left: `${phaseItems.length === 1 ? 50 : (index / (phaseItems.length - 1)) * 100}%` }}
-                    className={`absolute top-[34px] -translate-x-1/2 cursor-pointer font-mono text-[20px] transition ${activePhase === index ? "scale-125 font-semibold text-[#121212]" : "text-[#595959] hover:scale-110 hover:text-[#121212]"}`}
-                  >
-                    {String(index + 1).padStart(2, "0")}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* L-Bracket Framed Phase Callout Card */}
-            <div className="relative mx-auto mt-16 max-w-[1800px] px-6 lg:mt-[96px] lg:px-[60px]">
-              <div className="relative mx-auto flex min-h-[220px] max-w-[1334px] flex-col items-center justify-start px-6 pt-3 pb-10 text-center lg:min-h-[248px]">
-                {/* 4 Corner L-Brackets */}
-                <span
-                  aria-hidden="true"
-                  className="pointer-events-none absolute left-0 top-0 h-[10px] w-[10px] border-l border-t border-[#767676]"
-                />
-                <span
-                  aria-hidden="true"
-                  className="pointer-events-none absolute right-0 top-0 h-[10px] w-[10px] border-r border-t border-[#767676]"
-                />
-                <span
-                  aria-hidden="true"
-                  className="pointer-events-none absolute bottom-0 left-0 h-[10px] w-[10px] border-b border-l border-[#767676]"
-                />
-                <span
-                  aria-hidden="true"
-                  className="pointer-events-none absolute bottom-0 right-0 h-[10px] w-[10px] border-b border-r border-[#767676]"
-                />
-
-                <p className="type-caption font-mono tracking-[0.08em] text-[#595959]">
-                  {phaseData.step}
-                </p>
-                <h3 className="type-h3-lg mt-3 font-normal text-[#121212]">
-                  {phaseData.title}
-                </h3>
-                <p className="type-small mt-3 max-w-[520px] leading-[1.45] tracking-[-0.01em] text-[#595959]">
-                  {phaseData.description}
-                </p>
-              </div>
-
-              {/* Faded Next Phase Preview on Right */}
-              <button
-                type="button"
-                onClick={() => setActivePhase((prev) => (prev + 1) % phaseItems.length)}
-                className="absolute right-[60px] top-[70px] hidden cursor-pointer text-[13px] tracking-[-0.01em] text-[#C8C8C8] transition hover:text-[#595959] xl:block"
-              >
-                {phaseData.nextPreview}
-              </button>
-            </div>
-          </div>
+          {/* Scroll-driven phase timeline (pins while scrolling through the phases) */}
+          <PhaseTimeline phases={phaseItems} />
         </div>
       </section>
 
@@ -414,9 +304,9 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
         <div className="relative z-10 mx-auto max-w-[1800px]">
           <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <div className="flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.02em]"><span className="h-1.5 w-1.5 bg-[#58C7E8]" /> TRUST THROUGH COMPLIANCE</div>
-              <h2 className="type-h2 mt-4 font-normal">Certified for Quality, Safety &amp; Export</h2>
-              <p className="type-lead mt-4 max-w-[960px] text-[#595959]">Industrial precision achieved through single-roof production, autonomous machinery, and stringent dielectric verification.</p>
+              <div className="flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.02em]"><span className="h-1.5 w-1.5 bg-[#58C7E8]" /> {copy?.certificationTag ?? "TRUST THROUGH COMPLIANCE"}</div>
+              <h2 className="type-h2 mt-4 max-w-[1100px] font-normal">{copy?.certificationTagline ?? <>Certified for Quality, Safety &amp; Export</>}</h2>
+              {!copy?.certificationTagline && <p className="type-lead mt-4 max-w-[960px] text-[#595959]">Industrial precision achieved through single-roof production, autonomous machinery, and stringent dielectric verification.</p>}
             </div>
             <a href="/catalogs/capco-product-catalog.pdf" download className="inline-flex min-h-[56px] w-full max-w-[320px] shrink-0 items-end justify-between gap-4 bg-[#58C7E8] px-4 pb-3 pt-6 text-[13px] font-medium text-[#020202]">Download Compliance Certificates (PDF)<span aria-hidden="true" className="text-xl">↓</span></a>
           </div>
@@ -436,12 +326,16 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
             <div>
               <p className="type-small inline-flex items-center gap-2.5 font-medium tracking-[-0.02em] text-[#121212]">
                 <span className="h-[4px] w-[4px] bg-[#4D65FF]" />
-                Complete Capacitors Solutions
+                {copy?.moreProductsTag ?? "Complete Capacitors Solutions"}
               </p>
-              <h2 className="type-h2 mt-5 font-normal text-[#020202] lg:mt-6">
-                Explore our full
-                <br />
-                range of capacitors.
+              <h2 className="type-h2 mt-5 max-w-[1000px] font-normal text-[#020202] lg:mt-6">
+                {copy?.moreProductsTagline ?? (
+                  <>
+                    Explore our full
+                    <br />
+                    range of capacitors.
+                  </>
+                )}
               </h2>
             </div>
 
@@ -511,35 +405,64 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
       {/* 7. Global Footprint — "Where We Operate" (shared map, product-page markets) */}
       <WhereWeOperateSection locations={exportMarkets} />
 
-      {false && <PublicFaqSection
-        eyebrow="Technical Clarity"
-        title="Frequently Asked Questions"
-        items={[
-          { q: "What applications is this product suited for?", a: product.summary },
-          { q: "Can CAPCO customize specifications for OEM requirements?", a: "Yes. Capacitance, housing, terminals, dimensions, and packaging can be configured to your application and assembly-line requirements." },
-          { q: "Do you provide compliance and test certificates?", a: "Every shipment can include applicable BIS, ISO, CE, and IEC documentation with batch-level test results." },
-          { q: "What is the typical lead time for bulk orders?", a: "Standard specifications are scheduled for dispatch within 7–15 working days; custom configurations are confirmed with the quotation." },
-        ]}
-      />}
 
       {/* 8. Ready to Partner? — "Start Your OEM Journey with Capco Capacitors" */}
-      <section className="bg-[#121212] px-6 py-16 text-white lg:px-[60px] lg:py-[160px]">
+      {/* Same background as the "Where We Operate" section above, so the two read as one block */}
+      <section className="bg-[#0A0A0A] px-6 py-16 text-white lg:px-[60px] lg:pb-[140px] lg:pt-[60px]">
         <div className="mx-auto max-w-[1800px]">
-          <p className="type-small inline-flex items-center gap-2.5 font-medium tracking-[-0.02em] text-white">
-            <span className="h-[5px] w-[5px] bg-[#4D65FF]" />
-            Ready to Partner?
-          </p>
-          <h2 className="type-h2 mt-6 font-normal text-white lg:mt-[32px]">
-            Start Your OEM Journey
-            <br />
-            with Capco Capacitors
-          </h2>
+          <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <p className="type-small inline-flex items-center gap-2.5 font-medium uppercase tracking-[0.02em] text-white">
+                <span className="h-[6px] w-[6px] bg-[#58C7E8]" />
+                {copy?.ctaTag ?? "Ready to Partner?"}
+              </p>
+              <h2 className="type-h2 mt-6 max-w-[1000px] font-normal text-white lg:mt-[28px]">
+                {copy?.ctaTagline ?? (
+                  <>
+                    Start Your OEM Journey
+                    <br />
+                    with Capco Capacitors
+                  </>
+                )}
+              </h2>
+            </div>
+            <div className="flex shrink-0 flex-wrap gap-3">
+            {copy?.primaryCta && (
+              <Link
+                href={`/contact?category=${/oem/i.test(copy.primaryCta) ? "oem" : /dealer/i.test(copy.primaryCta) ? "dealership" : "bulk"}#enquiry-form`}
+                style={{ clipPath: "polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%)" }}
+                className="inline-flex min-h-[56px] items-center justify-between gap-8 bg-[#58C7E8] px-4 text-[14px] font-medium leading-[1.2] !text-[#121212] transition hover:-translate-y-0.5 hover:brightness-105"
+              >
+                <span>{copy.primaryCta}</span>
+                <ArrowRight size={16} aria-hidden="true" />
+              </Link>
+            )}
+            {/* CTA beside the heading (top-right) */}
+            <Link
+              href={
+                /catalog/i.test(copy?.secondaryCta ?? "")
+                  ? "/catalogs/capco-product-catalog.pdf"
+                  : /dealer/i.test(copy?.secondaryCta ?? "")
+                    ? "/solutions/dealership"
+                    : /audit/i.test(copy?.secondaryCta ?? "")
+                      ? "/contact?category=industrial#enquiry-form"
+                      : "/contact#oem-solutions"
+              }
+              download={/catalog/i.test(copy?.secondaryCta ?? "") ? "CAPCO-Product-Catalog.pdf" : undefined}
+              style={{ clipPath: "polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%)" }}
+              className="inline-flex min-h-[56px] w-[301px] max-w-full shrink-0 items-center justify-between self-start bg-white px-4 text-[14px] font-medium leading-[1.2] !text-[#121212] transition hover:-translate-y-0.5 hover:bg-[#58C7E8] lg:self-auto"
+            >
+              <span>{copy?.secondaryCta ?? "Schedule Technical Consultation"}</span>
+              <ArrowRight size={16} aria-hidden="true" />
+            </Link>
+            </div>
+          </div>
 
           {/* 3 Rounded Image Cards */}
-          <div className="mt-12 grid gap-x-[9px] gap-y-10 md:grid-cols-3 lg:mt-[80px]">
+          <div className="mt-12 grid gap-x-3 gap-y-10 md:grid-cols-3 lg:mt-[64px]">
             {journeySteps.map((card) => (
               <article key={card.title}>
-                <div className="relative aspect-[594/600] w-full overflow-hidden rounded-[24px] lg:rounded-[32px]">
+                <div className="relative aspect-[4/3] w-full overflow-hidden rounded-[20px] lg:rounded-[24px]">
                   <Image
                     src={card.image}
                     alt={card.title}
@@ -558,51 +481,21 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
             ))}
           </div>
 
-          {/* Bottom-Left Schedule Technical Consultation Clipped White Button */}
-          <div className="mt-12 lg:mt-[64px]">
-            <Link
-              href="/contact#oem-solutions"
-              style={{
-                backgroundImage: 'url("/figma/solutions/9a91f.svg")',
-                backgroundSize: "100% 100%",
-                backgroundRepeat: "no-repeat",
-              }}
-              className="inline-flex min-h-[64px] w-[301px] max-w-full items-end justify-between px-3 pb-3 pt-6 text-[14px] font-medium leading-[1.2] text-[#121212] transition hover:-translate-y-0.5 hover:brightness-95 lg:min-h-[80px]"
-            >
-              <span>Schedule Technical Consultation</span>
-              <img src="/figma/solutions/24503.svg" alt="" aria-hidden="true" />
-            </Link>
-          </div>
         </div>
       </section>
       <PublicFaqSection
-        eyebrow="Technical Clarity"
+        eyebrow={copy?.faqTag ?? "Technical Clarity"}
         title="Frequently Asked Questions"
-        items={[
-          { q: "What applications is this product suited for?", a: product.summary },
-          { q: "Can CAPCO customize specifications for OEM requirements?", a: "Yes. Capacitance, housing, terminals, dimensions, and packaging can be configured to your application and assembly-line requirements." },
-          { q: "Do you provide compliance and test certificates?", a: "Every shipment can include applicable BIS, ISO, CE, and IEC documentation with batch-level test results." },
-          { q: "What is the typical lead time for bulk orders?", a: "Standard specifications are scheduled for dispatch within 7-15 working days; custom configurations are confirmed with the quotation." },
-        ]}
+        description={copy?.faqTagline}
+        items={
+          copy?.faqs ?? [
+            { q: "What applications is this product suited for?", a: product.summary },
+            { q: "Can CAPCO customize specifications for OEM requirements?", a: "Yes. Capacitance, housing, terminals, dimensions, and packaging can be configured to your application and assembly-line requirements." },
+            { q: "Do you provide compliance and test certificates?", a: "Every shipment can include applicable BIS, ISO, CE, and IEC documentation with batch-level test results." },
+            { q: "What is the typical lead time for bulk orders?", a: "Standard specifications are scheduled for dispatch within 7-15 working days; custom configurations are confirmed with the quotation." },
+          ]
+        }
       />
-      <section id="contact" className="hidden relative grid min-h-[560px] place-items-center overflow-hidden bg-[#121212] px-6 py-24 text-white lg:min-h-[720px] lg:px-[60px]">
-        <div className="pointer-events-none absolute inset-0" aria-hidden="true">
-          <span className="absolute left-1/2 top-1/2 h-[560px] w-[560px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/10" />
-          <span className="absolute left-1/2 top-1/2 h-[980px] w-[980px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/[0.06]" />
-          <span className="absolute left-1/2 top-1/2 h-[1500px] w-[1500px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/[0.04]" />
-          <div className="absolute left-1/2 top-1/2 h-[636px] w-[636px] -translate-x-1/2 -translate-y-1/2 bg-contain bg-no-repeat" style={{ backgroundImage: 'url("/figma/solutions/527c0.svg")' }} />
-          <div className="absolute left-1/2 top-1/2 h-[856px] w-[856px] -translate-x-1/2 -translate-y-1/2 bg-contain bg-no-repeat" style={{ backgroundImage: 'url("/figma/solutions/9c1db.svg")' }} />
-          <span className="absolute left-[15.9%] top-[18%] hidden h-[10px] w-[10px] border-l border-t border-white/30 lg:block" />
-          <span className="absolute right-[15.9%] top-[18%] hidden h-[10px] w-[10px] border-r border-t border-white/30 lg:block" />
-          <span className="absolute bottom-[18%] left-[15.9%] hidden h-[10px] w-[10px] border-b border-l border-white/30 lg:block" />
-          <span className="absolute bottom-[18%] right-[15.9%] hidden h-[10px] w-[10px] border-b border-r border-white/30 lg:block" />
-        </div>
-        <div className="relative z-10 mx-auto max-w-[860px] text-center">
-          <h2 className="type-h2 font-normal text-white">Ready to Partner?</h2>
-          <p className="type-lead mx-auto mt-6 max-w-[860px] text-white/90 lg:mt-8">Whether you need a single custom capacitor or a complete supply chain partnership, our OEM team is ready to support your requirements with technical expertise, competitive pricing, and reliable delivery.</p>
-          <div className="mt-8"><Link href="/contact?category=oem#enquiry-form" className="inline-flex min-h-[56px] min-w-[200px] items-end justify-between gap-4 bg-[#4E76F5] px-4 pb-3 pt-6 text-[14px] font-semibold leading-[1.2] text-white transition hover:-translate-y-0.5 hover:brightness-105" style={{ clipPath: "polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%)" }}><span>Request OEM Pricing</span><ArrowRight size={16} /></Link></div>
-        </div>
-      </section>
       <SiteFooter showPartnerCta />
     </main>
   );

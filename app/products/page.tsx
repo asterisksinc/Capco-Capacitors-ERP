@@ -66,13 +66,12 @@ export default function ProductsPage() {
                 <Image src={product.image} alt="" fill sizes="(min-width: 1280px) 31vw, (min-width: 768px) 47vw, 94vw" className="object-cover transition duration-500 group-hover:scale-105" />
               </div>
               <div className="mt-5 max-w-[535px]">
-                <p className="type-caption flex flex-wrap items-center gap-3 text-[#666]">
-                  <span>{product.date}</span>
-                  <span className="h-[3px] w-[3px] rounded-full bg-[#666]" />
-                  <span>{product.category}</span>
-                </p>
-                <h2 className="type-h3 mt-3 font-medium">{product.title}</h2>
-                <p className="type-small mt-5 inline-flex font-medium">Know more</p>
+                <p className="type-caption text-[#666]">{product.category}</p>
+                <h2 className="type-h4 mt-2.5 font-medium">{product.title}</h2>
+                {/* Small tag (as in the reference); the whole card is the link */}
+                <span className="type-caption mt-3 inline-block bg-[#F3F3F3] px-2 py-1 uppercase leading-none tracking-[0.04em] text-[#595959] transition group-hover:bg-[#58C7E8] group-hover:text-[#020202]">
+                  Know more
+                </span>
               </div>
             </Link>
           ))}

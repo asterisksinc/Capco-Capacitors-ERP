@@ -30,13 +30,13 @@ const project = (lat: number, lon: number) => ({
 
 /** Export markets (home page and product pages). */
 export const exportMarkets: readonly MapLocation[] = [
-  { name: "UAE", region: "Middle East", detail: "Dubai & Abu Dhabi · Motor Run and PFC Capacitors", lat: 24.4, lon: 54.4, href: "/regions/middle-east" },
+  { name: "UAE", region: "Middle East", detail: "Dubai & Abu Dhabi · Motor Run and PFC Capacitors", lat: 24.4, lon: 54.4, href: "/regions/uae" },
   { name: "USA", region: "North America", detail: "UL-certified Motor Run and PFC Capacitors", lat: 39, lon: -98, href: "/regions/usa" },
-  { name: "Sri Lanka", region: "South Asia", detail: "Submersible Panel and Fan Capacitors", lat: 7.9, lon: 80.8, href: "/regions/south-asia" },
-  { name: "Bangladesh", region: "South Asia", detail: "Motor Start and Fan Capacitors", lat: 23.7, lon: 90.4, href: "/regions/south-asia" },
-  { name: "Turkey", region: "Middle East", detail: "Lighting and Motor Run Capacitors", lat: 39, lon: 35, href: "/regions/middle-east" },
+  { name: "Sri Lanka", region: "South Asia", detail: "Submersible Panel and Fan Capacitors", lat: 7.9, lon: 80.8, href: "/regions/sri-lanka" },
+  { name: "Bangladesh", region: "South Asia", detail: "Motor Start and Fan Capacitors", lat: 23.7, lon: 90.4, href: "/regions/bangladesh" },
+  { name: "Turkey", region: "Middle East", detail: "Lighting and Motor Run Capacitors", lat: 39, lon: 35, href: "/regions/turkey" },
   { name: "African Continent", region: "Africa", detail: "PFC Capacitors and Capacitor Banks", lat: 4, lon: 21, href: "/regions/africa" },
-  { name: "Egypt", region: "Middle East", detail: "PFC and Motor Run Capacitors", lat: 26.8, lon: 30.8, href: "/regions/middle-east" },
+  { name: "Egypt", region: "Middle East", detail: "PFC and Motor Run Capacitors", lat: 26.8, lon: 30.8, href: "/regions/egypt" },
 ];
 
 /**

@@ -12,16 +12,8 @@ import {
 import JourneyRoadmap from "@/components/public/JourneyRoadmap";
 import ExportMarketsSection from "@/components/public/ExportMarketsSection";
 import HomeHero from "@/components/public/HomeHero";
-
-const HERO_STATS = [
-  ["IS:2993 / IS:13340", "BIS Certified"],
-  ["ISO 9001:2008", "TUV/5GS Audited"],
-  ["IEC 60252-1", "EU Directives"],
-  ["IEC 60831-1/2", "Self-Healing Dry"],
-  ["5,000+ Dealers", "Pan-India Stock"],
-  ["15+ Nations", "Direct Exporter"],
-  ["32+ Years", "Est. 1994"],
-] as const;
+import { CertificationStrip } from "@/components/public/CertificationStrip";
+import { clientTickerLogos } from "@/components/public/clientTickerLogos";
 
 const JOURNEY_HIGHLIGHTS = [
   {
@@ -269,28 +261,11 @@ export default function AboutPage() {
         secondary={{ label: "Explore Timeline", href: "#company-timeline" }}
         cutColor="#ffffff"
         overlay
+        descriptionAtBottom
       />
 
       {/* 2. 7-COLUMN CERTIFICATIONS & METRICS BAR (also the #compliance anchor for nav / footer links) */}
-      <section id="compliance" className="mt-8 border-y border-[#DBDBDB] bg-white py-6 lg:mt-[60px] lg:py-[40px]">
-        <div className="mx-auto grid max-w-[1920px] grid-cols-2 sm:grid-cols-3 lg:grid-cols-7">
-          {HERO_STATS.map(([title, subtitle], idx) => (
-            <div
-              key={title}
-              className={`flex flex-col items-center justify-center gap-3 px-4 py-6 text-center lg:h-[178px] lg:gap-[16px] lg:py-0 ${
-                idx < HERO_STATS.length - 1 ? "lg:border-r lg:border-[#DBDBDB]" : ""
-              }`}
-            >
-              <strong className="text-[19px] font-medium leading-none tracking-[-0.04em] text-[#020202] sm:text-[22px] lg:text-[24px]">
-                {title}
-              </strong>
-              <span className="text-[14px] font-normal leading-none text-[#595959] sm:text-[16px] lg:text-[18px]">
-                {subtitle}
-              </span>
-            </div>
-          ))}
-        </div>
-      </section>
+      <CertificationStrip id="compliance" className="mt-8 lg:mt-[60px]" />
 
       {/* 3. FULL-WIDTH GLOBAL MANUFACTURING HUB AERIAL BANNER */}
       <section className="mt-8 lg:mt-[60px]">
@@ -481,29 +456,31 @@ export default function AboutPage() {
             ENGINEERING SUPPLIER TO NATIONWIDE LEADERS &amp; GLOBAL DISTRIBUTORS
           </p>
 
-          {/* 2x5 LGPSM Logo Grid */}
+          {/* 2x5 client logo grid (same artwork as the home page logo strip) */}
           <div className="mx-auto mt-10 grid max-w-[1180px] grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-            {Array.from({ length: 10 }, (_, idx) => (
-              <div
-                key={idx}
-                style={{
-                  clipPath:
-                    "polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%)",
-                }}
-                className="flex h-[66px] items-center justify-center gap-3 bg-white px-4"
-              >
-                <svg width="26" height="20" viewBox="0 0 26 20" fill="none" aria-hidden="true">
-                  <path
-                    d="M2 2h12l4 5h-5l-2-2.5H5v8h7l2-2.5h5l-4 5H2V2z"
-                    fill="#58C7E8"
+            {clientTickerLogos
+              .filter((logo) => !logo.alt.endsWith("wordmark"))
+              .slice(0, 10)
+              .map((logo) => (
+                <div
+                  key={logo.src}
+                  style={{
+                    clipPath:
+                      "polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%)",
+                  }}
+                  className="relative flex h-[92px] items-center justify-center bg-white px-6 py-4"
+                >
+                  <Image
+                    src={logo.src}
+                    alt={logo.alt}
+                    width={logo.width}
+                    height={logo.height}
+                    sizes="140px"
+                    unoptimized={logo.src.endsWith(".gif")}
+                    className="h-full max-h-[56px] w-auto max-w-full object-contain"
                   />
-                  <path d="M15 9h9l-3 4h-6V9z" fill="#58C7E8" />
-                </svg>
-                <span className="text-[15px] font-bold tracking-[0.14em] text-[#0B1F3A]">
-                  LGPSM
-                </span>
-              </div>
-            ))}
+                </div>
+              ))}
           </div>
 
           {/* Industry Affiliations Row */}
@@ -609,7 +586,32 @@ export default function AboutPage() {
               </figcaption>
             </figure>
 
-            {/* Row 1, Col 4: /003 Automated High-Speed Winding */}
+            {/* Row 1, Col 4: /002 Vacuum Metallization */}
+            <article className="flex min-h-[320px] flex-col justify-between rounded-[16px] bg-white p-6 shadow-[0_2px_12px_rgba(0,0,0,0.03)] lg:p-7">
+              <div className="flex items-center justify-between border-b border-[#E5E5E5] pb-5">
+                <span className="type-caption font-medium tracking-[0.08em] text-[#58C7E8]">/002</span>
+                <span className="type-caption uppercase tracking-[0.1em] text-[#595959]">LEYBOLD HIGH-VACUUM</span>
+              </div>
+              <div className="my-5">
+                <h3 className="type-h4 font-medium text-[#020202]">Vacuum Metallization</h3>
+                <p className="mt-2.5 text-[13px] font-light leading-[1.55] text-[#4F4F4F]">
+                  Zinc/Aluminium alloy vapor deposition executed inside Leybold Optics chambers.
+                  Graded resistivity profile (6–9 Ω/sq) ensures optimum self-healing behavior under
+                  voltage spikes.
+                </p>
+              </div>
+              <span
+                style={{
+                  clipPath:
+                    "polygon(0 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%)",
+                }}
+                className="inline-flex h-[32px] self-start items-center bg-[#F4F4F4] px-3 text-[12px] font-medium text-[#020202]"
+              >
+                RESISTIVITY: 6-9 OHM/SQ
+              </span>
+            </article>
+
+            {/* Row 2, Col 1: /003 Automated High-Speed Winding */}
             <article className="flex min-h-[320px] flex-col justify-between rounded-[16px] bg-white p-6 shadow-[0_2px_12px_rgba(0,0,0,0.03)] lg:p-7">
               <div className="flex items-center justify-between border-b border-[#E5E5E5] pb-5">
                 <span className="type-caption font-medium tracking-[0.08em] text-[#58C7E8]">/003</span>
@@ -633,31 +635,6 @@ export default function AboutPage() {
                 className="inline-flex h-[32px] self-start items-center bg-[#F4F4F4] px-3 text-[12px] font-medium text-[#020202]"
               >
                 TOLERANCE: &lt; ±5.0% STD
-              </span>
-            </article>
-
-            {/* Row 2, Col 1: /002 Vacuum Metallization */}
-            <article className="flex min-h-[320px] flex-col justify-between rounded-[16px] bg-white p-6 shadow-[0_2px_12px_rgba(0,0,0,0.03)] lg:p-7">
-              <div className="flex items-center justify-between border-b border-[#E5E5E5] pb-5">
-                <span className="type-caption font-medium tracking-[0.08em] text-[#58C7E8]">/002</span>
-                <span className="type-caption uppercase tracking-[0.1em] text-[#595959]">LEYBOLD HIGH-VACUUM</span>
-              </div>
-              <div className="my-5">
-                <h3 className="type-h4 font-medium text-[#020202]">Vacuum Metallization</h3>
-                <p className="mt-2.5 text-[13px] font-light leading-[1.55] text-[#4F4F4F]">
-                  Zinc/Aluminium alloy vapor deposition executed inside Leybold Optics chambers.
-                  Graded resistivity profile (6–9 Ω/sq) ensures optimum self-healing behavior under
-                  voltage spikes.
-                </p>
-              </div>
-              <span
-                style={{
-                  clipPath:
-                    "polygon(0 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%)",
-                }}
-                className="inline-flex h-[32px] self-start items-center bg-[#F4F4F4] px-3 text-[12px] font-medium text-[#020202]"
-              >
-                RESISTIVITY: 6-9 OHM/SQ
               </span>
             </article>
 
@@ -717,31 +694,6 @@ export default function AboutPage() {
             </article>
           </div>
 
-          {/* Centered Schedule Virtual Factory Tour CTA */}
-          <div className="mt-12 flex justify-center lg:mt-[56px]">
-            <Link
-              href="/contact#general-enquiry"
-              style={{
-                clipPath:
-                  "polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%)",
-              }}
-              className="inline-flex min-h-[56px] w-[264px] items-end justify-between bg-[#58C7E8] px-3.5 pb-3 pt-6 text-[13px] font-medium leading-[1.2] text-[#121212] transition hover:-translate-y-0.5 hover:brightness-95"
-            >
-              <span>Schedule Virtual Factory Tour</span>
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                aria-hidden="true"
-              >
-                <rect x="2" y="6" width="14" height="12" rx="2" />
-                <path d="M22 8l-6 4 6 4V8z" />
-              </svg>
-            </Link>
-          </div>
         </div>
       </section>
 

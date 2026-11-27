@@ -5,28 +5,71 @@ import Image from "next/image";
 import { X } from "lucide-react";
 import { PublicFooter, PublicNav } from "@/components/public/PublicChrome";
 
-const galleryItems = [
-  ["gallery-01.jpg", "CORPORATE SOCIAL RESPONSIBILITY / CSR"],
-  ["gallery-02.jpg", "CORPORATE SOCIAL RESPONSIBILITY / CSR"],
-  ["gallery-03.jpg", "CORPORATE SOCIAL RESPONSIBILITY / CSR"],
-  ["gallery-04.jpg", "CORPORATE SOCIAL RESPONSIBILITY / CSR"],
-  ["gallery-05.jpg", "CORPORATE SOCIAL RESPONSIBILITY / CSR"],
-  ["gallery-06.jpg", "CORPORATE SOCIAL RESPONSIBILITY / CSR"],
-  ["gallery-07.jpg", "CORPORATE SOCIAL RESPONSIBILITY / CSR"],
-  ["gallery-08.jpg", "AWARDS"],
-  ["gallery-09.jpg", "AWARDS"],
-  ["gallery-10.jpg", "AWARDS"],
-  ["gallery-11.jpg", "AWARDS"],
-  ["gallery-12.jpg", "CERTIFICATIONS"],
-  ["gallery-13.jpg", "CERTIFICATIONS"],
-  ["gallery-14.jpg", "CERTIFICATIONS"],
-  ["gallery-15.jpg", "CERTIFICATIONS"],
-  ["gallery-16.jpg", "CERTIFICATIONS"],
-  ["gallery-17.jpg", "CERTIFICATIONS"],
-  ["gallery-18.jpg", "CERTIFICATIONS"],
-] as const;
-
 const filters = ["ALL", "CORPORATE SOCIAL RESPONSIBILITY / CSR", "AWARDS", "CERTIFICATIONS"] as const;
+
+type GalleryItem = {
+  image: string;
+  category: (typeof filters)[number];
+  title?: string;
+  /** Short line under the card title (issuer, licence no., validity). */
+  meta?: string;
+  description?: string;
+  documents?: { label: string; href: string }[];
+};
+
+const BIS = "Bureau of Indian Standards";
+
+const galleryItems: GalleryItem[] = [
+  { image: "gallery-01.jpg", category: "CORPORATE SOCIAL RESPONSIBILITY / CSR" },
+  { image: "gallery-02.jpg", category: "CORPORATE SOCIAL RESPONSIBILITY / CSR" },
+  { image: "gallery-03.jpg", category: "CORPORATE SOCIAL RESPONSIBILITY / CSR" },
+  { image: "gallery-04.jpg", category: "CORPORATE SOCIAL RESPONSIBILITY / CSR" },
+  { image: "gallery-05.jpg", category: "CORPORATE SOCIAL RESPONSIBILITY / CSR" },
+  { image: "gallery-06.jpg", category: "CORPORATE SOCIAL RESPONSIBILITY / CSR" },
+  { image: "gallery-07.jpg", category: "CORPORATE SOCIAL RESPONSIBILITY / CSR" },
+  { image: "gallery-08.jpg", category: "AWARDS" },
+  { image: "gallery-09.jpg", category: "AWARDS" },
+  { image: "gallery-10.jpg", category: "AWARDS" },
+  { image: "gallery-11.jpg", category: "AWARDS" },
+  // Current BIS licences (PDFs in /public/certifications). These supersede the 2020 copies of
+  // licences CM/L-6300073908 and CM/L-0006097778 that were previously shown as gallery-15/16.
+  {
+    image: "cert-bis-is13340.jpg",
+    category: "CERTIFICATIONS",
+    title: "BIS Licence: IS 13340 (Part 1) Shunt Power Capacitors",
+    meta: `${BIS} · CM/L-0006097778 · Valid to 31 Jan 2027`,
+    description:
+      "Self-healing shunt power (PFC) capacitors for a.c. systems rated up to 1000 V. Licence renewed from 1 Feb 2026 to 31 Jan 2027; from 10 Mar 2026 the standard is revised to IS 13340 (Part 1):2024 / IEC 60831-1:2014.",
+    documents: [
+      { label: "Renewal endorsement (Jan 2026)", href: "/certifications/13340%2001.pdf" },
+      { label: "Standard revision endorsement (Mar 2026)", href: "/certifications/13340%2002.pdf" },
+    ],
+  },
+  {
+    image: "cert-bis-is2993-part1.jpg",
+    category: "CERTIFICATIONS",
+    title: "BIS Licence: IS 2993 (Part 1) a.c. Motor Capacitors",
+    meta: `${BIS} · CM/L-6300073908 · Valid to 24 Aug 2031`,
+    description:
+      "a.c. motor (run) capacitors: general performance, testing and rating, and safety requirements (Third Revision). Licence renewed for five years in August 2026.",
+    documents: [{ label: "Renewal endorsement (Aug 2026)", href: "/certifications/299301.pdf" }],
+  },
+  {
+    image: "cert-bis-is2993-part2.jpg",
+    category: "CERTIFICATIONS",
+    title: "BIS Licence: IS 2993 (Part 2) Motor Start Capacitors",
+    meta: `${BIS} · CM/L-6300142190 · Valid to 13 Dec 2026`,
+    description:
+      "Self-healing motor start capacitors, 5 to 180 µF, rated up to 275 V, 50 Hz, climatic category 40/85/21, intermittent operation classes B, C and D, safety classes S0 and S2.",
+    documents: [{ label: "Licence for the use of Standard Mark", href: "/certifications/license%202993-2.pdf" }],
+  },
+  { image: "gallery-18.jpg", category: "CERTIFICATIONS", title: "ISO 9001:2015 Quality Management System", meta: "SM Certification Services · Certificate QMS1901557" },
+  { image: "gallery-17.jpg", category: "CERTIFICATIONS", title: "ISO 45001:2018 Occupational Health & Safety", meta: "International Standards Certification" },
+  { image: "gallery-14.jpg", category: "CERTIFICATIONS", title: "CE Certificates of Compliance", meta: "EMC & Low Voltage Directives" },
+  { image: "gallery-12.jpg", category: "CERTIFICATIONS", title: "ISO 9001:2008 Certificate of Compliance", meta: "EQRS · Manufacturing and supply of capacitors" },
+  { image: "gallery-13.jpg", category: "CERTIFICATIONS", title: "NSIC-CRISIL Performance & Credit Rating", meta: "NSIC-CRISIL · Rating SE 2B" },
+];
+
 
 export default function GalleryPage() {
   const [activeFilter, setActiveFilter] = useState<(typeof filters)[number]>("ALL");
@@ -40,8 +83,24 @@ export default function GalleryPage() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const closeTimer = useRef<number | null>(null);
 
+  // /gallery?filter=certifications (or awards / csr) opens with that filter selected.
+  useEffect(() => {
+    const wanted = new URLSearchParams(window.location.search).get("filter")?.toLowerCase();
+    if (!wanted) return;
+    const match = filters.find((f) => f !== "ALL" && f.toLowerCase().startsWith(wanted));
+    if (match) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time sync from the URL on load
+      setActiveFilter(match);
+      setShownFilter(match);
+    }
+  }, []);
+
   const changeFilter = (filter: (typeof filters)[number]) => {
     if (filter === activeFilter) return;
+    const url = new URL(window.location.href);
+    if (filter === "ALL") url.searchParams.delete("filter");
+    else url.searchParams.set("filter", filter.startsWith("CORPORATE") ? "csr" : filter.toLowerCase());
+    window.history.replaceState(null, "", url);
     setActiveFilter(filter);
     setGridVisible(false);
     if (swapTimer.current) window.clearTimeout(swapTimer.current);
@@ -92,7 +151,8 @@ export default function GalleryPage() {
 
   const visibleItems = galleryItems
     .map((item, index) => ({ item, index }))
-    .filter(({ item: [, category] }) => shownFilter === "ALL" || category === shownFilter);
+    .filter(({ item }) => shownFilter === "ALL" || item.category === shownFilter);
+  const selected = selectedItem !== null ? galleryItems[selectedItem] : null;
 
 
   return (
@@ -103,7 +163,7 @@ export default function GalleryPage() {
         <div className="mx-auto max-w-[1800px]">
           <header className="text-center">
             <h1 className="type-display font-normal">
-              Media &amp; Gallery
+              {activeFilter === "CERTIFICATIONS" ? "Certifications" : <>Media &amp; Gallery</>}
             </h1>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-2 text-[9px] uppercase tracking-[-0.02em] text-[#A2A2A2] sm:text-[10px]">
               {filters.map((filter) => (
@@ -130,9 +190,9 @@ export default function GalleryPage() {
               gridVisible ? "opacity-100" : "opacity-0"
             }`}
           >
-            {visibleItems.map(({ item: [image, category], index }, i) => (
+            {visibleItems.map(({ item, index }, i) => (
               <button
-                key={image}
+                key={item.image}
                 type="button"
                 onClick={() => openItem(index)}
                 style={{ animationDelay: `${Math.min(i, 8) * 45}ms` }}
@@ -140,8 +200,8 @@ export default function GalleryPage() {
               >
                 <div className="relative aspect-[1.37] overflow-hidden bg-[#F4F4F4]">
                   <Image
-                    src={`/figma/gallery/${image}`}
-                    alt="CAPCO award and certification gallery"
+                    src={`/figma/gallery/${item.image}`}
+                    alt={item.title ?? "CAPCO award and certification gallery"}
                     fill
                     loading="eager"
                     unoptimized
@@ -149,17 +209,13 @@ export default function GalleryPage() {
                     className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.04]"
                   />
                 </div>
-                <div className="mt-4 text-[10px] leading-none text-[#777777]">
-                  <span>08.06.2026</span>
-                  <span className="mx-2">•</span>
-                  <span>By </span>
-                  <span className="text-[#020202]">CAPCO</span>
-                </div>
-                <h2 className="type-h4 mt-3 font-medium text-[#020202]">
-                  Lorem ipsum dolor sit amet
+                {item.meta && <div className="type-caption mt-4 leading-[1.4] text-[#777777]">{item.meta}</div>}
+                <h2 className={`type-h4 font-medium text-[#020202] ${item.meta ? "mt-3" : "mt-4"}`}>
+                  {item.title ?? "Lorem ipsum dolor sit amet"}
                 </h2>
-                <p className="type-caption mt-3 inline-block bg-[#F3F3F3] px-2 py-1 uppercase leading-none tracking-[0.02em] text-[#8A8A8A]">
-                  {category}
+                <p className="type-caption mt-3 inline-flex items-center gap-2 bg-[#F3F3F3] px-2 py-1 uppercase leading-none tracking-[0.02em] text-[#8A8A8A]">
+                  {item.category}
+                  {item.documents && <span className="text-[#58C7E8]">· PDF</span>}
                 </p>
               </button>
             ))}
@@ -169,7 +225,7 @@ export default function GalleryPage() {
 
       <PublicFooter />
 
-      {selectedItem !== null && (
+      {selected && (
         <div className="fixed inset-0 z-50" role="dialog" aria-modal="true">
           <button
             type="button"
@@ -197,8 +253,8 @@ export default function GalleryPage() {
             <div className="p-6 sm:p-8 lg:p-10">
               <div className="relative aspect-[1.37] overflow-hidden bg-[#F4F4F4]">
                 <Image
-                  src={`/figma/gallery/${galleryItems[selectedItem][0]}`}
-                  alt="CAPCO award and certification gallery"
+                  src={`/figma/gallery/${selected.image}`}
+                  alt={selected.title ?? "CAPCO award and certification gallery"}
                   fill
                   unoptimized
                   sizes="760px"
@@ -207,16 +263,45 @@ export default function GalleryPage() {
               </div>
               <div className="mt-6 flex items-center justify-between gap-4 text-[12px] text-[#777777]">
                 <h2 className="type-h3-lg font-medium text-[#020202]">
-                  Lorem ipsum dolor sit amet
+                  {selected.title ?? "Lorem ipsum dolor sit amet"}
                 </h2>
-                <span className="shrink-0">08.06.2026&nbsp; • &nbsp;By <span className="text-[#020202]">logo ipsum</span></span>
               </div>
+              {selected.meta && <p className="type-small mt-2 text-[#777777]">{selected.meta}</p>}
               <p className="type-caption mt-5 inline-block bg-[#F3F3F3] px-3 py-2 uppercase text-[#777777]">
-                {galleryItems[selectedItem][1]}
+                {selected.category}
               </p>
               <p className="type-body mt-8 max-w-[640px] text-[#595959]">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
+                {selected.description ??
+                  (selected.category === "CERTIFICATIONS"
+                    ? "Certificate held by Dada Energies (P) Ltd., manufacturer of CAPCO capacitors."
+                    : "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.")}
               </p>
+              {selected.documents && (
+                <ul className="mt-8 space-y-3">
+                  {selected.documents.map((doc) => (
+                    <li key={doc.href} className="flex flex-wrap items-center justify-between gap-3 border border-[#E5E5E5] px-4 py-3">
+                      <span className="type-small font-medium text-[#020202]">{doc.label}</span>
+                      <span className="flex gap-2">
+                        <a
+                          href={doc.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="type-caption bg-[#58C7E8] px-3 py-2 font-medium uppercase tracking-[0.06em] text-[#020202] transition hover:brightness-95"
+                        >
+                          View PDF
+                        </a>
+                        <a
+                          href={doc.href}
+                          download
+                          className="type-caption bg-[#F3F3F3] px-3 py-2 font-medium uppercase tracking-[0.06em] text-[#020202] transition hover:bg-[#E6E6E6]"
+                        >
+                          Download
+                        </a>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           </aside>
         </div>

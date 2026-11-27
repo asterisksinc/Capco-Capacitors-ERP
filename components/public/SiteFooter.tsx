@@ -23,7 +23,7 @@ const linkGroups = [
     links: [
       ["Home", "/"], ["About", "/about"], ["Gallery", "/gallery"],
       ["Awards & Achievements", "/about#compliance"],
-      ["Careers", enquiry("Careers")], ["Contact", "/contact"],
+      ["Contact", "/contact"],
     ],
   },
   {
@@ -36,17 +36,35 @@ const linkGroups = [
   },
   {
     title: "Global Footprint",
-    links: ["UAE", "USA", "Sri Lanka", "Bangladesh", "Turkey", "African Continent"]
-      .map((country) => [country, enquiry(`${country} export enquiry`)]),
+    links: [
+      ["UAE", "/regions/uae"], ["USA", "/regions/usa"], ["Sri Lanka", "/regions/sri-lanka"],
+      ["Bangladesh", "/regions/bangladesh"], ["Turkey", "/regions/turkey"],
+      ["African Continent", "/regions/africa"], ["Egypt", "/regions/egypt"],
+    ],
   },
   {
     title: "Media",
     links: [
-      ["Awards", "/about#compliance"], ["Certifications", "/about#compliance"],
+      ["Awards", "/about#compliance"], ["Certifications", "/gallery?filter=certifications"],
     ],
   },
   { title: "Social", links: socialLinks },
 ];
+
+/** Final "Ready to Partner?" CTA: the home page version, used before the footer on every public page. */
+export function PartnerCtaSection({
+  title = "Ready to Partner?",
+  body = "Whether you need a single custom capacitor or a complete supply chain partnership, our OEM team is ready to support your requirements with technical expertise, competitive pricing, and reliable delivery.",
+  button = "Request OEM Pricing",
+  href = "/contact?category=oem#enquiry-form",
+}: { title?: string; body?: string; button?: string; href?: string } = {}) {
+  return (
+    <section id="contact" className="relative grid min-h-[560px] place-items-center overflow-hidden bg-[#121212] px-6 py-24 text-white lg:min-h-[720px] lg:px-[60px]">
+      <div className="pointer-events-none absolute inset-0" aria-hidden="true"><span className="absolute left-1/2 top-1/2 h-[560px] w-[560px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/10" /><span className="absolute left-1/2 top-1/2 h-[980px] w-[980px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/[0.06]" /><span className="absolute left-1/2 top-1/2 h-[1500px] w-[1500px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/[0.04]" /><div className="absolute left-1/2 top-1/2 h-[636px] w-[636px] -translate-x-1/2 -translate-y-1/2 bg-contain bg-no-repeat" style={{ backgroundImage: 'url("/figma/solutions/527c0.svg")' }} /><div className="absolute left-1/2 top-1/2 h-[856px] w-[856px] -translate-x-1/2 -translate-y-1/2 bg-contain bg-no-repeat" style={{ backgroundImage: 'url("/figma/solutions/9c1db.svg")' }} /></div>
+      <div className="relative z-10 mx-auto max-w-[860px] text-center"><h2 className="type-h2 font-normal">{title}</h2><p className="type-lead mx-auto mt-6 max-w-[860px] text-white/90 lg:mt-8">{body}</p><Link href={href} className="mt-8 inline-flex min-h-[56px] min-w-[200px] items-end justify-between gap-4 bg-[#4E76F5] px-4 pb-3 pt-6 text-[14px] font-semibold text-white transition hover:-translate-y-0.5 hover:brightness-105" style={{ clipPath: "polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%)" }}><span>{button}</span><ArrowRight size={16} /></Link></div>
+    </section>
+  );
+}
 
 export function SiteFooter({ showPartnerCta = true }: { showPartnerCta?: boolean }) {
   function handleNewsletter(event: FormEvent<HTMLFormElement>) {
@@ -59,12 +77,7 @@ export function SiteFooter({ showPartnerCta = true }: { showPartnerCta?: boolean
 
   return (
     <>
-      {showPartnerCta && (
-        <section id="contact" className="relative grid min-h-[560px] place-items-center overflow-hidden bg-[#121212] px-6 py-24 text-white lg:min-h-[720px] lg:px-[60px]">
-          <div className="pointer-events-none absolute inset-0" aria-hidden="true"><span className="absolute left-1/2 top-1/2 h-[560px] w-[560px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/10" /><span className="absolute left-1/2 top-1/2 h-[980px] w-[980px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/[0.06]" /><span className="absolute left-1/2 top-1/2 h-[1500px] w-[1500px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/[0.04]" /><div className="absolute left-1/2 top-1/2 h-[636px] w-[636px] -translate-x-1/2 -translate-y-1/2 bg-contain bg-no-repeat" style={{ backgroundImage: 'url("/figma/solutions/527c0.svg")' }} /><div className="absolute left-1/2 top-1/2 h-[856px] w-[856px] -translate-x-1/2 -translate-y-1/2 bg-contain bg-no-repeat" style={{ backgroundImage: 'url("/figma/solutions/9c1db.svg")' }} /></div>
-          <div className="relative z-10 mx-auto max-w-[860px] text-center"><h2 className="type-h2 font-normal">Ready to Partner?</h2><p className="type-lead mx-auto mt-6 max-w-[860px] text-white/90 lg:mt-8">Whether you need a single custom capacitor or a complete supply chain partnership, our OEM team is ready to support your requirements with technical expertise, competitive pricing, and reliable delivery.</p><Link href="/contact?category=oem#enquiry-form" className="mt-8 inline-flex min-h-[56px] min-w-[200px] items-end justify-between gap-4 bg-[#4E76F5] px-4 pb-3 pt-6 text-[14px] font-semibold text-white transition hover:-translate-y-0.5 hover:brightness-105" style={{ clipPath: "polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%)" }}><span>Request OEM Pricing</span><ArrowRight size={16} /></Link></div>
-        </section>
-      )}
+      {showPartnerCta && <PartnerCtaSection />}
       <footer className={styles.footer} aria-label="Site footer">
       <div className={styles.background} aria-hidden="true" />
       <div className={styles.content}>

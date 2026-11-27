@@ -1,26 +1,12 @@
 "use client";
 
-import { Pause, Play } from "lucide-react";
 import Image from "next/image";
-import { useState } from "react";
 import { clientTickerLogos } from "./clientTickerLogos";
 import styles from "./ClientTicker.module.css";
 
 export default function ClientTicker() {
-  const [paused, setPaused] = useState(false);
-
   return (
-    <section className={styles.ticker} aria-label="Client ticker" data-paused={paused}>
-      <button
-        type="button"
-        className={styles.control}
-        onClick={() => setPaused((value) => !value)}
-        aria-label={paused ? "Resume client ticker" : "Pause client ticker"}
-        aria-pressed={paused}
-      >
-        {paused ? <Play size={14} aria-hidden="true" /> : <Pause size={14} aria-hidden="true" />}
-      </button>
-
+    <section className={styles.ticker} aria-label="Client ticker">
       <div className={styles.content}>
         <div className={styles.viewport}>
           <div className={styles.logoTrack}>

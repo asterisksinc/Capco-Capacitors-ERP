@@ -1,8 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { PublicFooter, PublicNav } from "@/components/public/PublicChrome";
+import { caseStudies } from "@/lib/caseStudies";
 
-const stories = Array.from({ length: 9 }, (_, index) => ({ id: index + 1 }));
 
 export default function CaseStudiesPage() {
   return (
@@ -13,13 +13,12 @@ export default function CaseStudiesPage() {
           <p className="type-caption inline-flex items-center gap-2 font-medium uppercase tracking-[0.02em]"><span className="h-[5px] w-[5px] bg-[#58C7E8]" />Case Studies</p>
           <h1 className="type-display mt-6 max-w-[1250px] font-normal">See how CAPCO capacitors support OEMs, industries and infrastructure projects.</h1>
           <div className="mt-14 grid gap-x-6 gap-y-12 sm:grid-cols-2 lg:mt-16 lg:grid-cols-3 lg:gap-x-8 lg:gap-y-10">
-            {stories.map((story) => (
-              <Link key={story.id} href="/case-studies/detail" className="group block">
-                <div className="relative aspect-[1.37] overflow-hidden bg-[#F4F4F4]"><Image src="/figma/gallery/gallery-01.jpg" alt="CAPCO case study" fill sizes="(max-width: 639px) 100vw, (max-width: 1023px) 50vw, 33vw" className="object-cover transition duration-500 group-hover:scale-[1.02]" /></div>
-                <h2 className="type-h4 mt-4 font-medium">Lorem ipsum dolor sit amet</h2>
-                <p className="type-caption mt-2 leading-[1.4] text-[#B1B1B1]">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
-                <div className="mt-3 flex items-center gap-2 text-[9px] text-[#777777]"><span>08.06.2026</span><span>•</span><span>By logo ipsum</span></div>
-                <span className="mt-3 inline-block bg-[#F3F3F3] px-2 py-1 text-[8px] uppercase leading-none tracking-[0.02em] text-[#8A8A8A]">CORPORATE SOCIAL RESPONSIBILITY / CSR</span>
+            {caseStudies.map((story) => (
+              <Link key={story.slug} href={`/case-studies/${story.slug}`} className="group block">
+                <div className="relative aspect-[1.37] overflow-hidden bg-[#F4F4F4]"><Image src={story.image} alt={story.title} fill sizes="(max-width: 639px) 100vw, (max-width: 1023px) 50vw, 33vw" className="object-cover transition duration-500 group-hover:scale-[1.03]" /></div>
+                <h2 className="type-h4 mt-4 font-medium transition group-hover:text-[#58C7E8]">{story.title}</h2>
+                <p className="type-small mt-2 leading-[1.5] text-[#777777]">{story.summary}</p>
+                <span className="type-caption mt-3 inline-block bg-[#F3F3F3] px-2 py-1 uppercase leading-none tracking-[0.02em] text-[#8A8A8A]">{story.clientTag}</span>
               </Link>
             ))}
           </div>

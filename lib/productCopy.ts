@@ -23,6 +23,11 @@ export type ProductCopy = {
   ctaTagline: string;
   primaryCta: string;
   secondaryCta: string;
+  /** Label of the product-information button (default: Download Technical Data Sheet). */
+  infoCta?: string;
+  faqTag?: string;
+  faqTagline?: string;
+  faqs?: readonly { q: string; a: string }[];
 };
 
 const commonPhases = (phases: readonly ProductPhase[]) => phases;
@@ -53,6 +58,16 @@ export const productCopy: Record<string, ProductCopy> = {
     ctaTagline: "Partner with India’s only vertically integrated capacitor film manufacturer—Leybold-metallized, BIS-certified, export-ready.",
     primaryCta: "Request Bulk Pricing",
     secondaryCta: "Schedule Technical Consultation",
+    faqTag: "Technical Clarity",
+    faqTagline: "Answers to common questions on metallized BOPP film specs, CAPCO quality standards, and procurement.",
+    faqs: [
+      { q: "What applications is this film suited for?", a: "Ideal for AC motor run capacitors, PFC capacitors, lighting capacitors, and high-frequency UV lamp capacitors up to 450V AC." },
+      { q: "Can you customize alloy composition or thickness?", a: "Yes—we offer standard (Zn/Al) and customized alloy formulations with thickness from 3.5 to 14 microns based on your capacitance and voltage requirements." },
+      { q: "What is the lead time for bulk orders?", a: "Standard widths: 7–10 working days. Custom slitting or alloy specs: 15–20 working days post-PO." },
+      { q: "Do you provide test certificates with each shipment?", a: "Yes—every batch includes a mill certificate with thickness, resistivity, and adhesion test results traceable to BIS/CE norms." },
+      { q: "How does CAPCO film compare to imported alternatives?", a: "Our Leybold-metallized film matches European specs at 20–30% lower landed cost, with faster replenishment cycles for Indian OEMs." },
+      { q: "What’s the minimum order quantity (MOQ)?", a: "Standard rolls: 50 kg. Custom formulations: 200 kg MOQ. Export shipments: 1 MT+ preferred." },
+    ],
   },
   "fan-capacitor": {
     heroTag: "Engineered for Continuous Duty",
@@ -79,6 +94,17 @@ export const productCopy: Record<string, ProductCopy> = {
     ctaTagline: "Partner with CAPCO for bulk fan capacitor supply—Leybold-metallized film, BIS-certified, and delivered on OEM timelines.",
     primaryCta: "Request Bulk Quote",
     secondaryCta: "Become a Dealer",
+    infoCta: "View Product Catalog",
+    faqTag: "Technical Support",
+    faqTagline: "Answers to common questions on fan capacitor selection, CAPCO quality standards, and procurement.",
+    faqs: [
+      { q: "What MFD ratings are available for fan capacitors?", a: "Standard range: 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0 MFD. Custom values available on request." },
+      { q: "Can I choose between plastic and aluminium housing?", a: "Yes—both options are available. Aluminium offers better heat dissipation; plastic provides cost efficiency for high-volume OEM orders." },
+      { q: "Are these capacitors suitable for high-humidity environments?", a: "Absolutely. Our encapsulation (dry/oil) and housing design ensure reliable operation in coastal, tropical, and industrial conditions." },
+      { q: "Do you provide capacitors with custom terminal lengths or tag positions?", a: "Yes—we support OEM-specific terminal configurations (wire length, tag angle, insulation color) for assembly-line compatibility." },
+      { q: "What is the typical lifespan of a CAPCO fan capacitor?", a: "Under rated voltage and temperature: 30,000+ hours (approx. 8–10 years in continuous ceiling fan duty)." },
+      { q: "How do I place a bulk order for my fan manufacturing unit?", a: "Use our “Request Bulk Quote” form or contact our OEM sales team directly. Lead time: 7–15 days for standard specs; 20 days for custom builds." },
+    ],
   },
   "motor-run-capacitor": {
     heroTag: "Heavy-Duty Motor Support",
@@ -105,6 +131,17 @@ export const productCopy: Record<string, ProductCopy> = {
     ctaTagline: "Partner with CAPCO for motor run capacitors that meet BIS, CE, and OEM technical requirements—backed by 30+ years of vertical integration.",
     primaryCta: "Request OEM Pricing",
     secondaryCta: "Schedule Technical Call",
+    infoCta: "Download Specification Sheet",
+    faqTag: "Engineering Support",
+    faqTagline: "Answers to common questions on motor run capacitor selection, CAPCO quality benchmarks, and bulk procurement.",
+    faqs: [
+      { q: "What MFD range is available for motor run capacitors?", a: "Standard range: 0.5 to 432 MFD. Custom values (including dual-capacitance configurations) available on request for specialized motor designs." },
+      { q: "Can these capacitors handle high-temperature environments?", a: "Yes—dry encapsulation and metallized polypropylene film ensure stable operation from -25°C to +70°C ambient, suitable for tropical and industrial settings." },
+      { q: "What housing types are offered?", a: "Three options: Plastic (cost-efficient), Aluminium (superior heat dissipation), and Box-Type (for high-MFD, heavy-duty compressor applications)." },
+      { q: "Do you support custom terminal configurations for assembly lines?", a: "Absolutely—we configure wire length, tag angle, bushing size, and insulation color to match your motor assembly workflow." },
+      { q: "How does CAPCO ensure capacitance uniformity across batches?", a: "In-house Leybold metallization + Metar winding controls film thickness and layer consistency to <±5% tolerance, validated per BIS IS:2993 norms." },
+      { q: "What is the lead time for bulk OEM orders?", a: "Standard MFD ratings: 10–15 working days. Custom specs (housing, terminals, alloy): 20–25 working days post-PO confirmation." },
+    ],
   },
   "motor-start-capacitor": {
     heroTag: "High-Torque Motor Ignition",
@@ -131,6 +168,17 @@ export const productCopy: Record<string, ProductCopy> = {
     ctaTagline: "Partner with CAPCO for motor start capacitors that deliver consistent torque, extended cycle life, and OEM-ready customization.",
     primaryCta: "Request Bulk Pricing",
     secondaryCta: "Download Product Catalog",
+    infoCta: "View Technical Specifications",
+    faqTag: "Technical Guidance",
+    faqTagline: "Answers to common questions on motor start capacitor selection, CAPCO quality standards, and procurement.",
+    faqs: [
+      { q: "What MFD ratings are available for motor start capacitors?", a: "Standard pairings: 40/60, 60/80, 80/100, 100/120, 120/150, 150/200, 280/350, 300/250, 300/450, 400/500 MFD. Custom values available on request." },
+      { q: "Are these capacitors suitable for submersible pump applications?", a: "Yes—our heat & humidity-resistant design ensures reliable operation in submersible pump panels, borewell motors, and agricultural irrigation systems." },
+      { q: "What is the difference between motor start and motor run capacitors?", a: "Start capacitors provide high capacitance (40–500 MFD) for brief, high-torque motor ignition. Run capacitors (0.5–432 MFD) deliver continuous phase-shift support during operation." },
+      { q: "Can you customize capacitance values for specialized motor designs?", a: "Absolutely—we support custom MFD ratings, terminal lengths, and housing configurations to match your motor's starting torque requirements." },
+      { q: "How many start cycles can a CAPCO motor start capacitor withstand?", a: "Rated for 10,000+ start cycles under normal load conditions. Heavy-duty variants available for compressors and high-frequency start applications." },
+      { q: "What is the typical lead time for bulk OEM orders?", a: "Standard MFD pairings: 7–12 working days. Custom specifications: 15–20 working days post-PO confirmation." },
+    ],
   },
   "submersible-panel-capacitor": {
     heroTag: "Built for Underground Durability",
@@ -150,13 +198,24 @@ export const productCopy: Record<string, ProductCopy> = {
       { category: "Environmental Testing", title: "Durability Validation", description: "Tested for heat resistance (up to 70°C), humidity exposure, and voltage endurance before BIS-certified batch release." },
     ]),
     certificationTag: "Compliance for Rural Infrastructure",
-    certificationTagline: "BIS-certified manufacturing under ISO 9001:2008 QMS; suitable for government irrigation, borewell, and rural water-supply tenders.",
-    moreProductsTag: "Complete Pump Solutions",
-    moreProductsTagline: "Explore Motor Run Capacitors, Motor Start Capacitors, Fan Capacitors, and Custom Pump Capacitor Solutions.",
-    ctaTag: "Power Your Pump Network",
-    ctaTagline: "Partner with CAPCO for heat-resistant, moisture-protected capacitors built for reliable agricultural and submersible pump operation.",
+    certificationTagline: "BIS-certified manufacturing under ISO 9001:2008 QMS; suitable for government irrigation tenders and agricultural pump subsidy programs.",
+    moreProductsTag: "Complete Pump Capacitor Range",
+    moreProductsTagline: "Explore Motor Run Capacitors, Motor Start Capacitors, Fan Capacitors, and Custom Capacitor Solutions for Water Pump Applications.",
+    ctaTag: "Equip Your Pump Panels",
+    ctaTagline: "Partner with CAPCO for submersible panel capacitors that deliver reliable motor support in India’s toughest irrigation and borewell conditions.",
     primaryCta: "Request Bulk Quote",
-    secondaryCta: "Schedule Technical Consultation",
+    secondaryCta: "Become a Dealer",
+    infoCta: "Download Technical Data Sheet",
+    faqTag: "Application Support",
+    faqTagline: "Answers to common questions on submersible panel capacitor selection, CAPCO quality standards, and procurement.",
+    faqs: [
+      { q: "What MFD range is available for submersible panel capacitors?", a: "Standard range: 10, 12, 15, 20, 25, 30, 35, 40, 45, 50, 60, 70, 80, 90, 100, 110, 120 MFD. Custom values available on request for specialized pump motors." },
+      { q: "Are these capacitors suitable for single-phase and three-phase pumps?", a: "Yes—our 250V rating supports single-phase submersible pumps; 440V rating is designed for three-phase pump control panels and starter boxes." },
+      { q: "How do these capacitors handle water ingress in underground panels?", a: "Dry encapsulation with sealed plastic/aluminium housing provides IP54-level protection against moisture, dust, and humidity in submersible installations." },
+      { q: "Can you customize terminal lengths for deep borewell pump panels?", a: "Absolutely—we offer extended wire lengths, reinforced insulation, and custom tag configurations for deep borewell and agricultural irrigation applications." },
+      { q: "What is the expected lifespan in continuous pump operation?", a: "Under rated voltage and temperature: 25,000+ hours (approx. 7–9 years in typical agricultural pump duty cycles)." },
+      { q: "Do you supply capacitors for government irrigation subsidy programs?", a: "Yes—our BIS-certified manufacturing and ISO 9001:2008 QMS compliance make CAPCO capacitors eligible for state and central agricultural pump tenders." },
+    ],
   },
   "ac-refrigeration-washing-machine-capacitor": {
     heroTag: "Safety-First Appliance Support",
@@ -183,6 +242,17 @@ export const productCopy: Record<string, ProductCopy> = {
     ctaTagline: "Partner with CAPCO for P2-equipped capacitors that meet global appliance safety standards—backed by 30+ years of vertical integration.",
     primaryCta: "Request OEM Pricing",
     secondaryCta: "Schedule Technical Consultation",
+    infoCta: "View Appliance Solutions",
+    faqTag: "Safety & Compliance Support",
+    faqTagline: "Answers to common questions on P2 safety technology, capacitor selection for appliances, and CAPCO quality standards.",
+    faqs: [
+      { q: "What is P2 over-pressure disconnector technology?", a: "P2 is a safety mechanism that physically disconnects internal capacitor elements when internal pressure rises due to thermal/electrical stress, preventing casing explosion in home appliances." },
+      { q: "Which appliances require P2-equipped capacitors?", a: "Air conditioners, refrigerators, washing machines, and other sealed-compressor appliances where capacitor failure could pose safety risks to end-users." },
+      { q: "What MFD range is available for appliance capacitors?", a: "Standard range: 1.5 to 100 MFD (single and dual ratings). Custom values available for specific compressor and motor designs." },
+      { q: "Are these capacitors suitable for inverter ACs and refrigerators?", a: "Yes—our self-healing metallized film and P2 safety design ensure reliable operation in both fixed-speed and inverter-driven appliance compressors." },
+      { q: "Do you support custom terminal configurations for appliance assembly lines?", a: "Absolutely—we configure wire length, tag angle, and insulation color to match your appliance manufacturing workflow and quality standards." },
+      { q: "What certifications do CAPCO appliance capacitors carry?", a: "BIS IS:2993, IEC 60252-1 (P2 safety), ISO 9001:2008 QMS, and CE marking for export compliance to Middle East, Africa, and Southeast Asia." },
+    ],
   },
   "lighting-luminaire-capacitor": {
     heroTag: "Engineered for Continuous Illumination",
@@ -209,6 +279,17 @@ export const productCopy: Record<string, ProductCopy> = {
     ctaTagline: "Partner with CAPCO for lighting capacitors that deliver long-life performance, inbuilt safety, and compliance with public infrastructure standards.",
     primaryCta: "Request Bulk Quote",
     secondaryCta: "Become a Dealer",
+    infoCta: "Download Lighting Catalog",
+    faqTag: "Lighting Application Support",
+    faqTagline: "Answers to common questions on lighting capacitor selection, inbuilt discharge resistor benefits, and CAPCO quality standards.",
+    faqs: [
+      { q: "What MFD range is available for lighting capacitors?", a: "Standard range: 1, 1.5, 2, 2.5, 3, 3.5, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 18, 20, 22, 25, 30, 35, 40, 45 MFD. Custom values available for specialized luminaire designs." },
+      { q: "Why is the inbuilt discharge resistor important?", a: "It safely bleeds residual electrical charge after power-off, protecting maintenance personnel from electric shock during street light or luminaire servicing." },
+      { q: "Are these capacitors suitable for outdoor street lighting?", a: "Absolutely—heat & humidity-resistant encapsulation ensures reliable operation in outdoor environments, from coastal areas to high-temperature industrial zones." },
+      { q: "Can these capacitors be used in LED and HID luminaires?", a: "Yes—our capacitors support power factor correction in LED drivers, HID ballasts, fluorescent fixtures, and high-bay industrial luminaires." },
+      { q: "What is the expected lifespan in continuous street light operation?", a: "Rated for 50,000+ hours (approx. 12–15 years in typical 12-hour/day street lighting duty cycles)." },
+      { q: "Do you supply capacitors for government Smart City lighting projects?", a: "Yes—our BIS IS:1569 certification and ISO 9001:2008 QMS compliance make CAPCO capacitors eligible for municipal, state, and central government lighting tenders." },
+    ],
   },
   "uv-lamp-capacitor": {
     heroTag: "High-Frequency UV Power Support",
@@ -235,6 +316,17 @@ export const productCopy: Record<string, ProductCopy> = {
     ctaTagline: "Partner with CAPCO for UV lamp capacitors that deliver high-voltage reliability, superior heat management, and customization for your curing equipment.",
     primaryCta: "Request OEM Pricing",
     secondaryCta: "Schedule Technical Consultation",
+    infoCta: "Request Technical Specifications",
+    faqTag: "UV Application Support",
+    faqTagline: "Answers to common questions on UV lamp capacitor selection, high-voltage specifications, and CAPCO quality standards.",
+    faqs: [
+      { q: "What voltage ratings are available for UV lamp capacitors?", a: "Standard range: 230V to 4000V AC. Custom high-voltage ratings available for specialized UV ballast and curing system designs." },
+      { q: "Are these capacitors suitable for high-frequency UV ballasts?", a: "Yes—our metallized film and precision winding ensure stable capacitance at high frequencies (50/60 Hz and above) for consistent UV lamp intensity." },
+      { q: "What housing types are offered for UV capacitors?", a: "Two options: Aluminium (superior heat dissipation for high-power UV lamps) and Box-Type (for multi-terminal configurations in industrial curing systems)." },
+      { q: "Can you customize terminal pin configurations?", a: "Absolutely—we support 2, 3, 4, or 5-pin terminal layouts with custom spacing and insulation to match your UV ballast and lamp assembly requirements." },
+      { q: "How does the heat dissipation design work?", a: "Specialized aluminium housing with increased surface area and thermal conductivity channels heat away from internal elements, extending capacitor life in high-temperature UV compartments." },
+      { q: "What industries commonly use CAPCO UV lamp capacitors?", a: "Printing (offset, flexo, screen), coating (UV varnish, adhesives), wood finishing, PCB manufacturing, and industrial curing systems requiring high-intensity UV exposure." },
+    ],
   },
   "pfc-cylindrical-capacitor": {
     heroTag: "Industrial Power Factor Excellence",
@@ -261,5 +353,16 @@ export const productCopy: Record<string, ProductCopy> = {
     ctaTagline: "Partner with CAPCO for P2-equipped cylindrical capacitors that deliver safe, efficient reactive power compensation—backed by 30+ years of vertical integration.",
     primaryCta: "Request Bulk Quote",
     secondaryCta: "Schedule Power Audit",
+    infoCta: "Download PFC Technical Guide",
+    faqTag: "Power Factor Support",
+    faqTagline: "Answers to common questions on PFC capacitor selection, P2 safety technology, and CAPCO quality standards.",
+    faqs: [
+      { q: "What KVAR range is available for cylindrical PFC capacitors?", a: "Standard range: 0.5, 1, 1.5, 2, 2.5, 3, 4, 5, 6, 7.5, 8, 10, 12.5, 15, 16, 20, 25 KVAR. Custom values available for specialized APFC panel designs." },
+      { q: "What is the difference between normal duty and super heavy-duty?", a: "Normal duty: Dry resin encapsulation for standard industrial loads. Super heavy-duty: Oil-filled construction for high-harmonic environments (welding, furnaces, VFDs)." },
+      { q: "Why is P2 safety important for PFC capacitors?", a: "P2 over-pressure disconnector prevents catastrophic casing explosion during thermal/electrical stress, protecting APFC panels and facility personnel from hazardous failures." },
+      { q: "Can these capacitors be used in three-phase systems?", a: "Yes—available in single-phase (for individual phase correction) and three-phase (delta-connected) configurations for comprehensive power factor management." },
+      { q: "How do I calculate the KVAR needed for my facility?", a: "Use our power factor correction calculator or request a technical consultation. Typical industrial facilities require 20–40% of total load in KVAR for optimal correction." },
+      { q: "Are these capacitors suitable for APFC panels?", a: "Absolutely—our cylindrical capacitors are designed for direct integration into automatic power factor control (APFC) panels with contactor or thyristor switching." },
+    ],
   },
 };

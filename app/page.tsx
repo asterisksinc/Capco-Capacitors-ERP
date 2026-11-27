@@ -1,10 +1,6 @@
 "use client";
 
 /* eslint-disable @next/next/no-img-element */
-import {
-  ArrowLeft,
-  ArrowRight,
-} from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useLayoutEffect, useRef, useState } from "react";
@@ -12,13 +8,11 @@ import HomeHero from "@/components/public/HomeHero";
 import HomeMotion from "@/components/public/HomeMotion";
 import ClientTicker from "@/components/public/ClientTicker";
 import CrossFade from "@/components/public/CrossFade";
-import { exportMarkets, WhereWeOperateSection } from "@/components/public/WhereWeOperateSection";
 import {
   PublicFaqSection,
   ReadyToSpecifyCapcoSection,
 } from "@/components/public/PublicChrome";
 import { SiteFooter } from "@/components/public/SiteFooter";
-import { publicProducts } from "@/lib/publicProducts";
 
 const productLinks = [
   "/products?category=Metalized%20Polypropylene%20Film%20%5B%20MPP%20%5D", "/products?category=Fan%20Capacitors",
@@ -27,18 +21,6 @@ const productLinks = [
 ];
 
 /** Card images come from the shared product catalogue so Home and /products stay in sync. */
-const productImageSlugs = [
-  "zinc-aluminium-alloy-metalised-bopp-film",
-  "fan-capacitor",
-  "pfc-cylindrical-capacitor",
-  "lighting-luminaire-capacitor",
-  "uv-lamp-capacitor",
-  "customized-capacitor",
-];
-const productImages = productImageSlugs.map(
-  (slug) => publicProducts.find((product) => product.slug === slug)?.image ?? "/figma/products/product-11.png",
-);
-
 const products = [
   ["BOPP Substrate", "CAT: MPP-01", "Metalized Polypropylene Film (MPP)", "In-house Leybold-metallized BOPP film for self-healing, high-voltage capacitor applications.", "THICKNESS: 3.5-14 Micron", "VOLTAGE: Up to 4000V AC", "Explore MPP Film"],
   ["IS:2993 Certified", "CAT: MOT-RUN", "Fan & Motor Capacitors", "Motor run, motor start, fan, and submersible panel capacitors for HVAC, pumps, and appliances.", "RANGE: 0.5-432 MFD", "VOLTAGE: 400-440V AC", "Explore Fan & Motor"],
@@ -262,12 +244,6 @@ const manufacturingSteps = [
   },
 ] as const;
 
-const projects = [
-  ["/figma/solutions/2f1e3.png", "Product Catalogs & Spec Sheets", "Downloadable PDFs with electrical specs, BIS certifications, and installation guides for all CAPCO products.", "Browse Technical Docs"],
-  ["/figma/solutions/f5300.png", "Success Stories", "See how OEMs, dealers, and industrial buyers achieved cost savings, efficiency gains, and growth with CAPCO capacitors.", "View Case Studies"],
-  ["/figma/solutions/17639.png", "Industry Trends & Best Practices", "Power factor correction guides, capacitor selection tips, and updates on Indian electrical manufacturing.", "Read Latest Insights"],
-];
-
 function Eyebrow({ children, light = false }: { children: React.ReactNode; light?: boolean }) {
   return (
     <div className={`flex items-center gap-2 text-[14px] font-medium uppercase tracking-normal ${light ? "text-white" : "text-[#020202]"}`}>
@@ -291,8 +267,6 @@ function ButtonLink({ children, href = "/contact", light = false, muted = false,
 export default function Home() {
   const [industryIndex, setIndustryIndex] = useState(0);
   const [processIndex, setProcessIndex] = useState(0);
-  const [projectIndex, setProjectIndex] = useState(0);
-  const projectsContainerRef = useRef<HTMLDivElement | null>(null);
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const [indicator, setIndicator] = useState({ left: 0, width: 0 });
 
@@ -307,21 +281,6 @@ export default function Home() {
   }, [industryIndex]);
 
   const activeProcess = manufacturingSteps[processIndex];
-
-  const scrollToProject = (targetIdx: number) => {
-    const normalized = (targetIdx + projects.length) % projects.length;
-    setProjectIndex(normalized);
-    const container = projectsContainerRef.current;
-    if (!container) return;
-    const cards = container.querySelectorAll<HTMLElement>("[data-project-card]");
-    const card = cards[normalized];
-    if (card) {
-      container.scrollTo({
-        left: card.offsetLeft - container.offsetLeft,
-        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
-      });
-    }
-  };
 
   return (
     <main className="home-page min-h-screen bg-white text-[#020202]">
@@ -363,7 +322,7 @@ export default function Home() {
               <div className="feature-copy">
                 <div><img src="/figma/home/85f0e.svg" alt="" /><h3>{featureTitle}</h3></div>
                 <p>{featureBody}</p>
-                <ButtonLink muted href={['/about#manufacturing-line', '/about#compliance', '/solutions/dealership'][index]}>{cta}</ButtonLink>
+                <ButtonLink muted href={['/about#manufacturing-line', '/gallery?filter=certifications', '/solutions/dealership'][index]}>{cta}</ButtonLink>
               </div>
             </article>
           ))}
@@ -383,15 +342,6 @@ export default function Home() {
             {products.map(([badge, code, productTitle, productBody, specA, specB, cta], index) => (
               <article key={productTitle} className="product-card group flex min-h-[389px] flex-col justify-between gap-9 bg-[#f5f5f5] p-8">
                 <div>
-                  <div className="product-card-media relative -mx-8 -mt-8 mb-8 aspect-[16/10] overflow-hidden bg-[#e9e9e9]">
-                    <Image
-                      src={productImages[index]}
-                      alt={productTitle}
-                      fill
-                      sizes="(min-width: 1280px) 31vw, (min-width: 768px) 48vw, 100vw"
-                      className="object-cover transition-transform duration-700 ease-[cubic-bezier(.22,1,.36,1)] group-hover:scale-[1.04]"
-                    />
-                  </div>
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <span className="product-badge bg-white px-3 py-2 text-sm">{badge}</span>
                     <span className="text-sm font-medium text-[#58c7e8]">{code}</span>
@@ -739,82 +689,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
-      <section id="projects" className="bg-white px-6 py-20 lg:px-[60px] lg:py-[100px]">
-        <div className="mx-auto max-w-[1800px]">
-          <div className="flex items-end justify-between gap-4">
-            <div>
-              <Eyebrow>Knowledge Hub</Eyebrow>
-              <h2 className="type-h2 mt-6 font-normal">Technical Resources &amp; Insights</h2>
-            </div>
-            <div className="text-right">
-              <p className="type-small font-mono text-[#595959]" aria-live="polite">
-                {String(projectIndex + 1).padStart(2, "0")}/
-                {String(projects.length).padStart(2, "0")}
-              </p>
-              <div className="mt-2 flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => scrollToProject(projectIndex - 1)}
-                  className="cursor-pointer rounded-[8px] bg-white p-3 transition hover:bg-[#E8E8E8]"
-                  aria-label="Previous project"
-                >
-                  <ArrowLeft size={20} />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => scrollToProject(projectIndex + 1)}
-                  className="cursor-pointer rounded-[8px] bg-white p-3 transition hover:bg-[#E8E8E8]"
-                  aria-label="Next project"
-                >
-                  <ArrowRight size={20} />
-                </button>
-              </div>
-            </div>
-          </div>
-          <div
-            ref={projectsContainerRef}
-            onScroll={(e) => {
-              const container = e.currentTarget;
-              const cards = container.querySelectorAll<HTMLElement>("[data-project-card]");
-              let closestIdx = 0;
-              let minDiff = Infinity;
-              cards.forEach((card, idx) => {
-                const diff = Math.abs(card.offsetLeft - container.offsetLeft - container.scrollLeft);
-                if (diff < minDiff) {
-                  minDiff = diff;
-                  closestIdx = idx;
-                }
-              });
-              if (closestIdx !== projectIndex) {
-                setProjectIndex(closestIdx);
-              }
-            }}
-            className="project-list relative mt-[60px] flex snap-x snap-mandatory gap-2 overflow-x-auto scroll-smooth"
-          >
-            {projects.map(([image, projectTitle, projectBody, cta], index) => (
-              <article
-                key={projectTitle}
-                data-project-card
-                className="project-card relative w-[88vw] max-w-[1512px] shrink-0 snap-start overflow-hidden lg:w-[84%]"
-              >
-                <Image src={image} alt="" fill sizes="(min-width: 1024px) 78vw, 84vw" className="object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-b from-black/10 to-black/48" />
-                <div className="project-title">
-                  <img src={["/figma/solutions/1856e.svg", "/figma/solutions/cbe03.svg", "/figma/solutions/10f24.svg"][index]} alt="" />
-                  <h3 className="type-h3-lg mt-4 font-normal">{projectTitle}</h3>
-                </div>
-                <div className="project-detail">
-                  <p className="type-body opacity-80">{projectBody}</p>
-                  <div className="mt-8"><ButtonLink light href={["/catalogs/capco-product-catalog.pdf", "/solutions/oem", "/about#manufacturing-line"][index]} download={index === 0}>{cta}</ButtonLink></div>
-                </div>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <WhereWeOperateSection locations={exportMarkets} />
 
       <ReadyToSpecifyCapcoSection />
 

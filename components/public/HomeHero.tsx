@@ -32,6 +32,8 @@ type HomeHeroProps = {
   cutColor?: string;
   /** Darken a bright photo so the white type stays readable. */
   overlay?: boolean;
+  /** Put the description beside the buttons (bottom-right) instead of top-right; replaces the credential badges. */
+  descriptionAtBottom?: boolean;
 };
 
 function HeroButton({ action, icon, className }: { action: HeroAction; icon: string; className: string }) {
@@ -61,12 +63,13 @@ export default function HomeHero({
       BIS-certified motor run, PFC, lighting &amp; custom capacitors. In-house Leybold metallization, Metar winding, and 5,000+ dealers pan-India.
     </>
   ),
-  tags = ["Vertically Integrated Since 1994"],
+  tags = ["Vertically Integrated Since 1994", "Facility ID: HYD-TELANGANA-INDIA"],
   title = ["India's Trusted Capacitor", "Manufacturer"],
   primary = { label: "Explore Products", href: "#solutions" },
   secondary = { label: "Request Quote", href: "/contact?category=oem#enquiry-form" },
   cutColor,
   overlay = false,
+  descriptionAtBottom = false,
 }: HomeHeroProps) {
   return (
     <section
@@ -80,7 +83,7 @@ export default function HomeHero({
       {overlay && <div className={styles.overlay} aria-hidden="true" />}
       <PublicNav variant="overlay" />
       <div className={styles.content}>
-        <p className={styles.description} data-reveal>{description}</p>
+        {!descriptionAtBottom && <p className={styles.description} data-reveal>{description}</p>}
         <div className={styles.tags} data-reveal>
           {tags.map((tag) => <span key={tag}>{tag}</span>)}
         </div>
@@ -89,18 +92,23 @@ export default function HomeHero({
           <span className={styles.line}><span>{title[0]}</span></span>
           <span className={styles.line}><span>{title[1]}</span></span>
         </h1>
-        <div className={styles.actions} data-reveal>
-          <HeroButton action={primary} icon="490a3.svg" className={styles.button} />
-          <HeroButton action={secondary} icon="5ec8a.svg" className={`${styles.button} ${styles.secondary}`} />
+        <div className={descriptionAtBottom ? styles.bottomRow : undefined}>
+          <div className={styles.actions} data-reveal>
+            <HeroButton action={primary} icon="490a3.svg" className={styles.button} />
+            <HeroButton action={secondary} icon="5ec8a.svg" className={`${styles.button} ${styles.secondary}`} />
+          </div>
+          {descriptionAtBottom && <p className={styles.bottomDescription} data-reveal>{description}</p>}
         </div>
-        <div className={styles.credentials}>
-          {credentials.map(([icon, title, detail]) => (
-            <div className={styles.credential} key={title} data-reveal>
-              <img src={`/figma/solutions/${icon}`} alt="" />
-              <div><p>{title}</p><p>{detail}</p></div>
-            </div>
-          ))}
-        </div>
+        {!descriptionAtBottom && (
+          <div className={styles.credentials}>
+            {credentials.map(([icon, title, detail]) => (
+              <div className={styles.credential} key={title} data-reveal>
+                <img src={`/figma/solutions/${icon}`} alt="" />
+                <div><p>{title}</p><p>{detail}</p></div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

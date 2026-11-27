@@ -135,49 +135,39 @@ export function FourStepProcessAndTeamSection({
   teamMembers = defaultTeamMembers,
 }: FourStepProcessAndTeamSectionProps) {
   const [activeTeamIndex, setActiveTeamIndex] = useState(0);
-  const [inView, setInView] = useState(false);
   const stepsContainerRef = useRef<HTMLDivElement | null>(null);
 
-  // Cascading staggered reveal as cards scroll into view
+  // Desktop (>=1024px): diagonal glide from the reference. Cards sit in a staircase (each one step
+  // right of the card above, right edges aligned) and, as the section scrolls, the whole staircase
+  // slides left, so every card travels up-and-left and its text panel widens as it arrives.
   useEffect(() => {
     const container = stepsContainerRef.current;
     if (!container) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setInView(true);
-          }
-        });
-      },
-      {
-        root: null,
-        rootMargin: "50px",
-        threshold: 0.1,
-      }
-    );
-
-    observer.observe(container);
-    return () => observer.disconnect();
-  }, [steps]);
-
-  // Desktop stacking (>=1380px): mark a card "covered" while the next card overlaps it,
-  // so its copy fades out and never shows through the gap between the next card's two panels.
-  useEffect(() => {
-    const container = stepsContainerRef.current;
-    if (!container) return;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     let frame = 0;
+
     const update = () => {
       frame = 0;
       const cards = [...container.querySelectorAll<HTMLElement>("[data-process-card]")];
-      const stacking = window.innerWidth >= 1380;
+      if (window.innerWidth < 1024) {
+        cards.forEach((card) => card.style.removeProperty("--glide-x"));
+        return;
+      }
+      const width = container.clientWidth;
+      const vh = window.innerHeight;
+      const rect = container.getBoundingClientRect();
+      // 0 when the stack's top enters the lower part of the screen, 1 when its bottom reaches mid-screen
+      const progress = reduce
+        ? 0.5
+        : Math.min(1, Math.max(0, (vh * 0.85 - rect.top) / (rect.height + vh * 0.35)));
+      const step = width * 0.14; // horizontal step between consecutive cards
+      const base = width * 0.3; // where card 01 starts
+      const maxIndent = Math.max(0, width - 260 - 440); // keep >= 440px for the text panel
+      // travel far enough that the last card ends flush left (when its bottom reaches mid-screen)
+      const shift = progress * (base + step * (cards.length - 1));
       cards.forEach((card, i) => {
-        const next = cards[i + 1];
-        // covered as soon as the next card starts sliding over this one
-        const covered =
-          stacking && !!next && next.getBoundingClientRect().top < card.getBoundingClientRect().bottom - 24;
-        if (card.dataset.covered !== String(covered)) card.dataset.covered = String(covered);
+        const x = Math.min(maxIndent, Math.max(0, base + step * i - shift));
+        card.style.setProperty("--glide-x", `${Math.round(x)}px`);
       });
     };
     const onScroll = () => {
@@ -201,116 +191,76 @@ export function FourStepProcessAndTeamSection({
           PART 1: FOUR-STEP PROCESS (Cascading Staggered Staircase Layout)
           Recreating exact layout & animation from reference video
          ───────────────────────────────────────────────────────────── */}
-      <div className="px-6 py-20 lg:px-[60px] lg:py-32 border-b border-[#EFEFEF]">
+      <div className="border-b border-[#EFEFEF] px-6 py-20 lg:px-[60px] lg:py-32">
         <div className="mx-auto max-w-[1800px]">
-          <div className="grid grid-cols-[minmax(0,1fr)] gap-12 lg:gap-16 min-[1380px]:grid-cols-[minmax(0,1fr)_880px] min-[1600px]:grid-cols-[minmax(0,1fr)_980px]">
-            {/* Left Sticky Header */}
-            <div className="min-[1380px]:sticky min-[1380px]:top-[120px] min-[1380px]:self-start">
+          {/* Header: eyebrow + heading (left) and CTA, above the staircase; scrolls normally */}
+          <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+            <div>
               <div className="flex items-center gap-2 text-[14px] font-medium tracking-[-0.56px] text-[#1C1C1C]">
-                <span className="h-[6px] w-[6px] rounded-full bg-[#00E05C]" />
+                <span className="h-[6px] w-[6px] bg-[#58C7E8]" />
                 {processEyebrow}
               </div>
-              <h2 className="type-h2 mt-5 max-w-[460px] font-normal text-[#121212]">
+              <h2 className="type-h2 mt-5 max-w-[620px] font-normal text-[#121212]">
                 {processHeading}
               </h2>
-
-              <div className="mt-8">
-                <Link
-                  href={processCtaHref}
-                  style={{
-                    clipPath:
-                      "polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%)",
-                  }}
-                  className="inline-flex min-h-[56px] min-w-[240px] max-w-full items-center justify-between gap-6 bg-[#0092CA] px-5 py-3 text-[14px] font-medium leading-[1.2] !text-white transition hover:-translate-y-0.5 hover:brightness-105"
-                >
-                  <span className="!text-white">{processCtaText}</span>
-                  <ArrowRight size={16} className="!text-white shrink-0" />
-                </Link>
-              </div>
             </div>
-
-            {/* Right Column: 4 Staggered Staircase Cards with Cascading Reveal */}
-            <div
-              ref={stepsContainerRef}
-              className="flex w-full max-w-[980px] flex-col gap-8 pb-8 sm:gap-10"
+            <Link
+              href={processCtaHref}
+              style={{
+                clipPath:
+                  "polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%)",
+              }}
+              className="inline-flex min-h-[56px] min-w-[240px] max-w-full shrink-0 items-center justify-between gap-6 self-start bg-[#0092CA] px-5 py-3 text-[14px] font-medium leading-[1.2] !text-white transition hover:-translate-y-0.5 hover:brightness-105 lg:self-auto"
             >
-              {steps.map((step, idx) => {
-                // Indent progressively to create the staggered staircase layout shown in the video:
-                // Card 01 -> ml-0, Card 02 -> ml-8, Card 03 -> ml-16, Card 04 -> ml-24
-                const staircaseIndentClass =
-                  idx === 0
-                    ? "lg:ml-0"
-                    : idx === 1
-                    ? "lg:ml-8 xl:ml-12"
-                    : idx === 2
-                    ? "lg:ml-16 xl:ml-24"
-                    : "lg:ml-24 xl:ml-36";
+              <span className="!text-white">{processCtaText}</span>
+              <ArrowRight size={16} className="!text-white shrink-0" />
+            </Link>
+          </div>
 
-                return (
-                  <div
-                    key={step.num}
-                    data-process-card={idx}
-                    style={{
-                      // Two-column desktop: each card pins a step lower than the one before,
-                      // so scrolling stacks them into a staircase beside the sticky heading.
-                      // applied only where the cards are sticky (see min-[1380px]:top-[var(--stair-top)])
-                      ["--stair-top" as string]: `${120 + idx * 32}px`,
-                      // keeps each card's sticky range ending a step above the next, so the stack stays staggered
-                      ["--stair-end" as string]: `${(steps.length - 1 - idx) * 32}px`,
-                      transition:
-                        "opacity 800ms cubic-bezier(0.22, 1, 0.36, 1), transform 800ms cubic-bezier(0.22, 1, 0.36, 1)",
-                      transitionDelay: `${idx * 140}ms`,
-                      opacity: inView ? 1 : 0.9,
-                      transform: inView
-                        ? "translateY(0px) scale(1)"
-                        : "translateY(24px) scale(0.99)",
-                    }}
-                    className={`group flex flex-col gap-1 relative rounded-[16px] transition-shadow duration-300 sm:flex-row min-[1380px]:sticky min-[1380px]:top-[var(--stair-top)] min-[1380px]:mb-[var(--stair-end)] min-[1380px]:gap-2 ${staircaseIndentClass}`}
-                  >
-                    {/* Square Number Card with Circular Dial Pattern */}
-                    <div className="relative flex h-[280px] w-full items-center justify-center overflow-hidden rounded-[16px] bg-[#ECECEC] sm:h-[320px] sm:w-[320px] shrink-0 min-[1380px]:shadow-[0_-10px_28px_-14px_rgba(0,0,0,0.28)]">
-                      {step.dial ? (
-                        <img
-                          src={step.dial}
-                          alt=""
-                          aria-hidden="true"
-                          className="pointer-events-none absolute inset-0 m-auto h-[260px] w-[260px] opacity-70 transition-transform duration-700 ease-out group-hover:rotate-45"
-                        />
-                      ) : (
-                        <div className="pointer-events-none absolute inset-0 m-auto h-[240px] w-[240px] rounded-full border border-dashed border-black/20" />
-                      )}
-                      <span className="relative z-10 font-sans text-[76px] font-light leading-none tracking-tight text-[#121212]">
-                        {step.num}
-                      </span>
-                    </div>
+          {/* Staircase: margin-left comes from --glide-x (set on scroll, desktop only) */}
+          <div ref={stepsContainerRef} className="mt-12 flex flex-col gap-3 lg:mt-16 lg:gap-2.5">
+            {steps.map((step) => (
+              <div
+                key={step.num}
+                data-process-card
+                className="group flex flex-col gap-1 sm:flex-row sm:gap-2.5 lg:ml-[var(--glide-x,0px)] lg:will-change-[margin]"
+              >
+                {/* Number card with dial */}
+                <div className="relative flex h-[240px] w-full shrink-0 items-center justify-center overflow-hidden rounded-[16px] bg-[#ECECEC] sm:h-[260px] sm:w-[260px]">
+                  {step.dial ? (
+                    <img
+                      src={step.dial}
+                      alt=""
+                      aria-hidden="true"
+                      className="pointer-events-none absolute inset-0 m-auto h-[210px] w-[210px] opacity-70 transition-transform duration-700 ease-out group-hover:rotate-45"
+                    />
+                  ) : (
+                    <div className="pointer-events-none absolute inset-0 m-auto h-[200px] w-[200px] rounded-full border border-dashed border-black/20" />
+                  )}
+                  <span className="relative z-10 font-sans text-[64px] font-light leading-none tracking-tight text-[#121212]">
+                    {step.num}
+                  </span>
+                </div>
 
-                    {/* Rectangular Content Card aligned toward right */}
-                    <div className="flex min-h-[280px] flex-1 flex-col justify-between rounded-[16px] bg-[#ECECEC] p-8 sm:min-h-[320px] sm:p-10 min-[1380px]:shadow-[0_-10px_28px_-14px_rgba(0,0,0,0.28)]">
-                      <span className="font-mono text-[12px] font-medium uppercase tracking-[0.12em] text-[#737373] transition-opacity duration-300 group-data-[covered=true]:opacity-0">
-                        {step.label}
-                      </span>
-                      <div className="my-auto pt-4 transition-opacity duration-300 group-data-[covered=true]:opacity-0">
-                        <h3 className="type-h3 font-normal text-[#121212]">
-                          {step.title}
-                        </h3>
-                        <p className="type-small mt-3 leading-[1.6] text-[#595959]">
-                          {step.body}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2 pt-2 text-[12px] font-medium text-[#121212]/60 transition group-hover:text-[#121212] group-data-[covered=true]:opacity-0">
-                        <span>Phase Specification Locked</span>
-                        <ChevronRight size={14} />
-                      </div>
-                    </div>
+                {/* Content card: fills the rest of the row, so right edges stay aligned */}
+                <div className="flex min-h-[240px] min-w-0 flex-1 flex-col justify-between rounded-[16px] bg-[#ECECEC] p-7 sm:min-h-[260px] sm:p-8">
+                  <span className="font-mono text-[12px] font-medium uppercase tracking-[0.12em] text-[#737373]">
+                    {step.label}
+                  </span>
+                  <div className="my-auto pt-4">
+                    <h3 className="type-h3 font-normal text-[#121212]">{step.title}</h3>
+                    <p className="type-small mt-3 max-w-[560px] leading-[1.6] text-[#595959]">{step.body}</p>
                   </div>
-                );
-              })}
-            </div>
+                  <div className="flex items-center gap-2 pt-2 text-[12px] font-medium text-[#121212]/60 transition group-hover:text-[#121212]">
+                    <span>Phase Specification Locked</span>
+                    <ChevronRight size={14} />
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
-
-     
     </section>
   );
 }

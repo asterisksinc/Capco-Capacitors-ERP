@@ -3,20 +3,22 @@
 /* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
 import HomeHero from "@/components/public/HomeHero";
+import { caseStudies } from "@/lib/caseStudies";
+import { CertificationStrip } from "@/components/public/CertificationStrip";
 import { useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
   Download,
   Plus,
-  Minus,
   X,
 } from "lucide-react";
 import {
   PublicFooter,
+  PublicFaqSection,
 } from "@/components/public/PublicChrome";
 import { FourStepProcessAndTeamSection } from "@/components/public/FourStepProcessAndTeamSection";
-import { WhereWeOperateSection } from "@/components/public/WhereWeOperateSection";
+import { exportMarkets, WhereWeOperateSection } from "@/components/public/WhereWeOperateSection";
 
 const oemCapabilities = [
   {
@@ -68,64 +70,7 @@ const developmentSteps = [
   },
 ] as const;
 
-const oemStories = [
-  {
-    image: "/figma/solutions/946c5.png",
-    clientTag: "HVAC OEM Client Case",
-    title: "Leading HVAC OEM Reduces Capacitor Costs by 28%",
-    stats: [
-      { label: "[CR]", value: "28%" },
-      { label: "[FR]", value: "60%" },
-      { label: "[ZQI]", value: "18 Months" },
-    ],
-    summary:
-      "High landed cost of imported motor run capacitors with 12-week lead times. Capcocapacitors co-engineered equivalent capacitors with Leybold metallization, delivered in 10 days.",
-    fullText:
-      "A Tier-1 HVAC manufacturer was experiencing severe supply disruptions and escalating import duties on European-sourced motor run capacitors. CAPCO's engineering team reverse-engineered the dielectric stack and qualified a custom P2 burst-proof polypropylene capacitor within 3 weeks. Full volume production transitioned within 60 days, cutting unit costs by 28% and stabilizing assembly line inventory with buffer stock held in Hyderabad.",
-  },
-  {
-    image: "/figma/solutions/4596c.png",
-    clientTag: "Agricultural Pump OEM",
-    title: "Submersible Pump OEM Achieves Burst-Proof Reliability Across Rural Grids",
-    stats: [
-      { label: "[FR]", value: "-64%" },
-      { label: "[LT]", value: "10 Days" },
-      { label: "[IS]", value: "IS:2993" },
-    ],
-    summary:
-      "Rural voltage surges between 140V and 500V caused frequent capacitor failures in agricultural borewell pumps. CAPCO engineered a high-surge self-healing capacitor with reinforced dielectric margins.",
-    fullText:
-      "Operating in agricultural zones with severe phase fluctuations, western pump manufacturers suffered warranty returns exceeding 8%. CAPCO deployed custom MPP film with zinc-heavy edges and high-temperature polyurethane resin encapsulation. Field warranty claims plummeted by 64% over two monsoon seasons, making CAPCO their exclusive factory-installed capacitor partner.",
-  },
-  {
-    image: "/figma/solutions/34685.png",
-    clientTag: "Industrial EPC & APFC",
-    title: "APFC Panel Builder Delivers 35% Space Saving with Modular 150 KVAR Banks",
-    stats: [
-      { label: "[SS]", value: "35%" },
-      { label: "[PF]", value: "0.99" },
-      { label: "[IS]", value: "IS:13340" },
-    ],
-    summary:
-      "Heavy automotive stamping facility required high harmonic endurance in compact switchgear enclosures. CAPCO delivered modular cylindrical PFC cells rated for continuous 24/7 duty.",
-    fullText:
-      "Space constraints inside plant electrical substations restricted conventional box-type capacitor banks. CAPCO engineered compact 25 KVAR cylindrical cells with overpressure disconnectors, enabling 150 KVAR modular rack integration in 35% less enclosure footprint while maintaining power factor strictly at 0.99 under fluctuating robotic stamping loads.",
-  },
-  {
-    image: "/figma/solutions/bec3c.png",
-    clientTag: "Appliance Tier-1 OEM",
-    title: "Consumer Appliance Manufacturer Validates 30,000-Hour Operating Life",
-    stats: [
-      { label: "[LIFE]", value: "30,000h" },
-      { label: "[DF]", value: "<0.002" },
-      { label: "[CERT]", value: "CE / RoHS" },
-    ],
-    summary:
-      "Front-load washing machine manufacturer required Class-B 10,000h certified capacitors with integrated bleeder resistors and compact quick-connect terminals.",
-    fullText:
-      "To meet global export standards across Middle Eastern and European appliance markets, this manufacturer required dual BIS & CE conformity. CAPCO designed a low-loss polypropylene motor capacitor with integrated safety disconnectors and tan-delta loss below 0.0018, passing 30,000 hours of continuous accelerated thermal life testing.",
-  },
-] as const;
+const oemStories = caseStudies;
 
 const oemProducts = [
   {
@@ -236,7 +181,6 @@ export function OemSolutionView() {
   const [selectedStory, setSelectedStory] = useState<(typeof oemStories)[number] | null>(null);
   const [storyOpen, setStoryOpen] = useState(false);
   const storyCloseTimer = useRef<number | null>(null);
-  const [activeFaq, setActiveFaq] = useState<number | null>(null);
 
   const storiesScrollRef = useRef<HTMLDivElement | null>(null);
 
@@ -444,53 +388,17 @@ export function OemSolutionView() {
         teamHeading="Deep operating experience across development, delivery and dispatch"
       />
 
-      {/* 4. Client Logos Bar (5-Column Grid with Divider Lines) */}
-      <section className="border-y border-[#E4E4E4] bg-white">
-        <div className="mx-auto max-w-[1920px]">
-          <div className="grid grid-cols-2 divide-x divide-[#E4E4E4] sm:grid-cols-3 lg:grid-cols-5">
-            {[1, 2, 3, 4, 5].map((item) => (
-              <div
-                key={item}
-                className="flex h-[140px] items-center justify-center px-6 transition hover:opacity-80 lg:h-[160px]"
-              >
-                <svg
-                  width="140"
-                  height="32"
-                  viewBox="0 0 140 32"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-7 w-auto"
-                >
-                  <path
-                    d="M12.5 7C7.8 7 4 10.8 4 15.5C4 20.2 7.8 24 12.5 24C16.2 24 19.3 21.6 20.5 18.2C21.7 21.6 24.8 24 28.5 24C33.2 24 37 20.2 37 15.5C37 10.8 33.2 7 28.5 7C24.8 7 21.7 9.4 20.5 12.8C19.3 9.4 16.2 7 12.5 7ZM12.5 11C15 11 17 13 17 15.5C17 18 15 20 12.5 20C10 20 8 18 8 15.5C8 13 10 11 12.5 11ZM28.5 11C31 11 33 13 33 15.5C33 18 31 20 28.5 20C26 20 24 18 24 15.5C24 13 26 11 28.5 11Z"
-                    fill="#020202"
-                  />
-                  <text
-                    x="44"
-                    y="21"
-                    fontFamily="system-ui, -apple-system, sans-serif"
-                    fontSize="13"
-                    fontWeight="800"
-                    letterSpacing="0.1em"
-                    fill="#020202"
-                  >
-                    LOGOIPSUM
-                  </text>
-                </svg>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* 4. Certifications & key numbers (shared with the About page) */}
+      <CertificationStrip />
 
-      {/* 5. OEM Success Stories Carousel */}
-      <section className="bg-white px-6 py-20 lg:px-[60px] lg:py-32">
+      {/* 5. OEM Success Stories Carousel: whole section sized to ~80vh on desktop */}
+      <section id="oem-stories" className="bg-white px-6 py-20 lg:px-[60px] lg:py-12">
         <div className="mx-auto max-w-[1800px]">
           {/* Header Row */}
           <div className="flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
             <div>
               <div className="flex items-center gap-2 text-[14px] font-medium tracking-[0.02em] text-[#020202]">
-                <span className="h-[6px] w-[6px] bg-[#00E05C]" />
+                <span className="h-[6px] w-[6px] bg-[#58C7E8]" />
                 Proven Partnerships
               </div>
               <h2 className="type-h2 mt-4 font-normal text-[#020202]">
@@ -525,7 +433,7 @@ export function OemSolutionView() {
           {/* Stories Horizontal Track */}
           <div
             ref={storiesScrollRef}
-            className="mt-12 flex gap-6 overflow-x-auto overscroll-x-contain pb-4 scrollbar-none"
+            className="mt-12 flex gap-6 overflow-x-auto overscroll-x-contain pb-4 hide-scrollbar lg:mt-8"
             style={{ scrollSnapType: "x mandatory" }}
           >
             {oemStories.map((story) => (
@@ -543,7 +451,7 @@ export function OemSolutionView() {
                 tabIndex={0}
                 aria-label={`Read case study: ${story.title}`}
                 style={{ scrollSnapAlign: "start" }}
-                className="group relative h-[560px] w-[88vw] max-w-[1512px] shrink-0 cursor-pointer overflow-hidden rounded-[32px] bg-[#1A1A1A] transition-shadow duration-300 hover:shadow-2xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#58C7E8] lg:h-[864px] lg:w-[1512px]"
+                className="group relative h-[560px] w-[88vw] lg:h-[max(380px,calc(80svh-236px))] max-w-[1512px] shrink-0 cursor-pointer overflow-hidden rounded-[32px] bg-[#1A1A1A] transition-shadow duration-300 hover:shadow-2xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#58C7E8] lg:w-[min(1512px,92%)]"
               >
                 {/* Background Image */}
                 <img
@@ -653,7 +561,13 @@ export function OemSolutionView() {
             <p className="type-body text-white/80">
               {selectedStory.fullText}
             </p>
-            <div className="mt-8 flex justify-end">
+            <div className="mt-8 flex flex-wrap items-center justify-end gap-3">
+              <Link
+                href={`/case-studies/${selectedStory.slug}`}
+                className="rounded-full border border-white/30 px-6 py-2.5 text-[14px] font-semibold !text-white transition hover:bg-white hover:!text-black"
+              >
+                Read full case study
+              </Link>
               <button
                 type="button"
                 onClick={closeStory}
@@ -757,7 +671,7 @@ export function OemSolutionView() {
       </section>
 
       {/* 7. Where We Operate */}
-      <WhereWeOperateSection />
+      <WhereWeOperateSection locations={exportMarkets} />
 
       {/* 8. Start Your OEM Journey with Capco Capacitors */}
       <section className="bg-[#000000] px-6 py-20 text-white lg:px-[60px] lg:py-32">
@@ -843,110 +757,12 @@ export function OemSolutionView() {
         </div>
       </section>
 
-      {/* 9. Frequently Asked Questions */}
-      <section className="bg-white px-6 py-20 lg:px-[60px] lg:py-32">
-        <div className="mx-auto max-w-[1200px]">
-          {/* Eyebrow & Title */}
-          <div className="text-center">
-            <div className="inline-flex items-center gap-2 text-[14px] font-medium tracking-[0.02em] text-[#020202]">
-              <span className="h-[6px] w-[6px] bg-[#58C7E8]" />
-              OEM Partnership Clarity
-            </div>
-            <h2 className="type-h2 mt-4 font-normal text-[#020202]">
-              Frequently Asked Questions
-            </h2>
-          </div>
+      {/* 9. Frequently Asked Questions (same component as the home page) */}
+      <PublicFaqSection items={oemFaqs} />
 
-          {/* Accordion Cards */}
-          <div className="mt-12 flex flex-col gap-4">
-            {oemFaqs.map((faq, idx) => {
-              const isOpen = activeFaq === idx;
-              return (
-                <div
-                  key={faq.q}
-                  className={`rounded-[16px] p-6 transition-colors duration-300 sm:p-7 ${isOpen ? "bg-[#EEFAFF]" : "bg-[#F5F5F5] hover:bg-[#EFEFEF]"}`}
-                >
-                  <button
-                    type="button"
-                    onClick={() => setActiveFaq(isOpen ? null : idx)}
-                    aria-expanded={isOpen}
-                    aria-controls={`oem-faq-${idx}`}
-                    className="flex w-full cursor-pointer items-center justify-between gap-4 text-left"
-                  >
-                    <span className="text-[17px] font-medium text-[#020202] sm:text-[19px]">
-                      {faq.q}
-                    </span>
-                    <span className="relative grid h-9 w-9 shrink-0 place-items-center rounded-[8px] bg-[#222222] text-white transition-colors hover:bg-black">
-                      <Minus size={16} className="absolute" />
-                      <Minus
-                        size={16}
-                        className={`absolute transition-transform duration-300 ease-out ${isOpen ? "rotate-0" : "rotate-90"}`}
-                      />
-                    </span>
-                  </button>
-                  <div
-                    id={`oem-faq-${idx}`}
-                    inert={!isOpen}
-                    className={`grid transition-[grid-template-rows,opacity] duration-300 ease-out ${
-                      isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-                    }`}
-                  >
-                    <div className="overflow-hidden">
-                      <p className="type-body pt-4 text-[#595959]">{faq.a}</p>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* 10. Ready to Partner? CTA Banner (Radar Background) */}
-      <section className="relative overflow-hidden bg-[#0A0A0A] px-6 py-24 text-center text-white lg:px-[60px] lg:py-36">
-        {/* Subtle Concentric Radar Radial Dial */}
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-15">
-          <svg
-            width="1200"
-            height="1200"
-            viewBox="0 0 1200 1200"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className="animate-pulse"
-          >
-            <circle cx="600" cy="600" r="200" stroke="#FFFFFF" strokeWidth="1" strokeDasharray="4 4" />
-            <circle cx="600" cy="600" r="380" stroke="#FFFFFF" strokeWidth="1" strokeDasharray="6 6" />
-            <circle cx="600" cy="600" r="540" stroke="#FFFFFF" strokeWidth="1" strokeDasharray="8 8" />
-            <line x1="600" y1="50" x2="600" y2="1150" stroke="#FFFFFF" strokeWidth="0.5" strokeOpacity="0.4" />
-            <line x1="50" y1="600" x2="1150" y2="600" stroke="#FFFFFF" strokeWidth="0.5" strokeOpacity="0.4" />
-          </svg>
-        </div>
-
-        <div className="relative z-10 mx-auto max-w-[800px]">
-          <h2 className="type-h2 font-light text-white">
-            Ready to Partner?
-          </h2>
-          <p className="type-lead mx-auto mt-5 max-w-[680px] text-[#A1A1A1]">
-            Whether you need a single custom capacitor or a complete supply chain partnership, our OEM team is ready to support your requirements with technical expertise, competitive pricing, and reliable delivery.
-          </p>
-          <div className="mt-10 flex justify-center">
-            <Link
-              href="/contact?category=oem#enquiry-form"
-              style={{
-                clipPath:
-                  "polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%)",
-              }}
-              className="inline-flex min-h-[56px] min-w-[240px] items-center justify-between gap-6 bg-[#4E76F5] px-6 py-3.5 text-[15px] font-semibold !text-white transition hover:-translate-y-0.5 hover:brightness-110"
-            >
-              <span className="!text-white">Request OEM Pricing</span>
-              <ArrowRight size={18} className="!text-white shrink-0" />
-            </Link>
-          </div>
-        </div>
-      </section>
 
       {/* 11. Public Footer (Clean, matching Figma reference with hideCta to prevent duplicate CTA) */}
-      <PublicFooter hideCta={true} />
+      <PublicFooter />
     </main>
   );
 }
