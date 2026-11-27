@@ -2751,12 +2751,12 @@ export default function ContactPage() {
               <span className="text-[14px] font-normal uppercase leading-[1.2] text-white/50 sm:text-[16px]">
                 COMMERCIAL DESK PHONE
               </span>
-              <div className="flex h-[112px] w-[112px] items-center justify-center rounded-full border border-white/50 transition group-hover:border-[#58C7E8] sm:h-[156px] sm:w-[156px]">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full border border-white/50 transition group-hover:border-[#58C7E8] sm:h-[96px] sm:w-[96px] lg:h-[120px] lg:w-[120px]">
                 <img
                   src="/figma/solutions/45042.svg"
                   alt=""
                   aria-hidden="true"
-                  className="h-[30px] w-[30px] sm:h-[38px] sm:w-[38px]"
+                  className="h-[22px] w-[22px] sm:h-[30px] sm:w-[30px] lg:h-[34px] lg:w-[34px]"
                 />
               </div>
               <span className="text-[16px] font-normal leading-[1.4] text-white transition group-hover:text-[#58C7E8] sm:text-[18px]">
@@ -2771,13 +2771,11 @@ export default function ContactPage() {
               <span className="text-[14px] font-normal uppercase leading-[1.2] text-white/50 sm:text-[16px]">
                 DEPARTMENT EMAIL DESK
               </span>
-              <div className="flex h-[112px] w-[112px] items-center justify-center rounded-full border border-white/50 transition group-hover:border-[#58C7E8] sm:h-[156px] sm:w-[156px]">
-                <img
-                  src="/figma/solutions/1a3aa.svg"
-                  alt=""
-                  aria-hidden="true"
-                  className="h-[28px] w-[28px] sm:h-[36px] sm:w-[36px]"
-                />
+              <div className="flex h-16 w-16 items-center justify-center rounded-full border border-white/50 transition group-hover:border-[#58C7E8] sm:h-[96px] sm:w-[96px] lg:h-[120px] lg:w-[120px]">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="h-[22px] w-[22px] text-white sm:h-[30px] sm:w-[30px] lg:h-[34px] lg:w-[34px]">
+                  <rect x="3" y="5" width="18" height="14" rx="2" />
+                  <path d="m3 7 9 6 9-6" />
+                </svg>
               </div>
               <span className="text-[16px] font-normal leading-[1.4] text-white transition group-hover:text-[#58C7E8] sm:text-[18px]">
                 info@capcocapacitor.com

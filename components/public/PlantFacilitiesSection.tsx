@@ -56,8 +56,8 @@ export function PlantFacilitiesSection() {
           ].map(({ label, value, href, Icon }) => (
             <a key={label} href={href} className="group min-w-0">
               <span className="type-caption block uppercase tracking-[0.08em] text-white/50">{label}</span>
-              <span className="mt-6 grid h-16 w-16 place-items-center rounded-full border border-white/25 lg:h-[72px] lg:w-[72px] text-white transition group-hover:border-[#58C7E8] group-hover:text-[#58C7E8]">
-                <Icon size={26} strokeWidth={1.5} />
+              <span className="mt-4 grid h-12 w-12 place-items-center rounded-full border border-white/25 sm:mt-6 sm:h-16 sm:w-16 lg:h-[72px] lg:w-[72px] text-white transition group-hover:border-[#58C7E8] group-hover:text-[#58C7E8]">
+                <Icon className="h-5 w-5 sm:h-[26px] sm:w-[26px]" strokeWidth={1.5} />
               </span>
               <span className="type-body mt-6 block break-words text-white transition group-hover:text-[#58C7E8]">{value}</span>
             </a>

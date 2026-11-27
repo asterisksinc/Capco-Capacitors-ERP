@@ -417,7 +417,7 @@ export function OemSolutionView() {
                 aria-label={!story.published ? `${story.title} (coming soon)` : `Read case study: ${story.title}`}
                 aria-disabled={!story.published || undefined}
                 style={{ scrollSnapAlign: "start" }}
-                className={`group relative ${!story.published ? "cursor-default" : "cursor-pointer"} h-[560px] w-[88vw] lg:h-[max(380px,calc(80svh-236px))] max-w-[1512px] shrink-0 overflow-hidden rounded-[32px] bg-[#1A1A1A] transition-shadow duration-300 ${!story.published ? "" : "hover:shadow-2xl"} focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#58C7E8] lg:w-[min(1512px,92%)]`}
+                className={`group relative ${!story.published ? "cursor-default" : "cursor-pointer"} min-h-[560px] w-[88vw] sm:h-[560px] lg:h-[max(380px,calc(80svh-236px))] lg:min-h-0 max-w-[1512px] shrink-0 overflow-hidden rounded-[32px] bg-[#1A1A1A] transition-shadow duration-300 ${!story.published ? "" : "hover:shadow-2xl"} focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#58C7E8] lg:w-[min(1512px,92%)]`}
               >
                 {/* Background Image */}
                 <img
@@ -446,7 +446,7 @@ export function OemSolutionView() {
                 />
 
                 {/* Bottom Auto Layout Container: padding: 14px; gap: 0px 24px */}
-                <div className="absolute inset-0 flex flex-col justify-end p-6 lg:p-[14px]">
+                <div className="relative flex min-h-[560px] flex-col justify-end p-5 pt-[84px] sm:absolute sm:inset-0 sm:min-h-0 sm:p-6 lg:p-[14px]">
                   <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between lg:gap-[24px]">
                     {/* Left Title Container: width: 900px; padding: 0px 0px 34px 34px; gap: 15px */}
                     <div className="flex flex-col items-start gap-[15px] lg:w-[900px] lg:pb-[34px] lg:pl-[34px]">
@@ -455,21 +455,21 @@ export function OemSolutionView() {
                         {story.clientTag ? `[${story.clientTag.toUpperCase()}]` : "[CASE STUDY]"}
                       </span>
                       {/* Title: 48px / 53px / -1.44px */}
-                      <h3 className="type-h3-lg font-sans font-normal text-white">
+                      <h3 className="font-sans text-[22px] font-normal leading-[1.2] tracking-[-0.02em] text-white sm:text-[26px] lg:text-[32px]">
                         {story.title}
                       </h3>
                     </div>
 
                     {/* Right Frosted Glass Stats Card: width: 560px; max-w: 560px; height: 245.38px; padding: 36px; gap: 47.38px; background: rgba(16, 16, 16, 0.42); backdrop-blur: 14px; border-radius: 18px */}
-                    <div className="flex w-full max-w-[560px] flex-col justify-between rounded-[18px] bg-[rgba(16,16,16,0.42)] p-6 backdrop-blur-[14px] lg:min-h-[245px] lg:w-[560px] lg:p-[36px]">
+                    <div className="flex w-full max-w-[560px] flex-col justify-between rounded-[18px] bg-[rgba(16,16,16,0.42)] p-5 backdrop-blur-[14px] sm:p-6 lg:min-h-[245px] lg:w-[560px] lg:p-[36px]">
                       {/* Stats Row: gap 32px */}
-                      <div className="flex flex-nowrap items-start gap-6 lg:gap-[28px]">
+                      <div className="flex flex-wrap items-start gap-x-5 gap-y-3 sm:flex-nowrap sm:gap-6 lg:gap-[28px]">
                         {story.stats.map((stat) => (
                           <div key={stat.label} className="flex flex-col gap-2">
                             <span className="font-mono text-[11px] leading-[13px] tracking-[1.1px] text-white/70">
                               {stat.label.startsWith("[") ? stat.label : `[${stat.label}]`}
                             </span>
-                            <div className="whitespace-nowrap font-sans text-[28px] font-normal leading-[38px] tracking-[-1.14px] text-white sm:text-[34px]">
+                            <div className="whitespace-nowrap font-sans text-[22px] font-normal leading-[30px] tracking-[-0.8px] text-white sm:text-[34px] sm:leading-[38px] sm:tracking-[-1.14px]">
                               {stat.value}
                             </div>
                           </div>
