@@ -226,7 +226,7 @@ export default function GalleryPage() {
       <PublicFooter />
 
       {selected && (
-        <div className="fixed inset-0 z-50" role="dialog" aria-modal="true">
+        <div className="fixed inset-0 z-50" role="dialog" aria-modal="true" data-lenis-prevent>
           <button
             type="button"
             aria-label="Close media detail"

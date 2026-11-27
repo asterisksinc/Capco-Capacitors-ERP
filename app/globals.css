@@ -95,6 +95,9 @@ select {
 @utility type-caption { font-size: 12px; }
 
 html { scroll-behavior: smooth; scroll-padding-top: 96px; }
+/* Lenis smooth scrolling (components/public/SmoothScroll.tsx): it eases scrolling itself, and maps must stay interactive */
+html.lenis { scroll-behavior: auto; }
+.lenis.lenis-smooth iframe { pointer-events: auto; }
 :where(section[id]) { scroll-margin-top: 24px; }
 :where(a, button, input, textarea, select):focus-visible {
   outline: 2px solid #58c7e8;

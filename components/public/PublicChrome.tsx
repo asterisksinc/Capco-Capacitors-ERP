@@ -2,6 +2,7 @@
 
 /* eslint-disable @next/next/no-img-element */
 import { SiteFooter } from "./SiteFooter";
+import { SmoothScroll } from "./SmoothScroll";
 import { ArrowRight, ChevronDown, Menu, Phone, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -65,6 +66,7 @@ export function PublicNav({
             : "sticky top-0 border-b border-[#E4E4E4] bg-white/95 text-[#020202] backdrop-blur"
       } ${className}`}
     >
+      <SmoothScroll />
       <div className="mx-auto flex h-[86px] max-w-[1920px] items-center justify-between px-6 lg:px-[60px]">
         <Link href="/" aria-label="CAPCO home" className="inline-flex shrink-0 items-center">
           <Image src={logoSrc} alt="CAPCO Capacitors" width={127} height={47} priority className="h-auto w-[127px]" />
