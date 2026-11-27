@@ -1,7 +1,6 @@
 "use client";
 
 /* eslint-disable @next/next/no-img-element */
-import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState, type ChangeEvent, type DragEvent, type FormEvent } from "react";
 import { PublicNav } from "@/components/public/PublicChrome";
@@ -2703,39 +2702,27 @@ export default function ContactPage() {
             </h2>
           </div>
 
-          {/* Aerial Facility Image & Overlay Card */}
-          <div className="relative h-[480px] w-full overflow-hidden rounded-[24px] sm:h-[600px] lg:h-[864px] lg:rounded-[32px]">
-            <Image
-              src="/figma/solutions/plant-facilities-bg.png"
-              alt="DADA Energies manufacturing facilities"
-              fill
-              priority
-              sizes="100vw"
-              className="object-cover"
-            />
-            <div
-              className="absolute inset-0"
-              style={{
-                background:
-                  "linear-gradient(180deg, rgba(10, 10, 10, 0.157) 0%, rgba(10, 10, 10, 0.45) 100%)",
-              }}
+          {/* Google Map of the plant with the address card */}
+          <div className="relative h-[480px] w-full overflow-hidden rounded-[24px] bg-[#1a1a1a] sm:h-[600px] lg:h-[720px] lg:rounded-[32px]">
+            <iframe
+              title="Map: DADA ENERGIES (P) LTD., Medak, Telangana"
+              src="https://www.google.com/maps?q=17.7359222,78.4825576&z=15&output=embed"
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              className="absolute inset-0 h-full w-full border-0"
             />
 
             {/* Blurred Address Card */}
             <div
-              className="absolute bottom-4 left-4 right-4 flex flex-col items-start justify-between gap-6 rounded-[18px] border border-white/10 bg-[#101010]/45 p-6 backdrop-blur-[14px] sm:left-auto sm:right-6 sm:bottom-6 sm:w-[480px] lg:right-[32px] lg:bottom-[32px] lg:w-[560px] lg:gap-[48px] lg:p-[36px]"
-              style={{
-                backgroundImage: "url('/figma/solutions/c47a2.svg')",
-                backgroundSize: "cover",
-              }}
+              className="absolute bottom-4 left-4 right-4 flex flex-col items-start justify-between gap-6 rounded-[18px] border border-white/10 bg-[#121212]/92 p-6 shadow-[0_12px_32px_rgba(0,0,0,0.25)] backdrop-blur-[14px] sm:left-auto sm:right-6 sm:bottom-6 sm:w-[480px] lg:right-[32px] lg:bottom-[32px] lg:w-[560px] lg:gap-[48px] lg:p-[36px]"
             >
-              <p className="type-body max-w-[488px] font-normal text-white/80">
+              <p className="type-body max-w-[488px] font-normal text-white/85">
                 DADA ENERGIES (P) LTD. E54 to E77, TSIIC Automotive Park, Muppireddypally Village,
                 Manoharabad Mandal, Medak District, Hyderabad, Telangana - 502336.
               </p>
 
               <a
-                href="https://www.google.com/maps/search/?api=1&query=DADA+ENERGIES+TSIIC+Automotive+Park+Muppireddypally+Telangana+502336"
+                href="https://maps.app.goo.gl/iCLxR4jT38AWZDBQ7"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex h-[52px] w-[280px] max-w-full items-end justify-between bg-white px-3 pb-3 pt-5 text-[13px] font-medium leading-[1.2] !text-[#020202] [&_*]:!text-[#020202] transition hover:brightness-95 sm:h-[56px] sm:text-[14px]"

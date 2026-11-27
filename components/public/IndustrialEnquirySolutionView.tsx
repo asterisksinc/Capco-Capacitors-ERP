@@ -3,18 +3,16 @@
 /* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
 import HomeHero from "@/components/public/HomeHero";
-import { caseStudies } from "@/lib/caseStudies";
+import { PlantFacilitiesSection } from "@/components/public/PlantFacilitiesSection";
+import { featuredCaseStudies } from "@/lib/caseStudies";
 import { CertificationStrip } from "@/components/public/CertificationStrip";
 import { useRef, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
   Download,
-  ExternalLink,
   FileText,
   ShieldCheck,
-  Headphones,
-  Mail,
   Cpu,
   Layers,
   Sparkles,
@@ -135,7 +133,7 @@ const industrialProducts = [
   },
 ] as const;
 
-const successStories = caseStudies;
+const successStories = featuredCaseStudies;
 
 const faqItems = [
   {
@@ -598,13 +596,19 @@ export function IndustrialEnquirySolutionView() {
                         ))}
                       </div>
 
-                      <Link
-                        href={`/case-studies/${story.slug}`}
-                        className="inline-flex items-center justify-between text-[13px] font-medium !text-white transition hover:!text-[#58C7E8]"
-                      >
-                        <span>Read Full Case Study</span>
-                        <ArrowRight size={14} />
-                      </Link>
+                      {story.published ? (
+                        <Link
+                          href={`/case-studies/${story.slug}`}
+                          className="inline-flex items-center justify-between text-[13px] font-medium !text-white transition hover:!text-[#58C7E8]"
+                        >
+                          <span>Read Full Case Study</span>
+                          <ArrowRight size={14} />
+                        </Link>
+                      ) : (
+                        <span className="inline-flex w-fit items-center rounded-full bg-white px-3 py-1.5 text-[12px] font-medium uppercase tracking-[0.08em] text-[#020202]">
+                          Coming soon
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -618,89 +622,8 @@ export function IndustrialEnquirySolutionView() {
       {/* 7. FAQ (same component as the home page; industrial questions) */}
       <PublicFaqSection eyebrow="Industrial Buyer Clarity" items={faqItems} />
 
-      {/* ─────────────────────────────────────────────────────────────
-          9. PLANT FACILITIES (Frame 91 - Dark Section with Banner & Contacts)
-         ───────────────────────────────────────────────────────────── */}
-      <section className="bg-[#121212] px-6 py-20 text-white lg:px-[60px] lg:py-28">
-        <div className="mx-auto max-w-[1800px]">
-          <div>
-            <div className="flex items-center gap-2 text-[14px] font-medium leading-none text-[#58C7E8]">
-              <span className="h-[6px] w-[6px] bg-[#58C7E8]" />
-              LOCATIONS
-            </div>
-            <h2 className="type-h2 mt-4 font-normal text-white">
-              Plant Facilities
-            </h2>
-          </div>
-
-          {/* Large Facility Banner (1800px x 864px in Figma) */}
-          <div className="relative mt-12 w-full overflow-hidden rounded-[32px] bg-[#1a1a1a] sm:h-[600px] lg:mt-16 lg:h-[864px]">
-            <img
-              src="/figma/solutions/plant-facilities-bg.png"
-              alt="DADA Energies CAPCO global manufacturing hub plant facilities"
-              className="h-full w-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-
-            {/* Bottom-right Overlay Glass Badge */}
-            <div className="absolute bottom-6 right-6 max-w-[560px] rounded-[18px] bg-[rgba(16,16,16,0.42)] p-8 backdrop-blur-[14px] sm:bottom-10 sm:right-10">
-              <p className="type-body font-normal text-white/80">
-                DADA ENERGIES (P) LTD. E54 to E77, TSIIC Automotive Park, Muppireddypally Village, Manoharabad Mandal, Medak District, Hyderabad, Telangana - 502336.
-              </p>
-              <div className="mt-6">
-                <a
-                  href="https://www.google.com/maps/search/?api=1&query=DADA+ENERGIES+TSIIC+Automotive+Park+Muppireddypally+Telangana+502336"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex h-[56px] w-[280px] items-center justify-between bg-white px-5 py-3 text-[14px] font-medium leading-[120%] !text-[#020202] transition hover:bg-[#F2F2F2]"
-                >
-                  <span className="!text-[#020202]">Get Directions on Google Maps</span>
-                  <ExternalLink size={18} className="!text-[#020202] shrink-0" />
-                </a>
-              </div>
-            </div>
-          </div>
-
-          {/* Contact Circles Row (Frame 150) */}
-          <div className="mt-14 grid gap-8 sm:grid-cols-2 lg:gap-14">
-            {/* Commercial Desk Phone */}
-            <div className="flex flex-col items-start gap-4">
-              <span className="text-[16px] font-normal leading-[120%] text-white/50">
-                COMMERCIAL DESK PHONE
-              </span>
-              <a
-                href="tel:+919848014000"
-                className="group flex flex-col items-start gap-4 transition"
-              >
-                <div className="grid h-[156px] w-[156px] place-items-center rounded-full border border-white/50 transition group-hover:border-white group-hover:bg-white/10">
-                  <Headphones size={38} className="text-white" />
-                </div>
-                <strong className="text-[18px] font-normal leading-[140%] text-white transition group-hover:text-[#58C7E8]">
-                  +91-9848014000
-                </strong>
-              </a>
-            </div>
-
-            {/* Department Email Desk */}
-            <div className="flex flex-col items-start gap-4">
-              <span className="text-[16px] font-normal leading-[120%] text-white/50">
-                DEPARTMENT EMAIL DESK
-              </span>
-              <a
-                href="mailto:info@capcocapacitor.com"
-                className="group flex flex-col items-start gap-4 transition"
-              >
-                <div className="grid h-[156px] w-[156px] place-items-center rounded-full border border-white/50 transition group-hover:border-white group-hover:bg-white/10">
-                  <Mail size={38} className="text-white" />
-                </div>
-                <strong className="text-[18px] font-normal leading-[140%] text-white transition group-hover:text-[#58C7E8]">
-                  info@capcocapacitor.com
-                </strong>
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* 9. Plant Facilities (same section as the Dealership page) */}
+      <PlantFacilitiesSection />
 
 
       {/* ─────────────────────────────────────────────────────────────

@@ -163,7 +163,7 @@ export default function GalleryPage() {
         <div className="mx-auto max-w-[1800px]">
           <header className="text-center">
             <h1 className="type-display font-normal">
-              {activeFilter === "CERTIFICATIONS" ? "Certifications" : <>Media &amp; Gallery</>}
+              {activeFilter === "CERTIFICATIONS" ? "Certifications" : activeFilter === "AWARDS" ? <>Awards &amp; Achievements</> : <>Media &amp; Gallery</>}
             </h1>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-2 text-[9px] uppercase tracking-[-0.02em] text-[#A2A2A2] sm:text-[10px]">
               {filters.map((filter) => (

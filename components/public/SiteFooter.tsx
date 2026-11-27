@@ -22,7 +22,7 @@ const linkGroups = [
     title: "Company",
     links: [
       ["Home", "/"], ["About", "/about"], ["Gallery", "/gallery"],
-      ["Awards & Achievements", "/about#compliance"],
+      ["Awards & Achievements", "/gallery?filter=awards"],
       ["Contact", "/contact"],
     ],
   },
@@ -45,7 +45,7 @@ const linkGroups = [
   {
     title: "Media",
     links: [
-      ["Awards", "/about#compliance"], ["Certifications", "/gallery?filter=certifications"],
+      ["Awards", "/gallery?filter=awards"], ["Certifications", "/gallery?filter=certifications"],
     ],
   },
   { title: "Social", links: socialLinks },

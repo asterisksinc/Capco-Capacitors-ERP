@@ -10,7 +10,7 @@ import { ArrowRight } from "lucide-react";
 import { PublicFaqSection, PublicNav } from "@/components/public/PublicChrome";
 import { SiteFooter } from "@/components/public/SiteFooter";
 import { type PublicProduct, publicProducts } from "@/lib/publicProducts";
-import { productCopy } from "@/lib/productCopy";
+import { productCopy, productSpecs } from "@/lib/productCopy";
 import { exportMarkets, WhereWeOperateSection } from "@/components/public/WhereWeOperateSection";
 
 const defaultSpecs: [string, string][] = [
@@ -204,18 +204,31 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
 
             {/* Top-Right Cell */}
             <div className="p-6 lg:min-h-[481px] lg:p-[24px]">
+              {/* Real exploded drawing when we have one (fan, motor run); otherwise the product photo */}
               <h2 className="type-h3 font-normal text-[#020202]">
-                Technical Drawing
+                {copy?.drawing ? "Technical Drawing" : "Product"}
               </h2>
-              <div className="relative mx-auto mt-10 aspect-[759/280] w-full max-w-[759px] lg:mt-[76px]">
-                <Image
-                  src="/figma/products/bopp-tech-drawing.png"
-                  alt="Technical BOPP film roll diagram"
-                  fill
-                  sizes="(min-width: 1024px) 759px, 92vw"
-                  className="object-contain"
-                />
-              </div>
+              {copy?.drawing ? (
+                <div className="relative mx-auto mt-10 aspect-[16/9] w-full max-w-[759px] lg:mt-6">
+                  <Image
+                    src={copy.drawing}
+                    alt={`${product.title}: exploded technical drawing`}
+                    fill
+                    sizes="(min-width: 1024px) 759px, 92vw"
+                    className="object-contain"
+                  />
+                </div>
+              ) : (
+                <div className="relative mx-auto mt-6 aspect-[4/3] w-full max-w-[560px] overflow-hidden rounded-[16px] bg-[#F4F4F4]">
+                  <Image
+                    src={product.image}
+                    alt={product.title}
+                    fill
+                    sizes="(min-width: 1024px) 560px, 92vw"
+                    className="object-cover"
+                  />
+                </div>
+              )}
             </div>
           </div>
 
@@ -261,7 +274,7 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
                 Specs
               </h2>
               <div className="mt-5">
-                {defaultSpecs.map(([label, value]) => (
+                {(copy?.specs ?? productSpecs[product.slug] ?? defaultSpecs).map(([label, value]) => (
                   <div
                     key={label}
                     className="flex items-center justify-between gap-4 border-b border-[#E7E7E7] py-[10.5px] text-[13px] leading-[1.2] tracking-[-0.02em] last:border-b-0"
@@ -305,7 +318,7 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
           <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <div className="flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.02em]"><span className="h-1.5 w-1.5 bg-[#58C7E8]" /> {copy?.certificationTag ?? "TRUST THROUGH COMPLIANCE"}</div>
-              <h2 className="type-h2 mt-4 max-w-[1100px] font-normal">{copy?.certificationTagline ?? <>Certified for Quality, Safety &amp; Export</>}</h2>
+              <h2 className={`${copy?.certificationTagline ? "text-[24px] leading-[1.25] tracking-[-0.03em] sm:text-[28px] lg:text-[34px]" : "type-h2"} mt-4 max-w-[1000px] font-normal`}>{copy?.certificationTagline ?? <>Certified for Quality, Safety &amp; Export</>}</h2>
               {!copy?.certificationTagline && <p className="type-lead mt-4 max-w-[960px] text-[#595959]">Industrial precision achieved through single-roof production, autonomous machinery, and stringent dielectric verification.</p>}
             </div>
             <a href="/catalogs/capco-product-catalog.pdf" download className="inline-flex min-h-[56px] w-full max-w-[320px] shrink-0 items-end justify-between gap-4 bg-[#58C7E8] px-4 pb-3 pt-6 text-[13px] font-medium text-[#020202]">Download Compliance Certificates (PDF)<span aria-hidden="true" className="text-xl">↓</span></a>
@@ -328,7 +341,7 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
                 <span className="h-[4px] w-[4px] bg-[#4D65FF]" />
                 {copy?.moreProductsTag ?? "Complete Capacitors Solutions"}
               </p>
-              <h2 className="type-h2 mt-5 max-w-[1000px] font-normal text-[#020202] lg:mt-6">
+              <h2 className={`${copy?.moreProductsTagline ? "text-[24px] leading-[1.25] tracking-[-0.03em] sm:text-[28px] lg:text-[34px]" : "type-h2"} mt-5 max-w-[900px] font-normal text-[#020202] lg:mt-6`}>
                 {copy?.moreProductsTagline ?? (
                   <>
                     Explore our full
@@ -416,7 +429,7 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
                 <span className="h-[6px] w-[6px] bg-[#58C7E8]" />
                 {copy?.ctaTag ?? "Ready to Partner?"}
               </p>
-              <h2 className="type-h2 mt-6 max-w-[1000px] font-normal text-white lg:mt-[28px]">
+              <h2 className={`${copy?.ctaTagline ? "text-[24px] leading-[1.25] tracking-[-0.03em] sm:text-[28px] lg:text-[34px]" : "type-h2"} mt-6 max-w-[900px] font-normal text-white lg:mt-[28px]`}>
                 {copy?.ctaTagline ?? (
                   <>
                     Start Your OEM Journey

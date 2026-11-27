@@ -838,4 +838,137 @@ export const countryPages: Record<string, CountryPageCopy> = {
       button: "Request Africa Pricing",
     },
   },
+  egypt: {
+    slug: "egypt",
+    country: "Egypt",
+    hero: {
+      tags: ["Global Export Capability", "Open for Egypt Enquiries"],
+      title: ["Capacitor Manufacturing", "Partner for Egypt"],
+      description:
+        "CAPCO Capacitors is open for Egypt enquiries from OEMs, distributors and industrial buyers seeking reliable motor run, PFC, lighting and custom capacitor solutions.",
+      primaryCta: "Request Egypt Pricing",
+      secondaryCta: "Download Egypt Catalog",
+      image: "/figma/solutions/66dd5.png",
+    },
+    expertise: {
+      tag: "Egypt Market Readiness",
+      title: "Capacitor solutions for Egyptian operating conditions.",
+      description:
+        "CAPCO supports Egypt-based OEMs, distributors and industrial buyers with export-ready capacitor solutions designed for HVAC systems, water-pumping infrastructure, appliances and industrial power applications.",
+      cards: [
+        {
+          title: "HVAC & Cooling Systems",
+          description:
+            "Motor run and appliance capacitors for air-conditioning, refrigeration and cooling equipment used across residential, commercial and industrial applications.",
+          image: "/figma/solutions/946c5.png",
+        },
+        {
+          title: "Water & Pumping Infrastructure",
+          description:
+            "Motor start and submersible panel capacitors for water pumps, irrigation systems and pumping applications across Egypt.",
+          image: "/figma/solutions/4596c.png",
+        },
+        {
+          title: "Industrial Power Quality",
+          description:
+            "PFC capacitors and capacitor banks for industrial facilities seeking improved power factor and electrical-system stability.",
+          image: "/figma/solutions/34685.png",
+        },
+      ],
+    },
+    applications: {
+      tag: "Applications We Serve",
+      title: "Capacitor solutions for Egyptian industries.",
+      description:
+        "From HVAC systems and water infrastructure to appliances and industrial power networks, CAPCO supplies application-ready capacitor solutions for Egyptian equipment manufacturers and system integrators.",
+      cards: [
+        {
+          tag: "HVAC",
+          title: "Air Conditioning & Refrigeration Capacitors",
+          description:
+            "Motor run and appliance capacitors engineered for compressors, fan motors and cooling systems used across residential, commercial and industrial HVAC applications.",
+          href: "/products/ac-refrigeration-washing-machine-capacitor",
+        },
+        {
+          tag: "Pumps",
+          title: "Water Pump & Submersible Capacitors",
+          description:
+            "Motor start and submersible panel capacitors designed to support reliable starting performance and sustained operation in water-pumping and irrigation systems.",
+          href: "/products/submersible-panel-capacitor",
+        },
+        {
+          tag: "Industrial",
+          title: "Power Factor Correction Capacitors",
+          description:
+            "Cylindrical PFC capacitors and capacitor banks for APFC panel integration and industrial power factor correction applications.",
+          href: "/products/pfc-cylindrical-capacitor",
+        },
+      ],
+    },
+    partner: {
+      tag: "Ready to Partner",
+      title: "A dependable capacitor supply partner for Egyptian OEMs and distributors.",
+      cards: [
+        {
+          tag: "Export Documentation",
+          description:
+            "Export-ready documentation, including commercial invoices, packing lists, certificates of origin and applicable compliance documents.",
+        },
+        {
+          tag: "Technical Support",
+          description:
+            "Technical assistance for product selection, application compatibility, specifications and custom capacitor requirements.",
+        },
+        {
+          tag: "Reliable Supply",
+          description:
+            "Consistent supply of BIS and CE-certified capacitors, supported by structured production planning and export logistics coordination.",
+        },
+      ],
+      cta: "Request Egypt Pricing",
+    },
+    faq: {
+      tag: "Egypt Export FAQs",
+      title: "Answers for Egyptian Buyers",
+      items: [
+        {
+          q: "Is CAPCO open to supplying capacitors in Egypt?",
+          a: "Yes. CAPCO Capacitors is open for Egypt enquiries from OEMs, distributors, importers and industrial buyers seeking reliable capacitor manufacturing and export support.",
+        },
+        {
+          q: "Which capacitor products can CAPCO supply for Egyptian applications?",
+          a: "CAPCO offers motor run capacitors, motor start capacitors, fan capacitors, submersible panel capacitors, PFC capacitors, lighting capacitors, UV lamp capacitors and custom capacitor solutions, subject to product availability and technical requirements.",
+        },
+        {
+          q: "Are CAPCO capacitors suitable for Egyptian HVAC applications?",
+          a: "Yes. CAPCO motor run and appliance capacitors are designed for air-conditioning, refrigeration, fan motor and compressor applications. Final product selection should be based on the equipment’s rated voltage, capacitance requirement, operating temperature and installation conditions.",
+        },
+        {
+          q: "Can CAPCO support power factor correction applications in Egypt?",
+          a: "Yes. CAPCO supplies cylindrical PFC capacitors and capacitor banks suitable for APFC panel integration and industrial power factor correction applications.",
+        },
+        {
+          q: "What certifications are available for Egypt-bound capacitors?",
+          a: "CAPCO products are stated as BIS and CE certified on its official website. For Egypt-bound shipments, buyers should confirm the applicable certification, conformity documentation and product-specific compliance requirements with CAPCO’s export team before placing an order.",
+        },
+        {
+          q: "What is the estimated shipping time from India to Egypt?",
+          a: "Estimated sea-freight transit time from India to Egyptian ports is typically 15–25 days, subject to shipping schedules, port conditions, customs clearance and agreed Incoterms.",
+        },
+        {
+          q: "What Incoterms can CAPCO support for Egypt export orders?",
+          a: "CAPCO can support commonly used export Incoterms, including FOB, CIF, DDP and EXW, subject to commercial agreement, destination requirements and logistics feasibility.",
+        },
+        {
+          q: "Can CAPCO provide custom capacitors for Egyptian OEM applications?",
+          a: "Yes. CAPCO can evaluate custom capacitor requirements based on capacitance, voltage, terminal configuration, housing, encapsulation, application conditions and required certifications. Custom solutions are subject to technical feasibility and minimum order requirements.",
+        },
+      ],
+    },
+    cta: {
+      title: "Looking for a Capacitor Manufacturer in Egypt?",
+      body: "Request Egypt-specific pricing, product specifications, export documentation and technical support from CAPCO’s export team.",
+      button: "Request Egypt Pricing",
+    },
+  },
 };

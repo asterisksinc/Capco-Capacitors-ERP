@@ -3,15 +3,15 @@
 /* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
 import HomeHero from "@/components/public/HomeHero";
-import { caseStudies } from "@/lib/caseStudies";
+import { featuredCaseStudies } from "@/lib/caseStudies";
 import { CertificationStrip } from "@/components/public/CertificationStrip";
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   ArrowRight,
   Download,
   Plus,
-  X,
 } from "lucide-react";
 import {
   PublicFooter,
@@ -70,7 +70,7 @@ const developmentSteps = [
   },
 ] as const;
 
-const oemStories = caseStudies;
+const oemStories = featuredCaseStudies;
 
 const oemProducts = [
   {
@@ -176,50 +176,12 @@ const oemFaqs = [
 ] as const;
 
 export function OemSolutionView() {
+  const router = useRouter();
   const [activeCapability, setActiveCapability] = useState<number | null>(0);
   const [activeStoryIndex, setActiveStoryIndex] = useState(0);
-  const [selectedStory, setSelectedStory] = useState<(typeof oemStories)[number] | null>(null);
-  const [storyOpen, setStoryOpen] = useState(false);
-  const storyCloseTimer = useRef<number | null>(null);
 
   const storiesScrollRef = useRef<HTMLDivElement | null>(null);
 
-  const openStory = (story: (typeof oemStories)[number]) => {
-    if (storyCloseTimer.current) window.clearTimeout(storyCloseTimer.current);
-    setSelectedStory(story);
-    requestAnimationFrame(() => requestAnimationFrame(() => setStoryOpen(true)));
-  };
-
-  const closeStory = () => {
-    setStoryOpen(false);
-    if (storyCloseTimer.current) window.clearTimeout(storyCloseTimer.current);
-    storyCloseTimer.current = window.setTimeout(() => setSelectedStory(null), 320);
-  };
-
-  // Lock page scroll while the case study is open (without layout shift) and close on Escape.
-  useEffect(() => {
-    if (!selectedStory) return;
-    const scrollbar = window.innerWidth - document.documentElement.clientWidth;
-    const { overflow, paddingRight } = document.body.style;
-    document.body.style.overflow = "hidden";
-    if (scrollbar > 0) document.body.style.paddingRight = `${scrollbar}px`;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") closeStory();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => {
-      document.body.style.overflow = overflow;
-      document.body.style.paddingRight = paddingRight;
-      window.removeEventListener("keydown", onKey);
-    };
-  }, [selectedStory]);
-
-  useEffect(
-    () => () => {
-      if (storyCloseTimer.current) window.clearTimeout(storyCloseTimer.current);
-    },
-    []
-  );
 
   // Keep the 0X/0Y counter in sync when the track is swiped or scrolled directly.
   useEffect(() => {
@@ -440,25 +402,38 @@ export function OemSolutionView() {
               <div
                 key={story.title}
                 data-story-card
-                onClick={() => openStory(story)}
+                onClick={() => {
+                  if (story.published) router.push(`/case-studies/${story.slug}`);
+                }}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
+                  if (story.published && (e.key === "Enter" || e.key === " ")) {
                     e.preventDefault();
-                    openStory(story);
+                    router.push(`/case-studies/${story.slug}`);
                   }
                 }}
-                role="button"
-                tabIndex={0}
-                aria-label={`Read case study: ${story.title}`}
+                role={!story.published ? undefined : "link"}
+                tabIndex={!story.published ? -1 : 0}
+                aria-label={!story.published ? `${story.title} (coming soon)` : `Read case study: ${story.title}`}
+                aria-disabled={!story.published || undefined}
                 style={{ scrollSnapAlign: "start" }}
-                className="group relative h-[560px] w-[88vw] lg:h-[max(380px,calc(80svh-236px))] max-w-[1512px] shrink-0 cursor-pointer overflow-hidden rounded-[32px] bg-[#1A1A1A] transition-shadow duration-300 hover:shadow-2xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#58C7E8] lg:w-[min(1512px,92%)]"
+                className={`group relative ${!story.published ? "cursor-default" : "cursor-pointer"} h-[560px] w-[88vw] lg:h-[max(380px,calc(80svh-236px))] max-w-[1512px] shrink-0 overflow-hidden rounded-[32px] bg-[#1A1A1A] transition-shadow duration-300 ${!story.published ? "" : "hover:shadow-2xl"} focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#58C7E8] lg:w-[min(1512px,92%)]`}
               >
                 {/* Background Image */}
                 <img
                   src={story.image}
                   alt={story.title}
-                  className="pointer-events-none absolute inset-0 h-full w-full object-cover transition-transform duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-105"
+                  className={`pointer-events-none absolute inset-0 h-full w-full object-cover transition-transform duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${!story.published ? "grayscale-[35%]" : "group-hover:scale-105"}`}
                 />
+                {!story.published && (
+                  <span className="absolute left-6 top-6 z-10 rounded-full bg-white px-4 py-2 text-[12px] font-medium uppercase tracking-[0.08em] text-[#020202] lg:left-[48px] lg:top-[40px]">
+                    Coming soon
+                  </span>
+                )}
+                {story.published && (
+                  <span className="absolute left-6 top-6 z-10 inline-flex items-center gap-2 rounded-full bg-[#58C7E8] px-4 py-2 text-[12px] font-medium uppercase tracking-[0.08em] text-[#020202] transition group-hover:bg-white lg:left-[48px] lg:top-[40px]">
+                    Read case study <ArrowRight size={14} />
+                  </span>
+                )}
 
                 {/* Figma Gradient: linear-gradient(180deg, rgba(10, 10, 10, 0.157) 0%, rgba(10, 10, 10, 0.45) 100%) */}
                 <div
@@ -485,15 +460,15 @@ export function OemSolutionView() {
                     </div>
 
                     {/* Right Frosted Glass Stats Card: width: 560px; max-w: 560px; height: 245.38px; padding: 36px; gap: 47.38px; background: rgba(16, 16, 16, 0.42); backdrop-blur: 14px; border-radius: 18px */}
-                    <div className="flex w-full max-w-[560px] flex-col justify-between rounded-[18px] bg-[rgba(16,16,16,0.42)] p-6 backdrop-blur-[14px] lg:h-[245.38px] lg:w-[560px] lg:p-[36px]">
+                    <div className="flex w-full max-w-[560px] flex-col justify-between rounded-[18px] bg-[rgba(16,16,16,0.42)] p-6 backdrop-blur-[14px] lg:min-h-[245px] lg:w-[560px] lg:p-[36px]">
                       {/* Stats Row: gap 32px */}
-                      <div className="flex flex-wrap items-start gap-6 lg:gap-[32px]">
+                      <div className="flex flex-nowrap items-start gap-6 lg:gap-[28px]">
                         {story.stats.map((stat) => (
                           <div key={stat.label} className="flex flex-col gap-2">
                             <span className="font-mono text-[11px] leading-[13px] tracking-[1.1px] text-white/70">
                               {stat.label.startsWith("[") ? stat.label : `[${stat.label}]`}
                             </span>
-                            <div className="font-sans text-[28px] font-normal leading-[38px] tracking-[-1.14px] text-white sm:text-[38px]">
+                            <div className="whitespace-nowrap font-sans text-[28px] font-normal leading-[38px] tracking-[-1.14px] text-white sm:text-[34px]">
                               {stat.value}
                             </div>
                           </div>
@@ -513,72 +488,6 @@ export function OemSolutionView() {
         </div>
       </section>
 
-      {/* Case Study Modal */}
-      {selectedStory && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label={selectedStory.title}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-        >
-          <button
-            type="button"
-            aria-label="Close dialog"
-            onClick={closeStory}
-            className={`absolute inset-0 h-full w-full cursor-default bg-black/80 backdrop-blur-sm transition-opacity duration-300 ease-out ${
-              storyOpen ? "opacity-100" : "opacity-0"
-            }`}
-          />
-          <div
-            className={`relative max-h-[90vh] w-full max-w-[760px] overflow-y-auto overscroll-contain rounded-[24px] bg-[#121212] p-6 text-white transition-[opacity,translate,scale] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] sm:p-10 ${
-              storyOpen ? "translate-y-0 scale-100 opacity-100" : "translate-y-4 scale-[0.97] opacity-0"
-            }`}
-          >
-            <button
-              type="button"
-              onClick={closeStory}
-              className="absolute right-4 top-4 grid h-10 w-10 cursor-pointer place-items-center rounded-full bg-white/10 text-white transition hover:rotate-90 hover:bg-white/20 sm:right-6 sm:top-6"
-              aria-label="Close dialog"
-            >
-              <X size={20} />
-            </button>
-            <span className="text-[13px] font-medium uppercase tracking-[0.1em] text-[#58C7E8]">
-              {selectedStory.clientTag}
-            </span>
-            <h3 className="type-h3-lg mt-3 pr-10 font-normal">
-              {selectedStory.title}
-            </h3>
-            <div className="my-6 grid grid-cols-3 gap-3 rounded-[16px] bg-white/5 p-4 sm:gap-4">
-              {selectedStory.stats.map((stat) => (
-                <div key={stat.label}>
-                  <span className="text-[11px] font-mono text-white/50">{stat.label}</span>
-                  <div className="mt-1 text-[18px] font-bold text-white sm:text-[26px]">
-                    {stat.value}
-                  </div>
-                </div>
-              ))}
-            </div>
-            <p className="type-body text-white/80">
-              {selectedStory.fullText}
-            </p>
-            <div className="mt-8 flex flex-wrap items-center justify-end gap-3">
-              <Link
-                href={`/case-studies/${selectedStory.slug}`}
-                className="rounded-full border border-white/30 px-6 py-2.5 text-[14px] font-semibold !text-white transition hover:bg-white hover:!text-black"
-              >
-                Read full case study
-              </Link>
-              <button
-                type="button"
-                onClick={closeStory}
-                className="cursor-pointer rounded-full bg-[#58C7E8] px-6 py-2.5 text-[14px] font-semibold text-black transition hover:brightness-105"
-              >
-                Close Case Study
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* 6. Browse by Product Category */}
       <section className="bg-white px-6 py-20 lg:px-[60px] lg:py-32">

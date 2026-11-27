@@ -168,9 +168,9 @@ export function PublicNav({
                   )}
                   {label === "Power Factor Capacitors" && (
                     <div className="invisible absolute left-full top-0 min-w-[220px] border border-[#E4E4E4] bg-white p-2 opacity-0 shadow-xl transition group-hover/product:visible group-hover/product:opacity-100">
-                      <Link href="/products?category=Power%20Factor%20Capacitors" className="block px-4 py-3 text-sm hover:bg-[#F5F5F5]">Cylindrical</Link>
-                      <Link href="/products?category=Power%20Factor%20Capacitors" className="block px-4 py-3 text-sm hover:bg-[#F5F5F5]">Box Type</Link>
-                      <Link href="/products?category=Power%20Factor%20Capacitors" className="block px-4 py-3 text-sm hover:bg-[#F5F5F5]">Capacitor Bank</Link>
+                      <Link href="/products/pfc-cylindrical-capacitor" className="block px-4 py-3 text-sm hover:bg-[#F5F5F5]">Cylindrical</Link>
+                      <Link href="/products/pfc-box-type-capacitor" className="block px-4 py-3 text-sm hover:bg-[#F5F5F5]">Box Type</Link>
+                      <Link href="/products/capacitor-bank" className="block px-4 py-3 text-sm hover:bg-[#F5F5F5]">Capacitor Bank</Link>
                     </div>
                   )}
                 </div>
@@ -181,14 +181,14 @@ export function PublicNav({
           {/* Recognition Dropdown */}
           <div className="group relative py-2">
             <Link
-              href="/about#compliance"
+              href="/gallery?filter=awards"
               className={`inline-flex items-center gap-1.5 whitespace-nowrap transition hover:text-[#58C7E8]`}
             >
               Recognition
               <ChevronDown size={15} className="transition-transform duration-200 group-hover:rotate-180" />
             </Link>
             <div className="invisible absolute left-0 top-full z-40 min-w-[240px] border border-[#E4E4E4] bg-white p-2 text-[#020202] opacity-0 shadow-xl transition group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
-              <Link href="/about#compliance" className="block px-4 py-2.5 text-sm hover:bg-[#F5F5F5]">
+              <Link href="/gallery?filter=awards" className="block px-4 py-2.5 text-sm hover:bg-[#F5F5F5]">
                 Awards &amp; Achievements
               </Link>
               <Link href="/case-studies" className="block px-4 py-2.5 text-sm hover:bg-[#F5F5F5]">
@@ -280,7 +280,7 @@ export function PublicNav({
             ["Company", [["About", "/about"], ["Gallery", "/gallery"], ["Certifications", "/gallery?filter=certifications"]]],
             ["Solutions", [["OEMs", "/solutions/oem"], ["Dealerships", "/solutions/dealership"], ["Industrial Enquiry", "/solutions/industrial-enquiry"]]],
             ["Products", [["All Products", "/products"]]],
-            ["Recognition", [["Awards & Achievements", "/about#compliance"], ["Case Studies", "/case-studies"]]],
+            ["Recognition", [["Awards & Achievements", "/gallery?filter=awards"], ["Case Studies", "/case-studies"]]],
             ["Global Footprint", [["UAE", "/regions/uae"], ["USA", "/regions/usa"], ["Sri Lanka", "/regions/sri-lanka"], ["Bangladesh", "/regions/bangladesh"], ["Turkey", "/regions/turkey"], ["African Continent", "/regions/africa"], ["Egypt", "/regions/egypt"]]],
           ] as const).map(([group, links]) => (
             <div key={group} className="border-b border-black/10 py-3">

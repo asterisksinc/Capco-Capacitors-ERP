@@ -8,6 +8,12 @@ export type CaseStudy = {
   stats: readonly { label: string; value: string }[];
   summary: string;
   fullText: string;
+  /** Wide image shown in full (not cropped) on the detail page instead of `image`. */
+  detailImage?: string;
+  /** Published case studies have a detail page; others are shown as "Coming soon". */
+  published?: boolean;
+  /** Image shown beside "The Story" on the detail page. */
+  storyImage?: string;
 };
 
 export const caseStudies: readonly CaseStudy[] = [
@@ -43,7 +49,10 @@ export const caseStudies: readonly CaseStudy[] = [
   },
   {
     slug: "apfc-panel-builder-modular-150-kvar-banks",
-    image: "/figma/solutions/34685.png",
+    published: true,
+    image: "/figma/case-studies/apfc-panel-case-study.jpg",
+    detailImage: "/figma/case-studies/oem-process-workflow.jpg",
+    storyImage: "/figma/case-studies/oem-story-fan-line.jpg",
     clientTag: "Industrial EPC & APFC",
     title: "APFC Panel Builder Delivers 35% Space Saving with Modular 150 KVAR Banks",
     stats: [
@@ -74,3 +83,11 @@ export const caseStudies: readonly CaseStudy[] = [
 ];
 
 export const getCaseStudy = (slug: string) => caseStudies.find((c) => c.slug === slug);
+
+/** The 3 case study cards shown on every solution page and the Case Studies page:
+ *  the published one first (links to its detail page), then two "Coming soon". */
+export const featuredCaseStudies: readonly CaseStudy[] = [
+  "apfc-panel-builder-modular-150-kvar-banks",
+  "hvac-oem-capacitor-cost-reduction",
+  "submersible-pump-oem-burst-proof-reliability",
+].map((slug) => caseStudies.find((c) => c.slug === slug)!);
