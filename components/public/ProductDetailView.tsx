@@ -9,7 +9,7 @@ import { PhaseTimeline } from "@/components/public/PhaseTimeline";
 import { ArrowRight } from "lucide-react";
 import { PublicFaqSection, PublicNav } from "@/components/public/PublicChrome";
 import { SiteFooter } from "@/components/public/SiteFooter";
-import { type PublicProduct, publicProducts } from "@/lib/publicProducts";
+import { type PublicProduct, publicProducts, productHref } from "@/lib/publicProducts";
 import { productCopy, productSpecs } from "@/lib/productCopy";
 import { exportMarkets, WhereWeOperateSection } from "@/components/public/WhereWeOperateSection";
 
@@ -138,24 +138,24 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
       <section className="px-6 pb-16 pt-10 lg:min-h-[527px] lg:px-[60px] lg:pb-[128px] lg:pt-[74px]">
         <div className="mx-auto max-w-[1800px]">
           <div className="flex items-center justify-between font-mono text-[10px] tracking-[0.02em] text-[#666666]">
-            <Link href={`/products/${previous.slug}`} className="transition hover:text-[#020202]">
+            <Link href={productHref(previous.slug)} className="transition hover:text-[#020202]">
               Previous Product
             </Link>
-            <Link href={`/products/${next.slug}`} className="transition hover:text-[#020202]">
+            <Link href={productHref(next.slug)} className="transition hover:text-[#020202]">
               Next Product
             </Link>
           </div>
 
           <div className="mt-4 flex items-center justify-between">
             <Link
-              href={`/products/${previous.slug}`}
+              href={productHref(previous.slug)}
               aria-label={`Previous product: ${previous.title}`}
               className="grid h-[52px] w-[52px] place-items-center rounded-[8px] bg-[#F4F4F4] transition hover:bg-[#E8E8E8]"
             >
               <img src="/figma/solutions/a96fb.svg" alt="" aria-hidden="true" className="rotate-180" />
             </Link>
             <Link
-              href={`/products/${next.slug}`}
+              href={productHref(next.slug)}
               aria-label={`Next product: ${next.title}`}
               className="grid h-[52px] w-[52px] place-items-center rounded-[8px] bg-[#F4F4F4] transition hover:bg-[#E8E8E8]"
             >
@@ -225,7 +225,7 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
                     alt={product.title}
                     fill
                     sizes="(min-width: 1024px) 560px, 92vw"
-                    className="object-cover"
+                    className="object-contain"
                   />
                 </div>
               )}
@@ -382,16 +382,16 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
             {visibleProducts.map((item) => (
               <Link
                 key={item.slug}
-                href={`/products/${item.slug}`}
+                href={productHref(item.slug)}
                 className="group block"
               >
-                <div className="relative aspect-[594/675] w-full overflow-hidden bg-[#F1F1F1]">
+                <div className="relative aspect-[4/3] w-full overflow-hidden bg-[#F1F1F1]">
                   <Image
                     src={item.image}
                     alt={item.title}
                     fill
                     sizes="(min-width: 1024px) 31vw, (min-width: 768px) 47vw, 94vw"
-                    className="object-cover transition duration-500 group-hover:scale-[1.02]"
+                    className="object-contain transition duration-500 group-hover:scale-[1.02]"
                   />
                 </div>
                 <div className="mt-[18px]">

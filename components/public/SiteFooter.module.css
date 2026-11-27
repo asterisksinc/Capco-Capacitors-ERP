@@ -77,6 +77,10 @@
 
 .contactCard { margin-top: 38px; max-width: 320px; color: #d0d0d0; font-size: 15px; line-height: 1.6; }
 .contactCard p { margin: 0 0 18px; }
+.socialIcons { display: flex; gap: 10px; margin-top: -4px; }
+.socialIcons a { display: grid; place-items: center; width: 40px; height: 40px; border: 1px solid rgb(255 255 255 / 25%); border-radius: 50%; color: white; transition: background .2s, color .2s, border-color .2s; }
+/* beats the generic `.footer a:hover` colour, so the icon stays dark on the blue circle */
+.footer .socialIcons a:hover { background: #58c7e8; border-color: #58c7e8; color: #020202; }
 .contactHeading { color: #58c7e8; font-size: 18px; font-weight: 500; letter-spacing: -.02em; }
 .socialRow { display: flex; flex-wrap: wrap; gap: 14px; border-top: 1px solid rgb(255 255 255 / 20%); padding-top: 14px; }
 .socialRow a { color: white; font-size: 14px; }

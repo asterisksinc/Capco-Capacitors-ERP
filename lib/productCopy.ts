@@ -314,6 +314,15 @@ export const productCopy: Record<string, ProductCopy> = {
     description: "Dry-type lighting capacitors (1–45 MFD) with inbuilt discharge resistors, engineered for long-life operation and heat resistance in municipal and industrial lighting applications.",
     includedTag: "Built for 24/7 Operation",
     includedItems: ["Inbuilt Discharge Resistor (Safety)", "Heat & Humidity Resistant", "230–250V AC Voltage Rating", "Long-Life Metallized Film", "Custom MFD for Luminaire Specs"],
+    specs: [
+      ["Container", "Plastic / Aluminium"],
+      ["Rating", "1 to 45 MFD"],
+      ["Encapsulation", "Dry"],
+      ["Terminal", "Wire / Tag"],
+      ["Voltage", "230 / 250 VAC"],
+      ["Frequency", "50 Hz"],
+      ["Customization", "As Per Specification"],
+    ],
     processTag: "Designed for Endurance",
     processTagline: "Every lighting capacitor is optimized for continuous operation in street lights, floodlights, and high-bay luminaires—delivering stable power factor correction and extended service life.",
     phases: commonPhases([

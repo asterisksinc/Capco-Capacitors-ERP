@@ -178,7 +178,7 @@ export const countryPages: Record<string, CountryPageCopy> = {
         "CAPCO Capacitors is open for USA enquiries from OEMs, distributors and industrial buyers seeking reliable motor run, PFC, lighting and custom capacitor solutions.",
       primaryCta: "Request USA Pricing",
       secondaryCta: "Download USA Catalog",
-      image: "/figma/solutions/66dd5.png",
+      image: "/figma/regions/usa-hero.jpg",
     },
     expertise: {
       tag: "USA Market Readiness",
@@ -312,7 +312,7 @@ export const countryPages: Record<string, CountryPageCopy> = {
         "CAPCO Capacitors is open for Sri Lanka enquiries from OEMs, distributors and industrial buyers seeking reliable motor run, PFC, lighting and custom capacitor solutions.",
       primaryCta: "Request Sri Lanka Pricing",
       secondaryCta: "Download Sri Lanka Catalog",
-      image: "/figma/solutions/66dd5.png",
+      image: "/figma/regions/sri-lanka-hero.jpg",
     },
     expertise: {
       tag: "Sri Lanka Market Readiness",
@@ -445,7 +445,7 @@ export const countryPages: Record<string, CountryPageCopy> = {
         "CAPCO Capacitors is open for Bangladesh enquiries from OEMs, distributors and industrial buyers seeking reliable motor run, PFC, lighting and custom capacitor solutions.",
       primaryCta: "Request Bangladesh Pricing",
       secondaryCta: "Download Bangladesh Catalog",
-      image: "/figma/solutions/66dd5.png",
+      image: "/figma/regions/bangladesh-hero.jpg",
     },
     expertise: {
       tag: "Bangladesh Market Readiness",
@@ -578,7 +578,7 @@ export const countryPages: Record<string, CountryPageCopy> = {
         "CAPCO Capacitors is open for Türkiye enquiries from OEMs, distributors and industrial buyers seeking reliable motor run, PFC, lighting and custom capacitor solutions.",
       primaryCta: "Request Türkiye Pricing",
       secondaryCta: "Download Türkiye Catalog",
-      image: "/figma/solutions/66dd5.png",
+      image: "/figma/regions/turkey-hero.jpg",
     },
     expertise: {
       tag: "Türkiye Market Readiness",
@@ -711,7 +711,7 @@ export const countryPages: Record<string, CountryPageCopy> = {
         "CAPCO Capacitors is open for enquiries from OEMs, distributors and industrial buyers across African markets seeking reliable motor run, PFC, lighting and custom capacitor solutions.",
       primaryCta: "Request Africa Pricing",
       secondaryCta: "Download Africa Catalog",
-      image: "/figma/solutions/66dd5.png",
+      image: "/figma/regions/africa-hero.jpg",
     },
     expertise: {
       tag: "Africa Market Readiness",
@@ -848,7 +848,7 @@ export const countryPages: Record<string, CountryPageCopy> = {
         "CAPCO Capacitors is open for Egypt enquiries from OEMs, distributors and industrial buyers seeking reliable motor run, PFC, lighting and custom capacitor solutions.",
       primaryCta: "Request Egypt Pricing",
       secondaryCta: "Download Egypt Catalog",
-      image: "/figma/solutions/66dd5.png",
+      image: "/figma/regions/egypt-hero.jpg",
     },
     expertise: {
       tag: "Egypt Market Readiness",

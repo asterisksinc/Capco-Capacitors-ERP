@@ -4,6 +4,7 @@
 import Link from "next/link";
 import HomeHero from "@/components/public/HomeHero";
 import { featuredCaseStudies } from "@/lib/caseStudies";
+import { productHref } from "@/lib/publicProducts";
 import { CertificationStrip } from "@/components/public/CertificationStrip";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -143,7 +144,7 @@ const oemProducts = [
       ["TERMINALS:", "Custom Pins/Tags"],
     ],
     cta: "Request Custom Solution",
-    slug: "special-application-capacitor",
+    slug: "customized-capacitor",
   },
 ] as const;
 
@@ -562,7 +563,7 @@ export function OemSolutionView() {
                 {/* Card Chamfered White CTA */}
                 <div className="mt-8 pt-2">
                   <Link
-                    href={`/products/${p.slug}`}
+                    href={productHref(p.slug)}
                     style={{
                       clipPath:
                         "polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%)",

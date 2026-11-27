@@ -51,6 +51,7 @@ export function CountryPage({ copy }: { copy: CountryPageCopy }) {
         primary={{ label: hero.primaryCta, href: pricingHref }}
         secondary={{ label: hero.secondaryCta, href: "/catalogs/capco-product-catalog.pdf", download: `CAPCO-${copy.country}-Catalog.pdf` }}
         cutColor="#ffffff"
+        overlay
       />
 
       {/* 2. Market expertise + slider */}

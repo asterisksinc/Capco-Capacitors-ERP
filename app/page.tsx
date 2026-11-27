@@ -17,7 +17,7 @@ import { SiteFooter } from "@/components/public/SiteFooter";
 const productLinks = [
   "/products?category=Metalized%20Polypropylene%20Film%20%5B%20MPP%20%5D", "/products?category=Fan%20Capacitors",
   "/products?category=Power%20Factor%20Capacitors", "/products?category=Luminaire%20Capacitor",
-  "/products?category=Luminaire%20Capacitor", "/products",
+  "/products?category=Luminaire%20Capacitor", "/contact?category=oem#enquiry-form",
 ];
 
 /** Card images come from the shared product catalogue so Home and /products stay in sync. */
@@ -199,45 +199,45 @@ const certifications = [
 const manufacturingSteps = [
   {
     num: "01",
-    image: "", // add image path later, e.g. "/figma/process/step-01.jpg"
+    image: "/figma/home/process/step-01-raw-film.jpg",
     imageAlt: "Rolls of BOPP capacitor film",
-    imagePosition: "50% 85%",
+    imagePosition: "50% 50%",
     title: "Raw Film Procurement",
     subtitle: "Certified BOPP Film",
     body: "Sourced from trusted suppliers with strict dielectric strength tolerances (>600 V/micron).",
   },
   {
     num: "02",
-    image: "", // add image path later, e.g. "/figma/process/step-01.jpg"
+    image: "/figma/home/process/step-02-metallization.jpg",
     imageAlt: "Leybold vacuum metallization chamber",
-    imagePosition: "50% 20%",
+    imagePosition: "50% 50%",
     title: "In-House Metallization",
     subtitle: "In-House Alloy Deposition",
     body: "Zinc/Aluminium layers vacuum-deposited via Leybold (Germany) for uniform surface resistivity (6–9 Ω/sq).",
   },
   {
     num: "03",
-    image: "", // add image path later, e.g. "/figma/process/step-01.jpg"
+    image: "/figma/home/process/step-03-winding.jpg",
     imageAlt: "Metar automatic winding line",
-    imagePosition: "50% 20%",
+    imagePosition: "50% 50%",
     title: "Metar Automatic Winding",
     subtitle: "Precision Non-Inductive Winding",
     body: "Metar (Switzerland) high-speed winding ensures <±5% capacitance tolerance and minimal internal losses.",
   },
   {
     num: "04",
-    image: "", // add image path later, e.g. "/figma/process/step-01.jpg"
+    image: "/figma/home/process/step-04-encapsulation.jpg",
     imageAlt: "Automated capacitor encapsulation and packing line",
-    imagePosition: "50% 20%",
+    imagePosition: "50% 50%",
     title: "Encapsulation & Safety",
     subtitle: "Dry & Oil Encapsulation",
     body: "Resin- or oil-filled housing with application-specific P2 over-pressure disconnectors for thermal and electrical stress protection.",
   },
   {
     num: "05",
-    image: "", // add image path later, e.g. "/figma/process/step-01.jpg"
+    image: "/figma/home/process/step-05-testing.jpg",
     imageAlt: "In-house capacitor testing laboratory",
-    imagePosition: "50% 20%",
+    imagePosition: "50% 50%",
     title: "Testing & Quality Check",
     subtitle: "BIS-Certified Batch Release",
     body: "100% tested for capacitance, voltage endurance, and insulation resistance before vacuum-sealed packaging.",
@@ -317,7 +317,7 @@ export default function Home() {
           {whyFeatures.map(([featureTitle, featureBody, cta], index) => (
             <article className="feature-row" key={featureTitle}>
               <div className="feature-image overflow-hidden">
-                <Image src={['/figma/solutions/2f1e3.png', '/figma/solutions/f5300.png', '/figma/solutions/17639.png'][index]} alt={['CAPCO metallized film rolls', 'Hydroelectric power infrastructure', 'Industrial capacitor systems'][index]} fill sizes="(min-width: 1024px) 55vw, 100vw" className="object-cover" />
+                <Image src={['/figma/home/why/why-01-metallization.jpg', '/figma/home/why/why-02-certified.jpg', '/figma/home/why/why-03-distribution.jpg'][index]} alt={['Metallized BOPP film roll beside a vacuum metallization chamber', 'BIS, ISO 9001:2015 and CE certifications with CAPCO capacitors', 'CAPCO capacitors loaded for pan-India dealer distribution'][index]} fill sizes="(min-width: 1024px) 55vw, 100vw" className="object-cover" />
               </div>
               <div className="feature-copy">
                 <div><img src="/figma/home/85f0e.svg" alt="" /><h3>{featureTitle}</h3></div>
@@ -537,7 +537,7 @@ export default function Home() {
                     clipPath:
                       "polygon(0 0, 100% 0, 100% calc(100% - 28px), calc(100% - 28px) 100%, 0 100%)",
                   }}
-                  className="relative aspect-[16/10] w-full overflow-hidden bg-[#F4F4F4]"
+                  className="relative aspect-[4/3] w-full overflow-hidden bg-[#F4F4F4]"
                 >
                   {step.image ? (
                     <img
@@ -545,7 +545,7 @@ export default function Home() {
                       alt={step.imageAlt}
                       loading="lazy"
                       style={{ objectPosition: step.imagePosition }}
-                      className="h-full w-full scale-[1.06] object-cover"
+                      className="h-full w-full object-cover"
                     />
                   ) : (
                     <div className="h-full w-full" aria-hidden="true" />

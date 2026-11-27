@@ -20,17 +20,17 @@ type GalleryItem = {
 const BIS = "Bureau of Indian Standards";
 
 const galleryItems: GalleryItem[] = [
-  { image: "gallery-01.jpg", category: "CORPORATE SOCIAL RESPONSIBILITY / CSR" },
-  { image: "gallery-02.jpg", category: "CORPORATE SOCIAL RESPONSIBILITY / CSR" },
-  { image: "gallery-03.jpg", category: "CORPORATE SOCIAL RESPONSIBILITY / CSR" },
-  { image: "gallery-04.jpg", category: "CORPORATE SOCIAL RESPONSIBILITY / CSR" },
-  { image: "gallery-05.jpg", category: "CORPORATE SOCIAL RESPONSIBILITY / CSR" },
-  { image: "gallery-06.jpg", category: "CORPORATE SOCIAL RESPONSIBILITY / CSR" },
-  { image: "gallery-07.jpg", category: "CORPORATE SOCIAL RESPONSIBILITY / CSR" },
-  { image: "gallery-08.jpg", category: "AWARDS" },
-  { image: "gallery-09.jpg", category: "AWARDS" },
-  { image: "gallery-10.jpg", category: "AWARDS" },
-  { image: "gallery-11.jpg", category: "AWARDS" },
+  { image: "gallery-01.jpg", category: "CORPORATE SOCIAL RESPONSIBILITY / CSR", title: "Mega Blood Donation Drive" },
+  { image: "gallery-02.jpg", category: "CORPORATE SOCIAL RESPONSIBILITY / CSR", title: "Bharat Vikas Award" },
+  { image: "gallery-03.jpg", category: "CORPORATE SOCIAL RESPONSIBILITY / CSR", title: "Sri Mathi Chandramma Memorial Charitable Trust" },
+  { image: "gallery-04.jpg", category: "CORPORATE SOCIAL RESPONSIBILITY / CSR", title: "Hayrana Nagrik Sangh" },
+  { image: "gallery-05.jpg", category: "CORPORATE SOCIAL RESPONSIBILITY / CSR", title: "Hyderabad City Police" },
+  { image: "gallery-06.jpg", category: "CORPORATE SOCIAL RESPONSIBILITY / CSR", title: "Corporate Cricket Club 2025" },
+  { image: "gallery-07.jpg", category: "CORPORATE SOCIAL RESPONSIBILITY / CSR", title: "Mother Teresa Excellence Award" },
+  { image: "gallery-08.jpg", category: "AWARDS", title: "Udyog Ratna Award" },
+  { image: "gallery-09.jpg", category: "AWARDS", title: "Award by All India Electrical Trade Exhibition" },
+  { image: "gallery-10.jpg", category: "AWARDS", title: "Silver Sponsorship" },
+  { image: "gallery-11.jpg", category: "AWARDS", title: "Winners Awarded by One Stores" },
   // Current BIS licences (PDFs in /public/certifications). These supersede the 2020 copies of
   // licences CM/L-6300073908 and CM/L-0006097778 that were previously shown as gallery-15/16.
   {

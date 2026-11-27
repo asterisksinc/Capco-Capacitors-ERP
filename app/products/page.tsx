@@ -1,7 +1,7 @@
 "use client";
 
 import { PublicFooter, PublicNav } from "@/components/public/PublicChrome";
-import { productCategories, publicProducts } from "@/lib/publicProducts";
+import { productCategories, productHref, publicProducts } from "@/lib/publicProducts";
 import { Search } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -61,9 +61,9 @@ export default function ProductsPage() {
       <section className="px-6 pb-28 lg:px-[60px]">
         <div className="mx-auto grid max-w-[1800px] gap-x-2 gap-y-20 md:grid-cols-2 xl:grid-cols-3">
           {filteredProducts.map((product) => (
-            <Link key={product.slug} href={`/products/${product.slug}`} className="group block">
-              <div className="relative aspect-[594/447] overflow-hidden bg-[#f1f1f1]">
-                <Image src={product.image} alt="" fill sizes="(min-width: 1280px) 31vw, (min-width: 768px) 47vw, 94vw" className="object-cover transition duration-500 group-hover:scale-105" />
+            <Link key={product.slug} href={productHref(product.slug)} className="group block">
+              <div className="relative aspect-[4/3] overflow-hidden bg-[#f1f1f1]">
+                <Image src={product.image} alt="" fill sizes="(min-width: 1280px) 31vw, (min-width: 768px) 47vw, 94vw" className="object-contain transition duration-500 group-hover:scale-[1.03]" />
               </div>
               <div className="mt-5 max-w-[535px]">
                 <p className="type-caption text-[#666]">{product.category}</p>

@@ -73,7 +73,7 @@ export const publicProducts: PublicProduct[] = [
     category: "Luminaire Capacitor",
     title: "Lighting Capacitor",
     author: "CAPCO Team",
-    image: "/figma/products/product-7.png",
+    image: "/figma/products/cards/lighting-luminaire-capacitor.jpg",
     summary: "Dry-type lighting capacitors (1–45 MFD) with inbuilt discharge resistors, engineered for long-life operation and heat resistance in municipal and industrial lighting applications.",
   },
   {
@@ -82,7 +82,7 @@ export const publicProducts: PublicProduct[] = [
     category: "Luminaire Capacitor",
     title: "UV Lamp Capacitor",
     author: "CAPCO Team",
-    image: "/figma/products/product-8.png",
+    image: "/figma/products/cards/uv-lamp-capacitor.jpg",
     summary: "Dry/oil-filled UV lamp capacitors engineered for high-frequency operation, superior heat dissipation, and reliable performance in UV curing systems up to 4000V AC.",
   },
   {
@@ -132,3 +132,8 @@ export const productCategories = [
   "Power Factor Capacitors",
 ];
 
+
+/** Customized capacitors are made to order, so they go straight to the enquiry form instead of a product page. */
+export const CUSTOM_CAPACITOR_HREF = "/contact?category=oem#enquiry-form";
+export const productHref = (slug: string) =>
+  slug === "customized-capacitor" ? CUSTOM_CAPACITOR_HREF : `/products/${slug}`;

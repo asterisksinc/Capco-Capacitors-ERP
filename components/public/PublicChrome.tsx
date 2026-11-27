@@ -137,14 +137,14 @@ export function PublicNav({
                 All Products
               </Link>
               {[
-                ["Metalized Polypropylene Film", "Metalized Polypropylene Film [ MPP ]", "/products/zinc-aluminium-alloy-metalised-bopp-film"],
-                ["Fan / Motor Capacitors", "Fan Capacitors", "/products/fan-capacitor"],
-                ["Luminaire Capacitor", "Luminaire Capacitor", "/products/lighting-luminaire-capacitor"],
-                ["Power Factor Capacitors", "Power Factor Capacitors", "/products/pfc-cylindrical-capacitor"],
-                ["Customized Capacitors", "All", "/products"],
+                ["Metalized Polypropylene Film", "Metalized Polypropylene Film [ MPP ]", "/products"],
+                ["Fan / Motor Capacitors", "Fan Capacitors", "/products"],
+                ["Luminaire Capacitor", "Luminaire Capacitor", "/products"],
+                ["Power Factor Capacitors", "Power Factor Capacitors", "/products"],
+                ["Customized Capacitors", "All", "/contact?category=oem#enquiry-form"],
               ].map(([label, category, href]) => (
                 <div key={label} className="group/product relative">
-                  <Link href={`${href === "/products" ? href : `${href}?category=${encodeURIComponent(category)}`}`} className="flex items-center justify-between px-4 py-3 text-sm hover:bg-[#F5F5F5]">
+                  <Link href={href.startsWith("/contact") ? href : `/products?category=${encodeURIComponent(category)}`} className="flex items-center justify-between px-4 py-3 text-sm hover:bg-[#F5F5F5]">
                     <span>{label}</span>
                     {label !== "Customized Capacitors" && <span aria-hidden="true" className="ml-4 text-base leading-none">›</span>}
                   </Link>
@@ -155,17 +155,17 @@ export function PublicNav({
                   )}
                   {label === "Fan / Motor Capacitors" && (
                     <div className="invisible absolute left-full top-0 min-w-[280px] border border-[#E4E4E4] bg-white p-2 opacity-0 shadow-xl transition group-hover/product:visible group-hover/product:opacity-100">
-                      <Link href="/products?category=Fan%20Capacitors" className="block px-4 py-3 text-sm hover:bg-[#F5F5F5]">Fan Capacitor</Link>
-                      <Link href="/products?category=Motor%20Capacitors" className="block px-4 py-3 text-sm hover:bg-[#F5F5F5]">Motor Run Capacitor</Link>
-                      <Link href="/products?category=Motor%20Capacitors" className="block px-4 py-3 text-sm hover:bg-[#F5F5F5]">Motor Start Capacitor</Link>
-                      <Link href="/products?category=Motor%20Capacitors" className="block px-4 py-3 text-sm hover:bg-[#F5F5F5]">Submersible Panel Capacitor</Link>
-                      <Link href="/products?category=Fan%20Capacitors" className="block px-4 py-3 text-sm hover:bg-[#F5F5F5]">A.C. / Refrigeration / Washing Machine Capacitor</Link>
+                      <Link href="/products/fan-capacitor" className="block px-4 py-3 text-sm hover:bg-[#F5F5F5]">Fan Capacitor</Link>
+                      <Link href="/products/motor-run-capacitor" className="block px-4 py-3 text-sm hover:bg-[#F5F5F5]">Motor Run Capacitor</Link>
+                      <Link href="/products/motor-start-capacitor" className="block px-4 py-3 text-sm hover:bg-[#F5F5F5]">Motor Start Capacitor</Link>
+                      <Link href="/products/submersible-panel-capacitor" className="block px-4 py-3 text-sm hover:bg-[#F5F5F5]">Submersible Panel Capacitor</Link>
+                      <Link href="/products/ac-refrigeration-washing-machine-capacitor" className="block px-4 py-3 text-sm hover:bg-[#F5F5F5]">A.C. / Refrigeration / Washing Machine Capacitor</Link>
                     </div>
                   )}
                   {label === "Luminaire Capacitor" && (
                     <div className="invisible absolute left-full top-0 min-w-[240px] border border-[#E4E4E4] bg-white p-2 opacity-0 shadow-xl transition group-hover/product:visible group-hover/product:opacity-100">
-                      <Link href="/products?category=Luminaire%20Capacitor" className="block px-4 py-3 text-sm hover:bg-[#F5F5F5]">Lighting Capacitor</Link>
-                      <Link href="/products?category=Luminaire%20Capacitor" className="block px-4 py-3 text-sm hover:bg-[#F5F5F5]">UV Lamp Capacitor</Link>
+                      <Link href="/products/lighting-luminaire-capacitor" className="block px-4 py-3 text-sm hover:bg-[#F5F5F5]">Lighting Capacitor</Link>
+                      <Link href="/products/uv-lamp-capacitor" className="block px-4 py-3 text-sm hover:bg-[#F5F5F5]">UV Lamp Capacitor</Link>
                     </div>
                   )}
                   {label === "Power Factor Capacitors" && (

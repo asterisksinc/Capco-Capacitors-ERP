@@ -76,15 +76,6 @@ const FACILITIES = [
   },
 ] as const;
 
-const FACILITY_KPIS = [
-  ["1,050,000", "TOTAL MONTHLY UNITS"],
-  ["₹100+ Cr", "ANNUAL TURNOVER"],
-  ["250+", "SKILLED WORKFORCE"],
-  ["15+", "R&D ENGINEERS"],
-  ["25+", "FULL-TIME QC STAFF"],
-  ["15%", "EXPORT PRODUCTION"],
-] as const;
-
 const CSR_PILLARS = [
   {
     eyebrow: "500 KW SOLAR ROOFTOP",
@@ -267,29 +258,16 @@ export default function AboutPage() {
       {/* 2. 7-COLUMN CERTIFICATIONS & METRICS BAR (also the #compliance anchor for nav / footer links) */}
       <CertificationStrip id="compliance" className="mt-8 lg:mt-[60px]" />
 
-      {/* 3. FULL-WIDTH GLOBAL MANUFACTURING HUB AERIAL BANNER */}
-      <section className="mt-8 lg:mt-[60px]">
-        <div className="relative mx-auto aspect-[1920/960] w-full max-w-[1920px] overflow-hidden bg-[#E5E5E5]">
-          <Image
-            src="/figma/about/global-hub-banner.png"
-            alt="CAPCO Global Manufacturing Hub aerial view"
-            fill
-            sizes="100vw"
-            className="object-cover"
-          />
-        </div>
-      </section>
-
       {/* 4. SPLIT "WHO WE ARE" SECTION */}
       <section className="mx-auto grid max-w-[1920px] grid-cols-[minmax(0,1fr)] lg:min-h-[673px] lg:grid-cols-[930fr_990fr]">
-        {/* Left Hydroelectric Dam Image */}
-        <div className="relative min-h-[360px] w-full overflow-hidden bg-[#1A1A1A] sm:min-h-[480px] lg:min-h-[673px]">
+        {/* Left: CAPCO product range at the plant */}
+        <div className="relative min-h-[420px] w-full overflow-hidden bg-[#1A1A1A] sm:min-h-[560px] lg:min-h-[673px]">
           <Image
-            src="/figma/products/product-5.png"
-            alt="High-voltage power infrastructure"
+            src="/figma/about/capco-product-showcase.jpg"
+            alt="CAPCO capacitor range on display at the manufacturing plant"
             fill
             sizes="(min-width: 1024px) 50vw, 100vw"
-            className="object-cover"
+            className="object-cover object-[50%_62%]"
           />
         </div>
 
@@ -709,7 +687,7 @@ export default function AboutPage() {
                 FACILITIES
               </p>
               <h2 className="type-h2 mt-5 font-normal text-[#020202] lg:mt-6">
-                Two Strategic Locations in
+                One Strategic Location in
                 <br />
                 Hyderabad, Telangana
               </h2>
@@ -790,23 +768,6 @@ export default function AboutPage() {
                   </dl>
                 </div>
               </article>
-            ))}
-          </div>
-
-          {/* 6 KPI Cards */}
-          <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:mt-[32px] lg:grid-cols-6 lg:gap-[20px]">
-            {FACILITY_KPIS.map(([val, label]) => (
-              <div
-                key={label}
-                className="flex h-[124px] flex-col items-center justify-center bg-[#EEFAFF] px-4 text-center lg:h-[138px]"
-              >
-                <strong className="text-[22px] font-medium leading-none tracking-[-0.03em] text-[#020202] lg:text-[24px]">
-                  {val}
-                </strong>
-                <span className="mt-3 text-[12px] font-normal uppercase tracking-[0.02em] text-[#595959] lg:text-[14px]">
-                  {label}
-                </span>
-              </div>
             ))}
           </div>
         </div>

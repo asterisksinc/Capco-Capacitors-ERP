@@ -5,6 +5,7 @@ import Link from "next/link";
 import HomeHero from "@/components/public/HomeHero";
 import { PlantFacilitiesSection } from "@/components/public/PlantFacilitiesSection";
 import { featuredCaseStudies } from "@/lib/caseStudies";
+import { productHref } from "@/lib/publicProducts";
 import { CertificationStrip } from "@/components/public/CertificationStrip";
 import { useRef, useState } from "react";
 import {
@@ -129,7 +130,7 @@ const industrialProducts = [
       ["TERMINALS:", "Custom Pins/Tags"],
     ],
     cta: "Request Custom Solution",
-    slug: "pfc-capacitor",
+    slug: "customized-capacitor",
   },
 ] as const;
 
@@ -497,7 +498,7 @@ export function IndustrialEnquirySolutionView() {
                     ))}
                   </div>
                   <Link
-                    href={`/products/${prod.slug}`}
+                    href={productHref(prod.slug)}
                     style={{ clipPath: "polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%)" }}
                     className="inline-flex min-h-[52px] items-center gap-8 bg-white px-4 text-[14px] font-medium !text-[#020202] transition hover:bg-[#58C7E8]"
                   >
