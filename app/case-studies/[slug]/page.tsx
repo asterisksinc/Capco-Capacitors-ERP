@@ -67,7 +67,7 @@ export default async function CaseStudyPage({ params }: { params: Promise<{ slug
           </div>
 
           <div className="mt-16 grid gap-12 lg:mt-24 lg:grid-cols-[minmax(0,1fr)_minmax(0,560px)] lg:gap-20">
-            <div className="flex flex-col gap-8 self-start">
+            <div className="flex flex-col gap-8 self-start lg:sticky lg:top-[120px]">
               <div className="flex items-center gap-2 text-[14px] font-medium uppercase leading-none text-[#020202]">
                 <span className="h-[6px] w-[6px] bg-[#58C7E8]" />
                 The Story
@@ -81,14 +81,42 @@ export default async function CaseStudyPage({ params }: { params: Promise<{ slug
               )}
             </div>
             <div className="flex flex-col gap-10">
-              <div>
-                <h2 className="type-h3-lg font-medium text-[#020202]">The challenge</h2>
-                <p className="type-body mt-4 text-[#121212]">{study.summary}</p>
-              </div>
-              <div>
-                <h2 className="type-h3-lg font-medium text-[#020202]">Solution &amp; outcome</h2>
-                <p className="type-body mt-4 text-[#121212]">{study.fullText}</p>
-              </div>
+              {study.sections ? (
+                <>
+                  {study.scenario && (
+                    <div>
+                      <h2 className="type-h3-lg font-medium text-[#020202]">The scenario</h2>
+                      <p className="type-body mt-4 text-[#121212]">{study.scenario}</p>
+                    </div>
+                  )}
+                  {study.sections.map((section, i) => (
+                    <div key={section.title} className="border-t border-[#E4E4E4] pt-8">
+                      <p className="type-caption font-mono uppercase tracking-[0.12em] text-[#58C7E8]">
+                        {String(i + 1).padStart(2, "0")}
+                      </p>
+                      <h2 className="type-h3 mt-2 font-medium text-[#020202]">{section.title}</h2>
+                      <p className="type-body mt-3 text-[#121212]">{section.body}</p>
+                      {section.target && (
+                        <p className="type-small mt-4 inline-flex rounded-[6px] bg-[#EEFAFF] px-3 py-2 text-[#020202]">
+                          <span className="mr-2 font-medium">Target:</span>
+                          {section.target}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </>
+              ) : (
+                <>
+                  <div>
+                    <h2 className="type-h3-lg font-medium text-[#020202]">The challenge</h2>
+                    <p className="type-body mt-4 text-[#121212]">{study.summary}</p>
+                  </div>
+                  <div>
+                    <h2 className="type-h3-lg font-medium text-[#020202]">Solution &amp; outcome</h2>
+                    <p className="type-body mt-4 text-[#121212]">{study.fullText}</p>
+                  </div>
+                </>
+              )}
               <Link
                 href="/contact?category=oem#enquiry-form"
                 style={{ clipPath: "polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%)" }}

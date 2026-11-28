@@ -70,17 +70,17 @@ const journeySteps = [
   {
     title: "Technical Consultation",
     body: "Share your specifications, application requirements, and target pricing. Our engineers will recommend optimal solutions.",
-    image: "/figma/products/journey-building.png",
+    image: "/figma/products/journey/01-consultation.jpg",
   },
   {
     title: "Prototype & Validation",
     body: "Receive samples for testing and validation. We'll iterate based on your feedback until performance matches your expectations.",
-    image: "/figma/products/journey-building.png",
+    image: "/figma/products/journey/02-prototype.jpg",
   },
   {
     title: "Production & Delivery",
     body: "Finalize commercial terms, sign supply agreement, and begin regular deliveries with JIT or bulk shipment options.",
-    image: "/figma/products/journey-building.png",
+    image: "/figma/products/journey/03-delivery.jpg",
   },
 ];
 
@@ -475,7 +475,7 @@ export function ProductDetailView({ product, previous, next }: ProductDetailView
           <div className="mt-12 grid gap-x-3 gap-y-10 md:grid-cols-3 lg:mt-[64px]">
             {journeySteps.map((card) => (
               <article key={card.title}>
-                <div className="relative aspect-[4/3] w-full overflow-hidden rounded-[20px] lg:rounded-[24px]">
+                <div className="relative mx-auto aspect-[4/5] w-full max-w-[520px] overflow-hidden rounded-[20px] lg:rounded-[24px]">
                   <Image
                     src={card.image}
                     alt={card.title}

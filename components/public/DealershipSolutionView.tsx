@@ -141,8 +141,9 @@ export function DealershipSolutionView() {
       {/* 1. Hero (shared with the home page) */}
       <HomeHero
         id="dealership-hero-title"
-        image="/figma/solutions/22cfa.png"
-        imageAlt="Power transmission grid infrastructure across landscape"
+        image="/figma/solutions/heroes/dealership-hero.jpg"
+        imageAlt="CAPCO dealer partnership handshake outside the CAPCO Capacitors plant"
+        overlay
         description={<>Join India&apos;s most trusted capacitor dealer network: competitive margins, co-branded marketing support, and 30+ years of brand equity behind every sale.</>}
         tags={["5,000+ Authorised Dealers", "20+ States Covered"]}
         title={["Grow Your Business", "with Capco Capacitors"]}

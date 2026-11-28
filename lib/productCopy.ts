@@ -81,6 +81,7 @@ export const productCopy: Record<string, ProductCopy> = {
     description: "Dry/oil-filled fan capacitors (0.5–10 MFD) designed for stable torque, energy efficiency, and extended motor life in residential and industrial fans.",
     includedTag: "Built for Endurance",
     includedItems: ["Self-Healing Metallized Film", "400–440V AC Voltage Rating", "Heat & Humidity Resistant", "Plastic or Aluminium Housing", "Custom Terminal Configurations"],
+    drawing: "/figma/products/drawings/fan-capacitor.jpg",
     processTag: "Precision in Every Layer",
     processTagline: "From metallized film to final encapsulation—each fan capacitor is built to withstand India’s toughest operating conditions.",
     phases: commonPhases([
@@ -98,7 +99,6 @@ export const productCopy: Record<string, ProductCopy> = {
     ctaTagline: "Partner with CAPCO for bulk fan capacitor supply—Leybold-metallized film, BIS-certified, and delivered on OEM timelines.",
     primaryCta: "Request Bulk Quote",
     secondaryCta: "Become a Dealer",
-    drawing: "/figma/products/drawings/fan-capacitor.jpg",
     specs: [
       ["Container", "Plastic / Aluminium"],
       ["Rating", "0.5 to 10 MFD"],
@@ -128,7 +128,6 @@ export const productCopy: Record<string, ProductCopy> = {
     description: "Dry-type motor run capacitors (0.5–432 MFD) engineered for sustained torque, energy efficiency, and extended motor lifespan in demanding AC applications.",
     includedTag: "Built for Industrial Endurance",
     includedItems: ["Self-Healing Metallized Film", "400–440V AC Voltage Tolerance", "Moisture & Heat Resistant", "Plastic/Aluminium/Box Housing", "Custom Terminal & Mounting Options"],
-    drawing: "/figma/products/drawings/motor-run-capacitor.jpg",
     specs: [
       ["Container", "Plastic / Aluminum / Box type"],
       ["Rating", "0.5 to 432 MFD"],
@@ -138,6 +137,7 @@ export const productCopy: Record<string, ProductCopy> = {
       ["Frequency", "50 Hz"],
       ["Customization", "As Per Specification"],
     ],
+    drawing: "/figma/products/drawings/motor-run-capacitor.jpg",
     processTag: "Engineered for Reliability",
     processTagline: "Every motor run capacitor leverages in-house Leybold metallization and Metar winding for zero-compromise performance in continuous-duty applications.",
     phases: commonPhases([
@@ -184,6 +184,7 @@ export const productCopy: Record<string, ProductCopy> = {
       ["Frequency", "50 Hz"],
       ["Customization", "As Per Specification"],
     ],
+    drawing: "/figma/products/drawings/motor-start-capacitor.jpg",
     processTag: "Engineered for Instant Power",
     processTagline: "Each motor start capacitor is optimized for high inrush current delivery, ensuring reliable motor ignition even under heavy load conditions.",
     phases: commonPhases([
@@ -230,6 +231,7 @@ export const productCopy: Record<string, ProductCopy> = {
       ["Frequency", "50 Hz"],
       ["Customization", "As Per Specification"],
     ],
+    drawing: "/figma/products/drawings/submersible-panel-capacitor.jpg",
     processTag: "Protected Against the Elements",
     processTagline: "Every submersible panel capacitor is built to withstand water ingress, thermal cycling, and continuous operation in borewell and irrigation pump applications.",
     phases: commonPhases([
@@ -277,6 +279,7 @@ export const productCopy: Record<string, ProductCopy> = {
       ["Frequency", "50 Hz"],
       ["Customization", "As Per Specification"],
     ],
+    drawing: "/figma/products/drawings/ac-refrigeration-washing-machine-capacitor.jpg",
     processTag: "Engineered for Consumer Safety",
     processTagline: "Every capacitor integrates P2 safety technology to prevent catastrophic failures in home appliances—protecting both equipment and end-users.",
     phases: commonPhases([
@@ -323,6 +326,7 @@ export const productCopy: Record<string, ProductCopy> = {
       ["Frequency", "50 Hz"],
       ["Customization", "As Per Specification"],
     ],
+    drawing: "/figma/products/drawings/lighting-luminaire-capacitor.jpg",
     processTag: "Designed for Endurance",
     processTagline: "Every lighting capacitor is optimized for continuous operation in street lights, floodlights, and high-bay luminaires—delivering stable power factor correction and extended service life.",
     phases: commonPhases([
@@ -416,6 +420,7 @@ export const productCopy: Record<string, ProductCopy> = {
       ["Frequency", "50 Hz"],
       ["Customization", "As Per Specification"],
     ],
+    drawing: "/figma/products/drawings/pfc-cylindrical-capacitor.jpg",
     processTag: "Engineered for Safety & Efficiency",
     processTagline: "Every cylindrical PFC capacitor integrates P2 safety technology and precision metallized film to prevent catastrophic failures while optimizing reactive power compensation.",
     phases: commonPhases([
@@ -453,6 +458,7 @@ export const productCopy: Record<string, ProductCopy> = {
     description: "Box type capacitors designed for power factor maintenance, reactive power compensation and enhanced electrical system stability in low-tension networks.",
     includedTag: "Built for Grid Stability",
     includedItems: ["Box-Type Construction", "Power Factor Correction", "Reactive Power Compensation", "Low-Tension Network Compatibility", "Industrial & Commercial Applications"],
+    drawing: "/figma/products/drawings/pfc-box-type-capacitor.jpg",
     processTag: "Engineered for Safety & Efficiency",
     processTagline: "Every box type capacitor integrates precision metallized film technology to support stable power factor correction and reliable reactive power compensation.",
     phases: commonPhases([
@@ -492,6 +498,7 @@ export const productCopy: Record<string, ProductCopy> = {
     description: "Capacitor banks designed for power factor maintenance, reactive power compensation and enhanced electrical system stability in industrial and commercial low-tension networks.",
     includedTag: "Built for Grid Stability",
     includedItems: ["Robust Bank Design", "Power Factor Correction", "Reactive Power Compensation", "Low-Tension Network Compatibility", "Industrial & Commercial Applications"],
+    drawing: "/figma/products/drawings/capacitor-bank.jpg",
     processTag: "Engineered for Stability & Efficiency",
     processTagline: "Every capacitor bank integrates precision metallized film technology and structured bank design to support stable power factor correction and reliable reactive power compensation.",
     phases: commonPhases([

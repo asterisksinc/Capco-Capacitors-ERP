@@ -200,8 +200,9 @@ export function IndustrialEnquirySolutionView() {
       {/* 1. Hero (shared with the home page) */}
       <HomeHero
         id="industrial-hero-title"
-        image="/figma/solutions/22cfa.png"
-        imageAlt="Power transmission grid infrastructure across landscape"
+        image="/figma/solutions/heroes/industrial-hero.jpg"
+        imageAlt="Industrial manufacturing plant with power infrastructure at dusk"
+        overlay
         description={<>CAPCO provides power factor audits, APFC panel integration support, and bulk capacitor supply (0.5–25 KVAR, up to 150 KVAR banks) for industrial buyers seeking to reduce electricity demand charges, improve voltage stability, and minimize equipment downtime.</>}
         tags={["Reduce Energy Costs", "Improve Power Quality"]}
         title={["Industrial Power Factor", "Correction Solutions"]}

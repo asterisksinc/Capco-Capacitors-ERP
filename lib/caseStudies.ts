@@ -14,6 +14,9 @@ export type CaseStudy = {
   published?: boolean;
   /** Image shown beside "The Story" on the detail page. */
   storyImage?: string;
+  /** Long-form story: an intro paragraph plus numbered sections (replaces challenge / solution). */
+  scenario?: string;
+  sections?: readonly { title: string; body: string; target?: string }[];
 };
 
 export const caseStudies: readonly CaseStudy[] = [
@@ -53,6 +56,36 @@ export const caseStudies: readonly CaseStudy[] = [
     image: "/figma/case-studies/apfc-panel-case-study.jpg",
     detailImage: "/figma/case-studies/oem-process-workflow.jpg",
     storyImage: "/figma/case-studies/oem-story-fan-line.jpg",
+    scenario:
+      "A ceiling fan manufacturer builds 20,000 fans a month across several models. Each fan needs a motor run capacitor that sets the fan's speed performance and starting behaviour. The OEM wants a supplier that matches its specification, ships on a predictable schedule, and can trace every batch. This is a composite scenario, not a real client.",
+    sections: [
+      {
+        title: "Understanding the OEM requirement",
+        body: "Supply starts with a clear specification. Before any sample is made, Capco's team records the capacitance and tolerance, rated voltage, operating temperature, terminal and lead style, physical size, expected life, and the standards the OEM's own approvals depend on. Both sides sign off this “spec sheet” as the single reference for everything that follows.",
+      },
+      {
+        title: "Customised design and sampling",
+        body: "Capco offers customisation on its products to the OEM's size and application needs. The sampling stage produces a small batch to the signed spec sheet. The OEM tests it on its own fan line and in its lab. Capco shares its own test readings alongside the samples so both sets of results can be compared.",
+        target: "15 working days from signed spec to approved sample.",
+      },
+      {
+        title: "Manufacturing and quality control",
+        body: "Capco makes its own metallized polypropylene film capacitors, with in-house metallization, automatic winding and a test lab. Quality control runs at three points: incoming film and material checks, in-process checks during winding and assembly, and a final electrical test on every outgoing unit. Each batch carries a code that links back to its materials and test records.",
+        target: "100% of outgoing units electrically tested; every batch traceable.",
+      },
+      {
+        title: "Supply planning and delivery",
+        body: "The OEM shares a 12-week forecast, and Capco plans material and production against it. Deliveries follow a monthly schedule agreed up front, with a named contact for order changes. If the OEM's demand moves, the forecast is revised at an agreed review point, so both sides plan from the same numbers.",
+      },
+      {
+        title: "Support, change control and continuity",
+        body: "After launch, the OEM has one point of contact for technical queries and complaints. Any change to materials, process or design goes through a written change notice, so nothing changes silently. If a batch is questioned, the traceability records allow a clear, fast review of which units are affected.",
+      },
+      {
+        title: "Conclusion",
+        body: "A fan OEM's biggest risk with a capacitor supplier is uncertainty: unclear specs, inconsistent batches and unreliable dates. This blueprint shows how Capco removes each one with a signed specification, tested and traceable batches, a shared forecast and controlled changes. If you build fans or other motor-driven products, Capco can walk you through the same process for your own range.",
+      },
+    ],
     clientTag: "Industrial EPC & APFC",
     title: "APFC Panel Builder Delivers 35% Space Saving with Modular 150 KVAR Banks",
     stats: [

@@ -99,7 +99,7 @@ export function WhereWeOperateSection({
     `world-map-pin absolute z-20 grid h-8 w-8 -translate-x-1/2 -translate-y-1/2 place-items-center ${isActive ? "is-active" : ""}`;
 
   return (
-    <section id={id} aria-label="Global footprint" className="relative overflow-hidden bg-[#0A0A0A] px-6 py-20 text-white lg:px-[60px] lg:py-[100px]">
+    <section id={id} aria-label="Global footprint" className="relative isolate overflow-hidden bg-[#0A0A0A] px-6 py-20 text-white lg:px-[60px] lg:py-[100px]">
       <div className="mx-auto max-w-[1800px]">
         <div className="text-center">
           <div className="flex items-center justify-center gap-2 text-[14px] font-medium uppercase tracking-normal text-white">
